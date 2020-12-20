@@ -1,0 +1,6 @@
+---
+# mpd.yaml
+"m": "male"
+"f": "female"
+"fm": "male and female"
+"both": "male and female"

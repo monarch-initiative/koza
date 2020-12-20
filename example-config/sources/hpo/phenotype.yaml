@@ -1,0 +1,11 @@
+dataset_description:
+  license: "this file has a unique license"
+
+depends_on:
+  - foo_map
+  - bar_map
+
+columns:
+  - foo
+  - bar
+  - baz

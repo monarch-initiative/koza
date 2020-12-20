@@ -1,0 +1,48 @@
+---
+# ensembl.yaml
+
+# txid to dbname
+"9606": "hsapiens_gene_ensembl"
+"10090": "mmusculus_gene_ensembl"
+"7955": "drerio_gene_ensembl"
+"28377": "acarolinensis_gene_ensembl"  # green lizard
+# "3702": "ensembl_3702.txt"           # "Arabidopsis thaliana"  NCBITaxon:3702
+"9913": "btaurus_gene_ensembl"
+"6239": "celegans_gene_ensembl"
+"9615": "cfamiliaris_gene_ensembl"
+"9031": "ggallus_gene_ensembl"
+# "44689": "ensembl_44689.txt"         #  dicty?
+"7227": "dmelanogaster_gene_ensembl"   #
+"9796": "ecaballus_gene_ensembl"       #
+"9544": "mmulatta_gene_ensembl"        #
+"13616": "mdomestica_gene_ensembl"     #
+"9258": "oanatinus_gene_ensembl"       #
+"9823": "sscrofa_gene_ensembl"         #
+"10116": "rnorvegicus_gene_ensembl"    #
+# "4896": "spombe_gene_ensembl"        # no pombe genome
+"31033": "trubripes_gene_ensembl"      #
+"8364": "xtropicalis_gene_ensembl"     #
+# "4932": "scerevisiae_gene_ensembl"   #  yeast
+"9685": "fcatus_gene_ensembl"
+
+# have not checked if Ensembl is still sending these keys
+# or if they have updated to match SO
+"ncRNA": "ncRNA_gene"
+"asRNA": "ncRNA_gene"           # TODO make term request for "asRNA"
+"Mt_rRNA": "mt_rRNA"            # was rRNA_gene
+"Mt_tRNA": "mt_tRNA"
+"lincRNA": "lincRNA_gene"
+"macro_lncRNA": "lncRNA_gene"   # FIXME non-specific term
+"miRNA": "miRNA_gene"
+"misc_RNA": "ncRNA_gene"
+"protein_coding": "protein_coding_gene"
+"rRNA": "rRNA_gene"
+"sRNA": "ncRNA_gene"            # FIXME non-specific term
+"snoRNA": "snoRNA_gene"
+"vaultRNA": "vaultRNA_primary_transcript"
+"other": "sequence_feature"
+"snRNA": "snRNA_gene"
+"piRNA": "piRNA_gene"
+"scRNA": "scRNA_gene"
+"tRNA": "tRNA_gene"
+"IG_LV_gene": "immunoglobulin_gene"  # SO:0002126 may be more (or too) specific

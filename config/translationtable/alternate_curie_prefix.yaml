@@ -1,0 +1,16 @@
+---
+# Alternate prefixes that may be found in the wild
+"Entrez": "NCBIGene"
+"Entrez.Gene": "NCBIGene"
+"EntrezGene": "NCBIGene"
+"Entrez-Gene": "NCBIGene"
+"DO:DOID": "DOID"
+"HPO": "HP"
+"MIM": "OMIM"
+"NCBI-Gene": "NCBIGene"
+"NCBI.Gene": "NCBIGene"
+"Orpha": "ORPHA"
+"Orphanet": "ORPHA"
+"ORDO": "ORPHA"
+"PubMed": "PMID"
+"WB": "WormBase"

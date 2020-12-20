@@ -1,0 +1,15 @@
+---
+# RGD local translation table
+
+
+"IEA": "evidence used in automatic assertion"  # "ECO:0000501"
+"IAGP": "inference by association of genotype from phenotype"  # "ECO:0005613"
+"IDA": "direct assay evidence used in manual assertion"  # "ECO:0000314"
+"IMP": "mutant phenotype evidence used in manual assertion"  # "ECO:0000315"
+"IED": "inference from experimental data evidence"  #  "ECO:0005611"
+"TAS": "author statement supported by traceable reference used in manual assertion"  # "ECO:0000304"
+"QTM": "quantitative trait analysis evidence"  #  "ECO:0000061"
+"ISS": "sequence similarity evidence used in manual assertion"  #  "ECO:0000250"
+"NAS": "author statement without traceable support used in manual assertion"  #  "ECO:0000303"
+"IPM": "inference from phenotype manipulation evidence"  #  "ECO:0005612"
+"IEP": "expression evidence used in manual assertion"  #  "ECO:0000270"

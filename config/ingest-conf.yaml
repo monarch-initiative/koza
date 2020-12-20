@@ -1,0 +1,12 @@
+curie_map: /foo/bar/baz
+
+sources:
+  - foo
+  - bar
+  - baz
+
+serializations:
+  - nt
+  - jsonlines
+  - tsv
+  - rdfstar

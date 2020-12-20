@@ -1,0 +1,336 @@
+---
+# mgi.yaml
+# evidence code
+"EXP": "experimental evidence"                                          # ECO:0000006
+"IBA": "biological aspect of ancestor evidence used in manual assertion"  # ECO:0000318
+"IC": "inference from background scientific knowledge"                  # ECO:0000001
+"IDA": "direct assay evidence used in manual assertion"                 # ECO:0000314
+"IEA": "evidence used in automatic assertion"                           # ECO:0000501
+"IEP": "expression pattern evidence"                                    # ECO:0000008
+"IGI": "genetic interaction evidence used in manual assertion"          # ECO:0000316
+"IKR": "phylogenetic determination of loss of key residues evidence used in manual assertion"  # ECO:0000320
+"IMP": "mutant phenotype evidence used in manual assertion"             # ECO:0000315
+"IPI": "physical interaction evidence used in manual assertion"         # ECO:0000353
+"ISA": "sequence alignment evidence"                                    # ECO:0000200
+"ISM": "match to sequence model evidence "                              # ECO:0000202
+"ISO": "sequence orthology evidence"                                    # ECO:0000201
+"ISS": "sequence similarity evidence used in manual assertion"          # ECO:0000250
+"NAS": "author statement without traceable support used in manual assertion"  # ECO:0000303
+"ND": "no biological data found"                                        # ECO:0000035
+"RCA": "computational combinatorial evidence used in manual assertion"  # ECO:0000245
+"TAS": "author statement supported by traceable reference used in manual assertion"  # ECO:0000304
+"M": "male"
+"F": "female"
+
+# can not have duplicate key  move to resolve(key, default='reference_locus')
+# "Not Applicable": "reference_locus"
+
+# marker types
+"Complex/Cluster/Region": "sequence_feature"
+# WE redefine these as transgenic insertion features instead
+"Transgene": "transgenic_insertion"
+# sequence_feature. sequence_motif=SO:0001683? region=SO:0000001
+"DNA Segment": "sequence_feature"
+"Pseudogene": "pseudogene"
+"Cytogenetic Marker": "genetic_marker"  # ?  fixme
+# sequence_feature. Or sequence_motif=SO:0001683?
+"Other Genome Feature": "sequence_feature"
+# BAC_end: SO:0000999, YAC_end: SO:00011498; using parent term
+"BAC/YAC end": "read"
+"Gene": "gene"
+
+# zygosity
+"Heterozygous": "heterozygous"
+"Heteroplasmic": "heteroplasmic"
+"Homozygous": "homozygous"
+"Homoplasmic": "homoplasmic"
+"Hemizygous Insertion": "hemizygous insertion-linked"
+"Hemizygous Deletion": "hemizygous"
+"Hemizygous X-linked": "hemizygous-x"
+"Hemizygous Y-linked": "hemizygous-y"
+"Indeterminate": "indeterminate"
+
+# marker types
+"6238160": "gene"
+"15406202": "lncRNA_gene"
+"6238161": "protein_coding_gene"
+"6238162": "ncRNA_gene"
+"15406203": "antisense_lncRNA"
+"6238163": "rRNA_gene"
+"6238164": "tRNA_gene"
+"6238165": "snRNA_gene"
+"6238166": "snoRNA_gene"
+"6238167": "miRNA_gene"
+"6238168": "scRNA_gene"
+"6238169": "lincRNA_gene"
+"6238170": "heritable_phenotypic_marker"
+"6238171": "gene_segment"
+"7313348": "pseudogene"
+"6238180": "SRP_RNA_gene"
+"6238181": "RNase_P_RNA_gene"
+"6238182": "RNase_MRP_RNA_gene"
+"6238183": "telomerase_RNA_gene"
+"6238184": "gene"           # unclassified gene  --> gene
+"6238186": "ncRNA_gene"     # unclassified non-coding RNA gene
+"6967235": "pseudogenic_gene_segment"
+"7196768": "chromosomal_deletion"
+"7196769": "insertion"
+"7196770": "chromosomal_inversion"
+"7196771": "Robertsonian_fusion"
+"7196772": "reciprocal_chromosomal_translocation"
+"7196773": "chromosomal_translocation"
+"7196774": "chromosomal_duplication"
+"7196775": "chromosomal_transposition"
+"7222413": "chromosome_part"  # unclassified cytogenetic marker
+# "7288448": "SO:0000341",  "chromosome_band"  CHECK what 7288448 is
+"7288448": "pseudogenic_region"
+"7288449": "polymorphic_pseudogene"
+"7648966": "retrotransposon"
+"7648967": "telomere"
+"7648968": "minisatellite"
+"7648969": "sequence_feature"                # unclassified other genome feature
+"9272146": "endogenous_retroviral_sequence"  # endogenous retroviral region
+"11928467": "sequence_variant"               # mutation defined region
+# intronic lncRNA gene  --> ncRNA gene       #FIXME (maybe done if "sense_" is okay)
+# "15406204": "SO:0001263",
+"15406204": "sense_intronic_ncRNA_gene"     # "SO:0002184"
+"15406205": "CpG_island"
+"15406206": "ribozyme_gene"
+"15406207": "promoter"
+"36700088": "TSS_region"
+"36700089": "sense_overlap_ncRNA_gene"
+"36700090": "bidirectional_promoter_lncRNA"
+
+# seq_alt_type
+# TODO: Finish identifying SO/GENO terms for mappings found in MGI
+"Deletion": "deletion"
+"Disruption caused by insertion of vector": "insertion"
+"Duplication": "duplication"
+"Insertion": "insertion"
+# TODO gene_trap_construct: SO:0001477
+"Insertion of gene trap vector": "transgenic_insertion"   # - correct?
+"Intergenic deletion": "deletion"   # TODO  SO:0001628 intergenic_variant
+"Intragenic deletion": "deletion"   # TODO  SO:0001564 gene_variant
+"Inversion": "inversion"
+"Not Applicable": "sequence_alteration"   # WARN could conflict with taxon usage
+"Not Specified": "sequence_alteration"    # WARN could conflict with taxon usage
+"Nucleotide repeat expansion": "direct_tandem_duplication"
+"Nucleotide substitutions": "MNV"  # multiple nucleotide variant
+"Other": "sequence_alteration"
+"Single point mutation": "point_mutation"
+"Translocation": "translocation"
+"Transposon insertion": "mobile_element_insertion"
+"Undefined": "sequence_alteration"
+"Viral insertion": "novel_sequence_insertion"  #  (no viral version)
+"wild type": "wild_type"
+
+# "Allele Type" (subtype)
+#####################
+# Chemically and radiation induced
+# Chemically induced (ENU)
+# Chemically induced (other)
+# Endonuclease-mediated
+# Gene trapped
+# Not Applicable
+# Not Specified
+# Other
+# QTL
+# Radiation induced
+# Spontaneous
+# Targeted
+# Transgenic
+# Transposon induced
+
+
+# taxon
+# @kshefchek - it's easier from an integration perspective to round up
+# to Mus musculus when applicable
+"Sus scrofa domestica L.": "Sus scrofa"  # "NCBITaxon:9823"  ?? why here ??
+"Rat": "Rattus"   # Genus
+
+"laboratory mouse and M. m. domesticus (brevirostris)": "Mus musculus brevirostris"
+"laboratory mouse and M. m. bactrianus": "Mus musculus bactrianus"
+# does not include lab mouse
+"laboratory mouse and M. m. castaneus and M. m. musculus": "Mus musculus musculus x M. m. castaneus"
+"M. m. domesticus and M. m. molossinus and M. m. castaneus": "Mus musculus domesticus x M. m. molossinu"
+"M. setulosus": "Mus setulosus"
+"laboratory mouse and wild-derived": "Mus"  # genus
+"laboratory mouse and M. m. musculus (Prague)": "Mus musculus musculus"
+"M. m. castaneus and M. m. musculus": "Mus musculus musculus x M. m. castaneus"
+"M. m. domesticus (Canada)": "Mus musculus"
+# FIXME
+"M. m. domesticus and M. m. domesticus poschiavinus": "Mus musculus"
+"M. m. musculus and M. spretus or M. m. domesticus": "Mus musculus x Mus spretus"
+"M. chypre": "Mus"   # '862507' -> SubGenus not Genus,  # unclassified mus
+"M. cookii (Southeast Asia)": "Mus cookii"
+"M. cervicolor": "Mus cervicolor"
+"M. m. gentilulus": "Mus musculus gentilulus"
+"M. m. domesticus poschiavinus (Tirano, Italy)": "Mus musculus"  # FIXME
+"M. m. castaneus (Phillipines)": "Mus musculus castaneus"
+"M. m. domesticus (brevirostris) (France)": "Mus musculus brevirostris"
+"M. m. domesticus (Lake Casitas, CA)": "Mus musculus"
+"laboratory mouse or wild": "Mus"   # '862507' -> SubGenus not Genus
+"M. spretus (Morocco)": "Mus spretus"
+"M. m. bactrianus (Russia)": "Mus musculus bactrianus"
+"M. m. musculus (Pakistan)": "Mus musculus musculus"
+"M. tenellus": "Mus tenellus"
+"M. baoulei": "Mus baoulei"
+"laboratory mouse and M. spretus or M. m. castaneus": "Mus"   # '862507' -> SubGenus not Genus
+"M. haussa": "Mus haussa"
+"M. m. domesticus (Montpellier, France)": "Mus musculus"
+"M. m. musculus": "Mus musculus musculus"
+"M. m. domesticus and Not specified": "Mus musculus"
+"laboratory mouse and M. spretus or M. m. musculus": "Mus"   # '862507' -> SubGenus not Genus
+"M. m. musculus (Czech)": "Mus musculus"
+"M. spretus or laboratory mouse and M. m. musculus": "Mus"   # '862507' -> SubGenus not Genus
+"M. m. domesticus (Skokholm, UK)": "Mus musculus"
+"M. shanghai": "Mus"   # '862507' -> SubGenus not Genus
+"M. m. musculus (Korea)": "Mus musculus"
+"laboratory mouse and M. m. domesticus (Peru)": "Mus musculus"
+"M. m. molossinus and laboratory mouse": "Mus musculus molossinus"
+"laboratory mouse and M. m. praetextus x M. m. domesticus": "Mus setulosus"
+"M. cervicolor popaeus": "Mus cervicolor popaeus"
+"M. m. domesticus or M. m. musculus": "Mus musculus"
+"M. abbotti": "Mus abbotti"
+"M. nitidulus": "Mus nitidulus"
+"M. gradsko": "Mus setulosus"
+"M. m. domesticus poschiavinus (Zalende)": "Mus musculus"
+"M. m. domesticus (MD)": "Mus musculus"
+"M. triton": "Mus triton"
+"M. m. domesticus (Tunisia)": "Mus musculus"
+"Wild and outbred Swiss and M. m. domesticus and M. m. molossinus": "Mus"   # '862507' -> SubGenus not Genus,
+"M. m. molossinus and M. spretus": "Mus musculus x Mus spretus"
+"M. spretus (France)": "Mus spretus"
+"M. m. praetextus x M. m. domesticus and M. m. domesticus": "Mus musculus"
+"M. m. bactrianus": "Mus musculus bactrianus"
+"M. m. domesticus (Bulgaria)": "Mus musculus"
+"Not Specified and M. m. domesticus": "Mus musculus"
+"laboratory mouse and M. m. molossinus": "Mus musculus"
+"M. spretus or M. m. domesticus": "Mus"   # '862507' -> SubGenus not Genus
+"M. m. molossinus (Anjo, Japan)": "Mus musculus molossinus"
+"M. m. castaneus or M. m. musculus": "Mus musculus"
+"laboratory mouse and M. m. castaneus and M. m. domesticus poschiavinus": "Mus"
+"M. spretus (Spain)": "Mus spretus"
+"M. m. molossinus (Japan)": "Mus musculus molossinus"
+"M. lepidoides": "Mus lepidoides"
+"M. m. macedonicus": "Mus musculus"
+"M. m. musculus (Pohnpei-Micronesia)": "Mus musculus"
+"M. m. domesticus (Morocco)": "Mus musculus domesticus"
+"laboratory mouse and M. m. domesticus poschiavinus": "Mus musculus"
+"M. (Nannomys) (Zakouma NP, Chad)": "Nannomys"
+"laboratory mouse and M. m. musculus (Tubingen, S Germany)": "Mus musculus"
+"M. cypriacus": "Mus cypriacus"
+"laboratory mouse and M. m. domesticus": "Mus musculus"
+"M. m. musculus and M. m. domesticus": "Mus musculus musculus x M. m. domesticus"
+"M. crociduroides": "Mus crociduroides"
+"laboratory mouse and M. m. domesticus (Israel)": "Mus musculus"
+"M. m. domesticus (Ann Arbor, MI)": "Mus musculus domesticus"
+"M. caroli": "Mus caroli"
+"M. emesi": "Mus emesi"
+"M. gratus": "Mus gratus"
+"laboratory mouse or M. spretus": "Mus musculus"
+"M. m. domesticus (PA)": "Mus musculus"
+"M. m. domesticus (DE)": "Mus musculus"
+"laboratory mouse and M. m. castaneus": "Mus musculus"
+"M. hortulanus (Austria)": "Mus spicilegus"  # synonymous with Mus spicilegus
+"M. m. musculus and M. hortulanus": "Mus"   # '862507' -> SubGenus not Genus
+"M. mattheyi": "Mus mattheyi"
+"M. m. macedonicus or M. m. musculus": "Mus musculus"
+"M. m. musculus (Georgia)": "Mus musculus"
+"M. famulus": "Mus famulus"
+"M. m. bactrianus (Iran)": "Mus musculus bactrianus"
+"M. m. musculus (Toshevo, Bulgaria)": "Mus musculus"
+"M. m. musculus (Prague)": "Mus musculus"
+"M. platythrix (India)": "Mus platythrix"
+"M. m. domesticus": "Mus musculus"
+"M. m. castaneus and laboratory mouse": "Mus musculus"
+"M. m. domesticus (Australia)": "Mus musculus"
+"laboratory mouse and M. m. domesticus and M. m. molossinus": "Mus"
+"M. m. domesticus (brevirostris) (Morocco)": "Mus musculus"
+"Mus musculus/domesticus": "Mus musculus"
+"laboratory mouse and M. spretus and M. m. musculus": "Mus"
+"M. m. molossinus": "Mus musculus molossinus"
+"M. hortulanus": "Mus spicilegus"  # synonymous with Mus spicilegus
+"M. dunni": "Mus terricolor"  # synonymous with Mus terricolor
+"M. m. castaneus (Pathumthani, Thailand)": "Mus musculus castaneus"
+"M. terricolor": "Mus terricolor"
+"M. m. domesticus (China)": "Mus musculus"
+"M. fragilicauda": "Mus fragilicauda"
+"Not Resolved": "Mus setulosus"  # assume Mus
+"M. m. musculus or M. spretus and laboratory mouse": "Mus setulosus"
+"M. macedonicus macedonicus": "Mus macedonicus macedonicus"
+"laboratory mouse": "Mus musculus"
+"laboratory mouse and M. abbotti": "Mus setulosus"
+"M. cervicolor cervicolor": "Mus cervicolor cervicolor"
+"laboratory mouse and M. spretus": "Mus setulosus"
+"M. m. domesticus (praetextus)": "Mus musculus"
+"M. spretus (London)": "Mus spretus"
+"M. m. musculus (Prague) and laboratory mouse": "Mus musculus"
+"laboratory mouse and M. m. musculus (Central Jutland, Denmark)": "Mus musculus"
+"M. m. musculus (Northern Jutland, Denmark)": "Mus musculus"
+"M. m. castaneus (Taiwan)": "Mus musculus castaneus"
+"M. brevirostris": "Mus musculus brevirostris"
+"M. spretus": "Mus spretus"
+"M. m. domesticus poschiavinus": "Mus musculus"
+"M. pahari": "Mus pahari"
+"M. m. molossinus (Hakozaki, Japan)": "Mus musculus molossinus"
+"M. m. musculus (Hokkaido)": "Mus musculus"
+"M. m. musculus or M. spretus": "Mus"   # '862507' -> SubGenus not Genus
+"laboratory mouse and M. m. musculus": "Mus musculus"
+"Not Specified and M. m. musculus": "Mus musculus"
+"M. m. castaneus (Masinagudi, South India)": "Mus musculus castaneus"
+"M. indutus": "Mus indutus"
+"M. saxicola": "Mus saxicola"
+"M. m. praetextus x M. m. musculus": "Mus musculus"
+"M. spretus and laboratory mouse": "Mus"   # '862507' -> SubGenus not Genus
+"laboratory mouse and M. m. castaneus and M. m. domesticus": "Mus"
+"M. m. musculus (Bulgaria)": "Mus musculus"
+"M. booduga": "Mus booduga"
+"Not Specified and M. m. molossinus": "Mus musculus"
+"M. m. musculus and M. spretus": "Mus"   # '862507' -> SubGenus not Genus
+"M. minutoides": "Mus minutoides"
+"M. spretus (Tunisia)": "Mus spretus"
+"M. spicilegus": "Mus spicilegus"
+"Peru Coppock": "Mus setulosus"  # unclassified mus
+"M. m. domesticus (CA)": "Mus musculus"
+"M. macedonicus spretoides": "Mus macedonicus spretoides"
+"M. m. musculus and M. m. castaneus": "Mus musculus musculus x M. m. castaneus"
+"M. m. praetextus x M. m. domesticus": "Mus musculus"
+"M. m. domesticus and M. spretus": "Mus"   # '862507' -> SubGenus not Genus
+"M. m. molossinus (Mishima)": "Mus musculus molossinus"
+"M. hortulanus and M. m. macedonicus": "Mus setulosus"
+"Not Specified and M. spretus": "Mus setulosus"
+"M. m. domesticus (Peru)": "Mus musculus"
+"M. m. domesticus (OH)": "Mus musculus"
+"M. m. bactrianus and laboratory mouse": "Mus musculus"
+"laboratory mouse and M. m. domesticus (OH)": "Mus musculus"
+"M. m. gansuensis": "Mus musculus gansuensis"
+"laboratory mouse and M. m. castaneus and M. spretus": "Mus setulosus"
+"M. m. castaneus": "Mus musculus castaneus"
+"Wild and M. m. domesticus": "Mus setulosus"
+"M. m. molossinus (Nagoya)": "Mus musculus molossinus"
+"M. m. domesticus (Pennsylvania, USA)": "Mus musculus"
+"M. m. domesticus (Ohio, USA)": "Mus musculus"
+"M. m. domesticus (Maryland, USA)": "Mus musculus"
+"M. m. musculus (Nitra region, Slovakia)": "Mus musculus"
+"M. m. domesticus (California, USA)": "Mus musculus"
+"M. m. domesticus (Bavaria, Germany)": "Mus musculus"
+"M. m. musculus (Estonia)": "Mus musculus"
+"M. m. domesticus (Schweben, Hessen, Germany)": "Mus musculus"
+"M. m. domesticus (Scar, Sanday Island, Orkneys, Scotland)": "Mus musculus"
+"M. m. domesticus (Delaware, USA) and M. m. musculus (Prague)": "Mus musculus"
+"M. m. domesticus (Delaware, USA)": "Mus musculus"
+"M. m. domesticus and M. m. musculus": "Mus musculus"
+"M. m. castaneus and M. m. domesticus": "Mus musculus musculus x M. m. castaneus"
+"M. m. musculus (Senkvice, Slovak Republic>": "Mus musculus"
+"M. m. domesticus (Orcetto, Italy)": "Mus musculus"
+"M. m. domesticus (Lake Casitas, CA, USA)": "Mus musculus"
+"M. m. domesticus (Batumi, Adjara, Georgia)": "Mus musculus"
+"M. m. domesticus (Ann Arbor, MI, USA)": "Mus musculus"
+"laboratory mouse or M. m. castaneus": "Mus"
+"laboratory mouse and M. m. domesticus (Ohio, USA)": "Mus musculus"
+# more than two crosses; revert to Genus
+"laboratory mouse and M. m. musculus and M. spretus": "Mus"
+"M. m. castaneus and M. m. domesticus and M. m. molossinus": "Mus"
+"laboratory mouse and M. m. castaneus and M. m. domesticus and M. m. musculus (Prague)": "Mus"
+"M. m. domesticus (Gough Island)": "Mus musculus"

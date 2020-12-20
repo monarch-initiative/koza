@@ -1,0 +1,35 @@
+dataset_description:
+  license: "this file has a unique license"
+
+
+# We could use node anchors and pyyaml but I
+# think this locks us too far into python
+# and harder to convert to json for web views/editors
+# eg
+# version: &version '11.0'
+# files:
+#   - !!python/object/apply:string.join ['9606.protein.links.detailed.v', *version, '.txt.gz']
+
+files:
+  - '9606.protein.links.detailed.v11.0.txt.gz'
+  - '10090.protein.links.detailed.v11.0.txt.gz'
+
+# protein1 protein2 neighborhood fusion cooccurence coexpression experimental database textmining combined_score
+columns:
+  - 'protein1'
+  - 'protein2'
+  - 'neighborhood'
+  - 'fusion'
+  - 'cooccurence'
+  - 'coexpression'
+  - 'experimental'
+  - 'database'
+  - 'textmining'
+  - 'combined_score'
+
+depends_on:
+  - string_map
+
+# TODO add checks that keys are in columns
+filter_row:
+  'combined_score': '>700'

@@ -1,0 +1,51 @@
+---
+# gwascatalog.yaml
+# Relating a variant to a gene
+'upstream_gene_variant': 'is upstream of sequence of'
+'downstream_gene_variant': 'is downstream of sequence of'
+
+# find a way to parameterize this
+'reference assembly': 'GRCh38'
+
+# switch from SO!region to falfo!Region
+'region': 'Region'
+
+# Variant type  (this makes no sense)
+'intron_variant': 'intron_variant'
+
+# seeking input on these
+# '3_prime_UTR_variant x intergenic_variant': ''
+# '3_prime_UTR_variant x intron_variant': ''
+# '3_prime_UTR_variant x regulatory_region_variant': ''
+# 'intergenic_variant x 3_prime_UTR_variant': ''
+# 'intergenic_variant x intergenic_variant': ''
+# 'intergenic_variant x intron_variant': ''
+# 'intergenic_variant x missense_variant': ''
+# 'intergenic_variant x non_coding_transcript_exon_variant': ''
+# 'intergenic_variant x regulatory_region_variant': ''
+# 'intergenic_variant x synonymous_variant': ''
+# 'intergenic_variant x TF_binding_site_variant': ''
+# 'intron_variant x 3_prime_UTR_variant': ''
+# 'intron_variant x intergenic_variant': ''
+# 'intron_variant x intron_variant': ''
+# 'intron_variant x non_coding_transcript_exon_variant': ''
+# 'intron_variant x regulatory_region_variant': ''
+# 'intron_variant x splice_region_variant': ''
+# 'intron_variant x stop_gained': ''
+# 'intron_variant x TF_binding_site_variant': ''
+# 'missense_variant x intergenic_variant': ''
+# 'missense_variant x intron_variant': ''
+# 'missense_variant x non_coding_transcript_exon_variant': ''
+# 'missense_variant x regulatory_region_variant': ''
+# 'non_coding_transcript_exon_variant x intergenic_variant': ''
+# 'non_coding_transcript_exon_variant x intron_variant': ''
+# 'non_coding_transcript_exon_variant x non_coding_transcript_exon_variant': ''
+# 'non_coding_transcript_exon_variant x regulatory_region_variant': ''
+# 'regulatory_region_variant x intergenic_variant': ''
+# 'regulatory_region_variant x intron_variant': ''
+# 'regulatory_region_variant x non_coding_transcript_exon_variant': ''
+# 'regulatory_region_variant x regulatory_region_variant': ''
+# 'stop_gained x intron_variant': ''
+# 'synonymous_variant x intergenic_variant': ''
+# 'synonymous_variant x intron_variant': ''
+# 'synonymous_variant x regulatory_region_variant': ''

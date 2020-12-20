@@ -1,0 +1,52 @@
+file_metadata:
+  description: "this the hpoa file"
+  description_url: "https://hpo.jax.org/app/help/annotations"
+
+files:
+  - 'phenotype.hpoa'
+
+columns:
+  - 'DatabaseID'
+  - 'DiseaseName'
+  - 'Qualifier'
+  - 'HPO_ID'
+  - 'Reference'
+  - 'Evidence'
+  - 'Onset'
+  - 'Frequency'
+  - 'Sex'
+  - 'Modifier'
+  - 'Aspect'
+  - 'Biocuration'
+
+multivalued_fields:
+  'Reference':
+    alias: publication
+    delimeter: ';'
+  'Modifier':
+    alias: modifier
+    delimeter: ';'
+
+# TODO add checks that keys are in columns
+filter_row:
+  - 'Qualifier':
+      - 'equals'
+      - 'NOT'
+
+associations:
+  - DiseaseToPhenotypicFeatureAssociation
+  - DiseaseToInheritanceAssociation
+  - DiseasetoOnsetAssociation
+
+max_associations_per_line: 1
+
+column_mappings:
+  - 'DatabaseID': 'Disease'
+  - 'HPO_ID': 'BiologicalEntity'
+  - 'Reference': 'Publication'
+  - 'Evidence': 'Evidence'
+  - 'Onset': 'Onset'
+  - 'Frequency': 'PhenotypicFrequency'
+  - 'Sex': 'BiologicalSex'
+  - 'Modifier': 'ClinicalModifier'
+  - 'Biocuration': 'Agent'

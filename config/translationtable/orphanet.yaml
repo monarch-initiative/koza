@@ -1,0 +1,87 @@
+---
+# orphanet.yaml
+
+# SO:0000703
+"Biomarker tested in": "is marker for"
+"Candidate gene tested in": "is marker for"
+# SO:0002053
+"Disease-causing germline mutation(s) (gain of function) in": "is causal gain of function germline mutation of in"
+# (RO:0004013)
+"Disease-causing germline mutation(s) in": "is causal germline mutation in"
+# SO:0002054
+"Disease-causing germline mutation(s) (loss of function) in": "is causal loss of function germline mutation of in"
+# (RO:0004014)
+"Disease-causing somatic mutation(s) in": "is causal somatic mutation in"
+# (RO:0004015)
+"Major susceptibility factor in": "is causal susceptibility factor for"
+# (RO:0004016)
+"Modifying germline mutation in": "is causal germline mutation partially giving rise to"
+
+"Part of a fusion gene in": "contributes to condition"  # I don't see any appriopriate RO term for this that is more granular
+"Role in the phenotype of": "contributes to condition"  # this seems like the right granularity here
+
+# status to ECO code
+"Assessed": "imported manually asserted information used in automatic assertion"
+"Not yet assessed": "imported automatically asserted information used in automatic assertion"
+
+# matching curie_map case
+"Ensembl": "ENSEMBL"
+"Reactome": "REACT"
+
+# Orpha stores variant-disease associations in the DisorderGeneAssociationType element
+# the second part after the pipe is not part of the dataset so these should go away
+
+# Here we store the mappings to be used when decomposing them (genos)
+
+# "Biomarker tested in|gene phenotype": "is marker for"
+# "Candidate gene tested in|gene phenotype": "is marker for"
+# "Disease-causing germline mutation(s) (gain of function) in|gene phenotype": "causes condition"
+# "Disease-causing germline mutation(s) (gain of function) in|function consequence": "gain_of_function_variant"
+# "Disease-causing germline mutation(s) (gain of function) in|cell origin": "germline"
+# "Disease-causing germline mutation(s) in|gene phenotype": "causes condition"
+# "Disease-causing germline mutation(s) in|cell origin": "germline"
+# "Disease-causing germline mutation(s) (loss of function) in|gene phenotype": "causes condition"
+# "Disease-causing germline mutation(s) (loss of function) in|function consequence": "loss_of_function_variant"
+# "Disease-causing germline mutation(s) (loss of function) in|cell origin": "germline"
+# "Disease-causing somatic mutation(s) in|gene phenotype": "causes condition"
+# "Disease-causing somatic mutation(s) in|cell origin": "somatic"
+# "Major susceptibility factor in|gene phenotype": "contributes to condition"
+# "Modifying germline mutation in|gene phenotype": "contributes to condition"
+# "Modifying germline mutation in|cell origin": "germline"
+# "Part of a fusion gene in|gene phenotype": "contributes to condition"
+# "Role in the phenotype of|gene phenotype": "contributes to condition"
+
+
+# xmlstarlet sel -t -m \
+# "JDBOR/DisorderList/Disorder/DisorderGeneAssociationList/DisorderGeneAssociation" \
+# -v "./DisorderGeneAssociationType/Name" -o " | " \
+# -v "./Gene/GeneType/Name" -n  < en_product6.xml | sort -u
+
+"Biomarker tested in | gene with protein product": "is marker for"
+
+"Candidate gene tested in | Disorder-associated locus": "is marker for"
+"Candidate gene tested in | gene with protein product": "is marker for"
+"Candidate gene tested in | Non-coding RNA": "is marker for"
+
+"Disease-causing germline mutation(s) (gain of function) in | gene with protein product": "gain_of_function_variant"
+"Disease-causing germline mutation(s) (gain of function) in | Non-coding RNA": "gain_of_function_variant"
+
+"Disease-causing germline mutation(s) in | Disorder-associated locus": "causes condition"
+"Disease-causing germline mutation(s) in | gene with protein product": "causes condition"
+"Disease-causing germline mutation(s) in | Non-coding RNA": "causes condition"
+
+"Disease-causing germline mutation(s) (loss of function) in | gene with protein product": "loss_of_function_variant"
+
+"Disease-causing somatic mutation(s) in | gene with protein product": "causes condition"
+"Disease-causing somatic mutation(s) in | Non-coding RNA": "causes condition"
+
+"Major susceptibility factor in | gene with protein product": "contributes to condition"
+"Major susceptibility factor in | Non-coding RNA": "contributes to condition"
+
+"Modifying germline mutation in | gene with protein product": "contributes to condition"
+
+"Part of a fusion gene in | gene with protein product": "contributes to condition"
+
+"Role in the phenotype of | Disorder-associated locus": "contributes to condition"
+"Role in the phenotype of | gene with protein product": "contributes to condition"
+"Role in the phenotype of | Non-coding RNA": "contributes to condition"

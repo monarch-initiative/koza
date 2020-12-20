@@ -1,0 +1,68 @@
+---
+# coriell.yaml
+
+"B-Lymphocyte": "B cell"
+"T-Lymphocyte": "T cell"
+"Endothelial": "endothelial cell"
+"Epithelial": "epithelial cell"
+
+# FIXME: No Match. "Abnormal precursor (virally transformed)
+# of mouse erythrocytes that can be grown in culture and
+# induced to differentiate by treatment with, for example, DMSO."
+"Erythroleukemic cell line": "precursor cell"
+
+"Fibroblast": "fibroblast"
+"Keratinocyte": "keratinocyte"
+"Melanocyte": "melanocyte"
+"Mesothelial": "mesothelial"
+"Myoblast": "myoblast"
+"Smooth muscle": "smooth muscle cell"
+"Stem cell": "stem cell"
+"Kidney-derived cell line": "immortal kidney-derived cell line cell"
+"Induced Pluripotent Stem Cell": "induced pluripotent stem cell"
+
+
+# FIXME: No Match. "Cells isolated from a mass of neoplastic cells,
+# i.e., a growth formed by abnormal cellular proliferation."
+
+# #####################################
+# race
+
+"American Indian": "Native American"
+"Asian; Other": "Asian"
+"Asiatic Indian": "Asian Indian"
+"Black": "African"
+"East Indian": "Eastern Indian"
+"Hispanic/Latino": "Hispanic"
+"More than one race": "hybrid"  # "NCBITaxon:37965"
+"Not Reported": "Homo sapiens"
+"Other": "Homo sapiens"
+"Unknown": "Homo sapiens"
+"Pacific Islander": "Asian/Pacific Islander"
+"Polynesian": "Asian/Pacific Islander"
+"Vietnamese": "Asian, Vietnamese"
+
+# ######################
+# taxa
+"Peromyscus peromyscus californicus": "Peromyscus californicus"
+"Peromyscus peromyscus maniculatus": "Peromyscus maniculatus"
+"Peromyscus peromyscus leucopus": "Peromyscus leucopus"
+"Peromyscus peromyscus polionotus": "Peromyscus polionotus"
+"Canis familiaris": "Canis lupus familiaris"
+# this next one should be checked to see it it is still the best match
+"Geochelone elephantopus": "Chelonoidis niger"
+
+
+# ######################
+# collections
+
+"NINDS Repository": "CoriellCollection:NINDS"
+"NIGMS Human Genetic Cell Repository": "CoriellCollection:NIGMS"
+"NIA Aging Cell Culture Repository": "CoriellCollection:NIA"
+"NHGRI Sample Repository for Human Genetic Research": "CoriellCollection:NHGRI"
+
+# #######################
+# affected
+"Yes": "affected"
+"No": "unaffected"
+# "":  "unspecified"   # defaulting to

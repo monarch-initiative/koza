@@ -1,0 +1,68 @@
+---
+
+# get terms for these
+
+# "amelorates": "???"
+# "exacerbates": "???"
+# "DOES NOT *": "???"
+
+
+# db_ids   the databases to fetch
+"50:": "PMID"     # pubmed
+"68:": "RO"       # obo-rel
+"71:": "FBdv"     # FBdv
+"74:": "FBbt"     # FBbt
+# "28":          # genbank
+"30:": "OMIM"     # MIM
+# "38":           # ncbi
+"75:": "ISBN"     # ISBN
+"46:": "PMID"     # PUBMED
+"51:": "ISBN"     # isbn
+"52:": "SO"       # so
+# "76":           # http
+"77:": "PMID"     # PMID
+"80:": "FBcv"     # FBcv
+# "95":           # MEDLINE
+"98:": "REACT"    # Reactome
+"103:": "CHEBI"   # Chebi
+"102:": "MESH"    # MeSH
+"106:": "OMIM"    # OMIM
+"105:": "KEGG-path"  # KEGG pathway
+"107:": "DOI"     # doi
+"108:": "CL"      # CL
+"114:": "CHEBI"   # CHEBI
+"115:": "KEGG"    # KEGG
+"116:": "PubChem"  # PubChem
+# "120":          # MA???
+"3:": "GO"        # GO
+"4:": "FlyBase"   # FlyBase
+# "126":          # URL
+"128:": "PATO"    # PATO
+# 131":          # IMG
+"2:": "SO"        # SO
+"136:": "MESH"    # MESH
+"139:": "CARO"    # CARO
+"140:": "NCBITaxon"  # NCBITaxon
+# "151":          # MP  ???
+"161:": "DOI"     # doi
+"36:": "BDGP"     # BDGP
+# "55":           # DGRC
+# "54":           # DRSC
+# "169":          # Transgenic RNAi project???
+"231:": "RO"      # RO
+"180:": "NCBIGene"  # entrezgene
+# "192":          # Bloomington stock center
+"197:": "UBERON"  # Uberon
+"212:": "ENSEMBL"  # Ensembl
+# "129":          # GenomeRNAi
+"275:": "PMID"    # PubMed
+"286:": "PMID"    # pmid
+"264:": "HGNC"
+# "265:": "OMIM"  # OMIM_Gene
+"266:": "OMIM"    # OMIM_Phenotype
+"300:": "DOID"    # DOID
+"302:": "MESH"    # MSH
+"347:": "PMID"    # Pubmed
+
+# example of using the local translation table handle local - global term collision.
+"phenotype": "FBcv:0001347"   # see "phenotype": "UPHENO:0001001" in globaltt
