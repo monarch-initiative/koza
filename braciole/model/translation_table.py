@@ -10,7 +10,7 @@ class TranslationTable:
     TODO consider making this a bidict
     """
 
-    __slots__= ('source_to_global', 'global')
+    __slots__= ('global', 'local')
 
     def __init__(self, src_handle: TextIO, global_handle: TextIO):
         """
@@ -29,3 +29,5 @@ class TranslationTable:
         # load into slots
 
         # freeze
+
+    # def resolve_term()
