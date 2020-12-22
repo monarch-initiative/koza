@@ -1,20 +1,20 @@
-dataset_description:
+name: protein-links-detailed
+
+file_metadata:
   license: "this file has a unique license"
 
+ingest_type: 'primary'
 
-# We could use node anchors and pyyaml but I
-# think this locks us too far into python
-# and harder to convert to json for web views/editors
-# eg
-# version: &version '11.0'
-# files:
-#   - !!python/object/apply:string.join ['9606.protein.links.detailed.v', *version, '.txt.gz']
+depends_on:
+  - entrez_2_string
+
+delimeter: 'tab'
+header_delimeter: 'tab'
 
 files:
   - '9606.protein.links.detailed.v11.0.txt.gz'
   - '10090.protein.links.detailed.v11.0.txt.gz'
 
-# protein1 protein2 neighborhood fusion cooccurence coexpression experimental database textmining combined_score
 columns:
   - 'protein1'
   - 'protein2'
@@ -27,9 +27,16 @@ columns:
   - 'textmining'
   - 'combined_score'
 
-depends_on:
-  - string_map
-
-# TODO add checks that keys are in columns
 filter_row:
-  'combined_score': '>700'
+  'combined_score':
+    - 'gte'
+    - '700'
+
+associations:
+  - PairwiseGeneToGeneInteraction
+
+max_associations_per_line: 1
+
+column_mappings:
+  - 'protein1': 'Gene'
+  - 'protein2': 'Gene'

@@ -1,5 +1,12 @@
+name: 'stringdb'
+
 dataset_description:
-  ingest_title: 'Human Phenotype Ontology'
-  ingest_url: 'https://hpo.jax.org/app/',
-  ingest_logo: 'source-hpo.png',
-  data_rights: 'https://hpo.jax.org/app/license'
+  ingest_title: 'String DB'
+  ingest_url: 'String'
+  data_rights: 'String'
+
+source_templates:
+  - 'protein-links-detailed'
+
+map_templates:
+  - 'entrez-2-string'

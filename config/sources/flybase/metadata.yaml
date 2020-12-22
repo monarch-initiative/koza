@@ -1,0 +1,10 @@
+name: 'flybase'
+
+dataset_description:
+  ingest_title: 'Human Phenotype Ontology'
+  ingest_url: 'http://www.flybase.org/'
+  data_rights: 'https://wiki.flybase.org/wiki/FlyBase_Wiki:General_disclaimer'
+
+source_files:
+
+map_files:
