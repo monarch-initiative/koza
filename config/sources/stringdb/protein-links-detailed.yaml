@@ -25,7 +25,7 @@ columns:
   - 'experimental'
   - 'database'
   - 'textmining'
-  - 'combined_score'
+  - 'combined_score{int}'
 
 filter_row:
   'combined_score':
