@@ -1,4 +1,4 @@
-from foo import Gene, PairwiseGeneToGeneInteraction
+from braciole.model import Gene, PairwiseGeneToGeneInteraction
 from bar import inject_files, inject_translation_table, next_row
 
 _ingest_code = 'protein-links-detailed'
@@ -25,4 +25,4 @@ gene_b.id = 'NCBIGene:' + entrez_2_string[file['protein2']]['entrez']
 
 pairwise_gene_to_gene_interaction.subject = gene_a
 pairwise_gene_to_gene_interaction.object = gene_b
-pairwise_gene_to_gene_interaction.relation = translation_table.global['interacts with']
+pairwise_gene_to_gene_interaction.relation = translation_table.globaltt['interacts with']

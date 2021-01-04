@@ -1,5 +1,6 @@
-from typing import TextIO
-import yaml
+from dataclasses import FrozenInstanceError
+
+from ..validator import is_dictionary_bimap
 
 
 class CurieMap:
@@ -10,7 +11,7 @@ class CurieMap:
     TODO consider making this a bidict
     """
 
-    def __init__(self, yaml_handle: TextIO):
+    def __init__(self, **curie_map):
         """
         consider just using **kwargs instead
         of requiring a file handle that contains
@@ -18,15 +19,17 @@ class CurieMap:
 
         :param yaml_handle:
         """
-        curie_map = yaml.safe_load(yaml_handle)
 
-        # check that the file is a map
+        if not is_dictionary_bimap(curie_map):
+            raise ValueError("Global table is not a bimap")
 
-        # check that the file is a bimap
+        self.__dict__.update(curie_map.keys(), **curie_map)
 
-        # load into items
+        for prefix, reference in curie_map:
+            setattr(prefix, reference)
 
-        # freeze
+    def __setattr__(self, key, value):
+        raise FrozenInstanceError(f"cannot assign to field {key!r}")
 
-
-
+    def __delattr__(self, item):
+        raise FrozenInstanceError(f"cannot delete field {item!r}")

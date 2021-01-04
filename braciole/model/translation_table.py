@@ -1,33 +1,77 @@
-from typing import TextIO
-import yaml
+from typing import Optional, Dict
+from dataclasses import dataclass
+
+import logging
+
+from ..validator import is_dictionary_bimap
+
+LOG = logging.getLogger(__name__)
 
 
+@dataclass(frozen=True)
 class TranslationTable:
     """
-    A class that converts a yaml map into
-    a frozen dictionary
 
-    TODO consider making this a bidict
     """
+    global_table: Dict[str, str]
+    local_table: Dict[str, str]  # maybe bidict
 
-    __slots__= ('global', 'local')
+    def __post_init__(self):
+        if not is_dictionary_bimap(self.global_table):
+            raise ValueError("Global table is not a bimap")
 
-    def __init__(self, src_handle: TextIO, global_handle: TextIO):
+        if not is_dictionary_bimap(self.local_table):
+            raise ValueError("Local table is not a bimap")
+
+    def resolve_term(
+            self,
+            word: str,
+            mandatory: Optional[bool] = True,
+            default: Optional[str] = None
+    ):
         """
-        consider just using **kwargs instead
-        of requiring a file handle that contains
-        valid yaml
+        Resolve a term from a source to its preferred curie
 
-        :param yaml_handle:
+        given a term in some source
+        return global[ (local[term] | term) ] || local[term] || (term | default)
+
+        if finding a mapping is not mandatory
+        returns x | default on fall through
+
+        This may be generalized further from any mapping
+        to a global mapping only; if need be.
+
+        :param word:  the string to find as a key in translation tables
+        :param mandatory: boolean to cause failure when no key exists
+        :param default: string to return if nothing is found (& not manandatory)
+        :return
+            value from global translation table,
+            or value from local translation table,
+            or the query key if finding a value is not mandatory (in this order)
         """
-        source_map = yaml.safe_load(src_handle)
 
-        # check that the source file is a map
+        if word is None:
+            raise ValueError("word is required")
 
-        # check that the source file is a bimap
+        # we may not agree with a remote sources use of a global term we have
+        # this provides opportunity for us to override
+        if word in self.local_table:
+            label = self.local_table[word]
+            if label in self.global_table:
+                term_id = self.global_table[label]
+            else:
+                LOG.info(  #
+                    "Translated to '%s' but no global term_id for: '%s'", label, word)
+                term_id = label
+        elif word in self.global_table:
+            term_id = self.global_table[word]
+        else:
+            if mandatory:
+                raise KeyError("Mapping required for: ", word)
+            LOG.warning("We have no translation for: '%s'", word)
 
-        # load into slots
-
-        # freeze
-
-    # def resolve_term()
+            if default is not None:
+                term_id = default
+            else:
+                term_id = word
+        return term_id
