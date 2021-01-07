@@ -1,4 +1,4 @@
-name: protein-links-detailed
+name: 'protein-links-detailed'
 
 file_metadata:
   license: "this file has a unique license"
@@ -6,10 +6,14 @@ file_metadata:
 ingest_type: 'primary'
 
 depends_on:
-  - entrez_2_string
+  - 'entrez_2_string'
 
 delimeter: 'tab'
 header_delimeter: 'tab'
+
+compression: 'gzip'
+
+skip_lines: 0
 
 files:
   - '9606.protein.links.detailed.v11.0.txt.gz'
@@ -30,10 +34,10 @@ columns:
 filter_row:
   'combined_score':
     - 'gte'
-    - '700'
+    - 700
 
 associations:
-  - PairwiseGeneToGeneInteraction
+  - 'PairwiseGeneToGeneInteraction'
 
 max_associations_per_line: 1
 

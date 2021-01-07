@@ -33,7 +33,7 @@ multivalued_fields:
 # TODO add checks that keys are in columns
 filter_row:
   - 'Qualifier':
-      - 'equals'
+      - 'eq'
       - 'NOT'
 
 associations:

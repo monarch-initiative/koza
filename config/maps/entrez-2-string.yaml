@@ -22,5 +22,4 @@ columns:
   - 'STRING'
 
 key: 'STRING'
-values:
-  - 'entrez'
+
