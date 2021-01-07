@@ -8,6 +8,8 @@ ingest_type: 'map'
 delimeter: 'tab'
 header_delimeter: ' / '
 
+# Assumes that no identifers are overlapping
+# otherwise these should go into separate configs
 files:
   - 'human.entrez_2_string.2018.tsv.gz'
   - 'mouse.entrez_2_string.2018.tsv.gz'

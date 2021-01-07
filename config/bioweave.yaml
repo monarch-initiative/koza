@@ -1,6 +1,8 @@
 name: 'Monarch Ingest'
 biolink_version: '1.03'
 
+# Archive version?
+
 curie_map: /foo/bar/baz
 
 sources:
