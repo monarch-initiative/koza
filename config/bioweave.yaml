@@ -1,5 +1,6 @@
 name: 'Monarch Ingest'
 biolink_version: '1.03'
+logfile: '/path/to/log'
 
 # Archive version?
 

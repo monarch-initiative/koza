@@ -1,9 +1,9 @@
 name: 'protein-links-detailed'
 
+local_dir: 'todo'
+
 file_metadata:
   license: "this file has a unique license"
-
-ingest_type: 'primary'
 
 depends_on:
   - 'entrez_2_string'

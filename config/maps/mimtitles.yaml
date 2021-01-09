@@ -1,0 +1,28 @@
+name: 'mimtitles'
+local_dir: 'todo'
+
+file_metadata:
+  description: 'OMIM mim Titles'
+
+source: 'omim'
+
+delimeter: 'tab'
+header_delimeter: 'tab'
+
+
+files:
+  - 'mimtitles.txt'
+
+columns:
+  - 'Prefix'
+  - 'MIM Number'
+  - 'Preferred Title; symbol'
+  - 'Alternative Title(s); symbol(s)'
+  - 'Included Title(s); symbols'
+
+key: 'MIM Number'
+
+values:
+  - 'type'
+  - 'obsoleted'
+  - 'replaced by'

@@ -11,7 +11,7 @@ from pydantic.dataclasses import dataclass
 from pydantic import validator
 from typing import Optional, List, Union, Dict, ClassVar, Any
 
-from bioweave.validator import is_valid_curie
+from bioweave.validator import *
 
 # Type alias for use in serializers
 Curie = str
@@ -26,12 +26,9 @@ class ThingWithTaxon:
     """
     in_taxon: List[Curie] = field(default_factory=list)
 
-    @validator('in_taxon')
-    def taxa_must_be_ncbi(cls, taxa):
-        for taxon in taxa:
-            if not is_valid_curie(taxon, ['NCBITaxon']):
-                raise ValueError(f"{taxon} is not a curie or not prefixed with NCBITaxon")
-        return taxa
+    # validators
+    _validate_in_taxon = validator('in_taxon', allow_reuse=True)(field_must_be_curie)
+    _validate_prefix = validator('in_taxon', allow_reuse=True)(valid_taxon)
 
 
 @dataclass
@@ -50,17 +47,12 @@ class Entity:
     source: str = None
     provided_by: Union[str, List[str]] = field(default_factory=list)
 
-    @validator('id')
-    def id_must_be_curie(cls, id):
-        if not is_valid_curie(id):
-            raise ValueError(f"{id} is not a curie")
-        return id
+    # validators
+    _validate_id = validator('id', allow_reuse=True)(field_must_be_curie)
 
-    @validator('provided_by')
-    def convert_provider_to_list(cls, provided_by):
-        if isinstance(provided_by, str):
-            provided_by = [provided_by]
-        return provided_by
+    # converters
+    _validate_provided_by = validator('provided_by', allow_reuse=True)(convert_object_to_scalar)
+
 
 @dataclass
 class NamedThing(Entity):

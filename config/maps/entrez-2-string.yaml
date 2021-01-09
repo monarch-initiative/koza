@@ -3,12 +3,12 @@ name: 'entrez_2_string'
 file_metadata:
   description: 'Mapping file provided by StringDB that contains entrez to protein ID mappings'
 
-ingest_type: 'map'
+source: 'stringdb'
 
 delimeter: 'tab'
 header_delimeter: ' / '
 
-# Assumes that no identifers are overlapping
+# Assumes that no identifiers are overlapping
 # otherwise these should go into separate configs
 files:
   - 'human.entrez_2_string.2018.tsv.gz'
@@ -25,3 +25,5 @@ columns:
 
 key: 'STRING'
 
+values:
+  - 'entrez'

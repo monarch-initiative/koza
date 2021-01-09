@@ -1,10 +1,11 @@
 from bioweave.model import Gene, PairwiseGeneToGeneInteraction, predicate
-from bar import inject_files, inject_translation_table, next_row
+from bioweave.facade.data_provider import inject_files, inject_translation_table
+from bioweave.facade.runner import next_row, info, warning, error
 
-_ingest_code = 'protein-links-detailed'
+_ingest_name = 'protein-links-detailed'
 
-file, entrez_2_string = inject_files(_ingest_code)
-translation_table = inject_translation_table(_ingest_code)
+file, entrez_2_string, = inject_files(_ingest_name)
+translation_table = inject_translation_table(_ingest_name)
 
 gene_a = Gene()  # Maps to file['protein1']
 gene_b = Gene()  # Maps to file['protein2']
@@ -23,7 +24,7 @@ if file['combined_score'] >= 700:
 gene_a.id = 'NCBIGene:' + entrez_2_string[file['protein1']]['entrez']
 gene_b.id = 'NCBIGene:' + entrez_2_string[file['protein2']]['entrez']
 
-pairwise_gene_to_gene_interaction.subject = gene_a.id
-pairwise_gene_to_gene_interaction.object = gene_b.id
+pairwise_gene_to_gene_interaction.subject = gene_a
+pairwise_gene_to_gene_interaction.object = gene_b
 pairwise_gene_to_gene_interaction.predicate = predicate.interacts_with
-pairwise_gene_to_gene_interaction.relation = translation_table.globaltt['interacts with']
+pairwise_gene_to_gene_interaction.relation = translation_table.global_table['interacts with']
