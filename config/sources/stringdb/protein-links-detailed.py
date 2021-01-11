@@ -1,6 +1,6 @@
 from bioweave.model import Gene, PairwiseGeneToGeneInteraction, predicate
 from bioweave.facade.data_provider import inject_files, inject_translation_table
-from bioweave.facade.runner import next_row, info, warning, error
+from bioweave.facade.helper import next_row
 
 _ingest_name = 'protein-links-detailed'
 

@@ -2,9 +2,13 @@ from typing import Tuple, Dict
 
 from ..model import TranslationTable
 
+# from foo import bioweave
+# get registry
+
 
 def inject_files(ingest_name: str) -> Tuple[Dict, ...]:
     pass
+
 
 
 def inject_map(ingest_name: str) -> Dict:
@@ -17,5 +21,6 @@ def inject_map(ingest_name: str) -> Dict:
     """
     pass
 
-def inject_translation_table(ingest_code: str) -> TranslationTable:
+
+def inject_translation_table(ingest_code: str)    -> TranslationTable:
     pass
