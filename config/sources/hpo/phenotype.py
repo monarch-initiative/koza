@@ -5,8 +5,8 @@ file = {}
 # Nodes
 
 #hp_term = Node
-#publication = Publication
-#disease = Disease
+#publications: List[Publication] = []
+# #disease = Disease
 
 
 for pub in file['Publications'].split(';'):

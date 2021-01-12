@@ -158,3 +158,42 @@ class Gene(GeneOrGeneProduct):
     symbol: str = None
     synonym: List[str] = field(default_factory=list)
     xref: List[str] = field(default_factory=list)
+
+
+@dataclass
+class InformationContentEntity(NamedThing):
+    """
+    a piece of information that typically describes some topic of discourse or is used as support.
+    """
+    _label: ClassVar[str] = 'InformationContentEntity'
+
+    category: ClassVar[List[str]] = ['NamedThing', 'InformationContentEntity']
+
+    license: str = None
+    rights: str = None
+    format: str = None
+    creation_date: str = None
+
+
+@dataclass
+class Publication(InformationContentEntity):
+    """
+    Any published piece of information. Can refer to a whole publication, its encompassing publication (i.e. journal
+    or book) or to a part of a publication, if of significant knowledge scope (e.g. a figure, figure legend, or
+    section highlighted by NLP). The scope is intended to be general and include information published on the web, as
+    well as printed materials, either directly or in one of the Publication Biolink category subclasses.
+    """
+
+    _label: ClassVar[str] = 'Publication'
+
+    category: ClassVar[List[str]] = ['NamedThing', 'InformationContentEntity', 'Publication']
+
+    authors: List[str] = field(default_factory=list)
+    pages: List[str] = field(default_factory=list)
+    summary: str = None
+    keywords: List[str] = field(default_factory=list)
+    mesh_terms: List[Curie] = field(default_factory=list)
+
+    # validators
+    _validate_mesh_terms = validator('mesh_terms', allow_reuse=True)(list_field_are_curies)
+

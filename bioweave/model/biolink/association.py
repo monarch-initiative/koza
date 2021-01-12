@@ -12,7 +12,7 @@ from pydantic import validator
 from typing import List, ClassVar, Union
 
 from bioweave.validator import *
-from .named_thing import Entity
+from .named_thing import Entity, Publication
 
 # Type alias for use in serializers
 Curie = str
@@ -33,20 +33,24 @@ class Association(Entity):
     relation: str = None
     negated: bool = False
     qualifiers: List[Curie] = field(default_factory=list)
-    publications: List[Curie] = field(default_factory=list)
+    publications: List[Union[Publication, Curie]] = field(default_factory=list)
     type: Curie = 'rdf:Statement'
-
-    # validators
-    _validate_subject = validator('subject', allow_reuse=True)(field_must_be_curie)
-    _validate_predicate = validator('predicate', allow_reuse=True)(field_must_be_curie)
-    _validate_object = validator('object', allow_reuse=True)(field_must_be_curie)
-    _validate_qualifiers = validator('qualifiers', allow_reuse=True)(fields_must_be_curie)
-    _validate_publications = validator('publications', allow_reuse=True)(fields_must_be_curie)
 
     # converters
     _subject_to_scalar = validator('subject', allow_reuse=True)(convert_object_to_scalar)
     _predicate_to_scalar = validator('predicate', allow_reuse=True)(convert_object_to_scalar)
     _object_to_scalar = validator('object', allow_reuse=True)(convert_object_to_scalar)
+    _publication_to_scalar = validator('publications', allow_reuse=True)(convert_objects_to_scalars)
+    #_qualifiers_to_scalar = validator('qualifiers', allow_reuse=True)(convert_objects_to_scalars)
+
+    # validators
+    _validate_subject = validator('subject', allow_reuse=True)(field_must_be_curie)
+    _validate_predicate = validator('predicate', allow_reuse=True)(field_must_be_curie)
+    _validate_object = validator('object', allow_reuse=True)(field_must_be_curie)
+    _validate_qualifiers = validator('qualifiers', allow_reuse=True)(list_field_are_curies)
+    _validate_publications = validator('publications', allow_reuse=True)(list_field_are_curies)
+
+
 
 
 @dataclass

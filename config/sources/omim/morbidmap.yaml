@@ -1,0 +1,31 @@
+name: 'morbidmap'
+
+data_dir: './omim'
+
+file_metadata:
+  license: "https://www.omim.org/downloads"
+
+depends_on:
+  - 'mim2gene'
+  - 'mimtitles'
+
+delimeter: 'tab'
+header_delimeter: 'tab'
+
+skip_lines: 4
+
+files:
+  - 'morbidmap.txt'
+
+columns:
+  - 'Phenotype'
+  - 'Gene Symbols'
+  - 'MIM Number'
+  - 'Cyto Location'
+
+associations:
+  - 'GeneToDiseaseAssociation'
+
+column_mappings:
+  - 'Phenotype': 'Disease'
+  - 'MIM Number': 'Gene'

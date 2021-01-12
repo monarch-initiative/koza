@@ -1,0 +1,16 @@
+name: 'omim'
+
+dataset_description:
+  ingest_title: 'Online Mendelian Inheritance in Man'
+  ingest_url: 'http://www.omim.org'
+  license_url: ~
+  data_rights: 'http://omim.org/help/agreement'
+
+data_dir: './omim'
+
+source_templates:
+  - 'morbidmap'
+
+map_templates:
+  - 'mim2gene'
+  - 'mimtitles'

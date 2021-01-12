@@ -6,4 +6,3 @@ class BioWeaveReader(ABC, Iterable):
     file_handle: IO[str]
     reader: Iterable
     type_map: Dict[str, Any]
-

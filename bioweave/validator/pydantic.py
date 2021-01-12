@@ -19,10 +19,10 @@ def field_must_be_curie(field: str) -> str:
     return field
 
 
-def fields_must_be_curie(fields: List[str]) -> List[str]:
-    for field in fields:
-        field_must_be_curie(field)
-    return fields
+def list_field_are_curies(items: List[str]) -> List[str]:
+    for curie in items:
+        field_must_be_curie(curie)
+    return items
 
 
 def convert_object_to_scalar(field: Union[Entity, str]) -> str:
@@ -30,6 +30,10 @@ def convert_object_to_scalar(field: Union[Entity, str]) -> str:
         return field.id
     else:
         return field
+
+
+def convert_objects_to_scalars(fields: List[Union[Entity, str]]) -> List[str]:
+    return [convert_object_to_scalar(field) for field in fields]
 
 
 def curie_must_have_prefix(curie: str, prefix: List[str]) -> str:
@@ -46,3 +50,6 @@ def all_curies_must_have_prefix(curies: List[str], prefix: List[str]) -> List[st
 
 def valid_taxon(curies: List[str]) -> List[str]:
     return all_curies_must_have_prefix(curies, TAXON_PREFIX)
+
+def get_default_categories():
+    pass

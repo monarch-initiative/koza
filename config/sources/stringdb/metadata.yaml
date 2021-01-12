@@ -5,7 +5,7 @@ dataset_description:
   ingest_url: 'String'
   data_rights: 'String'
 
-local_dir: './string'
+data_dir: './string'
 
 source_templates:
   - 'protein-links-detailed'

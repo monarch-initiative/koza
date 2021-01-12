@@ -1,6 +1,4 @@
-from csv import DictReader
-
-from .reader import BioWeaveReader
+from bioweave.source.reader import BioWeaveReader
 
 
 class CSVReader(BioWeaveReader):

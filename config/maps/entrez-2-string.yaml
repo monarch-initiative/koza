@@ -1,5 +1,7 @@
 name: 'entrez_2_string'
 
+data_dir: 'todo'
+
 file_metadata:
   description: 'Mapping file provided by StringDB that contains entrez to protein ID mappings'
 

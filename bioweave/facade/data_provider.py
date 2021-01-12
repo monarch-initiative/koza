@@ -22,5 +22,10 @@ def inject_map(ingest_name: str) -> Dict:
     pass
 
 
-def inject_translation_table(ingest_code: str)    -> TranslationTable:
+def inject_translation_table(ingest_code: str) -> TranslationTable:
+    """
+
+    :param ingest_code:
+    :return:
+    """
     pass

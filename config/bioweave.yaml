@@ -3,6 +3,8 @@ biolink_version: '1.03'
 
 # Archive version?
 
+output: ./out/
+
 curie_map: /foo/bar/baz
 
 sources:

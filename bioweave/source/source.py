@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from .reader.reader import BioWeaveReader
+from bioweave.source.reader import BioWeaveReader
 
 
 @dataclass(frozen=True)

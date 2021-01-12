@@ -31,17 +31,16 @@ multivalued_fields:
     delimeter: ';'
 
 # TODO add checks that keys are in columns
-filter_row:
+filter_out:
   - 'Qualifier':
-      - 'eq'
-      - 'NOT'
+      filter: 'eq'
+      value: 'NOT'
 
 associations:
   - DiseaseToPhenotypicFeatureAssociation
   - DiseaseToInheritanceAssociation
   - DiseasetoOnsetAssociation
 
-max_associations_per_line: 1
 
 column_mappings:
   - 'DatabaseID': 'Disease'

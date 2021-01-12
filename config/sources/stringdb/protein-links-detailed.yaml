@@ -1,6 +1,6 @@
 name: 'protein-links-detailed'
 
-local_dir: 'todo'
+data_dir: 'todo'
 
 file_metadata:
   license: "this file has a unique license"
@@ -31,15 +31,13 @@ columns:
   - 'textmining'
   - 'combined_score{int}'
 
-filter_row:
+filter_out:
   'combined_score':
-    - 'gte'
-    - 700
+     filter: 'lt'
+     value: 700
 
 associations:
   - 'PairwiseGeneToGeneInteraction'
-
-max_associations_per_line: 1
 
 column_mappings:
   - 'protein1': 'Gene'
