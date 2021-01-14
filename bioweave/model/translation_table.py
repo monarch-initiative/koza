@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 import logging
 
-from ..validator import is_dictionary_bimap
+from ..validator.map_validator import is_dictionary_bimap
 
 LOG = logging.getLogger(__name__)
 

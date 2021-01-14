@@ -17,7 +17,7 @@ skip_lines: 4
 files:
   - 'morbidmap.txt'
 
-columns:
+fields:
   - 'Phenotype'
   - 'Gene Symbols'
   - 'MIM Number'

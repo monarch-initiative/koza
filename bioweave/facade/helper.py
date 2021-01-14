@@ -15,7 +15,7 @@ def next_row():
     Breaks out of the facade file and iterates to the next row
     in the file
 
-    Equivalent to continue
+    Effectively a continue statement
     https://docs.python.org/3/reference/simple_stmts.html#continue
     :return:
     """

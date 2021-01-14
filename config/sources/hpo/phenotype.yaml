@@ -8,7 +8,7 @@ files:
 delimiter: 'tab'
 header_delimiter: 'tab'
 
-columns:
+fields:
   - 'DatabaseID'
   - 'DiseaseName'
   - 'Qualifier'

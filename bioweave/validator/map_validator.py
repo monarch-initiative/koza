@@ -6,6 +6,8 @@ from bioweave.curie_util import load_curie_map
 
 LOG = logging.getLogger(__name__)
 
+curie_regexp = re.compile(
+        r'^[a-zA-Z_]?[a-zA-Z_0-9-]*:[A-Za-z0-9_][A-Za-z0-9_.-]*[A-Za-z0-9_]*$')
 
 curie_map = load_curie_map()
 
@@ -34,16 +36,14 @@ def is_dictionary_bimap(dictionary: Dict[str, str]) -> bool:
 
 
 def is_valid_curie(curie: str, ns_filter: List[str] = None) -> bool:
-    curie_regexp = re.compile(
-        r'^[a-zA-Z_]?[a-zA-Z_0-9-]*:[A-Za-z0-9_][A-Za-z0-9_.-]*[A-Za-z0-9_]*$')
 
     if not curie_regexp.match(curie):
         return False
 
     prefix = curie.split(":")[0]
 
-    if prefix not in curie_map.keys():
-        return False
+    #if prefix not in curie_map.keys():
+    #    return False
 
     if ns_filter and prefix not in ns_filter:
         return False

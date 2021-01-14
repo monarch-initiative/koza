@@ -1,0 +1,8 @@
+# https://koxudaxi.github.io/pydantic-pycharm-plugin/type-checker-for-pydantic/
+
+[tool.pydantic-pycharm-plugin]
+# You can select higlith level  from "warning",  "weak_warning", "disable"
+acceptable-type-highlight = "disable"
+
+[tool.pydantic-pycharm-plugin.acceptable-types]
+"bioweave.model.curie.Curie" = ["str"]

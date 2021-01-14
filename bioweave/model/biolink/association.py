@@ -9,13 +9,12 @@ https://github.com/biolink/biolink-model/blob/master/biolink-model.yaml
 from dataclasses import field
 from pydantic.dataclasses import dataclass
 from pydantic import validator
-from typing import List, ClassVar, Union
+from typing import ClassVar
 
-from bioweave.validator import *
+from bioweave.validator.model_validator import *
+from ..curie import Curie
 from .named_thing import Entity, Publication
 
-# Type alias for use in serializers
-Curie = str
 
 
 @dataclass
@@ -42,15 +41,6 @@ class Association(Entity):
     _object_to_scalar = validator('object', allow_reuse=True)(convert_object_to_scalar)
     _publication_to_scalar = validator('publications', allow_reuse=True)(convert_objects_to_scalars)
     #_qualifiers_to_scalar = validator('qualifiers', allow_reuse=True)(convert_objects_to_scalars)
-
-    # validators
-    _validate_subject = validator('subject', allow_reuse=True)(field_must_be_curie)
-    _validate_predicate = validator('predicate', allow_reuse=True)(field_must_be_curie)
-    _validate_object = validator('object', allow_reuse=True)(field_must_be_curie)
-    _validate_qualifiers = validator('qualifiers', allow_reuse=True)(list_field_are_curies)
-    _validate_publications = validator('publications', allow_reuse=True)(list_field_are_curies)
-
-
 
 
 @dataclass

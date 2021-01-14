@@ -9,12 +9,10 @@ https://github.com/biolink/biolink-model/blob/master/biolink-model.yaml
 from dataclasses import field
 from pydantic.dataclasses import dataclass
 from pydantic import validator
-from typing import Optional, List, Union, Dict, ClassVar, Any
+from typing import Optional, ClassVar
 
-from bioweave.validator import *
-
-# Type alias for use in serializers
-Curie = str
+from ..curie import Curie
+from bioweave.validator.model_validator import *
 
 
 @dataclass
@@ -26,32 +24,7 @@ class ThingWithTaxon:
     """
     in_taxon: List[Curie] = field(default_factory=list)
 
-    # validators
-    _validate_in_taxon = validator('in_taxon', allow_reuse=True)(field_must_be_curie)
     _validate_prefix = validator('in_taxon', allow_reuse=True)(valid_taxon)
-
-
-@dataclass
-class Entity:
-    """
-    Root Biolink Model class for all things and informational relationships, real or imagined
-    """
-    _label: ClassVar[str] = 'Entity'
-    category: ClassVar[List[str]] = []
-
-    id: Curie = None
-    name: str = ''
-    iri: str = None
-    type: str = None
-    description: str = None
-    source: str = None
-    provided_by: Union[str, List[str]] = field(default_factory=list)
-
-    # validators
-    _validate_id = validator('id', allow_reuse=True)(field_must_be_curie)
-
-    # converters
-    _validate_provided_by = validator('provided_by', allow_reuse=True)(convert_object_to_scalar)
 
 
 @dataclass
@@ -59,8 +32,12 @@ class NamedThing(Entity):
     """
     Root Biolink Model class for all things and informational relationships, real or imagined
     """
-    _label: ClassVar[str] = 'NamedThing'
-    category: ClassVar[List[str]] = ['NamedThing']
+    _category: ClassVar[str] = 'NamedThing'
+    category: List[str] = field(default_factory=list)
+
+    def __post_init__(self):
+        if not self.category:
+            self.category = set_default_categories(NamedThing)
 
 
 @dataclass
@@ -69,7 +46,7 @@ class Agent(Entity):
     person, group, organization or project that provides a piece of information
     (i.e. a knowledge association)
     """
-    _label: ClassVar[str] = 'Agent'
+    _category: ClassVar[str] = 'Agent'
     category: ClassVar[List[str]] = ['Agent']
 
     affiliation: List[str] = field(default_factory=list)
@@ -78,7 +55,7 @@ class Agent(Entity):
 
 @dataclass
 class BiologicalEntity(NamedThing):
-    _label: ClassVar[str] = 'BiologicalEntity'
+    _category: ClassVar[str] = 'BiologicalEntity'
     category: ClassVar[List[str]] = ['NamedThing', 'BiologicalEntity']
 
 
@@ -87,21 +64,16 @@ class MolecularEntity(ThingWithTaxon, BiologicalEntity):
     """
     A gene, gene product, small molecule or macromolecule (including protein complex)
     """
-    _label: ClassVar[str] = 'MolecularEntity'
+    _category: ClassVar[str] = 'MolecularEntity'
     category: ClassVar[List[str]] = ['NamedThing', 'BiologicalEntity', 'MolecularEntity']
 
 
 @dataclass
 class GenomicEntity(MolecularEntity):
-    _label: ClassVar[str] = 'GenomicEntity'
 
-    category: ClassVar[List[str]] = [
-        'NamedThing',
-        'BiologicalEntity',
-        'MolecularEntity',
-        'GenomicEntity',
-    ]
+    _category: ClassVar[str] = 'GenomicEntity'
 
+    category: ClassVar[List[str]] = ['NamedThing', 'BiologicalEntity', 'MolecularEntity']
     has_biological_sequence: Optional[str] = None
 
 
@@ -113,7 +85,7 @@ class MacromolecularMachine(GenomicEntity):
     activities, or they encode molecules which do this.
     """
 
-    _label: ClassVar[str] = 'MacromolecularMachine'
+    _category: ClassVar[str] = 'MacromolecularMachine'
     category: ClassVar[List[str]] = [
         'NamedThing',
         'BiologicalEntity',
@@ -129,7 +101,7 @@ class GeneOrGeneProduct(MacromolecularMachine):
     a union of genes or gene products. Frequently an identifier for one will be used
     as proxy for another
     """
-    _label: ClassVar[str] = 'GeneOrGeneProduct'
+    _category: ClassVar[str] = 'GeneOrGeneProduct'
 
     category: ClassVar[List[str]] = [
         'NamedThing',
@@ -143,7 +115,7 @@ class GeneOrGeneProduct(MacromolecularMachine):
 
 @dataclass
 class Gene(GeneOrGeneProduct):
-    _label: ClassVar[str] = 'Gene'
+    _category: ClassVar[str] = 'Gene'
 
     category: ClassVar[List[str]] = [
         'NamedThing',
@@ -165,7 +137,7 @@ class InformationContentEntity(NamedThing):
     """
     a piece of information that typically describes some topic of discourse or is used as support.
     """
-    _label: ClassVar[str] = 'InformationContentEntity'
+    _category: ClassVar[str] = 'InformationContentEntity'
 
     category: ClassVar[List[str]] = ['NamedThing', 'InformationContentEntity']
 
@@ -184,7 +156,7 @@ class Publication(InformationContentEntity):
     well as printed materials, either directly or in one of the Publication Biolink category subclasses.
     """
 
-    _label: ClassVar[str] = 'Publication'
+    _category: ClassVar[str] = 'Publication'
 
     category: ClassVar[List[str]] = ['NamedThing', 'InformationContentEntity', 'Publication']
 
@@ -193,7 +165,3 @@ class Publication(InformationContentEntity):
     summary: str = None
     keywords: List[str] = field(default_factory=list)
     mesh_terms: List[Curie] = field(default_factory=list)
-
-    # validators
-    _validate_mesh_terms = validator('mesh_terms', allow_reuse=True)(list_field_are_curies)
-
