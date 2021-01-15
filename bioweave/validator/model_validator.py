@@ -17,26 +17,6 @@ TAXON_PREFIX = ['NCBITaxon']
 # to constrain to a prefix
 # PUBLICATION_PREFIX = []
 
-"""
-def _field_must_be_curie(field: str) -> str:
-    if not is_valid_curie(field):
-        raise ValueError(f"{field} is not a curie")
-    return field
-
-
-def field_must_be_curie(field: str) -> classmethod:
-    decorator = pydantic_validator(field, allow_reuse=True)
-    validator = decorator(_field_must_be_curie)
-    return validator
-
-
-def list_field_are_curies(items: List[str]) -> List[str]:
-    for curie in items:
-        field_must_be_curie(curie)
-    return items
-"""
-
-
 
 def curie_must_have_prefix(curie: str, prefix: List[str]) -> str:
     if not is_valid_curie(curie, prefix):
@@ -52,13 +32,6 @@ def all_curies_must_have_prefix(curies: List[str], prefix: List[str]) -> List[st
 
 def valid_taxon(curies: List[str]) -> List[str]:
     return all_curies_must_have_prefix(curies, TAXON_PREFIX)
-
-
-def set_default_categories(obj):
-    return [
-        super_class._category for super_class in inspect.getmro(obj)
-        if hasattr(super_class, '_category')
-    ]
 
 
 def convert_object_to_scalar(field: Union[Entity, str]) -> str:

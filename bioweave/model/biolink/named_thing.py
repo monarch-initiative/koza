@@ -33,11 +33,6 @@ class NamedThing(Entity):
     Root Biolink Model class for all things and informational relationships, real or imagined
     """
     _category: ClassVar[str] = 'NamedThing'
-    category: List[str] = field(default_factory=list)
-
-    def __post_init__(self):
-        if not self.category:
-            self.category = set_default_categories(NamedThing)
 
 
 @dataclass
@@ -47,7 +42,6 @@ class Agent(Entity):
     (i.e. a knowledge association)
     """
     _category: ClassVar[str] = 'Agent'
-    category: ClassVar[List[str]] = ['Agent']
 
     affiliation: List[str] = field(default_factory=list)
     address: str = None
@@ -56,7 +50,6 @@ class Agent(Entity):
 @dataclass
 class BiologicalEntity(NamedThing):
     _category: ClassVar[str] = 'BiologicalEntity'
-    category: ClassVar[List[str]] = ['NamedThing', 'BiologicalEntity']
 
 
 @dataclass
@@ -65,7 +58,6 @@ class MolecularEntity(ThingWithTaxon, BiologicalEntity):
     A gene, gene product, small molecule or macromolecule (including protein complex)
     """
     _category: ClassVar[str] = 'MolecularEntity'
-    category: ClassVar[List[str]] = ['NamedThing', 'BiologicalEntity', 'MolecularEntity']
 
 
 @dataclass
@@ -73,7 +65,6 @@ class GenomicEntity(MolecularEntity):
 
     _category: ClassVar[str] = 'GenomicEntity'
 
-    category: ClassVar[List[str]] = ['NamedThing', 'BiologicalEntity', 'MolecularEntity']
     has_biological_sequence: Optional[str] = None
 
 
@@ -84,15 +75,8 @@ class MacromolecularMachine(GenomicEntity):
     units of function in a cell. They either carry out individual biological
     activities, or they encode molecules which do this.
     """
-
     _category: ClassVar[str] = 'MacromolecularMachine'
-    category: ClassVar[List[str]] = [
-        'NamedThing',
-        'BiologicalEntity',
-        'MolecularEntity',
-        'GenomicEntity',
-        'MacromolecularMachine',
-    ]
+
 
 
 @dataclass
@@ -103,29 +87,10 @@ class GeneOrGeneProduct(MacromolecularMachine):
     """
     _category: ClassVar[str] = 'GeneOrGeneProduct'
 
-    category: ClassVar[List[str]] = [
-        'NamedThing',
-        'BiologicalEntity',
-        'MolecularEntity',
-        'GenomicEntity',
-        'MacromolecularMachine',
-        'GeneOrGeneProduct',
-    ]
-
 
 @dataclass
 class Gene(GeneOrGeneProduct):
     _category: ClassVar[str] = 'Gene'
-
-    category: ClassVar[List[str]] = [
-        'NamedThing',
-        'BiologicalEntity',
-        'MolecularEntity',
-        'GenomicEntity',
-        'MacromolecularMachine',
-        'GeneOrGeneProduct',
-        'Gene',
-    ]
 
     symbol: str = None
     synonym: List[str] = field(default_factory=list)
@@ -138,8 +103,6 @@ class InformationContentEntity(NamedThing):
     a piece of information that typically describes some topic of discourse or is used as support.
     """
     _category: ClassVar[str] = 'InformationContentEntity'
-
-    category: ClassVar[List[str]] = ['NamedThing', 'InformationContentEntity']
 
     license: str = None
     rights: str = None
@@ -157,8 +120,6 @@ class Publication(InformationContentEntity):
     """
 
     _category: ClassVar[str] = 'Publication'
-
-    category: ClassVar[List[str]] = ['NamedThing', 'InformationContentEntity', 'Publication']
 
     authors: List[str] = field(default_factory=list)
     pages: List[str] = field(default_factory=list)

@@ -23,8 +23,7 @@ class Association(Entity):
     A typed association between two entities, supported by evidence
     """
 
-    _label: ClassVar[str] = 'Association'
-    category: ClassVar[List[str]] = ['Association']
+    _category: ClassVar[str] = 'Association'
 
     subject: Union[Entity, Curie] = None
     predicate: Union[Entity, Curie] = None
@@ -49,8 +48,7 @@ class GeneToGeneAssociation(Association):
     abstract parent class for different kinds of gene-gene or gene product to gene product
     relationships. Includes homology and interaction.
     """
-    _label: ClassVar[str] = 'GeneToGeneAssociation'
-    category: ClassVar[List[str]] = ['Association', 'GeneToGeneAssociation']
+    _category: ClassVar[str] = 'GeneToGeneAssociation'
 
 
 @dataclass
@@ -59,10 +57,4 @@ class PairwiseGeneToGeneInteraction(GeneToGeneAssociation):
     An interaction between two genes or two gene products. May be physical (e.g. protein binding)
     or genetic (between genes). May be symmetric (e.g. protein interaction) or directed (e.g. phosphorylation)
     """
-    _label: ClassVar[str] = 'PairwiseGeneToGeneInteraction'
-
-    category: ClassVar[List[str]] = [
-        'Association',
-        'GeneToGeneAssociation',
-        'PairwiseGeneToGeneInteraction',
-    ]
+    _category: ClassVar[str] = 'PairwiseGeneToGeneInteraction'
