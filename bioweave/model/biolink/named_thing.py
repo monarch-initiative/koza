@@ -8,14 +8,14 @@ https://github.com/biolink/biolink-model/blob/master/biolink-model.yaml
 
 from dataclasses import field
 from pydantic.dataclasses import dataclass
-from pydantic import validator
 from typing import Optional, ClassVar
 
 from ..curie import Curie
+from .entity import PydanticConfig
 from bioweave.validator.model_validator import *
 
 
-@dataclass
+@dataclass(config=PydanticConfig)
 class ThingWithTaxon:
     """
     A mixin that can be used on any entity that can be taxonomically classified.
@@ -24,10 +24,10 @@ class ThingWithTaxon:
     """
     in_taxon: List[Curie] = field(default_factory=list)
 
-    _validate_prefix = validator('in_taxon', allow_reuse=True)(valid_taxon)
+    _validate_prefix = valid_taxon("in_taxon")
 
 
-@dataclass
+@dataclass(config=PydanticConfig)
 class NamedThing(Entity):
     """
     Root Biolink Model class for all things and informational relationships, real or imagined
@@ -35,7 +35,7 @@ class NamedThing(Entity):
     _category: ClassVar[str] = 'NamedThing'
 
 
-@dataclass
+@dataclass(config=PydanticConfig)
 class Agent(Entity):
     """
     person, group, organization or project that provides a piece of information
@@ -47,12 +47,12 @@ class Agent(Entity):
     address: str = None
 
 
-@dataclass
+@dataclass(config=PydanticConfig)
 class BiologicalEntity(NamedThing):
     _category: ClassVar[str] = 'BiologicalEntity'
 
 
-@dataclass
+@dataclass(config=PydanticConfig)
 class MolecularEntity(ThingWithTaxon, BiologicalEntity):
     """
     A gene, gene product, small molecule or macromolecule (including protein complex)
@@ -60,7 +60,7 @@ class MolecularEntity(ThingWithTaxon, BiologicalEntity):
     _category: ClassVar[str] = 'MolecularEntity'
 
 
-@dataclass
+@dataclass(config=PydanticConfig)
 class GenomicEntity(MolecularEntity):
 
     _category: ClassVar[str] = 'GenomicEntity'
@@ -68,7 +68,7 @@ class GenomicEntity(MolecularEntity):
     has_biological_sequence: Optional[str] = None
 
 
-@dataclass
+@dataclass(config=PydanticConfig)
 class MacromolecularMachine(GenomicEntity):
     """
     A union of gene, gene product, and macromolecular complex. These are the basic
@@ -79,7 +79,7 @@ class MacromolecularMachine(GenomicEntity):
 
 
 
-@dataclass
+@dataclass(config=PydanticConfig)
 class GeneOrGeneProduct(MacromolecularMachine):
     """
     a union of genes or gene products. Frequently an identifier for one will be used
@@ -88,7 +88,7 @@ class GeneOrGeneProduct(MacromolecularMachine):
     _category: ClassVar[str] = 'GeneOrGeneProduct'
 
 
-@dataclass
+@dataclass(config=PydanticConfig)
 class Gene(GeneOrGeneProduct):
     _category: ClassVar[str] = 'Gene'
 
@@ -97,7 +97,7 @@ class Gene(GeneOrGeneProduct):
     xref: List[str] = field(default_factory=list)
 
 
-@dataclass
+@dataclass(config=PydanticConfig)
 class InformationContentEntity(NamedThing):
     """
     a piece of information that typically describes some topic of discourse or is used as support.
@@ -110,7 +110,7 @@ class InformationContentEntity(NamedThing):
     creation_date: str = None
 
 
-@dataclass
+@dataclass(config=PydanticConfig)
 class Publication(InformationContentEntity):
     """
     Any published piece of information. Can refer to a whole publication, its encompassing publication (i.e. journal

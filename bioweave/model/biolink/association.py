@@ -8,16 +8,15 @@ https://github.com/biolink/biolink-model/blob/master/biolink-model.yaml
 
 from dataclasses import field
 from pydantic.dataclasses import dataclass
-from pydantic import validator
 from typing import ClassVar
 
 from bioweave.validator.model_validator import *
 from ..curie import Curie
 from .named_thing import Entity, Publication
+from .entity import PydanticConfig
 
 
-
-@dataclass
+@dataclass(config=PydanticConfig)
 class Association(Entity):
     """
     A typed association between two entities, supported by evidence
@@ -35,14 +34,13 @@ class Association(Entity):
     type: Curie = 'rdf:Statement'
 
     # converters
-    _subject_to_scalar = validator('subject', allow_reuse=True)(convert_object_to_scalar)
-    _predicate_to_scalar = validator('predicate', allow_reuse=True)(convert_object_to_scalar)
-    _object_to_scalar = validator('object', allow_reuse=True)(convert_object_to_scalar)
-    _publication_to_scalar = validator('publications', allow_reuse=True)(convert_objects_to_scalars)
-    #_qualifiers_to_scalar = validator('qualifiers', allow_reuse=True)(convert_objects_to_scalars)
+    _subject_to_scalar = convert_object_to_scalar('subject')
+    _predicate_to_scalar = convert_object_to_scalar('predicate')
+    _object_to_scalar = convert_object_to_scalar('object')
+    _publication_to_scalar = convert_objects_to_scalars('publications')
 
 
-@dataclass
+@dataclass(config=PydanticConfig)
 class GeneToGeneAssociation(Association):
     """
     abstract parent class for different kinds of gene-gene or gene product to gene product
@@ -51,7 +49,7 @@ class GeneToGeneAssociation(Association):
     _category: ClassVar[str] = 'GeneToGeneAssociation'
 
 
-@dataclass
+@dataclass(config=PydanticConfig)
 class PairwiseGeneToGeneInteraction(GeneToGeneAssociation):
     """
     An interaction between two genes or two gene products. May be physical (e.g. protein binding)
