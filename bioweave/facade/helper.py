@@ -3,11 +3,7 @@ Helper functions for facade files
 
 Goal is to keep this as simple as possible
 """
-
-
-class NextRowException(Exception):
-    """Triggers an iterator to continue to the next row"""
-    pass
+from bioweave.validator.exceptions import NextRowException
 
 
 def next_row():

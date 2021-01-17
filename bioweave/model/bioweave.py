@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Dict
 
-from .model.config.bioweave_config import BioWeaveConfig
+from bioweave.model.config.bioweave_config import BioWeaveConfig
 
 
 @dataclass

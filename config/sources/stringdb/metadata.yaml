@@ -9,6 +9,3 @@ data_dir: './string'
 
 source_templates:
   - 'protein-links-detailed'
-
-map_templates:
-  - 'entrez-2-string'

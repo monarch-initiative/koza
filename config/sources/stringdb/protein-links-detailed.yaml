@@ -8,6 +8,8 @@ file_metadata:
 depends_on:
   - 'entrez_2_string'
 
+on_map_failure: 'warning'
+
 delimeter: 'tab'
 header_delimeter: 'tab'
 

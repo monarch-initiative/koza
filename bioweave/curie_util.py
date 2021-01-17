@@ -1,7 +1,4 @@
-from functools import lru_cache
 # python 3.9 has a generic cache fx
-
-from .bioweave import BioWeaveConfig
 
 # from foo import bioweave
 

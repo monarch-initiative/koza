@@ -1,5 +1,5 @@
 """
-foo
+Functions that aggregate biolink models and facilitate serialization(s)
 """
 
 # from foo import bioweave

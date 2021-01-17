@@ -13,7 +13,7 @@ from typing import ClassVar
 from bioweave.validator.model_validator import *
 from ..curie import Curie
 from .named_thing import Entity, Publication
-from .entity import PydanticConfig
+from ..config.pydantic_config import PydanticConfig
 
 
 @dataclass(config=PydanticConfig)

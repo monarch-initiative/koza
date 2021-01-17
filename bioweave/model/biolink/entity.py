@@ -5,13 +5,7 @@ from typing import List, Union
 import inspect
 
 from ..curie import Curie
-
-
-class PydanticConfig:
-    validate_assignment = True
-    validate_all = True
-    underscore_attrs_are_private = True
-    extra = 'forbid'
+from ..config.pydantic_config import PydanticConfig
 
 
 @dataclass(config=PydanticConfig)

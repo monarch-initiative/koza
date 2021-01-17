@@ -34,4 +34,6 @@ filter enum:
 gt, eq, gte, lte, ne
 
 Always default to OR
+
+Add type coercion?
 """

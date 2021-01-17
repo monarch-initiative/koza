@@ -11,7 +11,7 @@ from pydantic.dataclasses import dataclass
 from typing import Optional, ClassVar
 
 from ..curie import Curie
-from .entity import PydanticConfig
+from ..config.pydantic_config import PydanticConfig
 from bioweave.validator.model_validator import *
 
 

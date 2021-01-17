@@ -8,6 +8,8 @@ file_metadata:
 depends_on:
   - 'mim2gene'
   - 'mimtitles'
+  -
+on_map_failure: 'error'
 
 delimeter: 'tab'
 header_delimeter: 'tab'
