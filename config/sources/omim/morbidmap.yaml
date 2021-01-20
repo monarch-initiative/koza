@@ -1,7 +1,5 @@
 name: 'morbidmap'
 
-data_dir: './omim'
-
 file_metadata:
   license: "https://www.omim.org/downloads"
 

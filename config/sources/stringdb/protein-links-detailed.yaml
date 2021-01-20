@@ -34,13 +34,13 @@ fields:
   - 'combined_score{int}'
 
 filter_out:
-  'combined_score':
-     filter: 'lt'
-     value: 700
+  - 'combined_score':
+       filter: 'lt'
+       value: 700
 
 associations:
   - 'PairwiseGeneToGeneInteraction'
 
 column_mappings:
-  - 'protein1': 'Gene'
-  - 'protein2': 'Gene'
+  'protein1': 'Gene'
+  'protein2': 'Gene'

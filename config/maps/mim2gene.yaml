@@ -14,7 +14,7 @@ header_delimeter: 'tab'
 files:
   - 'mim2gene.txt'
 
-columns:
+fields:
   - 'MIM Number'
   - 'MIM Entry Type (see FAQ 1.3 at https://omim.org/help/faq)'
   - 'Entrez Gene ID (NCBI)'
