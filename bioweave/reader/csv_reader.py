@@ -1,4 +1,4 @@
-from bioweave.source.reader import BioWeaveReader
+from bioweave.reader.reader import BioWeaveReader
 
 
 class CSVReader(BioWeaveReader):
@@ -11,6 +11,3 @@ class CSVReader(BioWeaveReader):
 
     def __next__(self):
         return next(self.reader)
-
-
-

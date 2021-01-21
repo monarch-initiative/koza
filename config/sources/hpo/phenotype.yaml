@@ -16,7 +16,7 @@ fields:
   - 'Reference'
   - 'Evidence'
   - 'Onset'
-  - 'Frequency'
+  - 'Frequency': 'Proportion'
   - 'Sex'
   - 'Modifier'
   - 'Aspect'
