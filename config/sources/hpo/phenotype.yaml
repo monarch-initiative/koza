@@ -42,7 +42,7 @@ associations:
   - DiseasetoOnsetAssociation
 
 
-column_mappings:
+field_mappings:
   - 'DatabaseID': 'Disease'
   - 'HPO_ID': 'BiologicalEntity'
   - 'Reference': 'Publication'

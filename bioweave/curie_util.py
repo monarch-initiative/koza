@@ -1,7 +1,7 @@
 """
 Utility functions for loading a curie map from a
 yaml configuration, checking for duplicate keys
-then converting to a dictionary
+and that the map is a bimap then converting to a dictionary
 
 relocate to a util module?
 """
@@ -17,6 +17,8 @@ try:
     from yaml import CLoader as Loader
 except ImportError:
     from yaml import Loader
+
+from .validator.map_validator import is_dictionary_bimap
 
 
 def no_duplicates_constructor(loader, node, deep=False):
@@ -45,15 +47,20 @@ def no_duplicates_constructor(loader, node, deep=False):
 @lru_cache
 def get_curie_map(curie_path: PathLike) -> Dict[str, str]:
     with open(curie_path, 'r') as curie_fh:
-        return _curie_map_from_yaml(curie_fh)
+        curie_map = _curie_map_from_yaml(curie_fh)
+
+    if not is_dictionary_bimap(curie_map):
+        raise ValueError("Global table is not a bimap")
+
+    return curie_map
 
 
 def _curie_map_from_yaml(curie_io: TextIO) -> Dict[str, str]:
     """
     Process a io stream from a curie yaml and return
     a dictionary
-    :param curie_io:
-    :return:
+    :param curie_io: io stream from open(curie_map_yaml)
+    :return: Dictionary of prefix: reference
     """
     yaml.add_constructor(
         yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, no_duplicates_constructor
