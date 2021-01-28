@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from bioweave.reader.reader import BioWeaveReader
+from bioweave.io.reader import BioWeaveReader
 from .config.source_config import SourceConfig
 from .translation_table import TranslationTable
 

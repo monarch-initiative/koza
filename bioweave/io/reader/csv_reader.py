@@ -1,4 +1,4 @@
-from bioweave.reader.reader import BioWeaveReader
+from bioweave.io.reader.reader import BioWeaveReader
 
 
 class CSVReader(BioWeaveReader):

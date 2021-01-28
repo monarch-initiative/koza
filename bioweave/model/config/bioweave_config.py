@@ -9,11 +9,9 @@ class SerializationEnum(str, Enum):
     """
     TODO do we need synonyms? - ttl, nt, kgx
     """
-    ntriples = 'ntriples'
-    jsonlines = 'jsonlines'
     tsv = 'tsv'
-    rdfstar = 'rdfstar'
     nturtles = 'nturtles'
+    # rdfstar, ntriples, etc
 
 
 @dataclass(frozen=True)
