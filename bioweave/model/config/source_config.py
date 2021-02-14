@@ -4,6 +4,8 @@ map config data class
 """
 from typing import Union, List, Dict
 from pydantic.dataclasses import dataclass
+from pydantic import ValidationError
+from dataclasses import field
 from pathlib import Path
 from enum import Enum
 
@@ -15,6 +17,15 @@ class MapErrorEnum(str, Enum):
     """
     warning = 'warning'
     error = 'error'
+
+
+class FormatType(str, Enum):
+    """
+    Enum for supported compression
+    """
+    tsv = 'tsv'
+    csv = 'csv'
+    jsonl = 'jsonl'
 
 
 class CompressionType(str, Enum):
@@ -71,6 +82,8 @@ class SourceConfig:
 
     TODO document fields
 
+    TODO override translation table path?
+
     delimiter:
     separator string similar to what works in str.split()
     https://docs.python.org/3/library/stdtypes.html#str.split
@@ -78,16 +91,17 @@ class SourceConfig:
 
     name: str
     file_metadata: DatasetDescription
-    depends_on: List[str]
     files: List[Union[str, Path]]
-    fields: List[Union[str, Dict[str, str]]]
-    format: str = 'tsv'
+    format: FormatType = 'tsv'
+    columns: List[Union[str, Dict[str, str]]] = None
+    properties: List[Dict[str, str]] = None
+    depends_on: List[str] = field(default_factory=list)
     delimiter: str = None
     header_delimiter: str = None
     skip_lines: int = 0
     compression: CompressionType = None
-    filter_in: List[Dict[str, Filter]] = None
-    filter_out: List[Dict[str, Filter]] = None
+    filter_in: List[Dict[str, Filter]] = field(default_factory=list)
+    filter_out: List[Dict[str, Filter]] = field(default_factory=list)
 
     def __post_init__(self):
         files_as_paths: List[Path] = []
@@ -98,8 +112,21 @@ class SourceConfig:
                 files_as_paths.append(file)
         object.__setattr__(self, 'files', files_as_paths)
 
+        all_filters = [filters for f_in in self.filter_in for filters in f_in.values()]
+        all_filters += [filters for f_out in self.filter_out for filters in f_out.values()]
+
+        if self.delimiter in ['tab', '\\t']:
+            object.__setattr__(self, 'delimiter', '\t')
+
         # some basic type checking? if lt, gt, lte, gte
         # make sure that filter is int or float?
+
+        for flter in all_filters:
+            if flter['filter'] in ['lt', 'gt', 'lte', 'gte']:
+                if not isinstance(flter['value'], (int, float)):
+                    raise ValueError(
+                        f"Filter value must be int or float for operator {flter['filter']}"
+                    )
 
         # enum for accepted types?
 
@@ -108,8 +135,6 @@ class SourceConfig:
 
 @dataclass(frozen=True)
 class PrimarySourceConfig(SourceConfig):
-    associations: List[str] = None
-    field_mappings: Dict[str, str] = None
     depends_on: List[str] = None
     on_map_failure: MapErrorEnum = MapErrorEnum.warning
 

@@ -9,6 +9,7 @@ leaning towards using async for all serialization
 
 # from foo import bioweave
 
-def collect(ingest_name: str, *args):
+
+def serialize(ingest_name: str, *args):
     # bioweave.serialize(ingest_name, *args)
     pass

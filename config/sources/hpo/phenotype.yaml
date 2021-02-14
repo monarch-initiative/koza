@@ -22,33 +22,8 @@ fields:
   - 'Aspect'
   - 'Biocuration'
 
-multivalued_fields:
-  'Reference':
-    alias: publication
-    delimeter: ';'
-  'Modifier':
-    alias: modifier
-    delimeter: ';'
-
 # TODO add checks that keys are in columns
 filter_out:
   - 'Qualifier':
       filter: 'eq'
       value: 'NOT'
-
-associations:
-  - DiseaseToPhenotypicFeatureAssociation
-  - DiseaseToInheritanceAssociation
-  - DiseasetoOnsetAssociation
-
-
-field_mappings:
-  - 'DatabaseID': 'Disease'
-  - 'HPO_ID': 'BiologicalEntity'
-  - 'Reference': 'Publication'
-  - 'Evidence': 'Evidence'
-  - 'Onset': 'Onset'
-  - 'Frequency': 'PhenotypicFrequency'
-  - 'Sex': 'BiologicalSex'
-  - 'Modifier': 'ClinicalModifier'
-  - 'Biocuration': 'Agent'

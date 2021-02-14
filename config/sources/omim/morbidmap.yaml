@@ -6,11 +6,11 @@ file_metadata:
 depends_on:
   - 'mim2gene'
   - 'mimtitles'
-  -
+
 on_map_failure: 'error'
 
-delimeter: 'tab'
-header_delimeter: 'tab'
+delimeter: '\t'
+header_delimeter: '\t'
 
 skip_lines: 4
 
@@ -22,10 +22,3 @@ fields:
   - 'Gene Symbols'
   - 'MIM Number'
   - 'Cyto Location'
-
-associations:
-  - 'GeneToDiseaseAssociation'
-
-column_mappings:
-  - 'Phenotype': 'Disease'
-  - 'MIM Number': 'Gene'

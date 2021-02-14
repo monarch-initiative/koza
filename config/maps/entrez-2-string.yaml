@@ -1,13 +1,11 @@
 name: 'entrez_2_string'
 
-data_dir: 'todo'
-
 file_metadata:
   description: 'Mapping file provided by StringDB that contains entrez to protein ID mappings'
 
 source: 'stringdb'
 
-delimeter: 'tab'
+delimeter: '\t'
 header_delimeter: ' / '
 
 # Assumes that no identifiers are overlapping

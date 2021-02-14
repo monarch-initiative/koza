@@ -6,8 +6,8 @@ file_metadata:
 
 source: 'omim'
 
-delimeter: 'tab'
-header_delimeter: 'tab'
+delimeter: '\t'
+header_delimeter: '\t'
 
 
 files:

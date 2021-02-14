@@ -1,5 +1,4 @@
 name: 'mim2gene'
-data_dir: 'todo'
 
 file_metadata:
   description: 'OMIM identifier to NCBI (entrez), HGNC symbols (no ids), Ensembl gene mappings'
@@ -8,8 +7,8 @@ source: 'omim'
 
 skip_lines: 4
 
-delimeter: 'tab'
-header_delimeter: 'tab'
+delimeter: '\t'
+header_delimeter: '\t'
 
 files:
   - 'mim2gene.txt'
