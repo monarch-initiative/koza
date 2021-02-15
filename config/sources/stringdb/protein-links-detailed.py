@@ -24,4 +24,4 @@ pairwise_gene_to_gene_interaction.object = gene_b
 pairwise_gene_to_gene_interaction.predicate = predicate.interacts_with
 pairwise_gene_to_gene_interaction.relation = translation_table.global_table['interacts with']
 
-serialize(_ingest_name, *model)
+serialize(*model)
