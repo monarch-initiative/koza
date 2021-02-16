@@ -8,7 +8,6 @@ source: 'omim'
 skip_lines: 4
 
 delimeter: '\t'
-header_delimeter: '\t'
 
 files:
   - 'mim2gene.txt'

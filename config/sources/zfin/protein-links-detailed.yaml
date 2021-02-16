@@ -1,0 +1,17 @@
+name: 'zfin-phenotype-agr'
+
+format: 'jsonl'
+
+# wget --quiet -O - http://download.alliancegenome.org/3.2.0/PHENOTYPE/ZFIN/1.0.1.3_PHENOTYPE_ZFIN_0.json | jq --compact-output '.data[]' | gzip >1.0.1.3_PHENOTYPE_ZFIN_0.jsonl.gz
+
+compression: 'gzip'
+
+files:
+  - '1.0.1.3_PHENOTYPE_ZFIN_0.jsonl.gz'
+
+properties:
+  - 'objectId'
+  - 'evidence'
+  - 'phenotypeTermIdentifiers'
+  - 'phenotypeStatement'
+  - 'primaryGeneticEntityIDs'

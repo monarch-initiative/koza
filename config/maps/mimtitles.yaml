@@ -7,8 +7,6 @@ file_metadata:
 source: 'omim'
 
 delimeter: '\t'
-header_delimeter: '\t'
-
 
 files:
   - 'mimtitles.txt'

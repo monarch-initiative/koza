@@ -6,7 +6,6 @@ files:
   - 'phenotype.hpoa'
 
 delimiter: 'tab'
-header_delimiter: 'tab'
 
 columns:
   - 'DatabaseID'

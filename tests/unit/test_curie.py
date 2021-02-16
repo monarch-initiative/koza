@@ -8,12 +8,18 @@ from bioweave.model.biolink.named_thing import *
 
 
 def test_bad_curie():
+    """
+    a misformatted curie returns a validation error
+    """
     entity = Entity()
     with pytest.raises(ValidationError):
         entity.id = "this is not a curie"
 
 
 def test_bad_curie_in_list():
+    """
+    Test that misformatted curie in a list returns a validation error
+    """
     with pytest.raises(ValidationError):
         pub = Publication(
             id='PMID:123',

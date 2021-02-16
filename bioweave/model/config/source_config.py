@@ -4,7 +4,6 @@ map config data class
 """
 from typing import Union, List, Dict
 from pydantic.dataclasses import dataclass
-from pydantic import ValidationError
 from dataclasses import field
 from pathlib import Path
 from enum import Enum
@@ -12,8 +11,7 @@ from enum import Enum
 
 class MapErrorEnum(str, Enum):
     """
-    Enum for how to handle key errors
-    in map files
+    Enum for how to handle key errors in map files
     """
     warning = 'warning'
     error = 'error'
@@ -21,9 +19,8 @@ class MapErrorEnum(str, Enum):
 
 class FormatType(str, Enum):
     """
-    Enum for supported compression
+    Enum for supported file types
     """
-    tsv = 'tsv'
     csv = 'csv'
     jsonl = 'jsonl'
 
@@ -46,6 +43,17 @@ class FilterCode(str, Enum):
     lte = 'lte'
     eq = 'eq'
     ne = 'ne'
+
+
+class FieldType(str, Enum):
+    """
+    Enum for filter codes
+    eg gt (greater than)
+    """
+    str = 'str'
+    int = 'int'
+    float = 'float'
+    #Proportion = 'Proportion'
 
 
 @dataclass(frozen=True)
@@ -92,10 +100,9 @@ class SourceConfig:
     name: str
     file_metadata: DatasetDescription
     files: List[Union[str, Path]]
-    format: FormatType = 'tsv'
-    columns: List[Union[str, Dict[str, str]]] = None
-    properties: List[Dict[str, str]] = None
-    depends_on: List[str] = field(default_factory=list)
+    format: FormatType = FormatType.csv
+    columns: List[Union[str, Dict[str, FieldType]]] = None
+    properties: List[str] = None
     delimiter: str = None
     header_delimiter: str = None
     skip_lines: int = 0
@@ -118,9 +125,6 @@ class SourceConfig:
         if self.delimiter in ['tab', '\\t']:
             object.__setattr__(self, 'delimiter', '\t')
 
-        # some basic type checking? if lt, gt, lte, gte
-        # make sure that filter is int or float?
-
         for flter in all_filters:
             if flter['filter'] in ['lt', 'gt', 'lte', 'gte']:
                 if not isinstance(flter['value'], (int, float)):
@@ -128,14 +132,17 @@ class SourceConfig:
                         f"Filter value must be int or float for operator {flter['filter']}"
                     )
 
-        # enum for accepted types?
+        if not self.columns and not self.properties:
+            raise ValueError(
+                f"Either columns or properties must be supplied by configuration"
+            )
 
         # do we parse the field-type map here, private attr?
 
 
 @dataclass(frozen=True)
 class PrimarySourceConfig(SourceConfig):
-    depends_on: List[str] = None
+    depends_on: List[str] = None  # field(default_factory=list)
     on_map_failure: MapErrorEnum = MapErrorEnum.warning
 
 

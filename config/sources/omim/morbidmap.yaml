@@ -10,7 +10,6 @@ depends_on:
 on_map_failure: 'error'
 
 delimeter: '\t'
-header_delimeter: '\t'
 
 skip_lines: 4
 
