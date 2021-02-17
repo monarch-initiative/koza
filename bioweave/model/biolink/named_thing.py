@@ -98,6 +98,11 @@ class Gene(GeneOrGeneProduct):
 
 
 @dataclass(config=PydanticConfig)
+class Protein(Gene):
+    _category: ClassVar[str] = 'Protein'
+
+
+@dataclass(config=PydanticConfig)
 class InformationContentEntity(NamedThing):
     """
     a piece of information that typically describes some topic of discourse or is used as support.

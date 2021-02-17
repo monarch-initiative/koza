@@ -2,8 +2,6 @@ from typing import Iterator, IO, Dict, Any, List
 import logging
 import json
 
-from bioweave.model.config.source_config import FieldType
-
 LOG = logging.getLogger(__name__)
 
 

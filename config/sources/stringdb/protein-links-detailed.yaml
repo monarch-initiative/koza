@@ -12,8 +12,6 @@ delimiter: "\t"
 
 compression: 'gzip'
 
-skip_lines: 0
-
 files:
   - '9606.protein.links.detailed.v11.0.txt.gz'
   - '10090.protein.links.detailed.v11.0.txt.gz'

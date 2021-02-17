@@ -127,16 +127,26 @@ class SourceConfig:
 
         for flter in all_filters:
             if flter['filter'] in ['lt', 'gt', 'lte', 'gte']:
+                # TODO determine if this should raise an exception
+                # or instead try to type coerce the string to a float
                 if not isinstance(flter['value'], (int, float)):
                     raise ValueError(
                         f"Filter value must be int or float for operator {flter['filter']}"
                     )
 
-        if not self.columns and not self.properties:
+        if format is FormatType.csv and self.properties:
             raise ValueError(
-                f"Either columns or properties must be supplied by configuration"
+                f"csv specified but properties have been configured\n"
+                f"either set format to jsonl or change properties to columns in the config"
             )
 
+        if format is FormatType.jsonl and self.columns:
+            raise ValueError(
+                f"jsonl specified but columns have been configured\n"
+                f"either set format to csv or change columns to properties in the config"
+            )
+        if self.columns:
+            pass
         # do we parse the field-type map here, private attr?
 
 

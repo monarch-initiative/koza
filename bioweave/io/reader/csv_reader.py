@@ -38,7 +38,7 @@ class CSVReader:
     def __init__(
             self,
             io_str: IO[str],
-            field_type_map: Dict[str, FieldType],
+            field_type_map: Dict[str, FieldType] = None,
             delimiter: str = "\t",
             has_header: bool = True,
             header_delimiter: str = None,
@@ -74,7 +74,15 @@ class CSVReader:
         return self
 
     def __next__(self) -> Dict[str, Any]:
-        if self.line_num == 0 and self.has_header:
+
+        if self.line_num == 0:
+
+            if not self.has_header and not self.field_type_map:
+                raise ValueError(
+                    f"there is no header and columns have not been supplied\n"
+                    f"configure the 'columns' property in the source yaml"
+                )
+
             fieldnames = next(
                 reader(self.io_str, **{
                     'delimiter': self.header_delimiter,
@@ -82,34 +90,35 @@ class CSVReader:
                 })
             )
             fieldnames[0].rstrip('# ').rstrip()
-
-            configured_fields = list(self.field_type_map.keys())
-
-            if set(self.field_type_map.keys()) > set(fieldnames):
-                raise ValueError(
-                    f"Configured columns missing in source file "
-                    f"{set(self.field_type_map.keys()) - set(fieldnames)}"
-                )
-
-            if set(fieldnames) > set(configured_fields):
-                LOG.warning(
-                    f"Additional column(s) in source file "
-                    f"{set(fieldnames) - set(self.field_type_map.keys())}\n"
-                    f"Checking if new column(s) inserted at end of the row"
-                )
-
-            # Check if the additional columns are appended, and allow if so
-            # We could also make this a warning instead of hard failing
-            if fieldnames[:len(configured_fields)] != configured_fields:
-                raise ValueError(
-                    f"Column ordering does not match configuration\n"
-                    f"given: {self.field_type_map.keys()}\n"
-                    f"found: {fieldnames}"
-                )
-
             self.fieldnames = fieldnames
-
             next(self.reader)
+
+            if self.field_type_map:
+
+                configured_fields = list(self.field_type_map.keys())
+
+                if set(self.field_type_map.keys()) > set(fieldnames):
+                    raise ValueError(
+                        f"Configured columns missing in source file "
+                        f"{set(self.field_type_map.keys()) - set(fieldnames)}"
+                    )
+
+                if set(fieldnames) > set(configured_fields):
+                    LOG.warning(
+                        f"Additional column(s) in source file "
+                        f"{set(fieldnames) - set(self.field_type_map.keys())}\n"
+                        f"Checking if new column(s) inserted at end of the row"
+                    )
+
+                # Check if the additional columns are appended
+                # not sure if this would useful or just noise
+                if fieldnames[:len(configured_fields)] != configured_fields:
+                    LOG.warning(
+                        f"Additional columns located within configured fields\n"
+                        f"given: {self.field_type_map.keys()}\n"
+                        f"found: {fieldnames}"
+                    )
+
         else:
             self.fieldnames = self.field_type_map.keys()
 
