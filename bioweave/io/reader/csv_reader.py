@@ -26,6 +26,9 @@ class CSVReader:
         a warning if extra fields exist and an ValueError
         if a field is missing
 
+      - Handle rows that are shorter/longer than expected
+        currently handled by raising an exception
+
       - Support a type map dictionary, in which fieldnames
         can be mapped to types, and the CSVReader will attempt
         to coerce them from their str representation, eg int('42')
@@ -97,25 +100,28 @@ class CSVReader:
 
                 configured_fields = list(self.field_type_map.keys())
 
-                if set(self.field_type_map.keys()) > set(fieldnames):
+                if set(configured_fields) > set(fieldnames):
                     raise ValueError(
                         f"Configured columns missing in source file "
-                        f"{set(self.field_type_map.keys()) - set(fieldnames)}"
+                        f"{set(configured_fields) - set(fieldnames)}"
                     )
 
                 if set(fieldnames) > set(configured_fields):
                     LOG.warning(
                         f"Additional column(s) in source file "
-                        f"{set(fieldnames) - set(self.field_type_map.keys())}\n"
+                        f"{set(fieldnames) - set(configured_fields)}\n"
                         f"Checking if new column(s) inserted at end of the row"
                     )
+                    # add to type map
+                    for new_fields in set(fieldnames) - set(configured_fields):
+                        self.field_type_map[new_fields] = FieldType.str
 
                 # Check if the additional columns are appended
                 # not sure if this would useful or just noise
                 if fieldnames[:len(configured_fields)] != configured_fields:
                     LOG.warning(
                         f"Additional columns located within configured fields\n"
-                        f"given: {self.field_type_map.keys()}\n"
+                        f"given: {configured_fields}\n"
                         f"found: {fieldnames}"
                     )
 
@@ -130,6 +136,11 @@ class CSVReader:
             row = next(self.reader)
 
         # Check row length discrepancies for each row
+        # TODO currently varying line lengths will raise an exception
+        # and hard fail, we should probably make these warnings and report
+        # out which lines vary
+        # Could also create a custom exception and allow the client code
+        # to determine what to do here
         fields_len = len(self.fieldnames)
         row_len = len(row)
         if fields_len < row_len:

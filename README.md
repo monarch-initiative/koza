@@ -1,11 +1,17 @@
 ### bioweave
 
-data ingest prototype likely to be renamed
+data ingest framework for the biolink model
 
-##### Quickstart
+#### Installation
+
+```
+
+```
+
+##### Building locally
 
 ```bash
 python3.8 -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
+make
 ```
