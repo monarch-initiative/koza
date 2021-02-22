@@ -9,24 +9,29 @@ MAKEFLAGS += --no-builtin-variables
 SHELL := bash
 
 .PHONY: all
-all: install-bioweave install-testing install-dev install-docs test
+all: install-flit install-bioweave install-dev test
+
+.PHONY: install-flit
+install-flit:
+	pip install flit
 
 .PHONY: install-bioweave
-install-bioweave:
-	pip install -r requirements.txt
-
-.PHONY: install-testing
-install-testing:
-	pip install -r tests/requirements.txt
-
-.PHONY: install-docs
-install-docs:
-	pip install -r docs/requirements.txt
+install-flit:
+	flit install --deps production --symlink
 
 .PHONY: install-dev
-install-dev:
-	pip install -r requirements-dev.txt
+install-testing:
+	flit install --deps develop --symlink
 
 .PHONY: test
 test:
 	python -m pytest
+
+.PHONY: build
+build:
+	flit build
+
+.PHONY: publish
+publish:
+	flit publish
+
