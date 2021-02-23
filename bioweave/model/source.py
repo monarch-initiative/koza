@@ -1,7 +1,7 @@
 from dataclasses import dataclass
-from typing import Dict, Iterator, Any
+from typing import Any, Dict, Iterator
 
-#from bioweave.io.reader import BioWeaveReader  # see reader.__init__.py
+# from bioweave.io.reader import BioWeaveReader  # see reader.__init__.py
 from .config.source_config import SourceConfig
 from .translation_table import TranslationTable
 

@@ -4,7 +4,8 @@ See https://pydantic-docs.helpmanual.io/usage/validators/#reuse-validators
 
 These also function as converters
 """
-from typing import Union, List
+from typing import List, Union
+
 from pydantic import validator as pydantic_validator
 
 from bioweave.model.biolink.entity import Entity

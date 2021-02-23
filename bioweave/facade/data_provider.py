@@ -1,4 +1,4 @@
-from typing import Tuple, Dict
+from typing import Dict, Tuple
 
 from ..model import TranslationTable
 
@@ -8,7 +8,6 @@ from ..model import TranslationTable
 
 def inject_files(ingest_name: str) -> Tuple[Dict, ...]:
     pass
-
 
 
 def inject_map(ingest_name: str) -> Dict:

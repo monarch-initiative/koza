@@ -21,10 +21,7 @@ def test_bad_curie_in_list():
     Test that misformatted curie in a list returns a validation error
     """
     with pytest.raises(ValidationError):
-        pub = Publication(
-            id='PMID:123',
-            mesh_terms=['foo:bar', 'bad_curie']
-        )
+        pub = Publication(id='PMID:123', mesh_terms=['foo:bar', 'bad_curie'])
 
 
 def test_good_curie():
@@ -34,5 +31,5 @@ def test_good_curie():
     """
     entity = Entity()
     entity.id = 'HP:0000001'
-    assert 'HP:0000001' is entity.id
+    assert 'HP:0000001' is entity.id  # noqa: F632
     assert 'HP:0000001' == entity.id

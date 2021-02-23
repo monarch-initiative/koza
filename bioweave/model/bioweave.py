@@ -25,6 +25,7 @@ class BioWeave:
     Hoping that making all attributes read-only offsets some downsides
     of this approach (multi threading would be fine)
     """
+
     config: BioWeaveConfig
     curie_map: Dict[str, str] = None
     source_registry: Dict[str, Source] = None

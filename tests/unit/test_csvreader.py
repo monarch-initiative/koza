@@ -8,17 +8,17 @@ from bioweave.model.config.source_config import FieldType
 test_file = Path(__file__).parent.parent / 'resources' / 'source-files' / 'string.tsv'
 
 field_type_map = {
-            'protein1': FieldType.str,
-            'protein2': FieldType.str,
-            'neighborhood': FieldType.str,
-            'fusion': FieldType.str,
-            'cooccurence': FieldType.str,
-            'coexpression': FieldType.str,
-            'experimental': FieldType.str,
-            'database': FieldType.str,
-            'textmining': FieldType.float,
-            'combined_score': FieldType.int
-        }
+    'protein1': FieldType.str,
+    'protein2': FieldType.str,
+    'neighborhood': FieldType.str,
+    'fusion': FieldType.str,
+    'cooccurence': FieldType.str,
+    'coexpression': FieldType.str,
+    'experimental': FieldType.str,
+    'database': FieldType.str,
+    'textmining': FieldType.float,
+    'combined_score': FieldType.int,
+}
 
 
 def test_no_exceptions_in_normal_case():
@@ -27,6 +27,7 @@ def test_no_exceptions_in_normal_case():
         # TODO actually test something
         for row in reader:
             pass
+
 
 def test_type_conversion():
     with open(test_file, 'r') as string_file:
@@ -56,8 +57,8 @@ def test_field_in_file_but_not_in_config_logs_warning(caplog):
         del field_map['combined_score']
         reader = CSVReader(string_file, field_map, delimiter=' ')
         next(reader)
-        assert(caplog.records[0].levelname == 'WARNING')
-        assert(caplog.records[0].msg.startswith('Additional column(s) in source file'))
+        assert caplog.records[0].levelname == 'WARNING'
+        assert caplog.records[0].msg.startswith('Additional column(s) in source file')
 
 
 def test_middle_field_in_file_but_not_in_config_logs_warning(caplog):
@@ -66,5 +67,5 @@ def test_middle_field_in_file_but_not_in_config_logs_warning(caplog):
         del field_map['cooccurence']
         reader = CSVReader(string_file, field_map, delimiter=' ')
         next(reader)
-        assert(caplog.records[1].levelname == 'WARNING')
-        assert(caplog.records[1].msg.startswith('Additional columns located within configured fields'))
+        assert caplog.records[1].levelname == 'WARNING'
+        assert caplog.records[1].msg.startswith('Additional columns located within configured fields')

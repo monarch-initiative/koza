@@ -2,17 +2,19 @@
 source config data class
 map config data class
 """
-from typing import Union, List, Dict
-from pydantic.dataclasses import dataclass
 from dataclasses import field
-from pathlib import Path
 from enum import Enum
+from pathlib import Path
+from typing import Dict, List, Union
+
+from pydantic.dataclasses import dataclass
 
 
 class MapErrorEnum(str, Enum):
     """
     Enum for how to handle key errors in map files
     """
+
     warning = 'warning'
     error = 'error'
 
@@ -21,6 +23,7 @@ class FormatType(str, Enum):
     """
     Enum for supported file types
     """
+
     csv = 'csv'
     jsonl = 'jsonl'
 
@@ -29,6 +32,7 @@ class CompressionType(str, Enum):
     """
     Enum for supported compression
     """
+
     gzip = 'gzip'
 
 
@@ -37,6 +41,7 @@ class FilterCode(str, Enum):
     Enum for filter codes
     eg gt (greater than)
     """
+
     gt = 'gt'
     gte = 'gte'
     lt = 'lt'
@@ -50,10 +55,11 @@ class FieldType(str, Enum):
     Enum for filter codes
     eg gt (greater than)
     """
+
     str = 'str'
     int = 'int'
     float = 'float'
-    #Proportion = 'Proportion'
+    # Proportion = 'Proportion'
 
 
 @dataclass(frozen=True)
@@ -130,9 +136,7 @@ class SourceConfig:
                 # TODO determine if this should raise an exception
                 # or instead try to type coerce the string to a float
                 if not isinstance(flter['value'], (int, float)):
-                    raise ValueError(
-                        f"Filter value must be int or float for operator {flter['filter']}"
-                    )
+                    raise ValueError(f"Filter value must be int or float for operator {flter['filter']}")
 
         if format is FormatType.csv and self.properties:
             raise ValueError(

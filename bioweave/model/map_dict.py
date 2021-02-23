@@ -6,6 +6,7 @@ class MapDict(dict):
     A custom dictionary that raises a special KeyError exception
     MapItemException
     """
+
     def __getitem__(self, key):
         try:
             return super().__getitem__(key)

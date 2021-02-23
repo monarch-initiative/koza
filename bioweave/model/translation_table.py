@@ -1,7 +1,6 @@
-from typing import Optional, Dict
-from dataclasses import dataclass
-
 import logging
+from dataclasses import dataclass
+from typing import Dict, Optional
 
 from ..validator.map_validator import is_dictionary_bimap
 
@@ -10,9 +9,8 @@ LOG = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class TranslationTable:
-    """
+    """"""
 
-    """
     global_table: Dict[str, str]
     local_table: Dict[str, str]  # maybe bidict
 
@@ -23,12 +21,7 @@ class TranslationTable:
         if not is_dictionary_bimap(self.local_table):
             raise ValueError("Local table is not a bimap")
 
-    def resolve_term(
-            self,
-            word: str,
-            mandatory: Optional[bool] = True,
-            default: Optional[str] = None
-    ):
+    def resolve_term(self, word: str, mandatory: Optional[bool] = True, default: Optional[str] = None):
         """
         Resolve a term from a source to its preferred curie
 
@@ -60,8 +53,7 @@ class TranslationTable:
             if label in self.global_table:
                 term_id = self.global_table[label]
             else:
-                LOG.info(  #
-                    "Translated to '%s' but no global term_id for: '%s'", label, word)
+                LOG.info("Translated to '%s' but no global term_id for: '%s'", label, word)  #
                 term_id = label
         elif word in self.global_table:
             term_id = self.global_table[word]

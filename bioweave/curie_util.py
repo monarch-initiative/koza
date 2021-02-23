@@ -8,11 +8,12 @@ relocate to a util module?
 # python 3.9 has a generic cache fx
 
 from functools import lru_cache
-from typing import TextIO, Dict
 from os import PathLike
+from typing import Dict, TextIO
 
 import yaml
 from yaml.constructor import ConstructorError
+
 try:
     from yaml import CLoader as Loader
 except ImportError:
@@ -36,8 +37,7 @@ def no_duplicates_constructor(loader, node, deep=False):
         value = loader.construct_object(value_node, deep=deep)
         if key in mapping:
             raise ConstructorError(
-                f"while constructing a mapping {node.start_mark} found duplicate key {key}",
-                key_node.start_mark
+                f"while constructing a mapping {node.start_mark} found duplicate key {key}", key_node.start_mark
             )
         mapping[key] = value
 
@@ -62,7 +62,5 @@ def _curie_map_from_yaml(curie_io: TextIO) -> Dict[str, str]:
     :param curie_io: io stream from open(curie_map_yaml)
     :return: Dictionary of prefix: reference
     """
-    yaml.add_constructor(
-        yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, no_duplicates_constructor
-    )
+    yaml.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, no_duplicates_constructor)
     return yaml.safe_load(curie_io)

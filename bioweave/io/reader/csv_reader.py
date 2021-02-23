@@ -1,6 +1,6 @@
-from typing import Iterator, IO, Dict, Any
 import logging
 from csv import reader
+from typing import IO, Any, Dict, Iterator
 
 from bioweave.model.config.source_config import FieldType
 
@@ -11,7 +11,7 @@ FIELDTYPE_CLASS = {
     FieldType.str: str,
     FieldType.int: int,
     FieldType.float: float,
-    #FieldType.Proportion: Proportion,
+    # FieldType.Proportion: Proportion,
 }
 
 
@@ -39,15 +39,15 @@ class CSVReader:
     """
 
     def __init__(
-            self,
-            io_str: IO[str],
-            field_type_map: Dict[str, FieldType] = None,
-            delimiter: str = "\t",
-            has_header: bool = True,
-            header_delimiter: str = None,
-            dialect: str = "excel",
-            *args,
-            **kwargs
+        self,
+        io_str: IO[str],
+        field_type_map: Dict[str, FieldType] = None,
+        delimiter: str = "\t",
+        has_header: bool = True,
+        header_delimiter: str = None,
+        dialect: str = "excel",
+        *args,
+        **kwargs,
     ):
         """
         :param io_str: Any IO stream that yields a string
@@ -86,12 +86,7 @@ class CSVReader:
                     f"configure the 'columns' property in the source yaml"
                 )
 
-            fieldnames = next(
-                reader(self.io_str, **{
-                    'delimiter': self.header_delimiter,
-                    'dialect': self.dialect
-                })
-            )
+            fieldnames = next(reader(self.io_str, **{'delimiter': self.header_delimiter, 'dialect': self.dialect}))
             fieldnames[0].rstrip('# ').rstrip()
             self.fieldnames = fieldnames
             next(self.reader)
@@ -102,8 +97,7 @@ class CSVReader:
 
                 if set(configured_fields) > set(fieldnames):
                     raise ValueError(
-                        f"Configured columns missing in source file "
-                        f"{set(configured_fields) - set(fieldnames)}"
+                        f"Configured columns missing in source file " f"{set(configured_fields) - set(fieldnames)}"
                     )
 
                 if set(fieldnames) > set(configured_fields):
@@ -118,7 +112,7 @@ class CSVReader:
 
                 # Check if the additional columns are appended
                 # not sure if this would useful or just noise
-                if fieldnames[:len(configured_fields)] != configured_fields:
+                if fieldnames[: len(configured_fields)] != configured_fields:
                     LOG.warning(
                         f"Additional columns located within configured fields\n"
                         f"given: {configured_fields}\n"

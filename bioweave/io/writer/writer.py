@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Iterable, Any
+from typing import Any, Iterable, Optional
 
 
 class BioWeaveWriter(ABC):

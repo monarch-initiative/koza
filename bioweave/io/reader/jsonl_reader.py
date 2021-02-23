@@ -1,6 +1,6 @@
-from typing import Iterator, IO, Dict, Any, List
-import logging
 import json
+import logging
+from typing import IO, Any, Dict, Iterator, List
 
 LOG = logging.getLogger(__name__)
 
@@ -33,9 +33,8 @@ class JSONLReader:
         if self.properties:
             if not set(json_obj.keys()) >= set(self.properties):
                 raise ValueError(
-                    f"Configured properties missing in source file "
-                    f"{set(self.properties) - set(json_obj.keys())}"
+                    f"Configured properties missing in source file " f"{set(self.properties) - set(json_obj.keys())}"
                 )
-            json_obj = {key:json_obj[key] for key in json_obj.keys() if key in self.properties}
+            json_obj = {key: json_obj[key] for key in json_obj.keys() if key in self.properties}
 
         return json_obj

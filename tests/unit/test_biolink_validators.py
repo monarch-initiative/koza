@@ -6,8 +6,8 @@ tests validators and converters
 import pytest
 from pydantic import ValidationError
 
-from bioweave.model.biolink.named_thing import *
 from bioweave.model.biolink.association import *
+from bioweave.model.biolink.named_thing import *
 
 
 def test_taxon_validator():
@@ -16,9 +16,7 @@ def test_taxon_validator():
     NCBITaxon is a valid curie prefix for taxa
     """
     with pytest.raises(ValidationError):
-        molec_entity = MolecularEntity(
-            in_taxon=['taxon:foo', 'NCBITaxon:2']
-        )
+        molec_entity = MolecularEntity(in_taxon=['taxon:foo', 'NCBITaxon:2'])
 
 
 def test_taxon_validator_with_setter():
@@ -40,10 +38,7 @@ def test_assoc_publication_to_scalar_converter():
     to a list of strings
     """
     assoc = Association()
-    assoc.publications = [
-        Publication(id='PMID:123'),
-        Publication(id='PMID:456')
-    ]
+    assoc.publications = [Publication(id='PMID:123'), Publication(id='PMID:456')]
     assert assoc.publications == ['PMID:123', 'PMID:456']
 
 

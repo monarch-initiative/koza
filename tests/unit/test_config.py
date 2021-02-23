@@ -2,13 +2,12 @@
 Testing the biolink config dataclasses + pydandic
 
 """
-import yaml
 from pathlib import Path
 
 import pytest
+import yaml
 
 from bioweave.model.config.source_config import PrimarySourceConfig
-
 
 base_config = Path(__file__).parent / 'resources' / 'primary-source.yaml'
 
@@ -31,11 +30,6 @@ def test_wrong_filter_type_raises_exception():
             PrimarySourceConfig(**source_config)
 
         del source_config['filter_out']
-        source_config['filter_in'] = [{
-            'combined_score': {
-                'filter': 'lt',
-                'value': '70'
-            }
-        }]
+        source_config['filter_in'] = [{'combined_score': {'filter': 'lt', 'value': '70'}}]
         with pytest.raises(ValueError):
             PrimarySourceConfig(**source_config)

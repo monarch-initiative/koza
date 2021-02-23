@@ -7,13 +7,15 @@ https://github.com/biolink/biolink-model/blob/master/biolink-model.yaml
 """
 
 from dataclasses import field
-from pydantic.dataclasses import dataclass
 from typing import ClassVar
 
+from pydantic.dataclasses import dataclass
+
 from bioweave.validator.model_validator import *
+
+from ..config.pydantic_config import PydanticConfig
 from ..curie import Curie
 from .named_thing import Entity, Publication
-from ..config.pydantic_config import PydanticConfig
 
 
 @dataclass(config=PydanticConfig)
@@ -46,6 +48,7 @@ class GeneToGeneAssociation(Association):
     abstract parent class for different kinds of gene-gene or gene product to gene product
     relationships. Includes homology and interaction.
     """
+
     _category: ClassVar[str] = 'GeneToGeneAssociation'
 
 
@@ -55,4 +58,5 @@ class PairwiseGeneToGeneInteraction(GeneToGeneAssociation):
     An interaction between two genes or two gene products. May be physical (e.g. protein binding)
     or genetic (between genes). May be symmetric (e.g. protein interaction) or directed (e.g. phosphorylation)
     """
+
     _category: ClassVar[str] = 'PairwiseGeneToGeneInteraction'

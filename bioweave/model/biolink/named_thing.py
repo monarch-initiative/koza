@@ -7,12 +7,14 @@ https://github.com/biolink/biolink-model/blob/master/biolink-model.yaml
 """
 
 from dataclasses import field
-from pydantic.dataclasses import dataclass
-from typing import Optional, ClassVar
+from typing import ClassVar, Optional
 
-from ..curie import Curie
-from ..config.pydantic_config import PydanticConfig
+from pydantic.dataclasses import dataclass
+
 from bioweave.validator.model_validator import *
+
+from ..config.pydantic_config import PydanticConfig
+from ..curie import Curie
 
 
 @dataclass(config=PydanticConfig)
@@ -22,6 +24,7 @@ class ThingWithTaxon:
     This includes individual organisms; genes, their products and other molecular
     entities; body parts; biological processes
     """
+
     in_taxon: List[Curie] = field(default_factory=list)
 
     _validate_prefix = valid_taxon("in_taxon")
@@ -32,6 +35,7 @@ class NamedThing(Entity):
     """
     Root Biolink Model class for all things and informational relationships, real or imagined
     """
+
     _category: ClassVar[str] = 'NamedThing'
 
 
@@ -41,6 +45,7 @@ class Agent(Entity):
     person, group, organization or project that provides a piece of information
     (i.e. a knowledge association)
     """
+
     _category: ClassVar[str] = 'Agent'
 
     affiliation: List[str] = field(default_factory=list)
@@ -57,6 +62,7 @@ class MolecularEntity(ThingWithTaxon, BiologicalEntity):
     """
     A gene, gene product, small molecule or macromolecule (including protein complex)
     """
+
     _category: ClassVar[str] = 'MolecularEntity'
 
 
@@ -75,8 +81,8 @@ class MacromolecularMachine(GenomicEntity):
     units of function in a cell. They either carry out individual biological
     activities, or they encode molecules which do this.
     """
-    _category: ClassVar[str] = 'MacromolecularMachine'
 
+    _category: ClassVar[str] = 'MacromolecularMachine'
 
 
 @dataclass(config=PydanticConfig)
@@ -85,6 +91,7 @@ class GeneOrGeneProduct(MacromolecularMachine):
     a union of genes or gene products. Frequently an identifier for one will be used
     as proxy for another
     """
+
     _category: ClassVar[str] = 'GeneOrGeneProduct'
 
 
@@ -107,6 +114,7 @@ class InformationContentEntity(NamedThing):
     """
     a piece of information that typically describes some topic of discourse or is used as support.
     """
+
     _category: ClassVar[str] = 'InformationContentEntity'
 
     license: str = None

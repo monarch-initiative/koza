@@ -1,11 +1,12 @@
-from dataclasses import field
-from pydantic.dataclasses import dataclass
-from pydantic import validator
-from typing import List, Union
 import inspect
+from dataclasses import field
+from typing import List, Union
 
-from ..curie import Curie
+from pydantic import validator
+from pydantic.dataclasses import dataclass
+
 from ..config.pydantic_config import PydanticConfig
+from ..curie import Curie
 
 
 @dataclass(config=PydanticConfig)
@@ -13,6 +14,7 @@ class Entity:
     """
     Root Biolink Model class for all things and informational relationships, real or imagined
     """
+
     id: Curie = None
     name: str = ''
     category: List[str] = field(default_factory=list)
@@ -34,6 +36,5 @@ class Entity:
         # by traversing the MRO chain
         if not self.category:
             self.category = [
-                super_class._category for super_class in inspect.getmro(type(self))
-                if hasattr(super_class, '_category')
+                super_class._category for super_class in inspect.getmro(type(self)) if hasattr(super_class, '_category')
             ]

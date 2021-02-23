@@ -50,11 +50,13 @@ bioweave = "bioweave:main"
 
 [tool.black]
 line_length = 120
+skip-string-normalization = true
 
 [tool.isort]
 profile = "black"
 line_length = 120
 multi_line_output = 3
+include_trailing_comma = true
 
 # https://koxudaxi.github.io/pydantic-pycharm-plugin/type-checker-for-pydantic/
 [tool.pydantic-pycharm-plugin]
