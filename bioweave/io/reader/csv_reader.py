@@ -86,7 +86,9 @@ class CSVReader:
                     f"configure the 'columns' property in the source yaml"
                 )
 
-            fieldnames = next(reader(self.io_str, **{'delimiter': self.header_delimiter, 'dialect': self.dialect}))
+            fieldnames = next(
+                reader(self.io_str, **{'delimiter': self.header_delimiter, 'dialect': self.dialect})
+            )
             fieldnames[0].rstrip('# ').rstrip()
             self.fieldnames = fieldnames
             next(self.reader)
@@ -97,7 +99,8 @@ class CSVReader:
 
                 if set(configured_fields) > set(fieldnames):
                     raise ValueError(
-                        f"Configured columns missing in source file " f"{set(configured_fields) - set(fieldnames)}"
+                        f"Configured columns missing in source file "
+                        f"{set(configured_fields) - set(fieldnames)}"
                     )
 
                 if set(fieldnames) > set(configured_fields):
@@ -118,6 +121,8 @@ class CSVReader:
                         f"given: {configured_fields}\n"
                         f"found: {fieldnames}"
                     )
+            else:
+                self.field_type_map = {field: FieldType.str for field in fieldnames}
 
         else:
             self.fieldnames = self.field_type_map.keys()

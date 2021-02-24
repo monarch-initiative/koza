@@ -34,6 +34,7 @@ class CompressionType(str, Enum):
     """
 
     gzip = 'gzip'
+    none = 'none'
 
 
 class FilterCode(str, Enum):
@@ -136,7 +137,9 @@ class SourceConfig:
                 # TODO determine if this should raise an exception
                 # or instead try to type coerce the string to a float
                 if not isinstance(flter['value'], (int, float)):
-                    raise ValueError(f"Filter value must be int or float for operator {flter['filter']}")
+                    raise ValueError(
+                        f"Filter value must be int or float for operator {flter['filter']}"
+                    )
 
         if format is FormatType.csv and self.properties:
             raise ValueError(

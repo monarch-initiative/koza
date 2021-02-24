@@ -9,5 +9,3 @@ class KGXSerializer:
     https://github.com/biolink/kgx/blob/master/specification/kgx-format.md
 
     """
-
-    pass

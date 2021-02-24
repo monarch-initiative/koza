@@ -68,4 +68,12 @@ def test_middle_field_in_file_but_not_in_config_logs_warning(caplog):
         reader = CSVReader(string_file, field_map, delimiter=' ')
         next(reader)
         assert caplog.records[1].levelname == 'WARNING'
-        assert caplog.records[1].msg.startswith('Additional columns located within configured fields')
+        assert caplog.records[1].msg.startswith(
+            'Additional columns located within configured fields'
+        )
+
+def test_no_field_map(caplog):
+    with open(test_file, 'r') as string_file:
+        reader = CSVReader(string_file, delimiter=' ')
+        next(reader)
+

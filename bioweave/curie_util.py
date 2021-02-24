@@ -15,9 +15,9 @@ import yaml
 from yaml.constructor import ConstructorError
 
 try:
-    from yaml import CLoader as Loader
+    pass
 except ImportError:
-    from yaml import Loader
+    pass
 
 from .validator.map_validator import is_dictionary_bimap
 
@@ -37,7 +37,8 @@ def no_duplicates_constructor(loader, node, deep=False):
         value = loader.construct_object(value_node, deep=deep)
         if key in mapping:
             raise ConstructorError(
-                f"while constructing a mapping {node.start_mark} found duplicate key {key}", key_node.start_mark
+                f"while constructing a mapping {node.start_mark} found duplicate key {key}",
+                key_node.start_mark,
             )
         mapping[key] = value
 

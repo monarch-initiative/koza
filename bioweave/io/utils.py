@@ -4,48 +4,65 @@ Set of functions to manage input and output
 """
 import gzip
 import tempfile
+from contextlib import contextmanager
+from io import TextIOWrapper
+from os import PathLike
 from pathlib import Path
-from typing import Iterator
+from typing import IO, Union
 
 import requests
 
+from bioweave.model.config.source_config import CompressionType
 
-def get_remote_source(source: str) -> Iterator[str]:
+
+@contextmanager
+def open_resource(resource: Union[str, PathLike], compression: CompressionType = None) -> IO[str]:
     """
     Iterates over lines from a resource, with basic support
     for compressed file formats
     For simplicity does not support FTP, but note
     that requests does not support FTP (use ftplib or urllib.request)
-    :param source: str, local filepath or remote resource
+
+    :param resource: str or PathLike - local filepath or remote resource
+    :param compression: str or PathLike - compression type
     :return: str, next line in resource
+
     """
-    path = Path(source)
-    if path.exists():
+    if Path(resource).exists():
         # Check if file is gzipped
+        if compression is None or compression == CompressionType.gzip:
+            try:
+                file = gzip.open(resource, 'rt')
+
+            except OSError:
+                file = open(resource, 'r')
+        else:
+            file = open(resource, 'r')
+
         try:
-            with gzip.open(path, 'rb') as file:
-                for line in file:
-                    yield line.decode()
-        except OSError:
-            with open(path, 'r') as file:
-                for line in file:
-                    yield line
-    elif source.startswith('http'):
-        if source.endswith('gz'):
+            yield file
+        finally:
+            file.close()
+
+    elif resource.startswith('http'):
+        tmp_file = tempfile.TemporaryFile('w+b')
+        request = requests.get(resource)
+        tmp_file.write(request.content)
+        tmp_file.seek(0)
+        if resource.endswith('gz') or compression == CompressionType.gzip:
             # This should be more robust, either check headers
             # or use https://github.com/ahupp/python-magic
-            tmp_f = tempfile.TemporaryFile()
-            request = requests.get(source)
-            tmp_f.write(request.content)
-            tmp_f.seek(0)
-            remote_file = gzip.GzipFile(mode='rb', fileobj=tmp_f)
-            for line in remote_file:
-                yield line.decode()
-            tmp_f.close()
+            remote_file = gzip.open(tmp_file, 'rt')
+            try:
+                yield remote_file
+            finally:
+                remote_file.close()
+                tmp_file.close()
         else:
-            with requests.Session() as session:
-                request = session.get(source, stream=True)
-                for line in request.iter_lines():
-                    yield line
+            try:
+                yield TextIOWrapper(tmp_file)
+            finally:
+                tmp_file.close()
+
     else:
-        raise ValueError("Cannot open resource: {}".format(source))
+        raise ValueError(f"Cannot open resource: {resource}")

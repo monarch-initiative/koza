@@ -36,5 +36,7 @@ class Entity:
         # by traversing the MRO chain
         if not self.category:
             self.category = [
-                super_class._category for super_class in inspect.getmro(type(self)) if hasattr(super_class, '_category')
+                super_class._category
+                for super_class in inspect.getmro(type(self))
+                if hasattr(super_class, '_category')
             ]

@@ -18,7 +18,6 @@ def inject_map(ingest_name: str) -> Dict:
     :param ingest_name:
     :return:
     """
-    pass
 
 
 def inject_translation_table(ingest_code: str) -> TranslationTable:
@@ -27,4 +26,3 @@ def inject_translation_table(ingest_code: str) -> TranslationTable:
     :param ingest_code:
     :return:
     """
-    pass

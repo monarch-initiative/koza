@@ -1,5 +1,4 @@
-# Note that you should in your virtual environment of choice
-# before running make
+# Note that you should be in your virtual environment of choice before running make
 
 MAKEFLAGS += --warn-undefined-variables
 MAKEFLAGS += --no-builtin-rules
@@ -16,15 +15,15 @@ install-flit:
 	pip install flit
 
 .PHONY: install-bioweave
-install-bioweave:
+install-bioweave: install-flit
 	flit install --deps production --symlink
 
 .PHONY: install-dev
-install-dev:
+install-dev: install-flit
 	flit install --deps develop --symlink
 
 .PHONY: test
-test:
+test: install-flit install-dev
 	python -m pytest
 
 .PHONY: build
@@ -43,6 +42,6 @@ lint:
 
 .PHONY: format
 format:
-	autoflake --remove-all-unused-imports --recursive --remove-unused-variables --in-place bioweave fastapi --exclude=__init__.py
+	autoflake --remove-all-unused-imports --recursive --remove-unused-variables --in-place bioweave tests --exclude=__init__.py
 	isort bioweave tests
 	black bioweave tests

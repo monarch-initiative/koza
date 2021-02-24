@@ -2,10 +2,10 @@
 
 import typer
 
-bioweave_cli = typer.Typer()
+app = typer.Typer()
 
 
-@bioweave_cli.command()
+@app.command()
 def run(name: str = typer.Argument(..., help="The name of the user to greet")):
     """
     Run a single file through bioweave
@@ -13,7 +13,7 @@ def run(name: str = typer.Argument(..., help="The name of the user to greet")):
     typer.echo(f"Creating item: {name}")
 
 
-@bioweave_cli.command()
+@app.command()
 def batch(item: str):
     """
     Run a group of files through bioweave
@@ -21,13 +21,13 @@ def batch(item: str):
     typer.echo(f"Deleting item: {item}")
 
 
-@bioweave_cli.command()
+@app.command()
 def create(item: str):
     """
-    Create a bioweave stub with config files
+    Create a new bioweave project
     """
     typer.echo(f"Deleting item: {item}")
 
 
 if __name__ == "__main__":
-    bioweave_cli()
+    app()
