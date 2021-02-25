@@ -16,9 +16,9 @@ class SerializationEnum(str, Enum):
 
 
 @dataclass(frozen=True)
-class BioWeaveConfig:
+class KozaConfig:
     """
-    Dataclass for bioweave configuration
+    Dataclass for koza configuration
     """
 
     name: str

@@ -8,14 +8,14 @@ MAKEFLAGS += --no-builtin-variables
 SHELL := bash
 
 .PHONY: all
-all: install-flit install-bioweave install-dev test
+all: install-flit install-koza install-dev test
 
 .PHONY: install-flit
 install-flit:
 	pip install flit
 
-.PHONY: install-bioweave
-install-bioweave: install-flit
+.PHONY: install-koza
+install-koza: install-flit
 	flit install --deps production --symlink
 
 .PHONY: install-dev
@@ -34,14 +34,21 @@ build:
 publish:
 	flit publish
 
+.PHONY: clean
+clean:
+	rm -rf `find . -name __pycache__`
+	rm -f `find . -type f -name '*.py[co]' `
+	rm -rf .pytest_cache
+	rm -rf dist
+
 .PHONY: lint
 lint:
-	flake8 --exit-zero --max-line-length 120 bioweave/ tests/
-	black --check --diff bioweave tests
-	isort --check-only --diff bioweave tests
+	flake8 --exit-zero --max-line-length 120 koza/ tests/
+	black --check --diff koza tests
+	isort --check-only --diff koza tests
 
 .PHONY: format
 format:
-	autoflake --remove-all-unused-imports --recursive --remove-unused-variables --in-place bioweave tests --exclude=__init__.py
-	isort bioweave tests
-	black bioweave tests
+	autoflake --remove-all-unused-imports --recursive --remove-unused-variables --in-place koza tests --exclude=__init__.py
+	isort koza tests
+	black koza tests

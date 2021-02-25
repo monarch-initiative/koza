@@ -12,16 +12,22 @@ from typing import IO, Union
 
 import requests
 
-from bioweave.model.config.source_config import CompressionType
+from koza.model.config.source_config import CompressionType
 
 
 @contextmanager
 def open_resource(resource: Union[str, PathLike], compression: CompressionType = None) -> IO[str]:
     """
-    Iterates over lines from a resource, with basic support
-    for compressed file formats
-    For simplicity does not support FTP, but note
-    that requests does not support FTP (use ftplib or urllib.request)
+    A generic function for opening a local or remote file
+
+    On remote files - files are written to a temporary file, returned as an IO[str]
+    and then deleted upon closing.  Users of this lib should be encouraged to
+    fetch remote files and store them locally using a more specialized tool
+    wget --timestamping with gmake works great see
+    https://github.com/monarch-initiative/DipperCache
+
+    Currently no plans to support FTP, but note
+    that requests does not support FTP (consider ftplib or urllib.request)
 
     :param resource: str or PathLike - local filepath or remote resource
     :param compression: str or PathLike - compression type

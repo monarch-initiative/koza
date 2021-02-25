@@ -2,7 +2,7 @@ import logging
 import re
 from typing import Dict, List
 
-# from bioweave.curie_util import load_curie_map
+# from koza.curie_util import load_curie_map
 
 LOG = logging.getLogger(__name__)
 

@@ -1,15 +1,15 @@
 from dataclasses import dataclass
 from typing import Dict
 
-from bioweave.model.config.bioweave_config import BioWeaveConfig
-from bioweave.model.source import Source
+from koza.model.config.koza_config import KozaConfig
+from koza.model.source import Source
 
 
 @dataclass(init=False, frozen=True)
-class BioWeave:
+class KozaApp:
     """
     Class that holds all configuration information
-    for BioWeave
+    for Koza
 
     Note that this is intended to be a singleton
     that is instantiated in biolink_runner and that
@@ -26,12 +26,12 @@ class BioWeave:
     of this approach (multi threading would be fine)
     """
 
-    config: BioWeaveConfig
+    config: KozaConfig
     curie_map: Dict[str, str] = None
     source_registry: Dict[str, Source] = None
     map_registry: Dict[str, Source] = None
     # serializer_registry: Dict[str, SerializerConfig] = None
     # map_cache: Dict[str, Dict] = None
 
-    def __init__(self, config: BioWeaveConfig):
+    def __init__(self, config: KozaConfig):
         pass

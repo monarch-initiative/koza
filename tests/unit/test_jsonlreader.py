@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from bioweave.io.reader.jsonl_reader import JSONLReader
+from koza.io.reader.jsonl_reader import JSONLReader
 
 test_zfin = (
     Path(__file__).parent.parent / 'resources' / 'source-files' / 'ZFIN_PHENOTYPE_0.jsonl.gz'

@@ -2,9 +2,9 @@ from abc import ABC, abstractmethod
 from typing import Any, Iterable, Optional
 
 
-class BioWeaveWriter(ABC):
+class KozaWriter(ABC):
     """
-    An abstract base class for all bioweave writers
+    An abstract base class for all koza writers
     """
 
     @abstractmethod

@@ -7,9 +7,9 @@ https://asyncio.readthedocs.io/en/latest/producer_consumer.html
 leaning towards using async for all serialization
 """
 
-# from foo import bioweave
+# from foo import koza
 
 
 def serialize(ingest_name: str, *args):
-    # bioweave.serialize(ingest_name, *args)
+    # koza.serialize(ingest_name, *args)
     pass

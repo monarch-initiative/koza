@@ -1,4 +1,4 @@
-from bioweave.validator.exceptions import MapItemException
+from koza.validator.exceptions import MapItemException
 
 
 class MapDict(dict):

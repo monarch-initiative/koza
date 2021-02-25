@@ -2,7 +2,7 @@ from typing import Dict, Tuple
 
 from ..model import TranslationTable
 
-# from foo import bioweave
+# from foo import koza
 # get registry
 
 

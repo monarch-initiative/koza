@@ -10,7 +10,7 @@
 
 # def register_map(): pass
 
-# def get_bioweave() -> BioWeave: pass
+# def get_koza() -> Koza: pass
 
 # def cache_maps(): pass
 

@@ -2,8 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from bioweave.io.reader.csv_reader import CSVReader
-from bioweave.model.config.source_config import FieldType
+from koza.io.reader.csv_reader import CSVReader
+from koza.model.config.source_config import FieldType
 
 test_file = Path(__file__).parent.parent / 'resources' / 'source-files' / 'string.tsv'
 

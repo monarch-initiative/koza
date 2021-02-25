@@ -2,7 +2,7 @@ import logging
 from csv import reader
 from typing import IO, Any, Dict, Iterator
 
-from bioweave.model.config.source_config import FieldType
+from koza.model.config.source_config import FieldType
 
 LOG = logging.getLogger(__name__)
 
@@ -155,7 +155,7 @@ class CSVReader:
             # This is really unreadable - malkovich malkovich
             # Take the value and coerce it using self.field_type_map (field: FieldType)
             # FIELD_TYPE is map of the field_type enum to the python
-            # built-in type or custom extras defined in bioweave
+            # built-in type or custom extras defined in koza
             typed_field_map[field] = FIELDTYPE_CLASS[self.field_type_map[field]](field_value)
 
         return typed_field_map

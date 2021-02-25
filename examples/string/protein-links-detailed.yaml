@@ -1,6 +1,8 @@
 name: 'protein-links-detailed'
 
-delimiter: "\t"
+delimiter: ' '
+
+compression: 'gzip'
 
 files:
   - '9606.protein.links.detailed.v11.0.txt.gz'

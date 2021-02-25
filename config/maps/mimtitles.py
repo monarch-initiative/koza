@@ -1,8 +1,8 @@
 import logging
 import re
 
-from bioweave.facade.data_provider import inject_files, inject_translation_table, inject_map
-from bioweave.facade.helper import next_row
+from koza.facade.data_provider import inject_files, inject_translation_table, inject_map
+from koza.facade.helper import next_row
 
 LOG = logging.getLogger(__name__)
 

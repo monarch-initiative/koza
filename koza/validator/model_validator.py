@@ -8,8 +8,8 @@ from typing import List, Union
 
 from pydantic import validator as pydantic_validator
 
-from bioweave.model.biolink.entity import Entity
-from bioweave.validator.map_validator import is_valid_curie
+from koza.model.biolink.entity import Entity
+from koza.validator.map_validator import is_valid_curie
 
 TAXON_PREFIX = ['NCBITaxon']
 

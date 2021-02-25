@@ -1,7 +1,7 @@
-from bioweave.model import Gene, PairwiseGeneToGeneInteraction, predicate
-from bioweave.facade.data_provider import inject_files, inject_translation_table
-from bioweave.facade.data_collector import serialize
-from bioweave.facade.helper import next_row
+from koza.model import Gene, PairwiseGeneToGeneInteraction, predicate
+from koza.facade.data_provider import inject_files, inject_translation_table
+from koza.facade.data_collector import serialize
+from koza.facade.helper import next_row
 
 _ingest_name = 'protein-links-detailed'
 

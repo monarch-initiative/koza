@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from bioweave.model.config.source_config import PrimarySourceConfig
+from koza.model.config.source_config import PrimarySourceConfig
 
 base_config = Path(__file__).parent / 'resources' / 'primary-source.yaml'
 

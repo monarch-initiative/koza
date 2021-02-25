@@ -11,7 +11,7 @@ from typing import ClassVar, Optional
 
 from pydantic.dataclasses import dataclass
 
-from bioweave.validator.model_validator import *
+from koza.validator.model_validator import *
 
 from ..config.pydantic_config import PydanticConfig
 from ..curie import Curie

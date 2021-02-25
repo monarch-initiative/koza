@@ -12,7 +12,7 @@ to break out of its lexical scope
 Some other options described here if this needs to be
 more complex: https://stackoverflow.com/a/16192256
 """
-from bioweave.validator.exceptions import NextRowException
+from koza.validator.exceptions import NextRowException
 
 
 def next_row():

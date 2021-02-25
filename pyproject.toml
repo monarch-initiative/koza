@@ -3,10 +3,10 @@ requires = ["flit_core >=2,<4"]
 build-backend = "flit_core.buildapi"
 
 [tool.flit.metadata]
-module = "bioweave"
+module = "koza"
 author = "The Monarch Initiative"
 author-email = "info@monarchinitiative.org"
-home-page = "https://github.com/kshefchek/bioweave"
+home-page = "https://github.com/monarch-initiative/koza"
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
     "License :: OSI Approved :: BSD License",
@@ -29,7 +29,7 @@ description-file = "README.md"
 requires-python = ">=3.6"
 
 [tool.flit.metadata.urls]
-Documentation = "https://github.com/kshefchek/bioweave"
+Documentation = "https://github.com/monarch-initiative/koza"
 
 [tool.flit.metadata.requires-extra]
 test = [
@@ -46,7 +46,7 @@ dev = [
 ]
 
 [tool.flit.scripts]
-bioweave = "bioweave:main.app"
+koza = "koza:main.app"
 
 [tool.black]
 line_length = 100
@@ -64,4 +64,4 @@ include_trailing_comma = true
 acceptable-type-highlight = "disable"
 
 [tool.pydantic-pycharm-plugin.acceptable-types]
-"bioweave.model.curie.Curie" = ["str"]
+"koza.model.curie.Curie" = ["str"]
