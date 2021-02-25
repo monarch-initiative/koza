@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from typing import Any, Dict, Iterator
 
-# from koza.io.reader import BioWeaveReader  # see reader.__init__.py
 from .config.source_config import SourceConfig
 from .translation_table import TranslationTable
 
