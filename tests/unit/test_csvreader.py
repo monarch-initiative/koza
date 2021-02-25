@@ -72,8 +72,8 @@ def test_middle_field_in_file_but_not_in_config_logs_warning(caplog):
             'Additional columns located within configured fields'
         )
 
+
 def test_no_field_map(caplog):
     with open(test_file, 'r') as string_file:
         reader = CSVReader(string_file, delimiter=' ')
         next(reader)
-

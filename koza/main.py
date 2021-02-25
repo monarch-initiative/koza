@@ -6,9 +6,7 @@ app = typer.Typer()
 
 
 @app.command()
-def run(
-        name: str = typer.Argument(..., help="The name of the user to greet")
-):
+def run(name: str = typer.Argument(..., help="The name of the user to greet")):
     """
     Run a single file through koza
     """

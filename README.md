@@ -5,7 +5,7 @@
 *Disclaimer*: Koza is in pre-alpha
 
 Author declarative transforms with dataclasses in the spirit of a DSL but in vanilla 
-Python3 [Jump to an example](#A Full Example)
+Python3
 
 
 #### Installation
