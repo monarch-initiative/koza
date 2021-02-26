@@ -1,5 +1,5 @@
-# This is a basic workflow to help you get started with Actions
-
+# Builds and runs pytest on ubuntu-latest
+# Tests python versions >=3.6
 name: CI
 
 on:
@@ -11,7 +11,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  test-ubuntu-latest:
+  # https://github.com/actions/setup-python
+  test-python3-ubuntu-latest:
     name: test py${{ matrix.python-version }} on linux
     runs-on: ubuntu-latest
     strategy:
@@ -24,6 +25,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+
+      - name: set up python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
 
       - name: make test
         run: make test
