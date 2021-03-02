@@ -36,13 +36,15 @@ class CSVReader:
       - Potentially will add support a multivalued field DSL, eg
         List[str][';'] would convert a semicolon delimited multivalued
         field to a list of strings
+
+    TODO handle cases when delimiter is >1 character
     """
 
     def __init__(
         self,
         io_str: IO[str],
         field_type_map: Dict[str, FieldType] = None,
-        delimiter: str = "\t",
+        delimiter: str = ",",
         has_header: bool = True,
         header_delimiter: str = None,
         dialect: str = "excel",
@@ -123,11 +125,19 @@ class CSVReader:
                     )
             else:
                 self.field_type_map = {field: FieldType.str for field in fieldnames}
+                LOG.info(
+                    f"No headers supplied, found {fieldnames}"
+                )
 
         else:
             self.fieldnames = self.field_type_map.keys()
-
-        row = next(self.reader)
+        try:
+            row = next(self.reader)
+        except StopIteration:
+            LOG.info(
+                f"Finished processing {self.line_num} rows"
+            )
+            raise StopIteration
         self.line_num = self.reader.line_num
 
         # skip blank lines
@@ -142,10 +152,14 @@ class CSVReader:
         # to determine what to do here
         fields_len = len(self.fieldnames)
         row_len = len(row)
-        if fields_len < row_len:
-            raise ValueError(f"CSV file has shorter columns at {self.reader.line_num}")
-        elif fields_len > row_len:
-            raise ValueError(f"CSV file has longer columns at {self.reader.line_num}")
+        if fields_len > row_len:
+            LOG.warning(
+                f"CSV file has {fields_len - row_len} fewer columns at {self.reader.line_num}"
+            )
+        elif row_len > fields_len:
+            LOG.warning(
+                f"CSV file has {row_len - fields_len} extra columns at {self.reader.line_num}"
+            )
 
         # if we've made it here we can convert a row to a dict
         field_map = dict(zip(self.fieldnames, row))

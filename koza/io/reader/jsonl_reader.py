@@ -20,6 +20,7 @@ class JSONLReader:
         """
         self.io_str = io_str
         self.properties = properties
+        self.line_num = 0
 
     def __iter__(self) -> Iterator:
         return self
@@ -27,7 +28,9 @@ class JSONLReader:
     def __next__(self) -> Dict[str, Any]:
         next_line = self.io_str.readline()
         if not next_line:
+            LOG.info(f"Finished processing {self.line_num} lines")
             raise StopIteration
+        self.line_num += 1
         json_obj = json.loads(next_line)
 
         if self.properties:

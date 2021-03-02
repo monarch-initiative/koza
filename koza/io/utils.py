@@ -35,13 +35,17 @@ def open_resource(resource: Union[str, PathLike], compression: CompressionType =
 
     """
     if Path(resource).exists():
-        # Check if file is gzipped
-        if compression is None or compression == CompressionType.gzip:
+        if compression is None:
+            # Try gzip first
             try:
                 file = gzip.open(resource, 'rt')
+                file.read(1)
+                file.seek(0)
 
             except OSError:
                 file = open(resource, 'r')
+        elif compression == CompressionType.gzip:
+            file = gzip.open(resource, 'rt')
         else:
             file = open(resource, 'r')
 
@@ -71,4 +75,4 @@ def open_resource(resource: Union[str, PathLike], compression: CompressionType =
                 tmp_file.close()
 
     else:
-        raise ValueError(f"Cannot open resource: {resource}")
+        raise ValueError(f"Cannot open local or remote file: {resource}")

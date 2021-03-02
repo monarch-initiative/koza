@@ -1,16 +1,47 @@
 #!/usr/bin/env python3
 
+import logging
+
 import typer
+
+from koza.model.config.source_config import FormatType, CompressionType
+from koza.koza_runner import run_single_resource
 
 app = typer.Typer()
 
 
+logging.basicConfig()
+LOG = logging.getLogger(__name__)
+
+
 @app.command()
-def run(name: str = typer.Argument(..., help="The name of the user to greet")):
+def run(
+        file: str = typer.Option(..., help="Path or url to the source file"),
+        format: FormatType = FormatType.csv,
+        delimiter: str = ',',
+        header_delimiter: str = None,
+        filter: str = None,
+        compression: CompressionType = None,
+        quiet: bool = False,
+        debug: bool = False
+):
     """
     Run a single file through koza
     """
-    typer.echo(f"Creating item: {name}")
+
+    # Logging levels
+    if quiet:
+        logging.getLogger().setLevel(logging.WARNING)
+    elif debug:
+        logging.getLogger().setLevel(logging.DEBUG)
+    else:
+        logging.getLogger().setLevel(logging.INFO)
+
+    # If a user passes in \s for a space delimited csv file
+    if delimiter == '\\s':
+        delimiter = ' '
+    run_single_resource(file, format, delimiter, header_delimiter, filter, compression)
+    #typer.echo(f"Creating item: {name}")
 
 
 @app.command()
