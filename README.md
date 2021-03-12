@@ -4,9 +4,24 @@
 
 *Disclaimer*: Koza is in pre-alpha
 
-Author declarative transforms with dataclasses in the spirit of a DSL but in vanilla 
-Python3
 
+##### Highlights
+Koza allows you to:
+
+- Author transforms with dataclasses in semi-declarative Python
+- Configure filters, metadata, and data mappings in yaml
+- Import and optionally transform mapping files
+- Create an ETL pipeline for multiple sources
+
+While Koza aims to support a declarative programming paradigm, it
+also supports procedural programming constructs
+
+TODO describe assumptions for source data
+
+
+###### What is out of scope mid term?
+
+- Models other than Biolink
 
 #### Installation
 
@@ -16,27 +31,36 @@ pip install koza
 
 #### Getting Started
 
-Send a TSV file through Koza to get some basic information (headers, row/column length)
+Send a TSV file through Koza to get some basic information (headers, number of rows)
 
 ```bash
-koza run --file https://raw.githubusercontent.com/monarch-initiative/koza/dev/tests/resources/source-files/string.tsv --delimiter ' '
+koza run \
+  --file https://raw.githubusercontent.com/monarch-initiative/koza/dev/tests/resources/source-files/string.tsv \
+  --delimiter ' '
 ```
 
-Or a local file
+Or a jsonl formatted file
 ```bash
-koza run --file ./tests/resources/source-files/ZFIN_PHENOTYPE_0.jsonl.gz --format jsonl
+koza run \
+  --file ./tests/resources/source-files/ZFIN_PHENOTYPE_0.jsonl.gz \
+  --format jsonl
 ```
 
 #### A Small Example - adding configuration and filters
 
 
-TODO example using string
-
 
 #### A Full Example - Adding transform logic and maps
 
+
+
 ##### Adding Transform Logic
 
+
 ##### Adding A Map
-/home/kshefchek/git/koza/examples/data
-TODO example using string
+TODO
+
+
+##### Example of a procedural transform
+TODO
+

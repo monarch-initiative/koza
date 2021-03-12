@@ -57,6 +57,8 @@ def open_resource(resource: Union[str, PathLike], compression: CompressionType =
     elif resource.startswith('http'):
         tmp_file = tempfile.TemporaryFile('w+b')
         request = requests.get(resource)
+        if request.status_code != 200:
+            raise ValueError(f"Remote file returned {request.status_code}: {request.text}")
         tmp_file.write(request.content)
         tmp_file.seek(0)
         if resource.endswith('gz') or compression == CompressionType.gzip:
@@ -76,3 +78,7 @@ def open_resource(resource: Union[str, PathLike], compression: CompressionType =
 
     else:
         raise ValueError(f"Cannot open local or remote file: {resource}")
+
+
+def get_resource_name(resource: Union[str, PathLike]) -> str:
+    return Path(resource).name

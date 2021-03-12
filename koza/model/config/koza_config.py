@@ -11,7 +11,7 @@ class SerializationEnum(str, Enum):
     """
 
     tsv = 'tsv'
-    nturtles = 'nturtles'
+    # nturtles = 'nturtles'
     # rdfstar, ntriples, etc
 
 

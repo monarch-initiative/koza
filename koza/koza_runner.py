@@ -4,12 +4,19 @@
 1 curie Map
 """
 
-from .model.config.source_config import FormatType, CompressionType
+from typing import IO
 
-from .io.utils import open_resource
+from csv import DictWriter
+
+from .model.config.source_config import FormatType, CompressionType
+from .model.config.koza_config import SerializationEnum
+
+from .io.utils import open_resource, get_resource_name
 
 from .io.reader.csv_reader import CSVReader
 from .io.reader.jsonl_reader import JSONLReader
+from .io.reader.json_reader import JSONReader
+
 
 
 # def register_source(): pass
@@ -28,18 +35,39 @@ def run_single_resource(
         format: FormatType = FormatType.csv,
         delimiter: str = ',',
         header_delimiter: str = None,
+        output: IO[str] = None,
+        serialization: SerializationEnum = None,
         filter: str = None,
         compression: CompressionType = None
 ):
+
     # Get the resource
+    resource_name = get_resource_name(file)
+
+
     with open_resource(file, compression) as resource_io:
 
-        if format is FormatType.csv:
-            reader = CSVReader(resource_io, delimiter=delimiter, header_delimiter=header_delimiter)
-        elif format is FormatType.jsonl:
-            reader = JSONLReader(resource_io)
+        if format == FormatType.csv:
+            reader = CSVReader(
+                resource_io, delimiter=delimiter, header_delimiter=header_delimiter, name=resource_name
+            )
+        elif format == FormatType.jsonl:
+            reader = JSONLReader(resource_io, name=resource_name)
+        elif format == FormatType.json:
+            reader = JSONReader(resource_io, name=resource_name)
         else:
             raise ValueError
 
-        for _ in reader:
-            pass
+        if format == FormatType.csv:
+            # Iterate over the header(s) to get field names for writer
+            first_row = next(reader)
+
+        # set the writer
+        if serialization is None:
+            writer = DictWriter(output, reader.fieldnames, delimiter='\t')
+            writer.writeheader()
+            writer.writerow(first_row)
+
+        for row in reader:
+            if output:
+                writer.writerow(row)

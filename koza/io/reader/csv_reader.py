@@ -48,12 +48,15 @@ class CSVReader:
         has_header: bool = True,
         header_delimiter: str = None,
         dialect: str = "excel",
+        skip_lines: int = 0,
+        name: str = "csv file",
         *args,
         **kwargs,
     ):
         """
         :param io_str: Any IO stream that yields a string
                        See https://docs.python.org/3/library/io.html#io.IOBase
+        :param name: filename or alias
         :param field_type_map: A dictionary of field names and their type (using the FieldType enum)
         :param delimiter: Field delimiter (eg. '\t' ',' ' ')
         :param has_header: true if the file has a header, default=True
@@ -67,6 +70,8 @@ class CSVReader:
         self.dialect = dialect
         self.has_header = has_header
         self.header_delimiter = header_delimiter if header_delimiter else delimiter
+        self.skip_lines = skip_lines
+        self.name = name
 
         self.line_num = 0
         self.fieldnames = []
@@ -80,7 +85,10 @@ class CSVReader:
 
     def __next__(self) -> Dict[str, Any]:
 
-        if self.line_num == 0:
+        while self.line_num < self.skip_lines:
+            next(self.reader)
+
+        if self.line_num == self.skip_lines:
 
             if not self.has_header and not self.field_type_map:
                 raise ValueError(
@@ -101,13 +109,13 @@ class CSVReader:
 
                 if set(configured_fields) > set(fieldnames):
                     raise ValueError(
-                        f"Configured columns missing in source file "
+                        f"Configured columns missing in source file {self.name}\n"
                         f"{set(configured_fields) - set(fieldnames)}"
                     )
 
                 if set(fieldnames) > set(configured_fields):
                     LOG.warning(
-                        f"Additional column(s) in source file "
+                        f"Additional column(s) in source file {self.name}\n"
                         f"{set(fieldnames) - set(configured_fields)}\n"
                         f"Checking if new column(s) inserted at end of the row"
                     )
@@ -126,7 +134,7 @@ class CSVReader:
             else:
                 self.field_type_map = {field: FieldType.str for field in fieldnames}
                 LOG.info(
-                    f"No headers supplied, found {fieldnames}"
+                    f"No headers supplied for {self.name}, found {fieldnames}"
                 )
 
         else:
@@ -135,7 +143,7 @@ class CSVReader:
             row = next(self.reader)
         except StopIteration:
             LOG.info(
-                f"Finished processing {self.line_num} rows"
+                f"Finished processing {self.line_num} rows for {self.name}"
             )
             raise StopIteration
         self.line_num = self.reader.line_num
@@ -154,11 +162,11 @@ class CSVReader:
         row_len = len(row)
         if fields_len > row_len:
             LOG.warning(
-                f"CSV file has {fields_len - row_len} fewer columns at {self.reader.line_num}"
+                f"CSV file {self.name} has {fields_len - row_len} fewer columns at {self.reader.line_num}"
             )
         elif row_len > fields_len:
             LOG.warning(
-                f"CSV file has {row_len - fields_len} extra columns at {self.reader.line_num}"
+                f"CSV file {self.name} has {row_len - fields_len} extra columns at {self.reader.line_num}"
             )
 
         # if we've made it here we can convert a row to a dict

@@ -5,9 +5,10 @@ map config data class
 from dataclasses import field
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Any
 
 from pydantic.dataclasses import dataclass
+from glom import Path as GlomPath
 
 
 class MapErrorEnum(str, Enum):
@@ -26,6 +27,7 @@ class FormatType(str, Enum):
 
     csv = 'csv'
     jsonl = 'jsonl'
+    json = 'json'
 
 
 class CompressionType(str, Enum):
@@ -102,6 +104,8 @@ class SourceConfig:
     delimiter:
     separator string similar to what works in str.split()
     https://docs.python.org/3/library/stdtypes.html#str.split
+
+    required_properties: A list of required top level properties in a json object
     """
 
     name: str
@@ -109,13 +113,15 @@ class SourceConfig:
     files: List[Union[str, Path]]
     format: FormatType = FormatType.csv
     columns: List[Union[str, Dict[str, FieldType]]] = None
-    properties: List[str] = None
+    required_properties: List[str] = None
     delimiter: str = None
     header_delimiter: str = None
     skip_lines: int = 0
+    skip_blank_lines: bool = True
     compression: CompressionType = None
     filter_in: List[Dict[str, Filter]] = field(default_factory=list)
     filter_out: List[Dict[str, Filter]] = field(default_factory=list)
+    glom_path: List[Any] = None
 
     def __post_init__(self):
         files_as_paths: List[Path] = []
@@ -136,25 +142,36 @@ class SourceConfig:
             if flter['filter'] in ['lt', 'gt', 'lte', 'gte']:
                 # TODO determine if this should raise an exception
                 # or instead try to type coerce the string to a float
+                # type coercion is probably the best thing to do here
                 if not isinstance(flter['value'], (int, float)):
                     raise ValueError(
                         f"Filter value must be int or float for operator {flter['filter']}"
                     )
 
-        if format is FormatType.csv and self.properties:
+        if self.format == FormatType.csv and self.required_properties:
             raise ValueError(
-                f"csv specified but properties have been configured\n"
+                f"csv specified but required properties have been configured\n"
                 f"either set format to jsonl or change properties to columns in the config"
             )
 
-        if format is FormatType.jsonl and self.columns:
+        if self.columns and self.format != FormatType.csv:
             raise ValueError(
-                f"jsonl specified but columns have been configured\n"
+                f"columns have been configured but format is not csv\n"
                 f"either set format to csv or change columns to properties in the config"
             )
+
+        if self.glom_path and self.format != FormatType.json:
+            raise ValueError(
+                f"iterate_over has been configured but format is not json\n"
+                f"either set format to json or remove iterate_over in the configuration"
+            )
+
         if self.columns:
             pass
         # do we parse the field-type map here, private attr?
+
+        if self.glom_path:
+            object.__setattr__(self, 'glom_path', GlomPath(*self.glom_path))
 
 
 @dataclass(frozen=True)
