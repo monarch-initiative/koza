@@ -133,18 +133,14 @@ class CSVReader:
                     )
             else:
                 self.field_type_map = {field: FieldType.str for field in fieldnames}
-                LOG.info(
-                    f"No headers supplied for {self.name}, found {fieldnames}"
-                )
+                LOG.info(f"No headers supplied for {self.name}, found {fieldnames}")
 
         else:
             self.fieldnames = self.field_type_map.keys()
         try:
             row = next(self.reader)
         except StopIteration:
-            LOG.info(
-                f"Finished processing {self.line_num} rows for {self.name}"
-            )
+            LOG.info(f"Finished processing {self.line_num} rows for {self.name}")
             raise StopIteration
         self.line_num = self.reader.line_num
 

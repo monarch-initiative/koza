@@ -1,6 +1,5 @@
 # test
 
-from pathlib import Path
 
 from koza.io.reader.csv_reader import CSVReader
 from koza.io.utils import open_resource

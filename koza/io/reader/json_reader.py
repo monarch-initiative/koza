@@ -13,11 +13,11 @@ class JSONReader:
     """
 
     def __init__(
-            self,
-            io_str: IO[str],
-            required_properties: List[str] = None,
-            glom_path: Path = None,
-            name: str = 'json file'
+        self,
+        io_str: IO[str],
+        required_properties: List[str] = None,
+        glom_path: Path = None,
+        name: str = 'json file',
     ):
         """
         :param io_str: Any IO stream that yields a string
@@ -58,6 +58,6 @@ class JSONReader:
                 )
 
             # If we want to subset
-            #next_obj = {key: next_obj[key] for key in next_obj.keys() if key in self.required_properties}
+            # next_obj = {key: next_obj[key] for key in next_obj.keys() if key in self.required_properties}
 
         return next_obj

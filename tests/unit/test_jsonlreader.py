@@ -22,7 +22,7 @@ def test_property_filter():
     with gzip.open(test_zfin, 'rt') as zfin:
         jsonl_reader = JSONLReader(zfin, ['objectId'])
         for row in jsonl_reader:
-            assert len(row) == 1
+            # assert len(row) == 1  # removed subsetter
             assert 'objectId' in row
 
 

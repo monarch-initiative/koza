@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 
 import logging
-from pathlib import Path
 import uuid
+from pathlib import Path
 
 import typer
 
-from koza.model.config.source_config import FormatType, CompressionType
-from koza.model.config.koza_config import SerializationEnum
 from koza.koza_runner import run_single_resource
+from koza.model.config.koza_config import SerializationEnum
+from koza.model.config.source_config import CompressionType, FormatType
 
 app = typer.Typer()
 
@@ -19,16 +19,16 @@ LOG = logging.getLogger(__name__)
 
 @app.command()
 def run(
-        file: str = typer.Option(..., help="Path or url to the source file"),
-        format: FormatType = FormatType.csv,
-        delimiter: str = ',',
-        header_delimiter: str = None,
-        filter: str = None,
-        compression: CompressionType = None,
-        output: str = None,
-        output_format: SerializationEnum = SerializationEnum.tsv,
-        quiet: bool = False,
-        debug: bool = False
+    file: str = typer.Option(..., help="Path or url to the source file"),
+    format: FormatType = FormatType.csv,
+    delimiter: str = ',',
+    header_delimiter: str = None,
+    filter: str = None,
+    compression: CompressionType = None,
+    output: str = None,
+    output_format: SerializationEnum = SerializationEnum.tsv,
+    quiet: bool = False,
+    debug: bool = False,
 ):
     """
     Run a single file through koza

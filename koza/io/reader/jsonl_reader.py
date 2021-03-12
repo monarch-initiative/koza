@@ -12,10 +12,7 @@ class JSONLReader:
     """
 
     def __init__(
-            self,
-            io_str: IO[str],
-            required_properties: List[str] = None,
-            name: str = 'jsonl file'
+        self, io_str: IO[str], required_properties: List[str] = None, name: str = 'jsonl file'
     ):
         """
         :param io_str: Any IO stream that yields a string
@@ -49,6 +46,6 @@ class JSONLReader:
                     f"{set(self.required_properties) - set(json_obj.keys())}"
                 )
             # If we want to turn this into a subsetter
-            #json_obj = {key: json_obj[key] for key in json_obj.keys() if key in self.required_properties}
+            # json_obj = {key: json_obj[key] for key in json_obj.keys() if key in self.required_properties}
 
         return json_obj

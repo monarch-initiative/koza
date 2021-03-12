@@ -4,20 +4,15 @@
 1 curie Map
 """
 
+from csv import DictWriter
 from typing import IO
 
-from csv import DictWriter
-
-from .model.config.source_config import FormatType, CompressionType
-from .model.config.koza_config import SerializationEnum
-
-from .io.utils import open_resource, get_resource_name
-
 from .io.reader.csv_reader import CSVReader
-from .io.reader.jsonl_reader import JSONLReader
 from .io.reader.json_reader import JSONReader
-
-
+from .io.reader.jsonl_reader import JSONLReader
+from .io.utils import get_resource_name, open_resource
+from .model.config.koza_config import SerializationEnum
+from .model.config.source_config import CompressionType, FormatType
 
 # def register_source(): pass
 
@@ -31,25 +26,27 @@ from .io.reader.json_reader import JSONReader
 
 
 def run_single_resource(
-        file: str,
-        format: FormatType = FormatType.csv,
-        delimiter: str = ',',
-        header_delimiter: str = None,
-        output: IO[str] = None,
-        serialization: SerializationEnum = None,
-        filter: str = None,
-        compression: CompressionType = None
+    file: str,
+    format: FormatType = FormatType.csv,
+    delimiter: str = ',',
+    header_delimiter: str = None,
+    output: IO[str] = None,
+    serialization: SerializationEnum = None,
+    filter: str = None,
+    compression: CompressionType = None,
 ):
 
     # Get the resource
     resource_name = get_resource_name(file)
 
-
     with open_resource(file, compression) as resource_io:
 
         if format == FormatType.csv:
             reader = CSVReader(
-                resource_io, delimiter=delimiter, header_delimiter=header_delimiter, name=resource_name
+                resource_io,
+                delimiter=delimiter,
+                header_delimiter=header_delimiter,
+                name=resource_name,
             )
         elif format == FormatType.jsonl:
             reader = JSONLReader(resource_io, name=resource_name)

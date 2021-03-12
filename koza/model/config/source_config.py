@@ -5,10 +5,10 @@ map config data class
 from dataclasses import field
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Union, Any
+from typing import Any, Dict, List, Union
 
-from pydantic.dataclasses import dataclass
 from glom import Path as GlomPath
+from pydantic.dataclasses import dataclass
 
 
 class MapErrorEnum(str, Enum):
