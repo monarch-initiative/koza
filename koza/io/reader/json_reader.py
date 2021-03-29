@@ -2,7 +2,7 @@ import json
 import logging
 from typing import IO, Any, Dict, Iterator, List
 
-from glom import Path
+from glom import glom, Path
 
 LOG = logging.getLogger(__name__)
 
@@ -27,25 +27,35 @@ class JSONReader:
         :param name: todo
         """
         self.io_str = io_str
-        self.glom_path = glom_path
         self.required_properties = required_properties
+        self.glom_path = glom_path
         self.name = name
-        self.json_obj = json.load(self.io_str)
-        self.iter_json = []
 
-        self._len = len(self.iter_json)
-        self._line_num = 0
+        if self.glom_path:
+            self.json_obj = glom(json.load(self.io_str), self.glom_path)
+        else:
+            self.json_obj = json.load(self.io_str)
+
+        if isinstance(self.json_obj, list):
+            self._len = len(self.json_obj)
+            self._line_num = 0
+        else:
+            self.json_obj = [self.json_obj]
+            self._len = 0
+            self._line_num = 0
 
     def __iter__(self) -> Iterator:
         return self
 
     def __next__(self) -> Dict[str, Any]:
-        # Read the whole json file into memory
-        next_obj = self.iter_json[self._line_num]
 
-        if self._line_num > self._len:
-            LOG.info(f"Finished processing json file")
+        if self._line_num + 1 > self._len:
+            LOG.info(f"Finished processing {self.name}")
             raise StopIteration
+
+        next_obj = self.json_obj[self._line_num]
+
+        self._line_num = self._line_num + 1
 
         if self.required_properties:
             if not set(next_obj.keys()) >= set(self.required_properties):

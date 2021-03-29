@@ -81,4 +81,11 @@ def open_resource(resource: Union[str, PathLike], compression: CompressionType =
 
 
 def get_resource_name(resource: Union[str, PathLike]) -> str:
+    """
+    Return a local or remote files name sans drive and directory path
+    equivalent to return os.path.basename(resource)
+
+    :param resource: local or remote file as string or pathlike
+    :return: str, name of the file without its directory or url path
+    """
     return Path(resource).name

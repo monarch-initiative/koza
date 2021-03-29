@@ -18,7 +18,7 @@ def test_normal_case():
         assert row['objectId'] == 'ZFIN:ZDB-GENE-011026-1'
 
 
-def test_property_filter():
+def test_required_property():
     with gzip.open(test_zfin, 'rt') as zfin:
         jsonl_reader = JSONLReader(zfin, ['objectId'])
         for row in jsonl_reader:
@@ -26,7 +26,7 @@ def test_property_filter():
             assert 'objectId' in row
 
 
-def test_missing_property_raises_exception():
+def test_missing_req_property_raises_exception():
     with gzip.open(test_zfin, 'rt') as zfin:
         jsonl_reader = JSONLReader(zfin, ['objectId', 'foobar'])
         with pytest.raises(ValueError):

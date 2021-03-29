@@ -49,9 +49,7 @@ koza run \
 #### A Small Example - adding configuration and filters
 
 
-
 #### A Full Example - Adding transform logic and maps
-
 
 
 ##### Adding Transform Logic
@@ -63,4 +61,3 @@ TODO
 
 ##### Example of a procedural transform
 TODO
-
