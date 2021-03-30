@@ -1,0 +1,73 @@
+import json
+import logging
+from typing import IO, Any, Dict, Iterator, List
+
+from glom import Path, glom
+
+LOG = logging.getLogger(__name__)
+
+
+class JSONReader:
+    """
+    A JSON reader that optionally iterates over a json list
+    """
+
+    def __init__(
+        self,
+        io_str: IO[str],
+        required_properties: List[str] = None,
+        glom_path: Path = None,
+        name: str = 'json file',
+    ):
+        """
+        :param io_str: Any IO stream that yields a string
+                       See https://docs.python.org/3/library/io.html#io.IOBase
+        :param required_properties: required top level properties
+        :param iterate_over: todo
+        :param name: todo
+        """
+        self.io_str = io_str
+        self.required_properties = required_properties
+        self.glom_path = glom_path
+        self.name = name
+
+        if self.glom_path:
+            self.json_obj = glom(json.load(self.io_str), self.glom_path)
+        else:
+            self.json_obj = json.load(self.io_str)
+
+        if isinstance(self.json_obj, list):
+            self._len = len(self.json_obj)
+            self._line_num = 0
+        else:
+            self.json_obj = [self.json_obj]
+            self._len = 0
+            self._line_num = 0
+
+    def __iter__(self) -> Iterator:
+        return self
+
+    def __next__(self) -> Dict[str, Any]:
+
+        if self._line_num + 1 > self._len:
+            LOG.info(f"Finished processing {self.name}")
+            raise StopIteration
+
+        next_obj = self.json_obj[self._line_num]
+
+        self._line_num = self._line_num + 1
+
+        if self.required_properties:
+            if not set(next_obj.keys()) >= set(self.required_properties):
+                # TODO - have koza runner handle this exception
+                # based on some configuration? similar to
+                # on_map_error
+                raise ValueError(
+                    f"Configured properties missing in source file "
+                    f"{set(self.required_properties) - set(next_obj.keys())}"
+                )
+
+            # If we want to subset
+            # next_obj = {key: next_obj[key] for key in next_obj.keys() if key in self.required_properties}
+
+        return next_obj

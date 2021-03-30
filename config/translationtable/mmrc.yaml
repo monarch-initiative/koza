@@ -1,0 +1,19 @@
+---
+
+# these are ids translated to labels as found
+# the comments are perhaps more specific
+"SM": "sequence_alteration"         # spontaneous mutation
+"TM": "sequence_alteration"         # targeted mutation
+"TG": "transgenic_insertion"        # transgenic
+"GT": "sequence_alteration"         # gene trap
+"CI": "sequence_alteration"         # chemically induced mutation
+"RAD": "sequence_alteration"        # radiation induced mutation
+"CH": "chromosome_structure_variation"  # chromosomal aberration
+"RB": "Robertsonian_fusion"         # Robertsonian translocation
+"TL": "reciprocal_chromosomal_translocation"  # reciprocal translocation
+"TP": "chromosomal_transposition"   # transposition
+"INV": "inversion"                  # inversion
+"INS": "insertion"                  # insertion
+"DEL": "deletion"                   # deletion
+"DP": "duplication"                 # duplication
+"OTH": "sequence_alteration"        # other

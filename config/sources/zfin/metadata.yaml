@@ -1,0 +1,11 @@
+name: 'stringdb'
+
+dataset_description:
+  ingest_title: 'String DB'
+  ingest_url: 'String'
+  data_rights: 'String'
+
+data_dir: './string'
+
+source_templates:
+  - 'protein-links-detailed'

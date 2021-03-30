@@ -1,0 +1,31 @@
+name: 'mim2gene'
+
+file_metadata:
+  description: 'OMIM identifier to NCBI (entrez), HGNC symbols (no ids), Ensembl gene mappings'
+
+source: 'omim'
+
+skip_lines: 4
+
+delimeter: '\t'
+
+files:
+  - 'mim2gene.txt'
+
+columns:
+  - 'MIM Number'
+  - 'MIM Entry Type (see FAQ 1.3 at https://omim.org/help/faq)'
+  - 'Entrez Gene ID (NCBI)'
+  - 'Approved Gene Symbol (HGNC)'
+  - 'Ensembl Gene ID (Ensembl)'
+
+key: 'MIM Number'
+
+values:
+  - 'Entrez Gene ID (NCBI)'
+  - 'Ensembl Gene ID (Ensembl)'
+
+filter_out:
+  'MIM Entry Type (see FAQ 1.3 at https://omim.org/help/faq)':
+     filter: 'eq'
+     value: 'moved/removed'

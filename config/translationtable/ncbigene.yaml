@@ -1,0 +1,24 @@
+---
+# ncbigene.yaml
+
+# map_type_of_gene
+"ncRNA": "ncRNA_gene"
+"other": "sequence_feature"
+"protein-coding": "protein_coding_gene"
+"pseudo": "pseudogene"
+"rRNA": "rRNA_gene"
+"snRNA": "snRNA_gene"
+"snoRNA": "snoRNA_gene"
+"tRNA": "tRNA_gene"
+"unknown": "sequence_feature"
+"scRNA": "scRNA_gene"
+"miscRNA": "mature_transcript"
+"biological-region": "region"
+
+# Curie prefixs
+"MIM": "OMIM"
+"HGNC:HGNC": "HGNC"
+"MGI:MGI": "MGI"
+"Ensembl": "ENSEMBL"
+"FLYBASE": "FlyBase"
+"VGNC:VGNC": "VGNC"

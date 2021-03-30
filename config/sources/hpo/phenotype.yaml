@@ -1,0 +1,28 @@
+file_metadata:
+  description: "this the hpoa file"
+  description_url: "https://hpo.jax.org/app/help/annotations"
+
+files:
+  - 'phenotype.hpoa'
+
+delimiter: 'tab'
+
+columns:
+  - 'DatabaseID'
+  - 'DiseaseName'
+  - 'Qualifier'
+  - 'HPO_ID'
+  - 'Reference'
+  - 'Evidence'
+  - 'Onset'
+  - 'Frequency': 'Proportion'
+  - 'Sex'
+  - 'Modifier'
+  - 'Aspect'
+  - 'Biocuration'
+
+# TODO add checks that keys are in columns
+filter_out:
+  - 'Qualifier':
+      filter: 'eq'
+      value: 'NOT'

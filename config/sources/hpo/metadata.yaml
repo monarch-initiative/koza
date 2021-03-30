@@ -1,0 +1,6 @@
+name: 'hpoa'
+
+dataset_description:
+  ingest_title: 'Human Phenotype Ontology'
+  ingest_url: 'https://hpo.jax.org/app/'
+  data_rights: 'https://hpo.jax.org/app/license'

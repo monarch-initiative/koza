@@ -1,0 +1,15 @@
+---
+"acen": "centromere"  # dubious see ucsc bands
+"gvar": "chromosome_band"
+"stalk": "chromosome_band"
+"gneg": "chromosome_band"
+"gpos100": "chromosome_band"
+"gpos25": "chromosome_band"
+"gpos33": "chromosome_band"
+"gpos50": "chromosome_band"
+"gpos66": "chromosome_band"
+"gpos75": "chromosome_band"
+"chromosome": "chromosome"
+"chromosome_arm": "chromosome_arm"
+"chromosome_band": "chromosome_band"
+"chromosome_part": "chromosome_part"

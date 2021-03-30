@@ -1,0 +1,10 @@
+---
+# zfin.yaml
+
+
+# type_map
+
+"deficiency": "chromosomal_deletion"
+"transgenic_unspecified": "transgenic"
+"transloc": "translocation"
+"unspecified": "sequence_alteration"

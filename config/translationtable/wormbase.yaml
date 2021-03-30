@@ -1,0 +1,19 @@
+---
+# wormbase.yaml
+
+# biotype_map
+"lincRNA": "lincRNA_gene"
+"miRNA": "miRNA_gene"
+"ncRNA": "ncRNA_gene"
+"piRNA": "piRNA_gene"
+"rRNA": "rRNA_gene"
+"scRNA": "scRNA_gene"
+"snRNA": "snRNA_gene"
+"snoRNA": "snoRNA_gene"
+"tRNA": "tRNA_gene"
+# transposable element gene
+"transposon": "transposable_element"
+"transposon_protein_coding": "transposable_element_gene"
+"transposon_pseudogene": "transposable_element_pseudogene"
+"protein_coding": "protein_coding_gene"
+"asRNA": "ncRNA_gene"  # TODO make term request

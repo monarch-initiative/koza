@@ -1,0 +1,54 @@
+---
+# omia.yaml
+
+"protein-coding": "protein_coding_gene"
+"pseudo": "pseudogene"
+"unknown": "protein_coding_gene"
+
+# inheritance_symbol to inheritance_term_id
+
+"A": "condition inheritance"       # Autosomal ... can we know dominant/recessive?
+"ACD": "co-dominant inheritance"    # Autosomal co-dominant
+# "ADV": None                       # autosomal dominant with variable expressivity
+# "AID": "GENO:0000259"  # autosomal incompletely dominant   # ABANDONED TERM !!!
+"ASD": "semi-dominant inheritance"
+"ASL": "autosomal recessive inheritance"    # autosomal recessive, semi-lethal
+"D": "autosomal dominant iniheritance"
+# "M": None,                                # multifactorial
+# "MAT": None,                              # Maternal
+"PR": "autosomal recessive inheritance"    # probably autosomal recessive
+"R": "autosomal recessive inheritance"
+"REL": "recessive inheritance"              # Recessive Embryonic Lethal
+"RL": "autosomal recessive inheritance"     # Autosomal Recessive Lethal
+"S": "allosomal dominant inheritance"       # Sex-linked   <--using allosomal dominant
+# "SLi": None,                              # Sex-limited
+"UD": "complete dominant inheritance"       # Dominant
+# "X": None,                                # x-linked    # HP:0001417 ?
+"XLD": "allosomal dominant inheritance"     # X-linked Dominant
+"XLR": "allosomal recessive inheritance"    # X-linked Recessive
+# "Y": None,                                # Y-linked
+# "Z": None,                                # Z-linked
+"ZR": "allosomal recessive inheritance"     # Z-linked recessive
+# "999": None,                              # Z-linked incompletely dominant
+
+
+# Group_Categories  to disease identifier label
+
+"group_category:None": "disease or disorder"         # maybe a wonky default
+"group_category:1": "inborn errors of metabolism"    # "Inborn error of metabolism" (was DOID:0014667)
+"group_category:2": "Dwarfism"
+"group_category:3": "congenital heart disease"       # "Congenital heart disease" (was DOID:1682)
+"group_category:4": "inherited bleeding disorder, platelet-type"   # (was 'DOID:74 / DOID:2214')
+"group_category:5": "lysosomal storage disease"      # "Lysosomal storage disease" (was 'DOID:3211')
+"group_category:6": "integumentary system disease"   # "Colour"  (was 'DOID:16')
+"group_category:7": "hereditary optic atrophy"       # "Progressive retinal atrophy (PRA)"  (was DOID:8466)
+"group_category:8": "Cone–rod dystrophy"             # "Cone–rod dystrophy (CRD)" (was 'DOID:0050572')
+"group_category:9": "hereditary retinal dystrophy"   # "Stationary retinal disorder" (was 'MESH:C536122')
+"group_category:10": "developmental defect of the eye"  # "Developmental retinal disorder"  (was 'ORPHA:98553')
+"group_category:11": "retinal disease"               # "Retinal disorder"   (was 'DOID:5679')
+"group_category:12": "disorder of sex development"   # "Disorder of Sexual Development (DSD)"  (was 'ORPHA:90771')
+"group_category:13": "embryonic lethality"           # "Embryonic lethal"
+"group_category:14": "hematological system disease"     # "Blood group system"  (was None)
+"group_category:15": "platelet disorder, undefined"  # "Intrinsic platelet disorder" (was 'DOID:2218')
+"group_category:16": "platelet disorder, undefined"  # "Extrinsic platelet disorder" (was 'DOID:2218')
+"group_category:18": "cancer"                        # "Cancer"  (was None)

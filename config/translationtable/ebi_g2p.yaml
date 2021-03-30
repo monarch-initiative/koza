@@ -1,0 +1,125 @@
+---
+# ebi_g2p.yaml
+# See https://www.clinicalgenome.org/site/assets/files/2757/fitzpatrick_ddg2p.pdf
+
+# DDD category
+# #############
+
+# both DD and IF - plausible disease-causing mutations within,
+# affecting or encompassing the coding region of a single gene
+# identified in multiple (>3) unrelated cases/families with both
+# a developmental disorder and an incidental (non-developmental) disorder
+"both DD and IF": "contributes to condition"
+
+# Can't find definition
+"child IF": "contributes to condition"
+
+# 1. plausible disease-causing mutations* within, affecting or encompassing an
+# interpretable functional region** of a single  gene identified in
+# multiple (>3) unrelated cases/families with a developmental disorder
+#
+# 2. plausible disease-causing mutations within, affecting or encompassing
+# cis-regulatory elements convincingly affecting the expression of a single gene
+# identified in multiple (>3) unrelated cases/families with a developmental disorder
+#
+# 3. as definition 1 and 2 of probable dd gene (see below) with addition of convincing
+# bioinformatic or functional evidence of causation e.g. known inborn error of metabolism
+# with mutation in orthologous gene which is known to have the relevant
+# deficient enzymatic activity in other species; existence of animal mode which
+# recapitulates the human phenotype
+"confirmed": "pathogenic_for_condition"
+
+# 1. plausible disease-causing mutations within, affecting or encompassing an
+# interpretable functional region of a single gene identified in more than
+# one (2 or 3) unrelated cases/families or segregation within multiple
+# individuals within a single large  family with a developmental disorder
+#
+# 2. plausible disease-causing mutations within, affecting or encompassing cis
+# -regulatory elements convincingly affecting the expression of a single gene
+# identified in in more than one (2 or 3) unrelated cases/families with a
+# developmental disorder
+#
+# 3. as definitions of possible dd gene (see below) with addition of convincing
+# bioinformatic or functional evidence of causation e.g.known inborn error of
+# metabolism with mutation in orthologous gene which is known to have the relevant
+# deficient enzymatic activity in other species; existence of animal mode which
+# recapitulates the human phenotype
+"probable": "likely_pathogenic_for_condition"
+
+# 1. plausible disease-causing mutations within, affecting or
+# encompassing an interpretable functional region of a single gene
+# identified in one case or segregation within multiple individuals within a small family with a developmental disorder
+#
+# 2. plausible disease-causing mutations within, affecting or encompassing cis
+# -regulatory elements convincingly affecting the expression of a single gene
+# identified in one case/family with a developmental disorder
+#
+# 3.possible disease-causing mutations within, affecting or encompassing an
+# interpretable functional region of a single gene identified in more than
+# one unrelated cases/families or segregation within multiple individuals within
+# a single large family with a developmental disorder
+"possible": "contributes to condition"
+
+
+# allelic requirement
+# ####################
+
+# plausible disease-causing mutations identified on one allele in all
+# or the vast majority of with specific developmental disorder
+"monoallelic": "monoallelic"
+
+# plausible disease-causing homozygous or compound heterozygous mutations
+# identified on both alleles in the majority of with specific developmental disorder
+"biallelic": "biallelic"
+
+# plausible disease-causing mutations identified on one allele in a
+# proportion of cells with the others being wild-type as a cause
+# of a specific developmental disorder
+"mosaic": "mosaic"
+"x-linked dominant": "x_linked_dominant"
+"digenic": "digenic_inheritance"
+"mitochondrial": "mitochondrial_inheritance"
+"imprinted": "genomically_imprinted"
+"hemizygous": "hemizygous"
+
+# Can't find def
+"x-linked over-dominance": "x_linked_dominant"
+
+
+# functional consequence
+# #######################
+
+# mutation, usually missense that results in a constitutive
+# functional activation of the gene product
+# TODO this was previously mapped to gain of function in the decipher script
+"activating": "activating_mutation"
+
+# mutation within one allele of a gene that creates a significantly greater
+# deleterious effect on gene product function than a monoallelic loss of
+# function mutation
+"dominant negative": "dominant_negative_variant"
+
+# copy number variation that increases the functional dosage of the gene
+"increased gene dosage": "increased_gene_dosage"
+
+"loss of function": "loss_of_function_variant"
+
+
+# molecular consequence
+# ######################
+"5_prime or 3_prime UTR mutation": "UTR_variant"
+
+# where all the mutations described in the data source are either missense
+# or in frame deletions and there is no evidence favoring either loss
+# -of-function, activating or dominant negative effect
+# should we make this missense SO:0001583 or inframe SO:0001650?
+"all missense/in frame": "all_missense_or_inframe"
+
+# mutation in cis-regulatory elements that lies outwith
+# the known transcription unit and promotor of the controlled gene
+# TODO these don't seem right
+"cis-regulatory or promotor mutation": "transcriptional_cis_regulatory_region"
+"part of contiguous gene duplication": "part_of_contiguous_gene_duplication"
+
+# where the exact nature of the mutation is unclear or not recorded
+# "uncertain": "uncertain significance"

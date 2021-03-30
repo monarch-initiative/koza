@@ -1,0 +1,48 @@
+---
+# animalqtldb.yaml
+"chicken": "Gallus gallus"  # NCBITaxon:9031
+"pig": "Sus scrofa"         # NCBITaxon:9823
+"horse": "Equus caballus"   # NCBITaxon:9796
+"rainbow_trout": "Oncorhynchus mykiss"  # NCBITaxon:8022
+"sheep": "Ovis aries"       # NCBITaxon:9940
+"cattle": "Bos taurus"      # NCBITaxon:9913
+
+# map_linkage_by_organism(self, organism):
+# This is not yet confirmed, thus is not utilized.
+
+#    "chicken": "Wageningen-chicken"    # PMID:10645958
+#    "cattle": "USDA-MARC"              # PMID:9074927
+#    "pig": "USDA-MARC"                 # PMID:8743988
+#    # -- this is an assumption
+#    "sheep": "Wageningen-sheep"        # PMID:11435411
+#    "horse": "Swinburne-Penedo"        # PMID:16314071 PMID:16093715
+#    "rainbow_trout": "USDA-NCCCWA"     # PMID:19019240 PMID:22101344
+
+"Btau_4.6": "UCSCBuild:bosTau7"  # UCSC prefered
+# not prefered
+#   "NCBIGenome:82"
+# Not Used
+#   "NCBIAssembly:GCF_000003205.5"
+
+"UMD_3.1": "NCBIGenome:82"
+# Not Used
+#   "NCBIAssembly:GCF_000003055.6"
+
+"GG_5.0": "UCSCBuild:galGal5"  # UCSC prefered
+# Not Used
+#   "NCBIAssembly:317958"
+
+"SS_11.1": "UCSCBuild:susScr11"  # UCSC prefered
+# Not Used
+#   "NCBIAssembly:304498"
+
+
+"OAR_4.0": "UCSCBuild:oviAri4"   # UCSC prefered
+# not prefered
+#   "NCBIGenome:83
+# Not Used
+#   "NCBIAssembly": "GCF_000298735.1"
+
+"EquCab2.0": "UCSCBuild:equCab2"  # UCSC prefered
+# Not Used
+#   "NCBIAssembly:GCF_000002305.2"

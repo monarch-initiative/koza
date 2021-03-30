@@ -1,0 +1,103 @@
+---
+# biogrid.yaml
+
+# mi_to_eco_map
+"MI:0018": "yeast 2-hybrid evidence"
+"MI:0004": "affinity chromatography evidence"
+"MI:0047": "far-Western blotting evidence"
+"MI:0055": "FRET"
+"MI:0090": "functional complementation evidence"    # desired: protein complementation
+"MI:0096": "immunoprecipitation evidence"           # desired: pull down
+"MI:0114": "x-ray crystallography evidence"
+"MI:0254": "genetic interaction evidence"           # desired: genetic interference
+"MI:0401": "biochemical trait analysis evidence"    # desired: biochemical
+"MI:0415": "enzyme assay evidence"                  # desired: enzymatic study
+"MI:0428": "imaging assay evidence"
+"MI:0686": "experimental evidence"                  # desired: unspecified
+"MI:1313": "experimental evidence"                  # None?
+
+# _map_MI_to_RO
+# default to 'interacts with'
+
+# colocalization
+"MI:0403": "colocalizes with"
+# direct interaction
+"MI:0407": "interacts with"
+# synthetic genetic interaction defined by inequality
+"MI:0794": "genetically interacts with"
+# suppressive genetic interaction defined by inequality
+"MI:0796": "genetically interacts with"
+# additive genetic interaction defined by inequality
+"MI:0799": "genetically interacts with"
+# association
+"MI:0914": "interacts with"
+# physical association
+"MI:0915": "interacts with"
+
+# idtype_to_prefix_map
+"XENBASE": "XenBase"
+"TREMBL": "TrEMBL"
+"MGI": "MGI"
+"REFSEQ_DNA_ACCESSION": "RefSeqNA"
+"MAIZEGDB": "MaizeGDB"
+"BEEBASE": "BeeBase"
+"ENSEMBL": "ENSEMBL"
+"TAIR": "TAIR"
+"GENBANK_DNA_GI": "NCBIgi"
+"CGNC": "CGNC"
+"RGD": "RGD"
+"GENBANK_GENOMIC_DNA_GI": "NCBIgi"
+"SWISSPROT": "Swiss-Prot"
+"MIM": "OMIM"
+"FLYBASE": "FlyBase"
+"VEGA": "VEGA"
+"ANIMALQTLDB": "AQTLDB"
+"ENTREZ_GENE_ETG": "ETG"
+"HPRD": "HPRD"
+"APHIDBASE": "APHIDBASE"
+"GENBANK_PROTEIN_ACCESSION": "NCBIProtein"
+"ENTREZ_GENE": "NCBIGene"
+"SGD": "SGD"
+"GENBANK_GENOMIC_DNA_ACCESSION": "NCBIGenome"
+"BGD": "BGD"
+"WORMBASE": "WormBase"
+"ZFIN": "ZFIN"
+"DICTYBASE": "dictyBase"
+"ECOGENE": "ECOGENE"
+"BIOGRID": "BIOGRID"
+"GENBANK_DNA_ACCESSION": "NCBILocus"
+"VECTORBASE": "VectorBase"
+"MIRBASE": "miRBase"
+"IMGT/GENE-DB": "IGMT"
+"HGNC": "HGNC"
+"SYSTEMATIC_NAME": None
+"OFFICIAL_SYMBOL": None
+"REFSEQ_GENOMIC_DNA_ACCESSION": "NCBILocus"
+"GENBANK_PROTEIN_GI": "NCBIgi"
+"REFSEQ_PROTEIN_ACCESSION": "RefSeqProt"
+"SYNONYM": None
+"GRID_LEGACY": None
+# the following showed up in 3.3.124
+"UNIPROT-ACCESSION": "UniprotKB"
+"SWISS-PROT": "Swiss-Prot"
+"OFFICIAL SYMBOL": None
+"ENSEMBL RNA": None
+"GRID LEGACY": None
+"ENSEMBL PROTEIN": None
+"REFSEQ-RNA-GI": None
+"REFSEQ-RNA-ACCESSION": None
+"REFSEQ-PROTEIN-GI": None
+"REFSEQ-PROTEIN-ACCESSION-VERSIONED": None
+"REFSEQ-PROTEIN-ACCESSION": None
+"REFSEQ-LEGACY": None
+"SYSTEMATIC NAME": None
+"ORDERED LOCUS": None
+"UNIPROT-ISOFORM": "UniProtKB"
+"UNIPROT_PRO": "UniProtKB"
+"ENSEMBL GENE": "ENSEMBL"
+"WORMBASE-OLD": "WormBase"
+
+# "???  TODO see if these should go somewhere  seen 2018-Aug
+"CGD": "CGD"
+"PBR": "PBR"
+"TUBERCULIST": "TUBERCULIST"

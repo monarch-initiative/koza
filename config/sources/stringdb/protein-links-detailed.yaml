@@ -1,0 +1,34 @@
+name: 'protein-links-detailed'
+
+file_metadata:
+  license_url: "this file has a unique license"
+
+depends_on:
+  - 'entrez_2_string'
+
+on_map_failure: 'warning'
+
+delimiter: "\t"
+
+compression: 'gzip'
+
+files:
+  - '9606.protein.links.detailed.v11.0.txt.gz'
+  - '10090.protein.links.detailed.v11.0.txt.gz'
+
+fields:
+  - 'protein1'
+  - 'protein2'
+  - 'neighborhood'
+  - 'fusion'
+  - 'cooccurence'
+  - 'coexpression'
+  - 'experimental'
+  - 'database'
+  - 'textmining'
+  - 'combined_score' : 'int'
+
+filter_out:
+  - 'combined_score':
+       filter: 'lt'
+       value: 700

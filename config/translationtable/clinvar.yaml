@@ -1,0 +1,128 @@
+---
+# clinvarxml_alpha.yaml
+# YAML format for a Python dict
+# external_string to internal_label translation table
+# quoted external_string, a colon, quoted internal_label.
+# octothorp comments and empty lines are ignored
+# the external_string column should be unique
+# items in the the internal_label column should be unique
+# in the first column of the global_terms.yaml file
+
+# ## RCV variant to gene relationship types type
+# ########################################################
+"within single gene": "has_affected_feature"
+"genes overlapped by variant": "has_part"
+"within multiple genes by overlap": "has_affected_feature"
+"variant in gene": "has_affected_feature"
+"near gene, upstream": "is upstream of sequence of"
+"near gene, downstream": "is downstream of sequence of"
+
+# asserted, but not computed, example RCV000087646
+"asserted, but not computed": "part_of"
+# ## Pathos Association types
+# ##########################################################
+"Benign": "benign_for_condition"
+"benign": "benign_for_condition"
+"conflicting data from submitters": "has_uncertain_significance_for_condition"
+"Likely benign": "likely_benign_for_condition"
+"likely benign": "likely_benign_for_condition"
+"Likely Benign": "likely_benign_for_condition"
+"likely pathogenic": "likely_pathogenic_for_condition"
+"Likely pathogenic": "likely_pathogenic_for_condition"
+"no known pathogenicity": "has_uncertain_significance_for_condition"
+"non-pathogenic": "has_uncertain_significance_for_condition"
+"pathogenic": "pathogenic_for_condition"
+"Pathogenic": "pathogenic_for_condition"
+"Pathogenic/Likely pathogenic": "pathogenic_for_condition"
+"Pathologic": "pathogenic_for_condition"
+"pathologic": "pathogenic_for_condition"
+"probable-non-pathogenic": "likely_benign_for_condition"
+"probable-pathogenic": "likely_pathogenic_for_condition"
+"probably pathogenic": "likely_pathogenic_for_condition"
+"probably not pathogenic": "likely_benign_for_condition"
+"Suspected Benign": "likely_benign_for_condition"
+"Suspected Pathogenic": "likely_pathogenic_for_condition"
+"uncertain": "has_uncertain_significance_for_condition"
+"Uncertain": "has_uncertain_significance_for_condition"
+"Uncertain significance": "has_uncertain_significance_for_condition"
+"Uncertain Significance": "has_uncertain_significance_for_condition"
+"unknown": "has_uncertain_significance_for_condition"
+"Unknown": "has_uncertain_significance_for_condition"
+"variant of unknown significance": "has_uncertain_significance_for_condition"
+"MUT": "has_uncertain_significance_for_condition"
+"Unknown significance": "has_uncertain_significance_for_condition"
+"likely pathogenic - adrenal pheochromocytoma": "likely_pathogenic_for_condition"
+"pathogenic variant for Bardet-Biedl Syndrome": "pathogenic_for_condition"
+"untested": "has_uncertain_significance_for_condition"
+"other": "has_uncertain_significance_for_condition"
+"not provided": "has_uncertain_significance_for_condition"
+"cancer": "pathogenic_for_condition"
+"risk factor": "likely_pathogenic_for_condition"
+"drug response": "has_drug_response"
+"drug-response": "has_drug_response"
+"association": "has_uncertain_significance_for_condition"   # tricksy with globaltt.association
+"association not found": "has_uncertain_significance_for_condition"
+"Affects": "has_uncertain_significance_for_condition"
+"Moderate": "has_uncertain_significance_for_condition"
+"protective": "protective_for_condition"
+"unknown significance": "has_uncertain_significance_for_condition"
+"likely pathogenic - adrenal bilateral pheochromocy": "likely_pathogenic_for_condition"
+"Associated with leiomyomas": "likely_benign_for_condition"
+"VSB": "likely_benign_for_condition"  # "variant(s) suspected benign"
+"VOUS": "has_uncertain_significance_for_condition"  # "variant of unknown significance"
+# this next one is ambigous think it implies
+"POLY": "has_uncertain_significance_for_condition"  # diff disorder with diff calls?
+# 2019 Dec
+"Affects, other": "has_uncertain_significance_for_condition"
+"Benign/Likely benign": "likely_benign_for_condition"
+"Benign/Likely benign, other": "likely_benign_for_condition"
+"Benign/Likely benign, risk factor": "likely_benign_for_condition"
+"Benign, other": "benign_for_condition"
+"Benign, risk factor": "benign_for_condition"
+"Conflicting interpretations of pathogenicity": "has_uncertain_significance_for_condition"
+"Conflicting interpretations of pathogenicity, other": "has_uncertain_significance_for_condition"
+"Conflicting interpretations of pathogenicity, risk factor": "has_uncertain_significance_for_condition"
+"Likely benign, other": "likely_benign_for_condition"
+"Likely benign, risk factor": "likely_benign_for_condition"
+"Likely pathogenic, other": "likely_pathogenic_for_condition"
+"Likely pathogenic, risk factor": "likely_pathogenic_for_condition"
+"other, risk factor": "has_uncertain_significance_for_condition"
+"Pathogenic, Affects": "pathogenic_for_condition"
+"Pathogenic, association": "pathogenic_for_condition"
+"Pathogenic, drug response": "pathogenic_for_condition"
+"Pathogenic/Likely pathogenic, other": "pathogenic_for_condition"
+"Pathogenic/Likely pathogenic, risk factor": "pathogenic_for_condition"
+"Pathogenic, other": "pathogenic_for_condition"
+"Pathogenic, risk factor": "pathogenic_for_condition"
+"Uncertain significance, Affects": "has_uncertain_significance_for_condition"
+"Uncertain significance, other": "has_uncertain_significance_for_condition"
+"Uncertain significance, risk factor": "has_uncertain_significance_for_condition"
+# "": ""
+# ##  Variant (Subject) Sequence Types
+# ############################################################
+"single nucleotide variant": "SNV"
+"Deletion": "deletion"
+"copy number gain": "copy_number_gain"
+"copy number loss": "copy_number_loss"
+"Duplication": "duplication"
+"Diplotype": "diplotype"
+"Insertion": "insertion"
+"Indel": "indel"
+"Variation": "sequence_alteration"
+"Translocation": "translocation"
+"Tandem duplication": "tandem_duplication"
+"Complex": "complex_structural_alteration"
+"Structural variant": "structural_alteration"
+"NT expansion": "direct_tandem_duplication"
+"undetermined variant": "sequence_alteration"
+"Inversion": "inversion"
+"Microsatellite": "microsatellite"
+"protein only": "protein_altering_variant"
+"CompoundHeterozygote": "compound heterozygous"
+"Haplotype": "haplotype"
+"Haplotype, single variant": "haplotype"
+"Phase unknown": "haplotype"
+"Distinct chromosomes": "mosaic"
+# ############################################################
+"patient phenotyping study": "phenotyping only"
+"provider interpretation": "imported information"   # "ECO:0000311"  checkme

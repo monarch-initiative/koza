@@ -1,0 +1,17 @@
+name: 'Monarch Ingest'
+
+output: ./out/
+
+curie_map: /foo/bar/baz
+
+sources:
+  - foo
+  - bar
+  - baz
+
+serializations:
+  - nturtles
+  - jsonlines
+  - tsv
+
+config_dir: /foo/bar/baz

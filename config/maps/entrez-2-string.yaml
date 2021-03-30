@@ -1,0 +1,29 @@
+name: 'entrez_2_string'
+
+file_metadata:
+  description: 'Mapping file provided by StringDB that contains entrez to protein ID mappings'
+
+source: 'stringdb'
+
+delimeter: '\t'
+header_delimeter: ' / '
+
+# Assumes that no identifiers are overlapping
+# otherwise these should go into separate configs
+files:
+  - 'human.entrez_2_string.2018.tsv.gz'
+  - 'mouse.entrez_2_string.2018.tsv.gz'
+  - 'zebrafish.entrez_2_string.2018.tsv.gz'
+  - 'fly.entrez_2_string.2018.tsv.gz'
+  - 'celegans.entrez_2_string.2018.tsv.gz'
+  - 'yeast.entrez_2_string.2018.tsv.gz'
+
+columns:
+  - 'NCBI taxid'
+  - 'entrez'
+  - 'STRING'
+
+key: 'STRING'
+
+values:
+  - 'entrez'

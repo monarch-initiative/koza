@@ -1,0 +1,32 @@
+---
+# bgee.yaml
+# Assembly-Name to Assembly-Accession for species
+# select '"'||genomeVersion||'": ""  # NCBITaxon:'||speciesId, speciesCommonName
+# from species where speciesCommonName != "";
+
+"WBcel235": "GCF_000002985.6"  # NCBITaxon:6239|nematode
+"BDGP6": "GCF_002762175.1"  # NCBITaxon:7227|fruit fly
+"GRCz10": "GCF_00000203551"  # NCBITaxon:7955|zebrafish
+"JGI 4.2": "GCA_000004195.1"  # NCBITaxon:8364|western clawed frog
+"Galgal4": "GCF_000002315.3"  # NCBITaxon:9031|chicken
+"OANA5": "GCF_000002275.2"  # NCBITaxon:9258|platypus
+"eriEur1": "GCA_000181395.1"  # NCBITaxon:9365|hedgehog not found.  eriEur2 -> GCA 000296755.1
+
+"gorGor3.1": "GCA_000151905.1"  # NCBITaxon:9593|gorilla
+"CHIMP2.1.4": "GCA_000001515.4"  # NCBITaxon:959[78]|bonobo/chimpanzee
+"GRCh38.p5": "GCA_000001405.20"  # NCBITaxon:9606|human
+"CanFam3.1": "GCA_000002285.2"  # NCBITaxon:9615|dog
+"Felis_catus_6.2": "GCA_000181335.2"  # NCBITaxon:9685|cat
+"Equ Cab 2": "GCA_000002305.1"  # NCBITaxon:9796|horse
+"Sscrofa10.2": "GCA_000003025.4"  # NCBITaxon:9823|pig
+"UMD3.1": "GCA_000003055.5"  # NCBITaxon:9913|cattle    ???
+"OryCun2.0": "GCA_000003625.1"  # NCBITaxon:9986|rabbit
+"GRCm38.p4": "GCA_000001635.6 "  # NCBITaxon:10090|mouse
+"Rnor_6.0": "GCA_000001895.4"  # NCBITaxon:10116|rat
+"cavPor3": "GCA_000151735.1"  # NCBITaxon:10141|guinea pig
+"monDom5": "GCF_000002295.2"  # NCBITaxon:13616|opossum   note: refseq
+"AnoCar2.0": "GCA_000090745.2"  # NCBITaxon:28377|green anole
+
+# http://jul2016.archive.ensembl.org/Macaca_mulatta/Info/Annotation
+# "MMUL 1.0": "" # NCBITaxon:9544|macaque
+# earliest MMUL I find is v7 -> GCA_000772875.1

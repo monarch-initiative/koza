@@ -1,0 +1,19 @@
+---
+# phene_code_to_eco
+"1": "inference from background scientific knowledge used in manual assertion"
+"2": "genomic context evidence"
+"3": "sequencing assay evidence"
+"4": "sequencing assay evidence"
+
+# "13": "???"
+
+
+"protein-coding": "protein_coding_gene"
+
+# mimTitles
+"Asterisk": "Gene"                                                  # count 15963
+"Number Sign": "Phenotype, molecular basis known"                   # count 5312
+"NULL": "Other, mainly phenotypes with suspected mendelian basis"   # count 1764
+"Percent": "Phenotype or locus, molecular basis unknown"            # count 1579
+"Caret": "Entry has been removed from the database or moved to another entry"  # count  1254
+"Plus": "Gene and phenotype, combined"                              # count 49

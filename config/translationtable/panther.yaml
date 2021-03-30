@@ -1,0 +1,42 @@
+---
+# panther.yaml
+
+# taxon_abbr to txid_num (ptax):
+# change the txid_num to the formal scientific binomial latin name
+# then extract the txid_num from the NCBITaxon ( in globaltt)
+
+"ANOCA": "Anolis carolinensis"          # green lizard
+"ARATH": "Arabidopsis thaliana"         # arabadopsis
+"BOVIN": "Bos taurus"                   # cow
+"CAEEL": "Caenorhabditis elegans"       # worm
+"CANLF": "Canis lupus familiaris"       # dog
+"CHICK": "Gallus gallus"                # chicken
+"DANRE": "Danio rerio"                  # zebrafish
+"DICDI": "Dictyostelium discoideum"     # discodium
+"DROME": "Drosophila melanogaster"      # drosophila melanogaster
+"ECOLI": "Escherichia coli"             # E.coli
+"FELCA": "Felis catus"                  # cat
+"HORSE": "Equus caballus"               # horses
+"HUMAN": "Homo sapiens"                 # humans
+"MACMU": "Macaca mulatta"               # macaque
+"MONDO": "Monodelphis domestica"        # opossum
+"MOUSE": "Mus musculus"                 # mouse
+"ORNAN": "Ornithorhynchus anatinus"     # orangutan
+"PANTR": "Pan troglodytes"              # chimp
+"PIG": "Sus scrofa"
+"RAT": "Rattus norvegicus"
+"SCHPO": Schizosaccharomyces pombe      # yeast
+"TAKRU": Takifugu rubripe               # pufferfish
+"XENTR": "Xenopus (Silurana) tropicalis"    # xenopus (frog)
+"YEAST": "Saccharomyces cerevisiae S288C"   # yeast
+
+# orthology_code_to_RO
+# default to   ->  "in orthology relationship with"
+"LDO": "in 1 to 1 orthology relationship with"  # least diverged ortholog;
+"O": "in orthology relationship with"           # other more diverged orthologs
+"P": "in paralogy relationship with"            # paralogs
+"X": "in xenology relationship with"            # horizontal gene transfer
+"LDX": "in xenology relationship with"          # least diverged horizontal gene transfer
+
+"orthologGroup": "orthologous"
+"paralogGroup": "paralogous"

@@ -1,0 +1,8 @@
+---
+# hpoanotations
+
+"IEA": "evidence used in automatic assertion"  # "ECO:0000501",
+"PCS": "experimental evidence used in manual assertion"  # "ECO:0000269",
+"TAS": "author statement supported by traceable reference used in manual assertion"  # "ECO:0000304",
+"ITM": "computational combinatorial evidence used in automatic assertion"  # "ECO:0000246",
+"ICE": "curator inference used in manual assertion"  # "ECO:0000305", should be gone??

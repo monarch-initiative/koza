@@ -1,0 +1,12 @@
+{
+   "@context": {
+      "type": {
+         "@id": "rdf:type"
+      },
+      "APO": "http://purl.obolibrary.org/obo/APO_",
+      "@vocab": "https://w3id.org/biolink/vocab/",
+      "actively_involved_in": {
+         "@type": "@id"
+      }
+   }
+}

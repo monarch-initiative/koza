@@ -1,0 +1,15 @@
+---
+# go.yaml
+
+"P": "involved in"
+"F": "enables"
+"C": "part_of"
+
+# go-style to curiemap-style prefix
+"WB": "WormBase"
+"WB_REF": "WormBase"
+"FB": "FlyBase"
+"Reactome": "REACT"
+"Ensembl": "ENSEMBL"
+"GOC": "GO_REF"
+"MGI:MGI": "MGI"
