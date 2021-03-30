@@ -16,15 +16,15 @@ def is_dictionary_bimap(dictionary: Dict[str, str]) -> bool:
     :return: boolean
     """
     is_bimap = True
-    temp_dict = {}
+    all_values = set()
     failed_list = []
 
-    for k, v in dictionary.items():
-        if v not in temp_dict:
-            temp_dict[v] = k
+    for val in dictionary.values():
+        if val not in all_values:
+            all_values.add(val)
         else:
             is_bimap = False
-            failed_list.append(v)
+            failed_list.append(val)
 
     if not is_bimap:
         LOG.warning(f"Duplicate values in yaml: {failed_list}")

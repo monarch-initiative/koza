@@ -1,15 +1,12 @@
 import gzip
 from pathlib import Path
 
-from glom import Path as GlomPath
-
 import pytest
+from glom import Path as GlomPath
 
 from koza.io.reader.json_reader import JSONReader
 
-test_ddpheno = (
-    Path(__file__).parents[1] / 'resources' / 'source-files' / 'ddpheno.json.gz'
-)
+test_ddpheno = Path(__file__).parents[1] / 'resources' / 'source-files' / 'ddpheno.json.gz'
 
 glom_path = GlomPath(*['graphs', 0, 'nodes'])
 
@@ -26,7 +23,6 @@ def test_required_properties():
         json_reader = JSONReader(ddpheno, ['id'], glom_path=glom_path)
         for row in json_reader:
             assert 'id' in row
-
 
 
 def test_missing_req_property_raises_exception():

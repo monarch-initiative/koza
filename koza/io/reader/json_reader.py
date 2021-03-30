@@ -2,7 +2,7 @@ import json
 import logging
 from typing import IO, Any, Dict, Iterator, List
 
-from glom import glom, Path
+from glom import Path, glom
 
 LOG = logging.getLogger(__name__)
 

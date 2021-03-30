@@ -60,6 +60,7 @@ def open_resource(resource: Union[str, PathLike], compression: CompressionType =
         if request.status_code != 200:
             raise ValueError(f"Remote file returned {request.status_code}: {request.text}")
         tmp_file.write(request.content)
+        request.close()  # not sure this is needed
         tmp_file.seek(0)
         if resource.endswith('gz') or compression == CompressionType.gzip:
             # This should be more robust, either check headers
