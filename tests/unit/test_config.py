@@ -33,3 +33,14 @@ def test_wrong_filter_type_raises_exception():
         source_config['filter_in'] = [{'combined_score': {'filter': 'lt', 'value': '70'}}]
         with pytest.raises(ValueError):
             PrimarySourceConfig(**source_config)
+
+
+@pytest.mark.parametrize("filter_set, code", [('filter_in', 'lgt'),
+                                              ('filter_out', 'ngte')])
+def test_wrong_filter_code_raises_exception(filter_set, code):
+    with open(base_config, 'r') as config:
+        source_config = yaml.safe_load(config)
+        source_config[filter_set] = [{'combined_score': {'filter': code, 'value': 70}}]
+        with pytest.raises(ValueError):
+            PrimarySourceConfig(**source_config)
+

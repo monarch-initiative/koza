@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Union
 
 from glom import Path as GlomPath
+from pydantic import StrictFloat, StrictInt
 from pydantic.dataclasses import dataclass
 
 
@@ -68,7 +69,13 @@ class FieldType(str, Enum):
 @dataclass(frozen=True)
 class Filter:
     filter: FilterCode
-    value: Union[str, int, float]
+    value: Union[StrictInt, StrictFloat, str]
+
+
+@dataclass(frozen=True)
+class ColumnFilter:
+    column: str
+    filter: Filter
 
 
 @dataclass(frozen=True)
@@ -119,8 +126,8 @@ class SourceConfig:
     skip_lines: int = 0
     skip_blank_lines: bool = True
     compression: CompressionType = None
-    filter_in: List[Dict[str, Filter]] = field(default_factory=list)
-    filter_out: List[Dict[str, Filter]] = field(default_factory=list)
+    filter_in: List[ColumnFilter] = field(default_factory=list)
+    filter_out: List[ColumnFilter] = field(default_factory=list)
     glom_path: List[Any] = None
 
     def __post_init__(self):
