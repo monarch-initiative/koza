@@ -11,6 +11,8 @@ class SerializationEnum(str, Enum):
     """
 
     tsv = 'tsv'
+    json = 'json'
+    jsonl = 'jsonl'
     # nturtles = 'nturtles'
     # rdfstar, ntriples, etc
 
@@ -21,10 +23,10 @@ class KozaConfig:
     Dataclass for koza configuration
     """
 
-    name: str
-    curie_map: Union[str, Path]
-    sources: List[str]
-    serializations: List[SerializationEnum]
+    name: str = 'koza-run'
+    curie_map: Union[str, Path] = None
+    sources: List[str] = None
+    serializations: List[SerializationEnum] = None
     output: str = './'
     config_dir: Union[str, Path] = None
     cache_maps: bool = True

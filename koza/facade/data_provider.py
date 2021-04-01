@@ -1,9 +1,7 @@
 from typing import Dict, Tuple
 
 from ..model import TranslationTable
-
-# from foo import koza
-# get registry
+from koza.koza_runner import get_koza_app
 
 
 def inject_files(ingest_name: str) -> Tuple[Dict, ...]:

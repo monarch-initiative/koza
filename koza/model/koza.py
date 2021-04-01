@@ -8,8 +8,7 @@ from koza.model.source import Source
 @dataclass(init=False, frozen=True)
 class KozaApp:
     """
-    Class that holds all configuration information
-    for Koza
+    Class that holds all configuration information for Koza
 
     Note that this is intended to be a singleton
     that is instantiated in biolink_runner and that
@@ -26,12 +25,12 @@ class KozaApp:
     of this approach (multi threading would be fine)
     """
 
-    config: KozaConfig
+    config: KozaConfig = None
     curie_map: Dict[str, str] = None
     source_registry: Dict[str, Source] = None
     map_registry: Dict[str, Source] = None
     # serializer_registry: Dict[str, SerializerConfig] = None
     # map_cache: Dict[str, Dict] = None
 
-    def __init__(self, config: KozaConfig):
+    def __init__(self):
         pass

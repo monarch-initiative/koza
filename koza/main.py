@@ -6,6 +6,7 @@ from pathlib import Path
 
 import typer
 
+from koza.curie_util import get_curie_map
 from koza.koza_runner import run_single_resource
 from koza.model.config.koza_config import SerializationEnum
 from koza.model.config.source_config import CompressionType, FormatType
@@ -24,6 +25,7 @@ def run(
     delimiter: str = ',',
     header_delimiter: str = None,
     filter: str = None,
+    curie_file: str = None,
     compression: CompressionType = None,
     output: str = None,
     output_format: SerializationEnum = SerializationEnum.tsv,
@@ -34,6 +36,8 @@ def run(
     Run a single file through koza
     """
     _set_log_level(quiet, debug)
+
+    curie_map = get_curie_map(curie_file)
 
     if output is None:
 
@@ -53,7 +57,17 @@ def run(
     # If a user passes in \s for a space delimited csv file
     if delimiter == '\\s':
         delimiter = ' '
-    run_single_resource(file, format, delimiter, header_delimiter, output, filter, compression)
+    run_single_resource(
+        file,
+        format,
+        delimiter,
+        header_delimiter,
+        output,
+        output_format,
+        filter,
+        compression,
+        curie_map,
+    )
 
 
 @app.command()

@@ -5,20 +5,32 @@
 """
 
 from csv import DictWriter
-from typing import IO
+from typing import IO, Dict
 
+from .curie_util import get_curie_map
 from .io.reader.csv_reader import CSVReader
 from .io.reader.json_reader import JSONReader
 from .io.reader.jsonl_reader import JSONLReader
 from .io.utils import get_resource_name, open_resource
 from .model.config.koza_config import SerializationEnum
 from .model.config.source_config import CompressionType, FormatType
+from .model.koza import KozaApp
+
+
+koza = KozaApp()
+
+
+def set_koza_app():
+    pass
+
+
+def get_koza_app() -> KozaApp:
+    pass
+
 
 # def register_source(): pass
 
 # def register_map(): pass
-
-# def get_koza() -> Koza: pass
 
 # def cache_maps(): pass
 
@@ -34,10 +46,14 @@ def run_single_resource(
     serialization: SerializationEnum = None,
     filter: str = None,
     compression: CompressionType = None,
+    curie_map: Dict[str, str] = None,
 ):
 
     # Get the resource
     resource_name = get_resource_name(file)
+
+    if not curie_map:
+        curie_map = get_curie_map()
 
     with open_resource(file, compression) as resource_io:
 

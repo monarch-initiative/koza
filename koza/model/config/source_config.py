@@ -5,10 +5,10 @@ map config data class
 from dataclasses import field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Union
+from typing import Dict, List, Union
 
-from glom import Path as GlomPath
 from pydantic.dataclasses import dataclass
+from pydantic import StrictStr, StrictInt, StrictFloat
 
 
 class MapErrorEnum(str, Enum):
@@ -68,7 +68,7 @@ class FieldType(str, Enum):
 @dataclass(frozen=True)
 class Filter:
     filter: FilterCode
-    value: Union[str, int, float]
+    value: Union[StrictStr, StrictInt, StrictFloat]
 
 
 @dataclass(frozen=True)
@@ -121,7 +121,7 @@ class SourceConfig:
     compression: CompressionType = None
     filter_in: List[Dict[str, Filter]] = field(default_factory=list)
     filter_out: List[Dict[str, Filter]] = field(default_factory=list)
-    glom_path: List[Any] = None
+    json_path: List[Union[StrictStr, StrictInt]] = None
 
     def __post_init__(self):
         files_as_paths: List[Path] = []
@@ -160,7 +160,7 @@ class SourceConfig:
                 f"either set format to csv or change columns to properties in the config"
             )
 
-        if self.glom_path and self.format != FormatType.json:
+        if self.json_path and self.format != FormatType.json:
             raise ValueError(
                 f"iterate_over has been configured but format is not json\n"
                 f"either set format to json or remove iterate_over in the configuration"
@@ -170,8 +170,6 @@ class SourceConfig:
             pass
         # do we parse the field-type map here, private attr?
 
-        if self.glom_path:
-            object.__setattr__(self, 'glom_path', GlomPath(*self.glom_path))
 
 
 @dataclass(frozen=True)

@@ -1,8 +1,6 @@
 import json
 import logging
-from typing import IO, Any, Dict, Iterator, List
-
-from glom import Path, glom
+from typing import IO, Any, Dict, Iterator, List, Union
 
 LOG = logging.getLogger(__name__)
 
@@ -16,7 +14,7 @@ class JSONReader:
         self,
         io_str: IO[str],
         required_properties: List[str] = None,
-        glom_path: Path = None,
+        json_path: List[Union[str, int]] = None,
         name: str = 'json file',
     ):
         """
@@ -28,11 +26,13 @@ class JSONReader:
         """
         self.io_str = io_str
         self.required_properties = required_properties
-        self.glom_path = glom_path
+        self.json_path = json_path
         self.name = name
 
-        if self.glom_path:
-            self.json_obj = glom(json.load(self.io_str), self.glom_path)
+        if self.json_path:
+            self.json_obj = json.load(self.io_str)
+            for path in self.json_path:
+                self.json_obj = self.json_obj[path]
         else:
             self.json_obj = json.load(self.io_str)
 

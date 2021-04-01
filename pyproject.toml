@@ -24,7 +24,6 @@ requires = [
     "pyyaml >=5.3.1,<6.0.0",
     "requests >=2.24.0,<3.0.0",
     "typer >=0.3",
-    "glom >= 20.0.0, <21.0.0"
 ]
 description-file = "README.md"
 requires-python = ">=3.6"

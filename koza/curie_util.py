@@ -5,8 +5,6 @@ and that the map is a bimap then converting to a dictionary
 
 relocate to a util module?
 """
-# python 3.9 has a generic cache fx
-
 import json
 from enum import Enum
 from functools import lru_cache
@@ -42,11 +40,11 @@ class UniqueKeyLoader(yaml.SafeLoader):
         return super().construct_mapping(node, deep)
 
 
-@lru_cache
+@lru_cache(maxsize=2)
 def get_curie_map(
     curie_path: PathLike = None,
     curie_format: CurieFileFormat = CurieFileFormat.yaml,
-    enforce_bimap: bool = True
+    enforce_bimap: bool = True,
 ) -> Dict[str, str]:
     """
     Get a local or remote curie map and convert to a dict
@@ -89,8 +87,7 @@ def _curie_map_from_yaml(curie_io: IO[str]) -> Dict[str, str]:
 
 def _curie_map_from_jsonld(curie_io: IO[str]) -> Dict[str, str]:
     """
-    Process a io stream from a curie yaml and return
-    a dictionary
+    Process a io stream from a jsonld @context and return a dictionary
     :param curie_io: io stream from open(curie_map_yaml)
     :return: Dictionary of prefix: reference
     """
