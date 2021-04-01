@@ -25,9 +25,14 @@ from koza.dsl.row_filter import RowFilter
                           ('b', 'gt', 11, False),
                           ('b', 'lt', 11, True),
                           ('b', 'lt', 9, False),
+                          ('c', 'eq', 'llama', True),
+                          ('c', 'ne', 'alpaca', True),
+                          ('c', 'eq', 'alpaca', False),
+                          ('c', 'in', ['llama', 'alpaca'], True),
+                          ('c', 'in', ['condor', 'alpaca'], False)
                           ])
-def test_numeric_filter(column, code, value, result):
-    row = {'a': .3, 'b': 10}
+def test_filter(column, code, value, result):
+    row = {'a': .3, 'b': 10, 'c': 'llama'}
     column_filter = ColumnFilter(column=column, filter=Filter(filter=FilterCode(code), value=value))
 
     rf = RowFilter([column_filter])

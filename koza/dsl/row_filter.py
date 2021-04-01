@@ -23,7 +23,8 @@ class RowFilter:
             'lt': self.lt,
             'lte': self.lte,
             'eq': self.eq,
-            'ne': self.ne
+            'ne': self.ne,
+            'in': self.inlist
         }
 
     def include_row(self, row) -> bool:
@@ -31,6 +32,7 @@ class RowFilter:
         :param row: A dictionary representing a single row
         :return: bool for whether the row should be included
         """
+        column_filter: ColumnFilter
         for column_filter in self.filters:
             # todo: this check should probably move to SourceConfig?
             if column_filter.column not in row.keys():
@@ -41,7 +43,7 @@ class RowFilter:
             if row.get(column_filter.column) is None:
                 return False
 
-            comparison_method = getattr(self, column_filter.filter.filter)
+            comparison_method = self.operators.get(column_filter.filter.filter)
             return comparison_method(row.get(column_filter.column), column_filter.filter.value)
 
     def gt(self, column_value, filter_value):
@@ -61,3 +63,6 @@ class RowFilter:
 
     def ne(self, column_value, filter_value):
         return column_value != filter_value
+
+    def inlist(self, column_value, filter_value):
+        return column_value in filter_value

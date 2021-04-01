@@ -52,6 +52,7 @@ class FilterCode(str, Enum):
     lte = 'lte'
     eq = 'eq'
     ne = 'ne'
+    inlist = 'in'
 
 
 class FieldType(str, Enum):
@@ -69,7 +70,7 @@ class FieldType(str, Enum):
 @dataclass(frozen=True)
 class Filter:
     filter: FilterCode
-    value: Union[StrictInt, StrictFloat, str]
+    value: Union[StrictInt, StrictFloat, str, List]
 
 
 @dataclass(frozen=True)
