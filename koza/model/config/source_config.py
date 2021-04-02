@@ -70,7 +70,7 @@ class FieldType(str, Enum):
 @dataclass(frozen=True)
 class Filter:
     filter: FilterCode
-    value: Union[str, StrictInt, StrictFloat, List]
+    value: Union[StrictInt, StrictFloat, List, str]
 
 
 @dataclass(frozen=True)

@@ -33,7 +33,7 @@ from koza.dsl.row_filter import RowFilter
                           ])
 def test_filter(column, code, value, result):
     row = {'a': .3, 'b': 10, 'c': 'llama'}
-    column_filter = {'column': column, filter : Filter(filter=FilterCode(code), value=value)}
+    column_filter = {'column': column, 'filter': Filter(filter=FilterCode(code), value=value)}
 
     rf = RowFilter([column_filter])
 
