@@ -5,8 +5,7 @@ from koza.model.config.source_config import Filter
 
 class RowFilter:
     """
-    A Filter class that is initialized with a List of ColumnFilters
-
+    A Filter class that is initialized with a List of column filters, each specifying a column, an operator and a value
     """
 
     def __init__(

@@ -9,7 +9,7 @@ import typer
 
 from koza.koza_runner import run_single_resource
 from koza.model.config.koza_config import SerializationEnum
-from koza.model.config.source_config import CompressionType, FormatType, ColumnFilter
+from koza.model.config.source_config import CompressionType, FormatType
 
 app = typer.Typer()
 
@@ -24,8 +24,8 @@ def run(
     format: FormatType = FormatType.csv,
     delimiter: str = ',',
     header_delimiter: str = None,
-    filter_in: List[ColumnFilter] = None,
-    filter_out: List[ColumnFilter] = None,
+    filter_in: List[Dict[str, Filter]] = None,
+    filter_out: List[Dict[str, Filter]] = None,
     compression: CompressionType = None,
     output: str = None,
     output_format: SerializationEnum = SerializationEnum.tsv,
