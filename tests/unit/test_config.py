@@ -17,7 +17,20 @@ def test_source_primary_config():
         PrimarySourceConfig(**yaml.safe_load(config))
 
 
-def test_wrong_filter_type_raises_exception():
+@pytest.mark.parametrize("filter_mode, column, filter_code, value",
+                         ([
+                             ('filter_in', 'combined_score', 'lt', '70'),
+                             ('filter_out', 'combined_score', 'lt', '70'),
+                             ('filter_in', 'combined_score', 'in', '70'),
+                             ('filter_out', 'combined_score', 'in', '70'),
+                             ('filter_out', 'combined_score', 'in', 70),
+                             ('filter_out', 'combined_score', 'in', .7),
+                             ('filter_in', 'combined_score', 'eq', ['goat', 'sheep']),
+                             ('filter_in', 'combined_score', 'lt', ['goat', 'sheep']),
+                             ('filter_in', 'combined_score', 'gte', ['goat', 'sheep']),
+                             ('filter_out', 'is_ungulate', 'eq', 'T'),
+                         ]))
+def test_wrong_filter_type_raises_exception(filter_mode, column, filter_code, value):
     """
     Test if filter_in and filter_out raises a
     value error when handed an incompatible type,
@@ -25,12 +38,9 @@ def test_wrong_filter_type_raises_exception():
     """
     with open(base_config, 'r') as config:
         source_config = yaml.safe_load(config)
-        source_config['filter_out'][0]['combined_score']['value'] = '70'
-        with pytest.raises(ValueError):
-            PrimarySourceConfig(**source_config)
-
         del source_config['filter_out']
-        source_config['filter_in'] = [{'combined_score': {'filter': 'lt', 'value': '70'}}]
+
+        source_config[filter_mode] = [{column: {'filter': filter_code, 'value': value}}]
         with pytest.raises(ValueError):
             PrimarySourceConfig(**source_config)
 

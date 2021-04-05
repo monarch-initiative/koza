@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Union
 
 from glom import Path as GlomPath
-from pydantic import StrictFloat, StrictInt
+from pydantic import StrictFloat, StrictInt, StrictStr
 from pydantic.dataclasses import dataclass
 
 
@@ -70,8 +70,7 @@ class FieldType(str, Enum):
 @dataclass(frozen=True)
 class Filter:
     filter: FilterCode
-    value: Union[StrictInt, StrictFloat, List, str]
-
+    value: Union[StrictInt, StrictFloat, StrictStr, List[Union[StrictInt, StrictFloat, StrictStr]]]
 
 @dataclass(frozen=True)
 class DatasetDescription:
@@ -137,6 +136,18 @@ class SourceConfig:
         all_filters = [filters for f_in in self.filter_in for filters in f_in.values()]
         all_filters += [filters for f_out in self.filter_out for filters in f_out.values()]
 
+        filter_columns = [filters for f_in in self.filter_in for filters in f_in.keys()]
+        filter_columns += [filters for f_out in self.filter_out for filters in f_out.keys()]
+        all_columns = [next(iter(column)) if isinstance(column, Dict) else column for column in self.columns]
+
+        for column in filter_columns:
+            if column not in all_columns:
+                raise(
+                    ValueError(
+                        f"Filter column {column} not in column list"
+                    )
+                )
+
         if self.delimiter in ['tab', '\\t']:
             object.__setattr__(self, 'delimiter', '\t')
 
@@ -148,6 +159,16 @@ class SourceConfig:
                 if not isinstance(flter['value'], (int, float)):
                     raise ValueError(
                         f"Filter value must be int or float for operator {flter['filter']}"
+                    )
+            elif flter['filter'] == 'eq':
+                if not isinstance(flter['value'], (str, int, float)):
+                    raise ValueError(
+                        f"Filter value must be string, int or float for operator {flter['filter']}"
+                    )
+            elif flter['filter'] == 'in':
+                if not isinstance(flter['value'], List):
+                    raise ValueError(
+                        f"Filter value must be List for operator {flter['filter']}"
                     )
 
         if self.format == FormatType.csv and self.required_properties:
