@@ -2,13 +2,14 @@
 source config data class
 map config data class
 """
-from dataclasses import field
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Union
 
 from glom import Path as GlomPath
+from pydantic import StrictFloat, StrictInt, StrictStr
 from pydantic.dataclasses import dataclass
+from pydantic.tools import parse_obj_as
 
 
 class MapErrorEnum(str, Enum):
@@ -51,7 +52,15 @@ class FilterCode(str, Enum):
     lte = 'lte'
     eq = 'eq'
     ne = 'ne'
+    inlist = 'in'
 
+class FilterInclusion(str, Enum):
+    """
+    Enum for filter inclusion/exclusion
+    """
+
+    include = 'include'
+    exclude = 'exclude'
 
 class FieldType(str, Enum):
     """
@@ -66,9 +75,11 @@ class FieldType(str, Enum):
 
 
 @dataclass(frozen=True)
-class Filter:
-    filter: FilterCode
-    value: Union[str, int, float]
+class ColumnFilter:
+    column: str
+    inclusion: FilterInclusion
+    filter_code: FilterCode
+    value: Union[StrictInt, StrictFloat, StrictStr, List[Union[StrictInt, StrictFloat, StrictStr]]]
 
 
 @dataclass(frozen=True)
@@ -119,8 +130,7 @@ class SourceConfig:
     skip_lines: int = 0
     skip_blank_lines: bool = True
     compression: CompressionType = None
-    filter_in: List[Dict[str, Filter]] = field(default_factory=list)
-    filter_out: List[Dict[str, Filter]] = field(default_factory=list)
+    filters: List[ColumnFilter] = None
     glom_path: List[Any] = None
 
     def __post_init__(self):
@@ -132,20 +142,40 @@ class SourceConfig:
                 files_as_paths.append(file)
         object.__setattr__(self, 'files', files_as_paths)
 
-        all_filters = [filters for f_in in self.filter_in for filters in f_in.values()]
-        all_filters += [filters for f_out in self.filter_out for filters in f_out.values()]
+        column_filters = parse_obj_as(List[ColumnFilter], self.filters)
+        filtered_columns = [column_filter.column for column_filter in column_filters]
+
+        all_columns = [next(iter(column)) if isinstance(column, Dict) else column for column in self.columns]
+
+        for column in filtered_columns:
+            if column not in all_columns:
+                raise(
+                    ValueError(
+                        f"Filter column {column} not in column list"
+                    )
+                )
 
         if self.delimiter in ['tab', '\\t']:
             object.__setattr__(self, 'delimiter', '\t')
 
-        for flter in all_filters:
-            if flter['filter'] in ['lt', 'gt', 'lte', 'gte']:
+        for column_filter in column_filters:
+            if column_filter.filter_code in ['lt', 'gt', 'lte', 'gte']:
                 # TODO determine if this should raise an exception
                 # or instead try to type coerce the string to a float
                 # type coercion is probably the best thing to do here
-                if not isinstance(flter['value'], (int, float)):
+                if not isinstance(column_filter.value, (int, float)):
                     raise ValueError(
-                        f"Filter value must be int or float for operator {flter['filter']}"
+                        f"Filter value must be int or float for operator {column_filter.filter_code}"
+                    )
+            elif column_filter.filter_code == 'eq':
+                if not isinstance(column_filter.value, (str, int, float)):
+                    raise ValueError(
+                        f"Filter value must be string, int or float for operator {column_filter.filter_code}"
+                    )
+            elif column_filter.filter_code == 'in':
+                if not isinstance(column_filter.value, List):
+                    raise ValueError(
+                        f"Filter value must be List for operator {column_filter.filter_code}"
                     )
 
         if self.format == FormatType.csv and self.required_properties:

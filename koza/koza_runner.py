@@ -5,14 +5,15 @@
 """
 
 from csv import DictWriter
-from typing import IO
+from typing import IO, List
 
 from .io.reader.csv_reader import CSVReader
 from .io.reader.json_reader import JSONReader
 from .io.reader.jsonl_reader import JSONLReader
 from .io.utils import get_resource_name, open_resource
 from .model.config.koza_config import SerializationEnum
-from .model.config.source_config import CompressionType, FormatType
+from .model.config.source_config import CompressionType, FormatType, ColumnFilter
+
 
 # def register_source(): pass
 
@@ -32,7 +33,7 @@ def run_single_resource(
     header_delimiter: str = None,
     output: IO[str] = None,
     serialization: SerializationEnum = None,
-    filter: str = None,
+    filters: List[ColumnFilter] = None,
     compression: CompressionType = None,
 ):
 
