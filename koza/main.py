@@ -9,7 +9,7 @@ import typer
 
 from koza.koza_runner import run_single_resource
 from koza.model.config.koza_config import SerializationEnum
-from koza.model.config.source_config import CompressionType, FormatType
+from koza.model.config.source_config import CompressionType, FormatType, ColumnFilter
 
 app = typer.Typer()
 
@@ -24,8 +24,7 @@ def run(
     format: FormatType = FormatType.csv,
     delimiter: str = ',',
     header_delimiter: str = None,
-    filter_in: List[Dict[str, Filter]] = None,
-    filter_out: List[Dict[str, Filter]] = None,
+    filters: List[ColumnFilter] = None,
     compression: CompressionType = None,
     output: str = None,
     output_format: SerializationEnum = SerializationEnum.tsv,
@@ -55,7 +54,7 @@ def run(
     # If a user passes in \s for a space delimited csv file
     if delimiter == '\\s':
         delimiter = ' '
-    run_single_resource(file, format, delimiter, header_delimiter, output, filter_in, filter_out, compression)
+    run_single_resource(file, format, delimiter, header_delimiter, output, filters, compression)
 
 
 @app.command()

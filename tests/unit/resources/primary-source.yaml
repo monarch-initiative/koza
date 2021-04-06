@@ -31,7 +31,8 @@ columns:
   - 'textmining'
   - 'combined_score' : 'int'
 
-filter_out:
-  - 'combined_score':
-       filter: 'lt'
-       value: 700
+filters:
+  - column: 'combined_score'
+    inclusion: 'include'
+    filter_code: 'lt'
+    value: 700

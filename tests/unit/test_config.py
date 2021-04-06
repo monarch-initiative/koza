@@ -17,40 +17,46 @@ def test_source_primary_config():
         PrimarySourceConfig(**yaml.safe_load(config))
 
 
-@pytest.mark.parametrize("filter_mode, column, filter_code, value",
+@pytest.mark.parametrize("inclusion, column, filter_code, value",
                          ([
-                             ('filter_in', 'combined_score', 'lt', '70'),
-                             ('filter_out', 'combined_score', 'lt', '70'),
-                             ('filter_in', 'combined_score', 'in', '70'),
-                             ('filter_out', 'combined_score', 'in', '70'),
-                             ('filter_out', 'combined_score', 'in', 70),
-                             ('filter_out', 'combined_score', 'in', .7),
-                             ('filter_in', 'combined_score', 'eq', ['goat', 'sheep']),
-                             ('filter_in', 'combined_score', 'lt', ['goat', 'sheep']),
-                             ('filter_in', 'combined_score', 'gte', ['goat', 'sheep']),
-                             ('filter_out', 'is_ungulate', 'eq', 'T'),
+                             ('include', 'combined_score', 'lt', '70'),
+                             ('exclude', 'combined_score', 'lt', '70'),
+                             ('include', 'combined_score', 'in', '70'),
+                             ('exclude', 'combined_score', 'in', '70'),
+                             ('exclude', 'combined_score', 'in', 70),
+                             ('exclude', 'combined_score', 'in', .7),
+                             ('include', 'combined_score', 'eq', ['goat', 'sheep']),
+                             ('include', 'combined_score', 'lt', ['goat', 'sheep']),
+                             ('include', 'combined_score', 'gte', ['goat', 'sheep']),
+                             ('exclude', 'is_ungulate', 'eq', 'T'),
                          ]))
-def test_wrong_filter_type_raises_exception(filter_mode, column, filter_code, value):
+def test_wrong_filter_type_raises_exception(inclusion, column, filter_code, value):
     """
-    Test if filter_in and filter_out raises a
+    Test if include and exclude raise a
     value error when handed an incompatible type,
     eg a string when using the lt operator
     """
     with open(base_config, 'r') as config:
         source_config = yaml.safe_load(config)
-        del source_config['filter_out']
+        del source_config['filters']
 
-        source_config[filter_mode] = [{column: {'filter': filter_code, 'value': value}}]
+        source_config['filters'] = [{'column': column,
+                                     'inclusion': inclusion,
+                                     'filter_code': filter_code,
+                                     'value': value}]
         with pytest.raises(ValueError):
             PrimarySourceConfig(**source_config)
 
 
-@pytest.mark.parametrize("filter_set, code", [('filter_in', 'lgt'),
-                                              ('filter_out', 'ngte')])
-def test_wrong_filter_code_raises_exception(filter_set, code):
+@pytest.mark.parametrize("inclusion, code", [('include', 'lgt'),
+                                              ('exclude', 'ngte')])
+def test_wrong_filter_code_raises_exception(inclusion, code):
     with open(base_config, 'r') as config:
         source_config = yaml.safe_load(config)
-        source_config[filter_set] = [{'combined_score': {'filter': code, 'value': 70}}]
+        source_config['filters'] = [{'column': 'combined_score',
+                                     'inclusion': inclusion,
+                                     'filter_code': code,
+                                     'value': 70}]
         with pytest.raises(ValueError):
             PrimarySourceConfig(**source_config)
 
