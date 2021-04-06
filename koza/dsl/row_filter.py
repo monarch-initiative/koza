@@ -1,6 +1,6 @@
 from typing import List
 
-from koza.model.config.source_config import ColumnFilter
+from koza.model.config.source_config import ColumnFilter, FilterInclusion
 
 
 class RowFilter:
@@ -31,14 +31,25 @@ class RowFilter:
         :param row: A dictionary representing a single row
         :return: bool for whether the row should be included
         """
+
+        include_row = True
+
         column_filter: ColumnFilter
         for column_filter in self.filters:
             # None can't be greater, less than or equal to any specified value, right?
             if row.get(column_filter.column) is None:
                 return False
 
+            include = column_filter.inclusion == FilterInclusion('include')
+            exclude = column_filter.inclusion == FilterInclusion('exclude')
+
             comparison_method = self.operators.get(column_filter.filter_code)
-            return comparison_method(row.get(column_filter.column), column_filter.value)
+            comparison_match = comparison_method(row.get(column_filter.column), column_filter.value)
+
+            if (include and not comparison_match) or (exclude and comparison_match):
+                include_row = False
+
+        return include_row
 
     def gt(self, column_value, filter_value):
         return column_value > filter_value
