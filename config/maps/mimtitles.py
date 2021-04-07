@@ -1,8 +1,8 @@
 import logging
 import re
 
-from koza.facade.data_provider import inject_files, inject_translation_table, inject_map
-from koza.facade.helper import next_row
+from koza.manager.data_provider import inject_files, inject_translation_table, inject_map
+from koza.manager.helper import next_row
 
 LOG = logging.getLogger(__name__)
 

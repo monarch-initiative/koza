@@ -1,6 +1,6 @@
 from koza.model import Protein, PairwiseGeneToGeneInteraction, predicate
-from koza.facade.data_provider import inject_files, inject_translation_table
-from koza.facade.data_collector import serialize
+from koza.manager.data_provider import inject_files, inject_translation_table
+from koza.manager.data_collector import serialize
 
 _ingest_name = 'protein-links-detailed'
 
