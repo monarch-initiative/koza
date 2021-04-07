@@ -1,4 +1,5 @@
 from typing import List
+from operator import gt, ge, lt, le, eq, ne
 
 from koza.model.config.source_config import ColumnFilter, FilterInclusion
 
@@ -17,13 +18,13 @@ class RowFilter:
         """
         self.filters = filters
         self.operators = {
-            'gt': self.gt,
-            'gte': self.gte,
-            'lt': self.lt,
-            'lte': self.lte,
-            'eq': self.eq,
-            'ne': self.ne,
-            'in': self.inlist
+            'gt': gt,
+            'ge': ge,
+            'lt': lt,
+            'le': le,
+            'eq': eq,
+            'ne': ne,
+            'in': self.inlist  # not using operator.contains because the it expects opposite argument order
         }
 
     def include_row(self, row) -> bool:
@@ -31,6 +32,9 @@ class RowFilter:
         :param row: A dictionary representing a single row
         :return: bool for whether the row should be included
         """
+
+        if not self.filters:
+            return True
 
         include_row = True
 
@@ -50,24 +54,6 @@ class RowFilter:
                 include_row = False
 
         return include_row
-
-    def gt(self, column_value, filter_value):
-        return column_value > filter_value
-
-    def gte(self, column_value, filter_value):
-        return column_value >= filter_value
-
-    def lt(self, column_value, filter_value):
-        return column_value < filter_value
-
-    def lte(self, column_value, filter_value):
-        return column_value <= filter_value
-
-    def eq(self, column_value, filter_value):
-        return column_value == filter_value
-
-    def ne(self, column_value, filter_value):
-        return column_value != filter_value
 
     def inlist(self, column_value, filter_value):
         return column_value in filter_value

@@ -12,8 +12,8 @@ from koza.dsl.row_filter import RowFilter
 @pytest.mark.parametrize("column, inclusion, code, value, result", [
   ('a', 'include', 'eq', .3, True),
   ('a', 'exclude', 'eq', .3, False),
-  ('a', 'include', 'gte', .3, True),
-  ('a', 'include', 'lte', .3, True),
+  ('a', 'include', 'ge', .3, True),
+  ('a', 'include', 'le', .3, True),
   ('a', 'include', 'ne', .3, False),
   ('a', 'include', 'ne', .4, True),
   ('a', 'include', 'lt', .4, True),
@@ -22,8 +22,8 @@ from koza.dsl.row_filter import RowFilter
   ('a', 'exclude', 'gt', .4, True),
   ('a', 'exclude', 'gt', .2, False),
   ('b', 'include', 'eq', 10, True),
-  ('b', 'include', 'gte', 10, True),
-  ('b', 'include', 'lte', 10, True),
+  ('b', 'include', 'ge', 10, True),
+  ('b', 'include', 'le', 10, True),
   ('b', 'include', 'gt', 9, True),
   ('b', 'include', 'gt', 11, False),
   ('b', 'include', 'lt', 11, True),
@@ -70,3 +70,11 @@ def test_multiple_filters(column_filters, result):
     rf = RowFilter(column_filters)
 
     assert rf.include_row(row) == result
+
+
+def test_empty_filters():
+    row = {'a': .3, 'b': 10, 'c': 'llama'}
+
+    rf = RowFilter()
+
+    assert rf.include_row(row)
