@@ -5,7 +5,7 @@
 """
 
 from csv import DictWriter
-from typing import IO, Dict
+from typing import IO, List, Dict
 
 from .curie_util import get_curie_map
 from .io.reader.csv_reader import CSVReader
@@ -13,6 +13,8 @@ from .io.reader.json_reader import JSONReader
 from .io.reader.jsonl_reader import JSONLReader
 from .io.utils import get_resource_name, open_resource
 from .model.config.koza_config import SerializationEnum
+from .model.config.source_config import CompressionType, FormatType, ColumnFilter
+
 from .model.config.source_config import CompressionType, FormatType
 from .model.koza import KozaApp
 
@@ -44,7 +46,7 @@ def run_single_resource(
     header_delimiter: str = None,
     output: IO[str] = None,
     serialization: SerializationEnum = None,
-    filter: str = None,
+    filters: List[ColumnFilter] = None,
     compression: CompressionType = None,
     curie_map: Dict[str, str] = None,
 ):
