@@ -47,12 +47,13 @@ class FilterCode(str, Enum):
     """
 
     gt = 'gt'
-    gte = 'gte'
+    ge = 'ge'
     lt = 'lt'
-    lte = 'lte'
+    lte = 'le'
     eq = 'eq'
     ne = 'ne'
     inlist = 'in'
+
 
 class FilterInclusion(str, Enum):
     """
@@ -61,6 +62,7 @@ class FilterInclusion(str, Enum):
 
     include = 'include'
     exclude = 'exclude'
+
 
 class FieldType(str, Enum):
     """

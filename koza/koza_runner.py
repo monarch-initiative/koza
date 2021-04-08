@@ -7,6 +7,8 @@
 from csv import DictWriter
 from typing import IO, List
 
+from koza.dsl.row_filter import RowFilter
+
 from .io.reader.csv_reader import CSVReader
 from .io.reader.json_reader import JSONReader
 from .io.reader.jsonl_reader import JSONLReader
@@ -60,6 +62,8 @@ def run_single_resource(
             # Iterate over the header(s) to get field names for writer
             first_row = next(reader)
 
+        row_filter = RowFilter(filters)
+
         # set the writer
         if serialization is None:
             writer = DictWriter(output, reader.fieldnames, delimiter='\t')
@@ -67,5 +71,5 @@ def run_single_resource(
             writer.writerow(first_row)
 
         for row in reader:
-            if output:
+            if output and row_filter.include_row(row):
                 writer.writerow(row)
