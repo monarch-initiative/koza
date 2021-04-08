@@ -46,9 +46,9 @@ class FilterCode(str, Enum):
     """
 
     gt = 'gt'
-    gte = 'gte'
+    ge = 'ge'
     lt = 'lt'
-    lte = 'lte'
+    lte = 'le'
     eq = 'eq'
     ne = 'ne'
     inlist = 'in'
