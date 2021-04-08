@@ -5,7 +5,7 @@
 """
 
 from csv import DictWriter
-from typing import IO, List, Dict
+from typing import IO, Dict, List
 
 from .curie_util import get_curie_map
 from .io.reader.csv_reader import CSVReader
@@ -13,11 +13,8 @@ from .io.reader.json_reader import JSONReader
 from .io.reader.jsonl_reader import JSONLReader
 from .io.utils import get_resource_name, open_resource
 from .model.config.koza_config import SerializationEnum
-from .model.config.source_config import CompressionType, FormatType, ColumnFilter
-
-from .model.config.source_config import CompressionType, FormatType
+from .model.config.source_config import ColumnFilter, CompressionType, FormatType
 from .model.koza import KozaApp
-
 
 koza = KozaApp()
 
@@ -59,21 +56,21 @@ def run_single_resource(
 
     with open_resource(file, compression) as resource_io:
 
-        if format == FormatType.csv:
+        if format == 'csv':
             reader = CSVReader(
                 resource_io,
                 delimiter=delimiter,
                 header_delimiter=header_delimiter,
                 name=resource_name,
             )
-        elif format == FormatType.jsonl:
+        elif format == 'jsonl':
             reader = JSONLReader(resource_io, name=resource_name)
-        elif format == FormatType.json:
+        elif format == 'json':
             reader = JSONReader(resource_io, name=resource_name)
         else:
             raise ValueError
 
-        if format == FormatType.csv:
+        if format == 'csv':
             # Iterate over the header(s) to get field names for writer
             first_row = next(reader)
 

@@ -53,6 +53,7 @@ class FilterCode(str, Enum):
     ne = 'ne'
     inlist = 'in'
 
+
 class FilterInclusion(str, Enum):
     """
     Enum for filter inclusion/exclusion
@@ -60,6 +61,7 @@ class FilterInclusion(str, Enum):
 
     include = 'include'
     exclude = 'exclude'
+
 
 class FieldType(str, Enum):
     """
@@ -141,21 +143,19 @@ class SourceConfig:
                 files_as_paths.append(file)
         object.__setattr__(self, 'files', files_as_paths)
 
+        if self.delimiter in ['tab', '\\t']:
+            object.__setattr__(self, 'delimiter', '\t')
+
         column_filters = parse_obj_as(List[ColumnFilter], self.filters)
         filtered_columns = [column_filter.column for column_filter in column_filters]
 
-        all_columns = [next(iter(column)) if isinstance(column, Dict) else column for column in self.columns]
+        all_columns = [
+            next(iter(column)) if isinstance(column, Dict) else column for column in self.columns
+        ]
 
         for column in filtered_columns:
             if column not in all_columns:
-                raise(
-                    ValueError(
-                        f"Filter column {column} not in column list"
-                    )
-                )
-
-        if self.delimiter in ['tab', '\\t']:
-            object.__setattr__(self, 'delimiter', '\t')
+                raise (ValueError(f"Filter column {column} not in column list"))
 
         for column_filter in column_filters:
             if column_filter.filter_code in ['lt', 'gt', 'lte', 'gte']:
@@ -198,7 +198,6 @@ class SourceConfig:
         if self.columns:
             pass
         # do we parse the field-type map here, private attr?
-
 
 
 @dataclass(frozen=True)

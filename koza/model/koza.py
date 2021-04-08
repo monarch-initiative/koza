@@ -29,8 +29,11 @@ class KozaApp:
     curie_map: Dict[str, str] = None
     source_registry: Dict[str, Source] = None
     map_registry: Dict[str, Source] = None
-    # serializer_registry: Dict[str, SerializerConfig] = None
     # map_cache: Dict[str, Dict] = None
 
-    def __init__(self):
+    def __init__(self, config: KozaConfig = None):
+        pass
+
+
+    def serialize(self):
         pass

@@ -13,8 +13,6 @@ class SerializationEnum(str, Enum):
     tsv = 'tsv'
     json = 'json'
     jsonl = 'jsonl'
-    # nturtles = 'nturtles'
-    # rdfstar, ntriples, etc
 
 
 @dataclass(frozen=True)

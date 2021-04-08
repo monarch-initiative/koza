@@ -7,7 +7,8 @@ compression: 'gzip'
 files:
   - '9606.protein.links.detailed.v11.0.txt.gz'
 
-filter_out:
-  - 'combined_score':
-       filter: 'lt'
-       value: 700
+filter:
+  - inclusion: 'include'
+    column: 'combined_score'
+    filter: 'lt'
+    value: 700

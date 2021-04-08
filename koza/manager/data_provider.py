@@ -1,7 +1,6 @@
 from typing import Dict, Tuple
 
 from ..model import TranslationTable
-from koza.koza_runner import get_koza_app
 
 
 def inject_files(ingest_name: str) -> Tuple[Dict, ...]:
@@ -24,3 +23,6 @@ def inject_translation_table(ingest_code: str) -> TranslationTable:
     :param ingest_code:
     :return:
     """
+
+def get_next_row():
+    pass

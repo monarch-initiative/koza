@@ -21,9 +21,9 @@ from .validator.map_validator import is_dictionary_bimap
 DEFAULT_CURIE_MAP = 'https://raw.githubusercontent.com/biolink/biolink-model/master/context.jsonld'
 
 
-class CurieFileFormat(Enum):
-    yaml = 1
-    jsonld = 2
+class CurieFileFormat(str, Enum):
+    yaml = 'yaml'
+    jsonld = 'jsonld'
 
 
 class UniqueKeyLoader(yaml.SafeLoader):
@@ -60,10 +60,10 @@ def get_curie_map(
         enforce_bimap = False
 
     with open_resource(curie_path) as curie_fh:
-        if curie_format == CurieFileFormat.yaml:
+        if curie_format == 'yaml':
             curie_map = _curie_map_from_yaml(curie_fh)
 
-        elif curie_format == CurieFileFormat.jsonld:
+        elif curie_format == 'jsonld':
             curie_map = _curie_map_from_jsonld(curie_fh)
 
         else:

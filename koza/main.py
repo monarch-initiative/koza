@@ -3,14 +3,14 @@
 import logging
 import uuid
 from pathlib import Path
-
 from typing import List
+
 import typer
 
 from koza.curie_util import get_curie_map
 from koza.koza_runner import run_single_resource
 from koza.model.config.koza_config import SerializationEnum
-from koza.model.config.source_config import CompressionType, FormatType, ColumnFilter
+from koza.model.config.source_config import ColumnFilter, CompressionType, FormatType
 
 app = typer.Typer()
 
@@ -38,11 +38,11 @@ def run(
     """
     _set_log_level(quiet, debug)
 
-    curie_map = get_curie_map(curie_file)
+    get_curie_map(curie_file)
 
     if output is None:
 
-        if output_format == SerializationEnum.tsv:
+        if output_format == 'tsv':
             extension = 'tsv'
         else:
             extension = 'tsv'

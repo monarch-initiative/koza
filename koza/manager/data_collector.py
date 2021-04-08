@@ -1,14 +1,6 @@
 """
-Functions that aggregate biolink models and facilitate serialization(s)
-
-Implement a producer-consumer design pattern here?
-https://asyncio.readthedocs.io/en/latest/producer_consumer.html
-
-leaning towards using async for all serialization
+Functions that collect biolink model objects and serialize them
 """
-
-from koza.koza_runner import get_koza_app
-
 
 
 def serialize(ingest_name: str, *args):
