@@ -8,7 +8,6 @@ from typing import Dict, List, Union
 
 from pydantic import StrictFloat, StrictInt, StrictStr
 from pydantic.dataclasses import dataclass
-from pydantic.tools import parse_obj_as
 
 
 class MapErrorEnum(str, Enum):
@@ -92,20 +91,20 @@ class DatasetDescription:
 
 
 @dataclass(frozen=True)
-class SourceMetadata:
+class SourceConfig:
     name: str
-    data_dir: Union[str, Path]
+    data_dir: str
     dataset_description: DatasetDescription
-    source_templates: List[str]
-    map_templates: List[str]
+    source_files: List[str]
+    map_files: List[str]
 
     def __post_init__(self):
         if isinstance(self.data_dir, str):
             object.__setattr__(self, 'data_dir', Path(self.data_dir))
 
 
-@dataclass(frozen=True)
-class SourceConfig:
+@dataclass
+class SourceFileConfig:
     """
     Base class for primary sources and mapping sources
 
@@ -121,9 +120,9 @@ class SourceConfig:
     """
 
     name: str
-    file_metadata: DatasetDescription
     files: List[Union[str, Path]]
     format: FormatType = FormatType.csv
+    file_metadata: DatasetDescription = None
     columns: List[Union[str, Dict[str, FieldType]]] = None
     required_properties: List[str] = None
     delimiter: str = None
@@ -134,7 +133,7 @@ class SourceConfig:
     filters: List[ColumnFilter] = None
     json_path: List[Union[StrictStr, StrictInt]] = None
 
-    def __post_init__(self):
+    def __post_init_post_parse__(self):
         files_as_paths: List[Path] = []
         for file in self.files:
             if isinstance(file, str):
@@ -146,8 +145,7 @@ class SourceConfig:
         if self.delimiter in ['tab', '\\t']:
             object.__setattr__(self, 'delimiter', '\t')
 
-        column_filters = parse_obj_as(List[ColumnFilter], self.filters)
-        filtered_columns = [column_filter.column for column_filter in column_filters]
+        filtered_columns = [column_filter.column for column_filter in self.filters]
 
         all_columns = [
             next(iter(column)) if isinstance(column, Dict) else column for column in self.columns
@@ -157,7 +155,7 @@ class SourceConfig:
             if column not in all_columns:
                 raise (ValueError(f"Filter column {column} not in column list"))
 
-        for column_filter in column_filters:
+        for column_filter in self.filters:
             if column_filter.filter_code in ['lt', 'gt', 'lte', 'gte']:
                 # TODO determine if this should raise an exception
                 # or instead try to type coerce the string to a float
@@ -196,17 +194,16 @@ class SourceConfig:
             )
 
         if self.columns:
-            pass
-        # do we parse the field-type map here, private attr?
+            pass  # do we parse the field-type map here, private attr?
 
 
-@dataclass(frozen=True)
-class PrimarySourceConfig(SourceConfig):
+@dataclass
+class PrimaryFileConfig(SourceFileConfig):
     depends_on: List[str] = None  # field(default_factory=list)
     on_map_failure: MapErrorEnum = MapErrorEnum.warning
 
 
-@dataclass(frozen=True)
-class MapSourceConfig(SourceConfig):
+@dataclass
+class MapFileConfig(SourceFileConfig):
     key: str = None
     values: List[str] = None

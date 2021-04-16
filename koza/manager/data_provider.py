@@ -1,13 +1,13 @@
-from typing import Dict, Tuple
+from typing import Dict
 
 from ..model import TranslationTable
 
 
-def inject_files(ingest_name: str) -> Tuple[Dict, ...]:
+def inject_files(ingest_name: str) -> Dict:
     pass
 
 
-def inject_map(ingest_name: str) -> Dict:
+def inject_map(map_name: str) -> Dict:
     """
 
     TODO Should the raw map be passed as well?
@@ -19,10 +19,10 @@ def inject_map(ingest_name: str) -> Dict:
 
 def inject_translation_table(ingest_code: str) -> TranslationTable:
     """
-
     :param ingest_code:
     :return:
     """
+
 
 def get_next_row():
     pass

@@ -1,41 +1,38 @@
 """
-1...* Primary Source
-1...* Serializer
-1 curie Map
+Module for managing koza runs
 """
 
-from csv import DictWriter
-from typing import IO, Dict, List
+from typing import IO, Dict, List, Optional
 
-from .curie_util import get_curie_map
-from koza.dsl.row_filter import RowFilter
-
-from .io.reader.csv_reader import CSVReader
-from .io.reader.json_reader import JSONReader
-from .io.reader.jsonl_reader import JSONLReader
-from .io.utils import get_resource_name, open_resource
-from .model.config.koza_config import SerializationEnum
-from .model.config.source_config import ColumnFilter, CompressionType, FormatType
+from .io.utils import get_resource_name
+from .model.config.koza_config import KozaConfig, SerializationEnum
+from .model.config.source_config import ColumnFilter, CompressionType, FormatType, SourceFileConfig
 from .model.koza import KozaApp
+from .model.source import Source, SourceFile
 
-koza = KozaApp()
-
-
-def set_koza_app():
-    pass
+KOZA_APP = None
 
 
-def get_koza_app() -> KozaApp:
-    pass
+def set_koza_app(
+    koza_config: KozaConfig,
+    sources: List[Source],
+    file_registry: Dict[str, SourceFile],
+    map_registry: Dict[str, SourceFile] = None,
+) -> KozaApp:
+    """
+    Setter for singleton koza app object
+    """
+    global KOZA_APP
+
+    KOZA_APP = KozaApp(koza_config, file_registry, map_registry)
+    return KOZA_APP
 
 
-# def register_source(): pass
-
-# def register_map(): pass
-
-# def cache_maps(): pass
-
-# def get_map_cache(): pass
+def get_koza_app() -> Optional[KozaApp]:
+    """
+    Getter for singleton koza app object
+    """
+    return KOZA_APP
 
 
 def run_single_resource(
@@ -47,43 +44,27 @@ def run_single_resource(
     serialization: SerializationEnum = None,
     filters: List[ColumnFilter] = None,
     compression: CompressionType = None,
-    curie_map: Dict[str, str] = None,
 ):
 
     # Get the resource
     resource_name = get_resource_name(file)
 
-    if not curie_map:
-        curie_map = get_curie_map()
+    # Since we're coming in from the command line, make the
+    # koza config object by hand
+    koza_config = KozaConfig(sources=[resource_name], serialization=serialization)
 
-    with open_resource(file, compression) as resource_io:
+    # Source registry by hand
+    source = SourceFile(
+        SourceFileConfig(
+            name=resource_name,
+            files=[file],
+            format=format,
+            delimiter=delimiter,
+            header_delimiter=header_delimiter,
+            compression=compression,
+            filters=filters,
+        )
+    )
+    source_registry = {resource_name: source}
 
-        if format == 'csv':
-            reader = CSVReader(
-                resource_io,
-                delimiter=delimiter,
-                header_delimiter=header_delimiter,
-                name=resource_name,
-            )
-        elif format == 'jsonl':
-            reader = JSONLReader(resource_io, name=resource_name)
-        elif format == 'json':
-            reader = JSONReader(resource_io, name=resource_name)
-        else:
-            raise ValueError
-
-        if format == 'csv':
-            # Iterate over the header(s) to get field names for writer
-            first_row = next(reader)
-
-        row_filter = RowFilter(filters)
-
-        # set the writer
-        if serialization is None:
-            writer = DictWriter(output, reader.fieldnames, delimiter='\t')
-            writer.writeheader()
-            writer.writerow(first_row)
-
-        for row in reader:
-            if output and row_filter.include_row(row):
-                writer.writerow(row)
+    set_koza_app(koza_config, source_registry)

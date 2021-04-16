@@ -1,8 +1,7 @@
+from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from typing import List, Union
-
-from pydantic.dataclasses import dataclass
 
 
 class SerializationEnum(str, Enum):
@@ -22,9 +21,9 @@ class KozaConfig:
     """
 
     name: str = 'koza-run'
-    curie_map: Union[str, Path] = None
     sources: List[str] = None
-    serializations: List[SerializationEnum] = None
+    serialization: SerializationEnum = None
     output: str = './'
-    config_dir: Union[str, Path] = None
+    config_dir: Union[str, Path] = './config'
     cache_maps: bool = True
+    curie_map: Union[str, Path] = None

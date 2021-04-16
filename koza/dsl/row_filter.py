@@ -1,5 +1,5 @@
+from operator import eq, ge, gt, le, lt, ne
 from typing import List
-from operator import gt, ge, lt, le, eq, ne
 
 from koza.model.config.source_config import ColumnFilter, FilterInclusion
 
@@ -9,10 +9,7 @@ class RowFilter:
     A Filter class that is initialized with a List of column filters, each specifying a column, an operator and a value
     """
 
-    def __init__(
-        self,
-        filters: List[ColumnFilter] = None
-    ):
+    def __init__(self, filters: List[ColumnFilter] = None):
         """
         :param filters: A collection of Filters to be applied
         """
@@ -24,7 +21,7 @@ class RowFilter:
             'le': le,
             'eq': eq,
             'ne': ne,
-            'in': self.inlist  # not using operator.contains because the it expects opposite argument order
+            'in': self.inlist,  # not using operator.contains because the it expects opposite argument order
         }
 
     def include_row(self, row) -> bool:

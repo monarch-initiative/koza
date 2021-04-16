@@ -7,7 +7,6 @@ from typing import List
 
 import typer
 
-from koza.curie_util import get_curie_map
 from koza.koza_runner import run_single_resource
 from koza.model.config.koza_config import SerializationEnum
 from koza.model.config.source_config import ColumnFilter, CompressionType, FormatType
@@ -25,7 +24,6 @@ def run(
     format: FormatType = FormatType.csv,
     delimiter: str = ',',
     header_delimiter: str = None,
-    curie_file: str = None,
     filters: List[ColumnFilter] = None,
     compression: CompressionType = None,
     output: str = None,
@@ -37,8 +35,6 @@ def run(
     Run a single file through koza
     """
     _set_log_level(quiet, debug)
-
-    get_curie_map(curie_file)
 
     if output is None:
 
