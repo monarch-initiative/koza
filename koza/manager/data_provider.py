@@ -1,28 +1,23 @@
-from typing import Dict
+from typing import Dict, Tuple
 
+from ..koza_runner import get_koza_app
 from ..model import TranslationTable
 
 
-def inject_files(ingest_name: str) -> Dict:
-    pass
+def inject_file(ingest_name: str) -> Dict:
+    koza = get_koza_app()
+    return koza.get_next_row(ingest_name)
 
 
-def inject_map(map_name: str) -> Dict:
+def inject_maps(ingest_name: str) -> Tuple[Dict, ...]:
     """
-
-    TODO Should the raw map be passed as well?
-
+    TODO
     :param ingest_name:
     :return:
     """
 
 
-def inject_translation_table(ingest_code: str) -> TranslationTable:
-    """
-    :param ingest_code:
-    :return:
-    """
-
-
-def get_next_row():
-    pass
+def inject_translation_table() -> TranslationTable:
+    """"""
+    koza = get_koza_app()
+    return koza.source.translation_table

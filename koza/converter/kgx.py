@@ -1,4 +1,4 @@
-class KGXSerializer:
+class KGXConverter:
     """
     Converts the biolink model to the KGX format, which splits
     data into nodes (Entity) and edges (Association)

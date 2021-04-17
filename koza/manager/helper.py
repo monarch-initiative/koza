@@ -1,10 +1,6 @@
 """
 Helper functions for facade files
 
-Goal is to keep this as simple as possible
-
-At a high level we want super simple event driven code
-
 Currently this is implemented with exceptions, but this
 assumes that all "events" will trigger the code
 to break out of its lexical scope

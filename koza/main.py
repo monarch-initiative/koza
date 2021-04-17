@@ -1,21 +1,28 @@
 #!/usr/bin/env python3
 
 import logging
-import uuid
 from pathlib import Path
-from typing import List
 
 import typer
 
 from koza.koza_runner import run_single_resource
-from koza.model.config.koza_config import SerializationEnum
-from koza.model.config.source_config import ColumnFilter, CompressionType, FormatType
+from koza.model.config.source_config import CompressionType, FormatType, OutputFormat
 
 app = typer.Typer()
 
 
 logging.basicConfig()
 LOG = logging.getLogger(__name__)
+
+"""
+name: str = 'koza-run'
+sources: List[str] = None
+serialization: SerializationEnum = None
+output: str = './'
+config_dir: Union[str, Path] = './config'
+cache_maps: bool = True
+curie_map: Union[str, Path] = None
+"""
 
 
 @app.command()
@@ -24,10 +31,10 @@ def run(
     format: FormatType = FormatType.csv,
     delimiter: str = ',',
     header_delimiter: str = None,
-    filters: List[ColumnFilter] = None,
+    filter_file: str = None,
     compression: CompressionType = None,
-    output: str = None,
-    output_format: SerializationEnum = SerializationEnum.tsv,
+    output_dir: str = None,
+    output_format: OutputFormat = OutputFormat.tsv,
     quiet: bool = False,
     debug: bool = False,
 ):
@@ -36,25 +43,26 @@ def run(
     """
     _set_log_level(quiet, debug)
 
-    if output is None:
+    if output_dir is None:
 
-        if output_format == 'tsv':
-            extension = 'tsv'
-        else:
-            extension = 'tsv'
-
-        filename = str(uuid.uuid4()) + '.' + extension
         output_directory = Path("/tmp")
         output_directory.mkdir(parents=True, exist_ok=True)
-        output_fp = output_directory / filename
-        output = open(output_fp, 'w')
 
-        LOG.warning(f"No output file provided, writing to {output_fp}")
+        # LOG.warning(f"No output file provided, writing to {output_fp}")
 
     # If a user passes in \s for a space delimited csv file
     if delimiter == '\\s':
         delimiter = ' '
-    run_single_resource(file, format, delimiter, header_delimiter, output, filters, compression)
+    run_single_resource(
+        file,
+        format,
+        delimiter,
+        header_delimiter,
+        output_dir,
+        output_format,
+        filter_file,
+        compression,
+    )
 
 
 @app.command()

@@ -1,9 +1,10 @@
 """
-Functions that collect biolink model objects and serialize them
+Functions that collect biolink model objects and write them
 """
 
+from ..koza_runner import get_koza_app
 
-def serialize(ingest_name: str, *args):
-    # koza = get_koza_app()
-    # koza.serialize(ingest_name, *args)
-    pass
+
+def collect(*args):
+    koza = get_koza_app()
+    koza.write(*args)

@@ -74,12 +74,31 @@ class FieldType(str, Enum):
     # Proportion = 'Proportion'
 
 
+class OutputFormat(str, Enum):
+    """
+    TODO do we need synonyms? - ttl, nt, kgx
+    """
+
+    tsv = 'tsv'
+    json = 'json'
+    jsonl = 'jsonl'
+
+
 @dataclass(frozen=True)
 class ColumnFilter:
     column: str
     inclusion: FilterInclusion
     filter_code: FilterCode
     value: Union[StrictInt, StrictFloat, StrictStr, List[Union[StrictInt, StrictFloat, StrictStr]]]
+
+
+@dataclass(frozen=True)
+class Filter:
+    """
+    for single file ingests
+    """
+
+    filter: List[ColumnFilter]
 
 
 @dataclass(frozen=True)
@@ -94,9 +113,11 @@ class DatasetDescription:
 class SourceConfig:
     name: str
     data_dir: str
-    dataset_description: DatasetDescription
+    output: str
     source_files: List[str]
-    map_files: List[str]
+    output_format: OutputFormat = None
+    map_files: List[str] = None
+    dataset_description: DatasetDescription = None
 
     def __post_init__(self):
         if isinstance(self.data_dir, str):

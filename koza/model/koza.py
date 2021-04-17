@@ -1,11 +1,10 @@
 from csv import DictWriter
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, List
 
 from koza.curie_util import get_curie_map
 from koza.dsl.row_filter import RowFilter
-from koza.model.config.koza_config import KozaConfig
-from koza.model.source import SourceFile
+from koza.model.source import Source, SourceFile
 
 
 @dataclass(init=False)
@@ -28,29 +27,39 @@ class KozaApp:
     of this approach (multi threading would be fine)
     """
 
-    config: KozaConfig
-    file_registry: Dict[str, SourceFile]
+    source: Source
+    file_registry: Dict[str, SourceFile] = None
     map_registry: Dict[str, SourceFile] = None
     curie_map: Dict[str, str] = None
-    # map_cache: Dict[str, Dict] = None
+    map_cache: Dict[str, Dict] = None
 
     def __init__(
         self,
-        config: KozaConfig,
-        file_registry: Dict[str, SourceFile],
-        map_registry: Dict[str, SourceFile],
+        source: Source,
+        source_files: List[SourceFile] = None,
+        map_files: List[SourceFile] = None,
+        curie_path: str = None,
     ):
 
-        if not KozaConfig.curie_map:
-            self.curie_map = get_curie_map()
+        self.curie_map = get_curie_map(curie_path)
+
+        if not source_files:
+            pass  # TODO try to infer
+
+        if not map_files:
+            pass  # TODO try to infer
+
+        # TODO check that all strings match, eg
+        # KozaConfig sources in source list,
+        # source files, maps etc
 
     def get_next_row(self, ingest_name: str):
         row_filter = RowFilter(self.file_registry[ingest_name].config.filters)
 
-        row = next(self.file_registry[ingest_name].reader)
+        row = next(self.file_registry[ingest_name])
         while not row_filter.include_row(row):
             # TODO log filtered out lines
-            row = next(self.file_registry[ingest_name].reader)
+            row = next(self.file_registry[ingest_name])
 
         return row
 
@@ -63,15 +72,15 @@ class KozaApp:
         :return:
         """
 
-    def serialize(self, ingest_name: str, *args):
+    def write(self, *args):
 
-        output = self.file_registry[ingest_name].config
+        output = self.source.output
 
         # set the writer
-        if self.config.serialization is None:
-            writer = DictWriter(output, reader.fieldnames, delimiter='\t')
+        if self.source.output_format is None:
+            writer = DictWriter(output, self.source.columns, delimiter='\t')
             writer.writeheader()
-            writer.writerow(first_row)
+            writer.writerow(self.source)
 
         for row in reader:
             if output and row_filter.include_row(row):
