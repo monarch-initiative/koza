@@ -1,26 +1,21 @@
 from koza.model import Protein, PairwiseGeneToGeneInteraction, predicate
-from koza.manager.data_provider import inject_file, inject_translation_table
-from koza.manager.data_collector import collect
+from koza.koza_runner import get_koza_app
 
-_ingest_name = 'protein-links-detailed'
+koza = get_koza_app()
 
-file = inject_file(_ingest_name)
-translation_table = inject_translation_table()
+for row in koza.file_registry['protein-links-detailed']:
 
-protein_a = Protein()
-protein_b = Protein()
+    protein_a = Protein()
+    protein_b = Protein()
 
-pairwise_gene_to_gene_interaction = PairwiseGeneToGeneInteraction(provided_by='stringdb')
+    pairwise_gene_to_gene_interaction = PairwiseGeneToGeneInteraction(provided_by='stringdb')
 
-model = (protein_a, protein_b, pairwise_gene_to_gene_interaction)
+    protein_a.id = 'Ensembl:' + row['protein1']
+    protein_b.id = 'Ensembl:' + row['protein2']
 
+    pairwise_gene_to_gene_interaction.subject = protein_a
+    pairwise_gene_to_gene_interaction.object = protein_b
+    pairwise_gene_to_gene_interaction.predicate = predicate.interacts_with
+    pairwise_gene_to_gene_interaction.relation = koza.source.translation_table.global_table['interacts with']
 
-protein_a.id = 'Ensembl:' + file['protein1']
-protein_b.id = 'Ensembl:' + file['protein2']
-
-pairwise_gene_to_gene_interaction.subject = protein_a
-pairwise_gene_to_gene_interaction.object = protein_b
-pairwise_gene_to_gene_interaction.predicate = predicate.interacts_with
-pairwise_gene_to_gene_interaction.relation = translation_table.global_table['interacts with']
-
-collect(*model)
+    koza.write(protein_a, protein_b, pairwise_gene_to_gene_interaction)

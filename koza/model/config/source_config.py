@@ -154,6 +154,8 @@ class SourceFileConfig:
     filters: List[ColumnFilter] = None
     json_path: List[Union[StrictStr, StrictInt]] = None
 
+    _field_type_map = Dict[str, FieldType]
+
     def __post_init_post_parse__(self):
         files_as_paths: List[Path] = []
         for file in self.files:
@@ -215,7 +217,21 @@ class SourceFileConfig:
             )
 
         if self.columns:
-            pass  # do we parse the field-type map here, private attr?
+            _field_type_map = {}
+            for field in self.columns:
+                if isinstance(field, str):
+                    _field_type_map[field] = FieldType.str
+                else:
+                    if len(field) != 1:
+                        # TODO expand this exception msg
+                        raise ValueError("Field type map contains more than one key")
+                    for key, val in field.items():
+                        _field_type_map[key] = val
+            object.__setattr__(self, '_field_type_map', _field_type_map)
+
+    @property
+    def field_type_map(self):
+        return self._field_type_map
 
 
 @dataclass

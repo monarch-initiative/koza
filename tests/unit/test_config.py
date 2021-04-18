@@ -7,14 +7,14 @@ from pathlib import Path
 import pytest
 import yaml
 
-from koza.model.config.source_config import SourceFileConfig
+from koza.model.config.source_config import PrimaryFileConfig
 
 base_config = Path(__file__).parent / 'resources' / 'primary-source.yaml'
 
 
 def test_source_primary_config():
     with open(base_config, 'r') as config:
-        SourceFileConfig(**yaml.safe_load(config))
+        PrimaryFileConfig(**yaml.safe_load(config))
 
 
 @pytest.mark.parametrize(
@@ -48,7 +48,7 @@ def test_wrong_filter_type_raises_exception(inclusion, column, filter_code, valu
             {'column': column, 'inclusion': inclusion, 'filter_code': filter_code, 'value': value}
         ]
         with pytest.raises(ValueError):
-            SourceFileConfig(**source_config)
+            PrimaryFileConfig(**source_config)
 
 
 @pytest.mark.parametrize("inclusion, code", [('include', 'lgt'), ('exclude', 'ngte')])
@@ -59,4 +59,4 @@ def test_wrong_filter_code_raises_exception(inclusion, code):
             {'column': 'combined_score', 'inclusion': inclusion, 'filter_code': code, 'value': 70}
         ]
         with pytest.raises(ValueError):
-            SourceFileConfig(**source_config)
+            PrimaryFileConfig(**source_config)

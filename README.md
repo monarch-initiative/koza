@@ -8,20 +8,22 @@
 ##### Highlights
 Koza allows you to:
 
-- Author transforms with dataclasses in semi-declarative Python
-- Configure filters, metadata, and data mappings in yaml
-- Import and optionally transform mapping files
-- Create an ETL pipeline for multiple sources
+- Author data transforms in semi-declarative Python
 
-While Koza aims to support a declarative programming paradigm, it
-also supports procedural programming constructs
+- Configure source files, expected columns/json properties and path filters,
+field filters, and metadata in yaml
 
-TODO describe assumptions for source data
+- Import mapping files from upstream sources to be used in ingests
+(eg id mapping, type mappings)
 
+- Translation tables to map between source vocabulary and ontology terms
 
-###### What is out of scope mid term?
+Koza supports processing csv, json, and jsonl and converting them to the
+[Biolink model](https://biolink.github.io/biolink-model/)
 
-- Models other than Biolink
+Koza outputs data in the
+[KGX tsv format](https://github.com/biolink/kgx/blob/master/specification/kgx-format.md#kgx-format-as-tsv)
+
 
 #### Installation
 
@@ -31,7 +33,7 @@ pip install koza
 
 #### Getting Started
 
-Send a TSV file through Koza to get some basic information (headers, number of rows)
+Send a local or remove csv file through Koza to get some basic information (headers, number of rows)
 
 ```bash
 koza run \
@@ -39,25 +41,60 @@ koza run \
   --delimiter ' '
 ```
 
-Or a jsonl formatted file
+Sending a json or jsonl formatted file will confirm if the file is valid json or jsonl
 ```bash
 koza run \
-  --file ./tests/resources/source-files/ZFIN_PHENOTYPE_0.jsonl.gz \
+  --file ./examples/data/ZFIN_PHENOTYPE_0.jsonl.gz \
   --format jsonl
 ```
 
-#### A Small Example - adding configuration and filters
+```bash
+koza run \
+  --file /examples/data/ddpheno.json.gz \
+  --format json
+```
+
+#### Tutorial
+
+##### Configuration and filters
+
+##### Transform logic
+
+##### Adding a map from a source
+
+##### Adding transform logic
+
+##### Adding a translation table
+
+##### Adding transform logic to a map
+
+##### Ingesting a source with multiple files
+
+##### Ingesting multiple sources
+
+Koza does not have out of the box support for ingesting a batch of sources.  For this we
+recommend creating a make or [snakemake](https://snakemake.readthedocs.io/en/stable/) pipeline.
+TODO, point to example
 
 
-#### A Full Example - Adding transform logic and maps
+#### Philosophy
+Koza's goal is to lower the barrier for domain experts to participate in data transform workflows.
 
+As a library, our goal is to do transformations well, and let other tools tackle downloading,
+storage/caching raw data files, batch parallel processing, and uploading to a target database.
+Koza does the T in ETL (Extract Transform Load).
 
-##### Adding Transform Logic
+For downloading source data we're currently using gnu make + wget, see
+[DipperCache](https://github.com/monarch-initiative/DipperCache) as an example.
 
+For creating batch workflows to ingest multiple sources we'll aim to use
+make or [snakemake](https://snakemake.readthedocs.io/en/stable/)
 
-##### Adding A Map
-TODO
+For uploading KGX TSVs to a target database we're using [KGX](https://github.com/biolink/kgx)
 
-
-##### Example of a procedural transform
-TODO
+##### Influences:
+ - [Dipper](https://github.com/monarch-initiative/dipper)
+ - [KG-COVID-19](https://github.com/Knowledge-Graph-Hub/kg-covid-19)
+ - [BioThings](https://github.com/biothings)
+ 
+And many others not listed here

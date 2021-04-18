@@ -4,8 +4,8 @@ Testing for row filtering
 """
 import pytest
 
-from koza.dsl.row_filter import RowFilter
 from koza.model.config.source_config import ColumnFilter, FilterCode, FilterInclusion
+from koza.row_filter import RowFilter
 
 
 @pytest.mark.parametrize(

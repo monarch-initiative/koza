@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from typing import Dict, List
 
 from koza.curie_util import get_curie_map
-from koza.dsl.row_filter import RowFilter
 from koza.model.source import Source, SourceFile
 
 
@@ -43,6 +42,9 @@ class KozaApp:
 
         self.curie_map = get_curie_map(curie_path)
 
+        # put this somewhere
+        # row_filter = RowFilter(self.file_registry[ingest_name].config.filters)
+
         if not source_files:
             pass  # TODO try to infer
 
@@ -52,16 +54,6 @@ class KozaApp:
         # TODO check that all strings match, eg
         # KozaConfig sources in source list,
         # source files, maps etc
-
-    def get_next_row(self, ingest_name: str):
-        row_filter = RowFilter(self.file_registry[ingest_name].config.filters)
-
-        row = next(self.file_registry[ingest_name])
-        while not row_filter.include_row(row):
-            # TODO log filtered out lines
-            row = next(self.file_registry[ingest_name])
-
-        return row
 
     def get_map(self, map_name: str):
         pass

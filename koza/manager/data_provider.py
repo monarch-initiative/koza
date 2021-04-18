@@ -4,9 +4,9 @@ from ..koza_runner import get_koza_app
 from ..model import TranslationTable
 
 
-def inject_file(ingest_name: str) -> Dict:
+def inject_row(ingest_name: str) -> Dict:
     koza = get_koza_app()
-    return koza.get_next_row(ingest_name)
+    return next(koza.file_registry[ingest_name])
 
 
 def inject_maps(ingest_name: str) -> Tuple[Dict, ...]:
