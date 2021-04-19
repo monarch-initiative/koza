@@ -9,13 +9,10 @@
 Koza allows you to:
 
 - Author data transforms in semi-declarative Python
-
 - Configure source files, expected columns/json properties and path filters,
 field filters, and metadata in yaml
-
 - Import mapping files from upstream sources to be used in ingests
 (eg id mapping, type mappings)
-
 - Translation tables to map between source vocabulary and ontology terms
 
 Koza supports processing csv, json, and jsonl and converting them to the
@@ -36,22 +33,23 @@ pip install koza
 Send a local or remove csv file through Koza to get some basic information (headers, number of rows)
 
 ```bash
-koza run \
+koza validate \
   --file https://raw.githubusercontent.com/monarch-initiative/koza/dev/tests/resources/source-files/string.tsv \
   --delimiter ' '
 ```
 
 Sending a json or jsonl formatted file will confirm if the file is valid json or jsonl
 ```bash
-koza run \
+koza validate \
   --file ./examples/data/ZFIN_PHENOTYPE_0.jsonl.gz \
   --format jsonl
 ```
 
 ```bash
-koza run \
-  --file /examples/data/ddpheno.json.gz \
-  --format json
+koza validate \
+  --file ./examples/data/ddpheno.json.gz \
+  --format json \
+  --compression gzip
 ```
 
 #### Tutorial

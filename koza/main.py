@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 
 import logging
-from pathlib import Path
 
 import typer
 
-from koza.koza_runner import run_single_resource
-from koza.model.config.source_config import CompressionType, FormatType, OutputFormat
+from koza.koza_runner import transform_source, validate_file
+from koza.model.config.source_config import CompressionType, FormatType
 
 app = typer.Typer()
 
@@ -14,63 +13,42 @@ app = typer.Typer()
 logging.basicConfig()
 LOG = logging.getLogger(__name__)
 
-"""
-name: str = 'koza-run'
-sources: List[str] = None
-serialization: SerializationEnum = None
-output: str = './'
-config_dir: Union[str, Path] = './config'
-cache_maps: bool = True
-curie_map: Union[str, Path] = None
-"""
-
 
 @app.command()
-def run(
-    file: str = typer.Option(..., help="Path or url to the source file"),
-    format: FormatType = FormatType.csv,
-    delimiter: str = ',',
-    header_delimiter: str = None,
-    filter_file: str = None,
-    compression: CompressionType = None,
-    output_dir: str = None,
-    output_format: OutputFormat = OutputFormat.tsv,
+def transform(
+    source: str = typer.Option(..., help="Source name"),
+    config_dir: str = typer.Option('./', help="Path to configuration directory"),
+    output_dir: str = typer.Option('./output', help="Path to output directory"),
+    curie_map: str = typer.Option(None, help="Path to custom curie map file"),
     quiet: bool = False,
     debug: bool = False,
 ):
     """
-    Run a single file through koza
+    Run Koza
     """
     _set_log_level(quiet, debug)
 
-    if output_dir is None:
-
-        output_directory = Path("/tmp")
-        output_directory.mkdir(parents=True, exist_ok=True)
-
-        # LOG.warning(f"No output file provided, writing to {output_fp}")
-
-    # If a user passes in \s for a space delimited csv file
-    if delimiter == '\\s':
-        delimiter = ' '
-    run_single_resource(
-        file,
-        format,
-        delimiter,
-        header_delimiter,
-        output_dir,
-        output_format,
-        filter_file,
-        compression,
-    )
+    transform_source(source, config_dir, output_dir, curie_map)
 
 
 @app.command()
-def batch(item: str):
+def validate(
+    file: str = typer.Option(..., help="Path or url to the source file"),
+    format: FormatType = FormatType.csv,
+    delimiter: str = ',',
+    header_delimiter: str = None,
+    compression: CompressionType = None,
+    skip_lines: int = 0,
+    skip_blank_lines: bool = True,
+):
     """
-    TODO
-    Run a group of files through koza
+    Run a single file through koza
     """
+    _set_log_level(debug=True)
+
+    validate_file(
+        file, format, delimiter, header_delimiter, compression, skip_lines, skip_blank_lines
+    )
 
 
 @app.command()

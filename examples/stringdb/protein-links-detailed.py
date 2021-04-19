@@ -8,7 +8,7 @@ for row in koza.file_registry['protein-links-detailed']:
     protein_a = Protein()
     protein_b = Protein()
 
-    pairwise_gene_to_gene_interaction = PairwiseGeneToGeneInteraction(provided_by='stringdb')
+    pairwise_gene_to_gene_interaction = PairwiseGeneToGeneInteraction()
 
     protein_a.id = 'Ensembl:' + row['protein1']
     protein_b.id = 'Ensembl:' + row['protein2']

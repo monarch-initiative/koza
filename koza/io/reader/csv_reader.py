@@ -49,6 +49,7 @@ class CSVReader:
         header_delimiter: str = None,
         dialect: str = "excel",
         skip_lines: int = 0,
+        skip_blank_lines: bool = True,
         name: str = "csv file",
         *args,
         **kwargs,
@@ -71,10 +72,14 @@ class CSVReader:
         self.has_header = has_header
         self.header_delimiter = header_delimiter if header_delimiter else delimiter
         self.skip_lines = skip_lines
+        self.skip_blank_lines = skip_blank_lines
         self.name = name
 
         self.line_num = 0
         self.fieldnames = []
+
+        if delimiter == '\\s':
+            delimiter = ' '
 
         kwargs['dialect'] = dialect
         kwargs['delimiter'] = delimiter
@@ -145,8 +150,9 @@ class CSVReader:
         self.line_num = self.reader.line_num
 
         # skip blank lines
-        while not row:
-            row = next(self.reader)
+        if self.skip_blank_lines:
+            while not row:
+                row = next(self.reader)
 
         # Check row length discrepancies for each row
         # TODO currently varying line lengths will raise an exception

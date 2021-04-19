@@ -76,7 +76,8 @@ class FieldType(str, Enum):
 
 class OutputFormat(str, Enum):
     """
-    TODO do we need synonyms? - ttl, nt, kgx
+    Have this set up but for prototyping removing this
+    as an option to only support the TSV output format
     """
 
     tsv = 'tsv'
@@ -103,10 +104,14 @@ class Filter:
 
 @dataclass(frozen=True)
 class DatasetDescription:
-    ingest_title: str = None
-    ingest_url: str = None
-    license_url: str = None
-    data_rights: str = None
+    id: str = None  # TODO constrain to a curie?
+    ingest_title: str = None  # Map to biolink name
+    ingest_url: str = None  # Maps to biolink iri
+    descripton: str = None
+    source: str = None
+    provided_by: str = None
+    license: str = None
+    rights: str = None
 
 
 @dataclass(frozen=True)
@@ -200,20 +205,20 @@ class SourceFileConfig:
 
         if self.format == FormatType.csv and self.required_properties:
             raise ValueError(
-                f"csv specified but required properties have been configured\n"
-                f"either set format to jsonl or change properties to columns in the config"
+                "csv specified but required properties have been configured\n"
+                "either set format to jsonl or change properties to columns in the config"
             )
 
         if self.columns and self.format != FormatType.csv:
             raise ValueError(
-                f"columns have been configured but format is not csv\n"
-                f"either set format to csv or change columns to properties in the config"
+                "columns have been configured but format is not csv\n"
+                "either set format to csv or change columns to properties in the config"
             )
 
         if self.json_path and self.format != FormatType.json:
             raise ValueError(
-                f"iterate_over has been configured but format is not json\n"
-                f"either set format to json or remove iterate_over in the configuration"
+                "iterate_over has been configured but format is not json\n"
+                "either set format to json or remove iterate_over in the configuration"
             )
 
         if self.columns:

@@ -3,10 +3,13 @@ name: 'protein-links-detailed'
 delimiter: ' '
 
 files:
-  - '9606.protein.links.detailed.v11.0.txt.gz'
+  - 'string.tsv'
 
 filter:
   - inclusion: 'include'
     column: 'combined_score'
     filter: 'lt'
     value: 700
+
+depends_on:
+  - 'entrez-2-string'

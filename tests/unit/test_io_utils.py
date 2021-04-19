@@ -29,5 +29,5 @@ def test_get_resource_name():
 def test_404():
     resource = "http://httpstat.us/404"
     with pytest.raises(ValueError):
-        with open_resource(resource) as foo:
+        with open_resource(resource) as _:
             pass

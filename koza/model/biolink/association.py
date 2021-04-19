@@ -7,11 +7,11 @@ https://github.com/biolink/biolink-model/blob/master/biolink-model.yaml
 """
 
 from dataclasses import field
-from typing import ClassVar
+from typing import ClassVar, List, Union
 
 from pydantic.dataclasses import dataclass
 
-from koza.validator.model_validator import *
+from koza.validator.model_validator import convert_object_to_scalar, convert_objects_to_scalars
 
 from ..config.pydantic_config import PydanticConfig
 from ..curie import Curie
