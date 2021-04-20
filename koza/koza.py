@@ -1,6 +1,7 @@
 from csv import DictWriter
 from dataclasses import dataclass
-from typing import Dict, List
+from pathlib import Path
+from typing import Dict
 
 from koza.curie_util import get_curie_map
 from koza.model.source import Source, SourceFile
@@ -27,6 +28,8 @@ class KozaApp:
     """
 
     source: Source
+    config_dir: str = './'
+    output_dir: str = './output'
     file_registry: Dict[str, SourceFile] = None
     map_registry: Dict[str, SourceFile] = None
     curie_map: Dict[str, str] = None
@@ -35,8 +38,8 @@ class KozaApp:
     def __init__(
         self,
         source: Source,
-        source_files: List[SourceFile] = None,
-        map_files: List[SourceFile] = None,
+        config_dir: str = './',
+        output_dir: str = './output',
         curie_path: str = None,
     ):
 
@@ -44,12 +47,6 @@ class KozaApp:
 
         # put this somewhere
         # row_filter = RowFilter(self.file_registry[ingest_name].config.filters)
-
-        if not source_files:
-            pass  # TODO try to infer
-
-        if not map_files:
-            pass  # TODO try to infer
 
         # TODO check that all strings match, eg
         # KozaConfig sources in source list,

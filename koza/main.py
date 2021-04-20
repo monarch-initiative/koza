@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import logging
+from pathlib import Path
 
 import typer
 
@@ -27,6 +28,13 @@ def transform(
     Run Koza
     """
     _set_log_level(quiet, debug)
+
+    output_path = Path(output_dir)
+
+    if output_path.exists() and not output_path.is_dir():
+        raise NotADirectoryError(f"{output_dir} is not a directory")
+    elif not output_path.exists():
+        output_path.mkdir(parents=True)
 
     transform_source(source, config_dir, output_dir, curie_map)
 

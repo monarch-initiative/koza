@@ -5,7 +5,7 @@ from koza.io.reader.csv_reader import CSVReader
 from koza.io.reader.json_reader import JSONReader
 from koza.io.reader.jsonl_reader import JSONLReader
 from koza.io.utils import open_resource
-from koza.model.config.source_config import DatasetDescription, OutputFormat, SourceFileConfig
+from koza.model.config.source_config import DatasetDescription, SourceFileConfig
 from koza.model.translation_table import TranslationTable
 from koza.row_filter import RowFilter
 
@@ -19,12 +19,9 @@ class Source:
     avoids nesting but also a DRY violation?
     """
 
-    name: str
-    data_dir: str
-    output_dir: str
     source_files: List[str]
-    output_format: OutputFormat = None
-    map_files: List[str] = None
+    name: str = None
+    data_dir: str = './data'
     dataset_description: DatasetDescription = None
     translation_table: TranslationTable = None
 
@@ -41,10 +38,13 @@ class SourceFile:
     """
 
     config: SourceFileConfig
-    filter: RowFilter
+    _filter: RowFilter
     _reader: Iterator[Dict[str, Any]]
 
-    def __init__(self, config: SourceFileConfig, filter: RowFilter = None):
+    def __init__(self, config: SourceFileConfig):
+
+        self.config = config
+        self._filter = RowFilter(config.filters)
 
         for file in config.files:
             with open_resource(file, config.compression) as resource_io:
@@ -76,9 +76,9 @@ class SourceFile:
         return self
 
     def __next__(self) -> Dict[str, Any]:
-        if self.filter:
+        if self._filter:
             row = next(self._reader)
-            while not self.filter.include_row(row):
+            while not self._filter.include_row(row):
                 # TODO log filtered out lines
                 row = next(self._reader)
 

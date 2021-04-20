@@ -9,6 +9,8 @@ from typing import Dict, List, Union
 from pydantic import StrictFloat, StrictInt, StrictStr
 from pydantic.dataclasses import dataclass
 
+from koza.model.config.pydantic_config import PydanticConfig
+
 
 class MapErrorEnum(str, Enum):
     """
@@ -105,31 +107,33 @@ class Filter:
 @dataclass(frozen=True)
 class DatasetDescription:
     id: str = None  # TODO constrain to a curie?
+    name: str = None  # If empty use source name
     ingest_title: str = None  # Map to biolink name
     ingest_url: str = None  # Maps to biolink iri
-    descripton: str = None
+    description: str = None
     source: str = None
     provided_by: str = None
     license: str = None
     rights: str = None
 
 
-@dataclass(frozen=True)
+@dataclass(config=PydanticConfig)
 class SourceConfig:
-    name: str
-    data_dir: str
-    output: str
     source_files: List[str]
+    name: str = None
+    data_dir: str = './data'
     output_format: OutputFormat = None
-    map_files: List[str] = None
     dataset_description: DatasetDescription = None
 
     def __post_init__(self):
-        if isinstance(self.data_dir, str):
-            object.__setattr__(self, 'data_dir', Path(self.data_dir))
+        if not Path(self.data_dir).exists():
+            raise FileNotFoundError(f"{self.data_dir} is not a directory")
+
+        if not Path(self.data_dir).is_dir():
+            raise NotADirectoryError(f"{self.data_dir} is not a directory")
 
 
-@dataclass
+@dataclass(config=PydanticConfig)
 class SourceFileConfig:
     """
     Base class for primary sources and mapping sources
@@ -158,8 +162,6 @@ class SourceFileConfig:
     compression: CompressionType = None
     filters: List[ColumnFilter] = None
     json_path: List[Union[StrictStr, StrictInt]] = None
-
-    _field_type_map = Dict[str, FieldType]
 
     def __post_init_post_parse__(self):
         files_as_paths: List[Path] = []
