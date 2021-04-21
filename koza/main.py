@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
 
 import logging
-import uuid
 from pathlib import Path
 
-from typing import List
 import typer
 
-from koza.koza_runner import run_single_resource
-from koza.model.config.koza_config import SerializationEnum
-from koza.model.config.source_config import CompressionType, FormatType, ColumnFilter
+from koza.koza_runner import transform_source, validate_file
+from koza.model.config.source_config import CompressionType, FormatType
 
 app = typer.Typer()
 
@@ -19,50 +16,47 @@ LOG = logging.getLogger(__name__)
 
 
 @app.command()
-def run(
-    file: str = typer.Option(..., help="Path or url to the source file"),
-    format: FormatType = FormatType.csv,
-    delimiter: str = ',',
-    header_delimiter: str = None,
-    filters: List[ColumnFilter] = None,
-    compression: CompressionType = None,
-    output: str = None,
-    output_format: SerializationEnum = SerializationEnum.tsv,
+def transform(
+    source: str = typer.Option(..., help="Source metadata file"),
+    output_dir: str = typer.Option('./output', help="Path to output directory"),
+    global_table: str = typer.Option(None, help="Path to global translation table"),
+    local_table: str = typer.Option(None, help="Path to local translation table"),
     quiet: bool = False,
     debug: bool = False,
 ):
     """
-    Run a single file through koza
+    Run Koza
     """
     _set_log_level(quiet, debug)
 
-    if output is None:
+    output_path = Path(output_dir)
 
-        if output_format == SerializationEnum.tsv:
-            extension = 'tsv'
-        else:
-            extension = 'tsv'
+    if output_path.exists() and not output_path.is_dir():
+        raise NotADirectoryError(f"{output_dir} is not a directory")
+    elif not output_path.exists():
+        output_path.mkdir(parents=True)
 
-        filename = str(uuid.uuid4()) + '.' + extension
-        output_directory = Path("/tmp")
-        output_directory.mkdir(parents=True, exist_ok=True)
-        output_fp = output_directory / filename
-        output = open(output_fp, 'w')
-
-        LOG.warning(f"No output file provided, writing to {output_fp}")
-
-    # If a user passes in \s for a space delimited csv file
-    if delimiter == '\\s':
-        delimiter = ' '
-    run_single_resource(file, format, delimiter, header_delimiter, output, filters, compression)
+    transform_source(source, output_dir, global_table, local_table)
 
 
 @app.command()
-def batch(item: str):
+def validate(
+    file: str = typer.Option(..., help="Path or url to the source file"),
+    format: FormatType = FormatType.csv,
+    delimiter: str = ',',
+    header_delimiter: str = None,
+    compression: CompressionType = None,
+    skip_lines: int = 0,
+    skip_blank_lines: bool = True,
+):
     """
-    TODO
-    Run a group of files through koza
+    Run a single file through koza
     """
+    _set_log_level(debug=True)
+
+    validate_file(
+        file, format, delimiter, header_delimiter, compression, skip_lines, skip_blank_lines
+    )
 
 
 @app.command()

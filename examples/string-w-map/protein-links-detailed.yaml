@@ -23,6 +23,5 @@ filters:
     filter_code: 'lt'
     value: 700
 
-transform_code: './examples/string/protein-links-detailed.py'
-
-transform_mode: 'loop'
+depends_on:
+  - './examples/maps/entrez-2-string.yaml'

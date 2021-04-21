@@ -11,23 +11,11 @@ https://github.com/monarch-initiative/dipper/blob/682560f/tests/test_udp.py#L85
 
 import pytest
 
-from koza.io.utils import get_resource_name, open_resource
-
-
-def test_get_resource_name():
-    resource = "/foo/bar.tsv"
-    name = get_resource_name(resource)
-
-    assert name == 'bar.tsv'
-
-    resource = "https://foo.com/bar.tsv"
-    name = get_resource_name(resource)
-
-    assert name == 'bar.tsv'
+from koza.io.utils import open_resource
 
 
 def test_404():
     resource = "http://httpstat.us/404"
     with pytest.raises(ValueError):
-        with open_resource(resource) as foo:
+        with open_resource(resource) as _:
             pass

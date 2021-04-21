@@ -1,4 +1,8 @@
-from ..validator.map_validator import curie_regexp, is_valid_curie
+import re
+
+from koza.curie_util import get_curie_map
+
+curie_regexp = re.compile(r'^[a-zA-Z_]?[a-zA-Z_0-9-]*:[A-Za-z0-9_][A-Za-z0-9_.-]*[A-Za-z0-9_]*$')
 
 
 class Curie(str):
@@ -24,6 +28,19 @@ class Curie(str):
     def validate(cls, curie):
         if not isinstance(curie, str):
             raise TypeError('string required')
-        if not is_valid_curie(curie):
-            raise ValueError(f"{curie} is not a valid curie")
+        if not Curie.is_prefix_in_map(curie):
+            prefix = curie.split(':')[0]
+            raise ValueError(f"prefix: '{prefix}' is not in curie map")
         return curie
+
+    @staticmethod
+    def is_prefix_in_map(curie: str) -> bool:
+
+        curie_map = get_curie_map()
+
+        prefix = curie.split(":")[0]
+
+        if prefix not in curie_map.keys():
+            return False
+
+        return True

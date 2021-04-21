@@ -1,46 +1,62 @@
 """
-1...* Primary Source
-1...* Serializer
-1 curie Map
+Module for managing koza runs
 """
 
-from csv import DictWriter
-from typing import IO, List
+import logging
+from pathlib import Path
+from typing import List, Optional
 
-from koza.dsl.row_filter import RowFilter
+import yaml
 
-from .io.reader.csv_reader import CSVReader
-from .io.reader.json_reader import JSONReader
-from .io.reader.jsonl_reader import JSONLReader
-from .io.utils import get_resource_name, open_resource
-from .model.config.koza_config import SerializationEnum
-from .model.config.source_config import CompressionType, FormatType, ColumnFilter
+from koza.app import KozaApp
+from koza.io.reader.csv_reader import CSVReader
+from koza.io.reader.json_reader import JSONReader
+from koza.io.reader.jsonl_reader import JSONLReader
+from koza.io.utils import open_resource
+from koza.model.config.source_config import CompressionType, FormatType, SourceConfig
+from koza.model.source import Source
+from koza.model.translation_table import TranslationTable
 
+LOG = logging.getLogger(__name__)
 
-# def register_source(): pass
-
-# def register_map(): pass
-
-# def get_koza() -> Koza: pass
-
-# def cache_maps(): pass
-
-# def get_map_cache(): pass
+KOZA_APP = None
 
 
-def run_single_resource(
+def set_koza_app(
+    source: Source,
+    output_dir: str = './output',
+) -> KozaApp:
+    """
+    Setter for singleton koza app object
+    """
+    global KOZA_APP
+
+    KOZA_APP = KozaApp(source, output_dir)
+    return KOZA_APP
+
+
+def get_koza_app() -> Optional[KozaApp]:
+    """
+    Getter for singleton koza app object
+    """
+    return KOZA_APP
+
+
+def validate_file(
     file: str,
     format: FormatType = FormatType.csv,
     delimiter: str = ',',
     header_delimiter: str = None,
-    output: IO[str] = None,
-    serialization: SerializationEnum = None,
-    filters: List[ColumnFilter] = None,
     compression: CompressionType = None,
+    skip_lines: int = 0,
+    skip_blank_lines: bool = True,
 ):
+    """
+    Runs a file through one of the Koza readers
+    For csv files will return header and row length
 
-    # Get the resource
-    resource_name = get_resource_name(file)
+    For json and jsonl just validates them
+    """
 
     with open_resource(file, compression) as resource_io:
 
@@ -49,27 +65,88 @@ def run_single_resource(
                 resource_io,
                 delimiter=delimiter,
                 header_delimiter=header_delimiter,
-                name=resource_name,
+                skip_lines=skip_lines,
+                skip_blank_lines=skip_blank_lines,
             )
         elif format == FormatType.jsonl:
-            reader = JSONLReader(resource_io, name=resource_name)
+            reader = JSONLReader(resource_io)
         elif format == FormatType.json:
-            reader = JSONReader(resource_io, name=resource_name)
+            reader = JSONReader(resource_io)
         else:
             raise ValueError
 
-        if format == FormatType.csv:
-            # Iterate over the header(s) to get field names for writer
-            first_row = next(reader)
+        for _ in reader:
+            pass
 
-        row_filter = RowFilter(filters)
 
-        # set the writer
-        if serialization is None:
-            writer = DictWriter(output, reader.fieldnames, delimiter='\t')
-            writer.writeheader()
-            writer.writerow(first_row)
+def validate_source_files(source: str, source_files: List[str]) -> List[str]:
+    """
+    Resolve a source string to its source metadata file
 
-        for row in reader:
-            if output and row_filter.include_row(row):
-                writer.writerow(row)
+    :param source:
+    :param source_files:
+    :return:
+    """
+    source_dir = Path(source).parent
+    source_paths = []
+    for src_file in source_files:
+        if not (Path(src_file).exists() or Path(src_file).is_file()):
+            # check if it's in source parent
+            updated_src_file = source_dir / src_file
+            if not (Path(updated_src_file).exists() or Path(updated_src_file).is_file()):
+                raise ValueError(f"Source file doesn't exist: {src_file}")
+            else:
+                source_paths.append(updated_src_file)
+        else:
+            source_paths.append(src_file)
+    return source_paths
+
+
+def get_translation_table(global_table: str, local_table: str) -> TranslationTable:
+    # Look for translation table files
+
+    global_tt = {}
+    local_tt = {}
+
+    if not global_table:
+        if local_table:
+            raise ValueError("Local table without a global table not allowed")
+        else:
+            LOG.info("No global table used for transform")
+    else:
+
+        with open(global_table, 'r') as global_tt_fh:
+            global_tt = yaml.safe_load(global_tt_fh)
+
+        if local_table:
+            with open(local_table, 'r') as local_tt_fh:
+                local_tt = yaml.safe_load(local_tt_fh)
+        else:
+            LOG.info("No local table used for transform")
+
+    return TranslationTable(global_tt, local_tt)
+
+
+def transform_source(
+    source: str,
+    output_dir: str,
+    global_table: str,
+    local_table: str,
+):
+
+    translation_table = get_translation_table(global_table, local_table)
+
+    with open(source, 'r') as source_fh:
+        source_config = SourceConfig(**yaml.safe_load(source_fh))
+        if not source_config.name:
+            source_config.name = Path(source).stem
+
+        source = Source(
+            source_files=validate_source_files(source, source_config.source_files),
+            name=source_config.name,
+            dataset_description=source_config.dataset_description,
+            translation_table=translation_table,
+        )
+
+        koza_app = set_koza_app(source, output_dir)
+        koza_app.process_sources()

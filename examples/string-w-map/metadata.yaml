@@ -1,0 +1,10 @@
+name: 'stringdb'
+
+dataset_description:
+  ingest_title: 'String DB'
+  ingest_url: 'https://string-db.org'
+  description: 'STRING: functional protein association networks'
+  rights: 'https://string-db.org/cgi/access.pl?footer_active_subpage=licensing'
+
+source_files:
+  - 'protein-links-detailed.yaml'

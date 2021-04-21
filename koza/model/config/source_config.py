@@ -4,12 +4,12 @@ map config data class
 """
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Union
+from typing import Dict, List, Union
 
-from glom import Path as GlomPath
 from pydantic import StrictFloat, StrictInt, StrictStr
 from pydantic.dataclasses import dataclass
-from pydantic.tools import parse_obj_as
+
+from koza.model.config.pydantic_config import PydanticConfig
 
 
 class MapErrorEnum(str, Enum):
@@ -76,6 +76,27 @@ class FieldType(str, Enum):
     # Proportion = 'Proportion'
 
 
+class OutputFormat(str, Enum):
+    """
+    Have this set up but for prototyping removing this
+    as an option to only support the TSV output format
+    """
+
+    tsv = 'tsv'
+    json = 'json'
+    jsonl = 'jsonl'
+
+
+class TransformMode(str, Enum):
+    """
+    Have this set up but for prototyping removing this
+    as an option to only support the TSV output format
+    """
+
+    flat = 'flat'
+    loop = 'loop'
+
+
 @dataclass(frozen=True)
 class ColumnFilter:
     column: str
@@ -86,27 +107,27 @@ class ColumnFilter:
 
 @dataclass(frozen=True)
 class DatasetDescription:
-    ingest_title: str = None
-    ingest_url: str = None
-    license_url: str = None
-    data_rights: str = None
+    id: str = None  # TODO constrain to a curie?
+    name: str = None  # If empty use source name
+    ingest_title: str = None  # Map to biolink name
+    ingest_url: str = None  # Maps to biolink iri
+    description: str = None
+    source: str = None
+    provided_by: str = None
+    license: str = None
+    rights: str = None
 
 
-@dataclass(frozen=True)
-class SourceMetadata:
-    name: str
-    data_dir: Union[str, Path]
-    dataset_description: DatasetDescription
-    source_templates: List[str]
-    map_templates: List[str]
-
-    def __post_init__(self):
-        if isinstance(self.data_dir, str):
-            object.__setattr__(self, 'data_dir', Path(self.data_dir))
-
-
-@dataclass(frozen=True)
+@dataclass(config=PydanticConfig)
 class SourceConfig:
+    source_files: List[str]
+    name: str = None
+    output_format: OutputFormat = None
+    dataset_description: DatasetDescription = None
+
+
+@dataclass(config=PydanticConfig)
+class SourceFileConfig:
     """
     Base class for primary sources and mapping sources
 
@@ -122,9 +143,9 @@ class SourceConfig:
     """
 
     name: str
-    file_metadata: DatasetDescription
     files: List[Union[str, Path]]
     format: FormatType = FormatType.csv
+    file_metadata: DatasetDescription = None
     columns: List[Union[str, Dict[str, FieldType]]] = None
     required_properties: List[str] = None
     delimiter: str = None
@@ -133,9 +154,11 @@ class SourceConfig:
     skip_blank_lines: bool = True
     compression: CompressionType = None
     filters: List[ColumnFilter] = None
-    glom_path: List[Any] = None
+    json_path: List[Union[StrictStr, StrictInt]] = None
+    transform_code: str = None
+    transform_mode: TransformMode = TransformMode.flat
 
-    def __post_init__(self):
+    def __post_init_post_parse__(self):
         files_as_paths: List[Path] = []
         for file in self.files:
             if isinstance(file, str):
@@ -144,23 +167,23 @@ class SourceConfig:
                 files_as_paths.append(file)
         object.__setattr__(self, 'files', files_as_paths)
 
-        column_filters = parse_obj_as(List[ColumnFilter], self.filters)
-        filtered_columns = [column_filter.column for column_filter in column_filters]
-
-        all_columns = [next(iter(column)) if isinstance(column, Dict) else column for column in self.columns]
-
-        for column in filtered_columns:
-            if column not in all_columns:
-                raise(
-                    ValueError(
-                        f"Filter column {column} not in column list"
-                    )
-                )
-
         if self.delimiter in ['tab', '\\t']:
             object.__setattr__(self, 'delimiter', '\t')
 
-        for column_filter in column_filters:
+        filtered_columns = [column_filter.column for column_filter in self.filters]
+
+        all_columns = []
+        if self.columns:
+            all_columns = [
+                next(iter(column)) if isinstance(column, Dict) else column
+                for column in self.columns
+            ]
+
+        for column in filtered_columns:
+            if column not in all_columns:
+                raise (ValueError(f"Filter column {column} not in column list"))
+
+        for column_filter in self.filters:
             if column_filter.filter_code in ['lt', 'gt', 'lte', 'gte']:
                 # TODO determine if this should raise an exception
                 # or instead try to type coerce the string to a float
@@ -182,37 +205,47 @@ class SourceConfig:
 
         if self.format == FormatType.csv and self.required_properties:
             raise ValueError(
-                f"csv specified but required properties have been configured\n"
-                f"either set format to jsonl or change properties to columns in the config"
+                "csv specified but required properties have been configured\n"
+                "either set format to jsonl or change properties to columns in the config"
             )
 
         if self.columns and self.format != FormatType.csv:
             raise ValueError(
-                f"columns have been configured but format is not csv\n"
-                f"either set format to csv or change columns to properties in the config"
+                "columns have been configured but format is not csv\n"
+                "either set format to csv or change columns to properties in the config"
             )
 
-        if self.glom_path and self.format != FormatType.json:
+        if self.json_path and self.format != FormatType.json:
             raise ValueError(
-                f"iterate_over has been configured but format is not json\n"
-                f"either set format to json or remove iterate_over in the configuration"
+                "iterate_over has been configured but format is not json\n"
+                "either set format to json or remove iterate_over in the configuration"
             )
 
         if self.columns:
-            pass
-        # do we parse the field-type map here, private attr?
+            _field_type_map = {}
+            for field in self.columns:
+                if isinstance(field, str):
+                    _field_type_map[field] = FieldType.str
+                else:
+                    if len(field) != 1:
+                        # TODO expand this exception msg
+                        raise ValueError("Field type map contains more than one key")
+                    for key, val in field.items():
+                        _field_type_map[key] = val
+            object.__setattr__(self, '_field_type_map', _field_type_map)
 
-        if self.glom_path:
-            object.__setattr__(self, 'glom_path', GlomPath(*self.glom_path))
+    @property
+    def field_type_map(self):
+        return self._field_type_map
 
 
-@dataclass(frozen=True)
-class PrimarySourceConfig(SourceConfig):
+@dataclass(config=PydanticConfig)
+class PrimaryFileConfig(SourceFileConfig):
     depends_on: List[str] = None  # field(default_factory=list)
     on_map_failure: MapErrorEnum = MapErrorEnum.warning
 
 
-@dataclass(frozen=True)
-class MapSourceConfig(SourceConfig):
+@dataclass(config=PydanticConfig)
+class MapFileConfig(SourceFileConfig):
     key: str = None
     values: List[str] = None

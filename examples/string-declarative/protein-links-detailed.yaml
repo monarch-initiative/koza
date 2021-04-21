@@ -22,7 +22,3 @@ filters:
     column: 'combined_score'
     filter_code: 'lt'
     value: 700
-
-transform_code: './examples/string/protein-links-detailed.py'
-
-transform_mode: 'loop'
