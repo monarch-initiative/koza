@@ -54,6 +54,14 @@ koza validate \
 
 #### Tutorial
 
+Some test commands while we get this up and running:
+
+```bash
+koza transform --source examples/string/metadata.yaml 
+
+koza transform --source examples/string-declarative/metadata.yaml 
+```
+
 ##### Configuration and filters
 
 ##### Transform logic

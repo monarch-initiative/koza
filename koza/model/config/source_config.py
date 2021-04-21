@@ -87,6 +87,16 @@ class OutputFormat(str, Enum):
     jsonl = 'jsonl'
 
 
+class TransformMode(str, Enum):
+    """
+    Have this set up but for prototyping removing this
+    as an option to only support the TSV output format
+    """
+
+    flat = 'flat'
+    loop = 'loop'
+
+
 @dataclass(frozen=True)
 class ColumnFilter:
     column: str
@@ -146,6 +156,7 @@ class SourceFileConfig:
     filters: List[ColumnFilter] = None
     json_path: List[Union[StrictStr, StrictInt]] = None
     transform_code: str = None
+    transform_mode: TransformMode = TransformMode.flat
 
     def __post_init_post_parse__(self):
         files_as_paths: List[Path] = []

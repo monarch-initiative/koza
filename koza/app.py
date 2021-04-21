@@ -3,6 +3,9 @@ from pathlib import Path
 from typing import Dict
 
 import yaml
+import json
+
+from pydantic.json import pydantic_encoder
 
 from koza.model.config.source_config import SourceFileConfig
 from koza.model.source import Source, SourceFile
@@ -65,15 +68,21 @@ class KozaApp:
             sys.path.append(str(parent_path))
             is_first = True
             transform_module = None
-            while True:
-                try:
-                    if is_first:
-                        transform_module = importlib.import_module(transform_code)
-                        is_first = False
-                    else:
-                        importlib.reload(transform_module)
-                except StopIteration:
-                    break
+            if source_file.config.transform_mode == 'flat':
+                while True:
+                    try:
+                        if is_first:
+                            transform_module = importlib.import_module(transform_code)
+                            is_first = False
+                        else:
+                            importlib.reload(transform_module)
+                    except StopIteration:
+                        break
+            elif source_file.config.transform_mode == 'loop':
+                importlib.import_module(transform_code)
+            else:
+                raise NotImplementedError
 
     def write(self, *args):
-        pass
+        for arg in args:
+            print(json.dumps(arg, default=pydantic_encoder))

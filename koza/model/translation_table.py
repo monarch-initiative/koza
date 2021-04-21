@@ -9,7 +9,9 @@ LOG = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class TranslationTable:
-    """"""
+    """
+    Translation table
+    """
 
     global_table: Dict[str, str]
     local_table: Dict[str, str]  # maybe bidict
