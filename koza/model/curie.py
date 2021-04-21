@@ -29,7 +29,8 @@ class Curie(str):
         if not isinstance(curie, str):
             raise TypeError('string required')
         if not Curie.is_prefix_in_map(curie):
-            raise ValueError(f"{curie} is not a valid curie")
+            prefix = curie.split(':')[0]
+            raise ValueError(f"prefix: '{prefix}' is not in curie map")
         return curie
 
     @staticmethod

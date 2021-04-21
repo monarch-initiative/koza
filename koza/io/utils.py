@@ -4,7 +4,6 @@ Set of functions to manage input and output
 """
 import gzip
 import tempfile
-from contextlib import contextmanager
 from io import TextIOWrapper
 from os import PathLike
 from pathlib import Path
@@ -15,20 +14,7 @@ import requests
 from koza.model.config.source_config import CompressionType
 
 
-class Resource:
-
-    def __init__(self, file_handle:IO[str]):
-        self.file_handle = file_handle
-
-    def __enter__(self):
-        return self.file_handle
-
-    def __exit__(self, type, value, traceback):
-        self.file_handle.close()
-        return True
-
-
-def open_resource(resource: Union[str, PathLike], compression: CompressionType = None) -> Resource:
+def open_resource(resource: Union[str, PathLike], compression: CompressionType = None) -> IO[str]:
     """
     A generic function for opening a local or remote file
 
@@ -61,7 +47,7 @@ def open_resource(resource: Union[str, PathLike], compression: CompressionType =
         else:
             file = open(resource, 'r')
 
-        return Resource(file)
+        return file
 
     elif resource.startswith('http'):
         tmp_file = tempfile.TemporaryFile('w+b')
@@ -75,10 +61,10 @@ def open_resource(resource: Union[str, PathLike], compression: CompressionType =
             # This should be more robust, either check headers
             # or use https://github.com/ahupp/python-magic
             remote_file = gzip.open(tmp_file, 'rt')
-            return Resource(remote_file)
+            return remote_file
 
         else:
-            return Resource(TextIOWrapper(tmp_file))
+            return TextIOWrapper(tmp_file)
 
     else:
         raise ValueError(f"Cannot open local or remote file: {resource}")

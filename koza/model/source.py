@@ -41,7 +41,7 @@ class SourceFile:
         self._filter = RowFilter(config.filters)
 
         for file in config.files:
-            resource_io = open_resource(file, config.compression).file_handle
+            resource_io = open_resource(file, config.compression)
             if self.config.format == 'csv':
                 self._reader = CSVReader(
                     resource_io,

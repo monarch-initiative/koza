@@ -139,7 +139,7 @@ def transform_source(
     with open(source, 'r') as source_fh:
         source_config = SourceConfig(**yaml.safe_load(source_fh))
         if not source_config.name:
-            source_config.name = source
+            source_config.name = Path(source).stem
 
         source = Source(
             source_files=validate_source_files(source, source_config.source_files),

@@ -1,3 +1,5 @@
+import re
+
 from koza.model.biolink import Protein, PairwiseGeneToGeneInteraction, predicate
 from koza.koza_runner import get_koza_app
 
@@ -10,12 +12,11 @@ for row in koza.file_registry['protein-links-detailed']:
 
     pairwise_gene_to_gene_interaction = PairwiseGeneToGeneInteraction()
 
-    protein_a.id = 'Ensembl:' + row['protein1']
-    protein_b.id = 'Ensembl:' + row['protein2']
+    protein_a.id = 'ENSEMBL:' + re.sub(r'\d+\.', '', row['protein1'])
+    protein_b.id = 'ENSEMBL:' + re.sub(r'\d+\.', '', row['protein2'])
 
     pairwise_gene_to_gene_interaction.subject = protein_a
     pairwise_gene_to_gene_interaction.object = protein_b
     pairwise_gene_to_gene_interaction.predicate = predicate.interacts_with
-    pairwise_gene_to_gene_interaction.relation = koza.source.translation_table.global_table['interacts with']
 
     koza.write(protein_a, protein_b, pairwise_gene_to_gene_interaction)

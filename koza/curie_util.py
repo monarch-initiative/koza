@@ -53,6 +53,8 @@ def get_curie_map(
     :return:
     """
 
+    curie_map = {}
+
     if not curie_path:
         curie_path = DEFAULT_CURIE_MAP
         curie_format = CurieFileFormat.jsonld

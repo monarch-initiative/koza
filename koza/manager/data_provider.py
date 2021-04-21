@@ -1,7 +1,7 @@
 from typing import Dict, Tuple
 
 from koza.koza_runner import get_koza_app
-from koza.model import TranslationTable
+from koza.model.translation_table import TranslationTable
 
 
 def inject_row(ingest_name: str) -> Dict:

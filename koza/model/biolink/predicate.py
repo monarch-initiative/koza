@@ -171,4 +171,6 @@ predicates = [
     'xenologous_to',
 ]
 
-predicate = namedtuple('biolink_predicate', predicates)(*predicates)
+predicate = namedtuple('biolink_predicate', predicates)(
+    *['biolink:' + predicate for predicate in predicates]
+)

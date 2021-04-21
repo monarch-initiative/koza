@@ -164,7 +164,8 @@ class SourceFileConfig:
         all_columns = []
         if self.columns:
             all_columns = [
-                next(iter(column)) if isinstance(column, Dict) else column for column in self.columns
+                next(iter(column)) if isinstance(column, Dict) else column
+                for column in self.columns
             ]
 
         for column in filtered_columns:

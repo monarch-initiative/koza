@@ -1,5 +1,7 @@
-from pathlib import Path
 import importlib
+from pathlib import Path
+from typing import Dict
+
 import yaml
 
 from koza.model.config.source_config import SourceFileConfig
@@ -32,9 +34,9 @@ class KozaApp:
     ):
         self.source = source
         self.output_dir = output_dir
-        self.file_registry = {}
-        self.map_registry = {}
-        self.map_cache = {}
+        self.file_registry: Dict[str, SourceFile] = {}
+        self.map_registry: Dict[str, SourceFile] = {}
+        self.map_cache: Dict[str, Dict] = {}
 
         for src_file in source.source_files:
             with open(src_file, 'r') as source_file_fh:
@@ -43,7 +45,7 @@ class KozaApp:
             if not source_file_config.transform_code:
                 # look for it alongside the source conf as a .py file
                 source_file_config.transform_code = (
-                    Path(src_file).parent / Path(src_file).stem + '.py'
+                    str(Path(src_file).parent / Path(src_file).stem) + '.py'
                 )
 
             self.file_registry[source_file_config.name] = SourceFile(source_file_config)
@@ -56,13 +58,20 @@ class KozaApp:
         :return:
         """
         import sys
+
         for source_file in self.file_registry.values():
             parent_path = Path(source_file.config.transform_code).parent
             transform_code = Path(source_file.config.transform_code).stem
             sys.path.append(str(parent_path))
+            is_first = True
+            transform_module = None
             while True:
                 try:
-                    importlib.import_module(transform_code)
+                    if is_first:
+                        transform_module = importlib.import_module(transform_code)
+                        is_first = False
+                    else:
+                        importlib.reload(transform_module)
                 except StopIteration:
                     break
 
