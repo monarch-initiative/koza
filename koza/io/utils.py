@@ -15,8 +15,20 @@ import requests
 from koza.model.config.source_config import CompressionType
 
 
-@contextmanager
-def open_resource(resource: Union[str, PathLike], compression: CompressionType = None) -> IO[str]:
+class Resource:
+
+    def __init__(self, file_handle:IO[str]):
+        self.file_handle = file_handle
+
+    def __enter__(self):
+        return self.file_handle
+
+    def __exit__(self, type, value, traceback):
+        self.file_handle.close()
+        return True
+
+
+def open_resource(resource: Union[str, PathLike], compression: CompressionType = None) -> Resource:
     """
     A generic function for opening a local or remote file
 
@@ -49,10 +61,7 @@ def open_resource(resource: Union[str, PathLike], compression: CompressionType =
         else:
             file = open(resource, 'r')
 
-        try:
-            yield file
-        finally:
-            file.close()
+        return Resource(file)
 
     elif resource.startswith('http'):
         tmp_file = tempfile.TemporaryFile('w+b')
@@ -66,61 +75,10 @@ def open_resource(resource: Union[str, PathLike], compression: CompressionType =
             # This should be more robust, either check headers
             # or use https://github.com/ahupp/python-magic
             remote_file = gzip.open(tmp_file, 'rt')
-            try:
-                yield remote_file
-            finally:
-                remote_file.close()
-                tmp_file.close()
+            return Resource(remote_file)
+
         else:
-            try:
-                yield TextIOWrapper(tmp_file)
-            finally:
-                tmp_file.close()
+            return Resource(TextIOWrapper(tmp_file))
 
     else:
         raise ValueError(f"Cannot open local or remote file: {resource}")
-
-
-def open_file(resource: Union[str, PathLike], compression: CompressionType = None) -> IO[str]:
-    """
-    A standard function version of the above - TODO DRY this code
-
-    or refactor to this a context manager as a class
-    https://book.pythontips.com/en/latest/context_managers.html#implementing-a-context-manager-as-a-class
-
-    """
-    if Path(resource).exists():
-        if compression is None:
-            # Try gzip first
-            try:
-                file = gzip.open(resource, 'rt')
-                file.read(1)
-                file.seek(0)
-
-            except OSError:
-                file = open(resource, 'r')
-        elif compression == CompressionType.gzip:
-            file = gzip.open(resource, 'rt')
-        else:
-            file = open(resource, 'r')
-
-        return file
-
-    elif resource.startswith('http'):
-        tmp_file = tempfile.TemporaryFile('w+b')
-        request = requests.get(resource)
-        if request.status_code != 200:
-            raise ValueError(f"Remote file returned {request.status_code}: {request.text}")
-        tmp_file.write(request.content)
-        request.close()  # not sure this is needed
-        tmp_file.seek(0)
-        if resource.endswith('gz') or compression == CompressionType.gzip:
-            # This should be more robust, either check headers
-            # or use https://github.com/ahupp/python-magic
-            remote_file = gzip.open(tmp_file, 'rt')
-            return remote_file
-        else:
-            return TextIOWrapper(tmp_file)
-    else:
-        raise ValueError(f"Cannot open local or remote file: {resource}")
-

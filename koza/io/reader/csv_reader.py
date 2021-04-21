@@ -106,7 +106,6 @@ class CSVReader:
             )
             fieldnames[0].rstrip('# ').rstrip()
             self.fieldnames = fieldnames
-            next(self.reader)
 
             if self.field_type_map:
 

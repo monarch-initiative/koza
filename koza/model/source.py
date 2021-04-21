@@ -4,7 +4,7 @@ from typing import Any, Dict, Iterator, List
 from koza.io.reader.csv_reader import CSVReader
 from koza.io.reader.json_reader import JSONReader
 from koza.io.reader.jsonl_reader import JSONLReader
-from koza.io.utils import open_file, open_resource
+from koza.io.utils import open_resource
 from koza.model.config.source_config import DatasetDescription, SourceFileConfig
 from koza.model.translation_table import TranslationTable
 from koza.row_filter import RowFilter
@@ -41,7 +41,7 @@ class SourceFile:
         self._filter = RowFilter(config.filters)
 
         for file in config.files:
-            resource_io = open_file(file, config.compression)
+            resource_io = open_resource(file, config.compression).file_handle
             if self.config.format == 'csv':
                 self._reader = CSVReader(
                     resource_io,
