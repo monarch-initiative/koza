@@ -6,7 +6,5 @@ dataset_description:
   description: 'STRING: functional protein association networks'
   rights: 'https://string-db.org/cgi/access.pl?footer_active_subpage=licensing'
 
-data_dir: './examples/data'
-
 source_files:
-  - 'protein-links-detailed'
+  - 'protein-links-detailed.yaml'

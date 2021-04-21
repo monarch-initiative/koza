@@ -81,12 +81,46 @@ def open_resource(resource: Union[str, PathLike], compression: CompressionType =
         raise ValueError(f"Cannot open local or remote file: {resource}")
 
 
-def get_resource_name(resource: Union[str, PathLike]) -> str:
+def open_file(resource: Union[str, PathLike], compression: CompressionType = None) -> IO[str]:
     """
-    Return a local or remote files name sans drive and directory path
-    equivalent to return os.path.basename(resource)
+    A standard function version of the above - TODO DRY this code
 
-    :param resource: local or remote file as string or pathlike
-    :return: str, name of the file without its directory or url path
+    or refactor to this a context manager as a class
+    https://book.pythontips.com/en/latest/context_managers.html#implementing-a-context-manager-as-a-class
+
     """
-    return Path(resource).name
+    if Path(resource).exists():
+        if compression is None:
+            # Try gzip first
+            try:
+                file = gzip.open(resource, 'rt')
+                file.read(1)
+                file.seek(0)
+
+            except OSError:
+                file = open(resource, 'r')
+        elif compression == CompressionType.gzip:
+            file = gzip.open(resource, 'rt')
+        else:
+            file = open(resource, 'r')
+
+        return file
+
+    elif resource.startswith('http'):
+        tmp_file = tempfile.TemporaryFile('w+b')
+        request = requests.get(resource)
+        if request.status_code != 200:
+            raise ValueError(f"Remote file returned {request.status_code}: {request.text}")
+        tmp_file.write(request.content)
+        request.close()  # not sure this is needed
+        tmp_file.seek(0)
+        if resource.endswith('gz') or compression == CompressionType.gzip:
+            # This should be more robust, either check headers
+            # or use https://github.com/ahupp/python-magic
+            remote_file = gzip.open(tmp_file, 'rt')
+            return remote_file
+        else:
+            return TextIOWrapper(tmp_file)
+    else:
+        raise ValueError(f"Cannot open local or remote file: {resource}")
+

@@ -15,8 +15,7 @@ import yaml
 from yaml.constructor import ConstructorError
 
 from koza.io.utils import open_resource
-
-from .validator.map_validator import is_dictionary_bimap
+from koza.validator.map_validator import is_dictionary_bimap
 
 DEFAULT_CURIE_MAP = 'https://raw.githubusercontent.com/biolink/biolink-model/master/context.jsonld'
 
@@ -97,7 +96,10 @@ def _curie_map_from_jsonld(curie_io: IO[str]) -> Dict[str, str]:
         for key, val in jsonld['@context'].items():
             if isinstance(key, str) and isinstance(val, str) and not key.startswith('@'):
                 curie_map[key] = val
+            elif isinstance(val, dict) and '@id' in val:
+                curie_map[key] = val['@id']
+
     else:
-        pass  # raise exception?
+        raise ValueError('No @context in jsonld')
 
     return curie_map

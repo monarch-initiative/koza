@@ -3,10 +3,24 @@ name: 'protein-links-detailed'
 delimiter: ' '
 
 files:
-  - '9606.protein.links.detailed.v11.0.txt.gz'
+  - './examples/data/string.tsv'
 
-filter:
+columns:
+  - 'protein1'
+  - 'protein2'
+  - 'neighborhood'
+  - 'fusion'
+  - 'cooccurence'
+  - 'coexpression'
+  - 'experimental'
+  - 'database'
+  - 'textmining'
+  - 'combined_score' : 'int'
+
+filters:
   - inclusion: 'include'
     column: 'combined_score'
-    filter: 'lt'
+    filter_code: 'lt'
     value: 700
+
+transform_code: './examples/stringdb/protein-links-detailed.py'

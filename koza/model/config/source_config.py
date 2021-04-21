@@ -96,15 +96,6 @@ class ColumnFilter:
 
 
 @dataclass(frozen=True)
-class Filter:
-    """
-    for single file ingests
-    """
-
-    filter: List[ColumnFilter]
-
-
-@dataclass(frozen=True)
 class DatasetDescription:
     id: str = None  # TODO constrain to a curie?
     name: str = None  # If empty use source name
@@ -121,16 +112,8 @@ class DatasetDescription:
 class SourceConfig:
     source_files: List[str]
     name: str = None
-    data_dir: str = './data'
     output_format: OutputFormat = None
     dataset_description: DatasetDescription = None
-
-    def __post_init__(self):
-        if not Path(self.data_dir).exists():
-            raise FileNotFoundError(f"{self.data_dir} is not a directory")
-
-        if not Path(self.data_dir).is_dir():
-            raise NotADirectoryError(f"{self.data_dir} is not a directory")
 
 
 @dataclass(config=PydanticConfig)
@@ -162,6 +145,7 @@ class SourceFileConfig:
     compression: CompressionType = None
     filters: List[ColumnFilter] = None
     json_path: List[Union[StrictStr, StrictInt]] = None
+    transform_code: str = None
 
     def __post_init_post_parse__(self):
         files_as_paths: List[Path] = []
@@ -177,9 +161,11 @@ class SourceFileConfig:
 
         filtered_columns = [column_filter.column for column_filter in self.filters]
 
-        all_columns = [
-            next(iter(column)) if isinstance(column, Dict) else column for column in self.columns
-        ]
+        all_columns = []
+        if self.columns:
+            all_columns = [
+                next(iter(column)) if isinstance(column, Dict) else column for column in self.columns
+            ]
 
         for column in filtered_columns:
             if column not in all_columns:
@@ -241,13 +227,13 @@ class SourceFileConfig:
         return self._field_type_map
 
 
-@dataclass
+@dataclass(config=PydanticConfig)
 class PrimaryFileConfig(SourceFileConfig):
     depends_on: List[str] = None  # field(default_factory=list)
     on_map_failure: MapErrorEnum = MapErrorEnum.warning
 
 
-@dataclass
+@dataclass(config=PydanticConfig)
 class MapFileConfig(SourceFileConfig):
     key: str = None
     values: List[str] = None

@@ -4,7 +4,7 @@ from typing import Any, Dict, Iterator, List
 from koza.io.reader.csv_reader import CSVReader
 from koza.io.reader.json_reader import JSONReader
 from koza.io.reader.jsonl_reader import JSONLReader
-from koza.io.utils import open_resource
+from koza.io.utils import open_file, open_resource
 from koza.model.config.source_config import DatasetDescription, SourceFileConfig
 from koza.model.translation_table import TranslationTable
 from koza.row_filter import RowFilter
@@ -21,12 +21,10 @@ class Source:
 
     source_files: List[str]
     name: str = None
-    data_dir: str = './data'
     dataset_description: DatasetDescription = None
     translation_table: TranslationTable = None
 
 
-@dataclass
 class SourceFile:
     """
     An iterator that provides a layer of abstraction over file types
@@ -37,40 +35,36 @@ class SourceFile:
     and yields a dictionary
     """
 
-    config: SourceFileConfig
-    _filter: RowFilter
-    _reader: Iterator[Dict[str, Any]]
-
     def __init__(self, config: SourceFileConfig):
 
         self.config = config
         self._filter = RowFilter(config.filters)
 
         for file in config.files:
-            with open_resource(file, config.compression) as resource_io:
-                if format == 'csv':
-                    self._reader = CSVReader(
-                        resource_io,
-                        name=config.name,
-                        field_type_map=config.field_type_map,
-                        delimiter=config.delimiter,
-                        header_delimiter=config.header_delimiter,
-                        skip_lines=config.skip_lines,
-                    )
-                elif format == 'jsonl':
-                    self._reader = JSONLReader(
-                        resource_io,
-                        name=config.name,
-                        required_properties=config.required_properties,
-                    )
-                elif format == 'json':
-                    self._reader = JSONReader(
-                        resource_io,
-                        name=config.name,
-                        required_properties=config.required_properties,
-                    )
-                else:
-                    raise ValueError
+            resource_io = open_file(file, config.compression)
+            if self.config.format == 'csv':
+                self._reader = CSVReader(
+                    resource_io,
+                    name=config.name,
+                    field_type_map=config.field_type_map,
+                    delimiter=config.delimiter,
+                    header_delimiter=config.header_delimiter,
+                    skip_lines=config.skip_lines,
+                )
+            elif self.config.format == 'jsonl':
+                self._reader = JSONLReader(
+                    resource_io,
+                    name=config.name,
+                    required_properties=config.required_properties,
+                )
+            elif self.config.format == 'json':
+                self._reader = JSONReader(
+                    resource_io,
+                    name=config.name,
+                    required_properties=config.required_properties,
+                )
+            else:
+                raise ValueError(f"File type {format} not supported")
 
     def __iter__(self) -> Iterator:
         return self

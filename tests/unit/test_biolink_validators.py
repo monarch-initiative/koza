@@ -47,8 +47,8 @@ def test_assoc_subject_to_scalar_converter():
     Test that an Entity object is converted to a string
     """
     assoc = Association()
-    assoc.subject = Entity(id='foo:bar')
-    assert assoc.subject == 'foo:bar'
+    assoc.subject = Entity(id='HP:1')
+    assert assoc.subject == 'HP:1'
 
 
 def test_entity_provided_by_to_list_converter():

@@ -3,13 +3,25 @@ name: 'protein-links-detailed'
 delimiter: ' '
 
 files:
-  - 'string.tsv'
+  - './examples/data/string.tsv'
 
-filter:
+columns:
+  - 'protein1'
+  - 'protein2'
+  - 'neighborhood'
+  - 'fusion'
+  - 'cooccurence'
+  - 'coexpression'
+  - 'experimental'
+  - 'database'
+  - 'textmining'
+  - 'combined_score' : 'int'
+
+filters:
   - inclusion: 'include'
     column: 'combined_score'
-    filter: 'lt'
+    filter_code: 'lt'
     value: 700
 
 depends_on:
-  - 'entrez-2-string'
+  - './examples/maps/entrez-2-string.yaml'

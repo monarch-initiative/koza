@@ -9,7 +9,6 @@ from typing import List, Union
 from pydantic import validator as pydantic_validator
 
 from koza.model.biolink.entity import Entity
-from koza.validator.map_validator import is_valid_curie
 
 TAXON_PREFIX = ['NCBITaxon']
 
@@ -18,8 +17,9 @@ TAXON_PREFIX = ['NCBITaxon']
 # PUBLICATION_PREFIX = []
 
 
-def _curie_must_have_prefix(curie: str, prefix: List[str]) -> str:
-    if not is_valid_curie(curie, prefix):
+def _curie_must_have_prefix(curie: str, prefix_filter: List[str]) -> str:
+    prefix = curie.split(':')[0]
+    if prefix not in prefix_filter:
         raise ValueError(f"{curie} is not prefixed with {prefix}")
     return curie
 

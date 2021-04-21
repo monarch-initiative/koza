@@ -17,10 +17,10 @@ LOG = logging.getLogger(__name__)
 
 @app.command()
 def transform(
-    source: str = typer.Option(..., help="Source name"),
-    config_dir: str = typer.Option('./', help="Path to configuration directory"),
+    source: str = typer.Option(..., help="Source metadata file"),
     output_dir: str = typer.Option('./output', help="Path to output directory"),
-    curie_map: str = typer.Option(None, help="Path to custom curie map file"),
+    global_table: str = typer.Option(None, help="Path to global translation table"),
+    local_table: str = typer.Option(None, help="Path to local translation table"),
     quiet: bool = False,
     debug: bool = False,
 ):
@@ -36,7 +36,7 @@ def transform(
     elif not output_path.exists():
         output_path.mkdir(parents=True)
 
-    transform_source(source, config_dir, output_dir, curie_map)
+    transform_source(source, output_dir, global_table, local_table)
 
 
 @app.command()

@@ -4,15 +4,15 @@ Module for managing koza runs
 
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 import yaml
 
+from koza.app import KozaApp
 from koza.io.reader.csv_reader import CSVReader
 from koza.io.reader.json_reader import JSONReader
 from koza.io.reader.jsonl_reader import JSONLReader
 from koza.io.utils import open_resource
-from koza.koza import KozaApp
 from koza.model.config.source_config import CompressionType, FormatType, SourceConfig
 from koza.model.source import Source
 from koza.model.translation_table import TranslationTable
@@ -24,16 +24,14 @@ KOZA_APP = None
 
 def set_koza_app(
     source: Source,
-    config_dir: str = './',
     output_dir: str = './output',
-    curie_path: str = None,
 ) -> KozaApp:
     """
     Setter for singleton koza app object
     """
     global KOZA_APP
 
-    KOZA_APP = KozaApp(source, config_dir, output_dir, curie_path)
+    KOZA_APP = KozaApp(source, output_dir)
     return KOZA_APP
 
 
@@ -81,71 +79,74 @@ def validate_file(
             pass
 
 
-def resolve_source(source: str, config_dir: str) -> Path:
+def validate_source_files(source: str, source_files: List[str]) -> List[str]:
     """
     Resolve a source string to its source metadata file
 
     :param source:
-    :param config_dir:
+    :param source_files:
     :return:
     """
-    source_path = Path(f"{config_dir}/sources/{source}")
-    if not (source_path.exists() or source_path.is_dir()):
-        # maybe config is the whole path
-        alt_path = Path(f"{config_dir}/{source}")
+    source_dir = Path(source).parent
+    source_paths = []
+    for src_file in source_files:
+        if not (Path(src_file).exists() or Path(src_file).is_file()):
+            # check if it's in source parent
+            updated_src_file = source_dir / src_file
+            if not (Path(updated_src_file).exists() or Path(updated_src_file).is_file()):
+                raise ValueError(f"Source file doesn't exist: {src_file}")
+            else:
+                source_paths.append(updated_src_file)
+        else:
+            source_paths.append(src_file)
+    return source_paths
 
-        if not (alt_path.exists() or alt_path.is_dir()):
-            raise FileNotFoundError(f"source directory does not exist, {source_path}")
 
-        source_path = alt_path
-
-    return source_path
-
-
-def get_translation_table(source: str, config_dir: str) -> TranslationTable:
+def get_translation_table(global_table: str, local_table: str) -> TranslationTable:
     # Look for translation table files
-    global_tt_path = Path(f"{config_dir}/translationtable/GLOBAL_TERMS.yaml")
-    local_tt_path = Path(f"{config_dir}/translationtable/{source}.yaml")
 
-    if not global_tt_path.exists():
-        LOG.warning("Global translation table does not exist")
-        global_tt = {}
+    global_tt = {}
+    local_tt = {}
+
+    if not global_table:
+        if local_table:
+            raise ValueError("Local table without a global table not allowed")
+        else:
+            LOG.info("No global table used for transform")
     else:
-        with global_tt_path.open('r') as global_tt_fh:
+
+        with open(global_table, 'r') as global_tt_fh:
             global_tt = yaml.safe_load(global_tt_fh)
 
-    if not local_tt_path.exists():
-        LOG.warning("Source translation table does not exist")
-        local_tt = {}
-    else:
-        with local_tt_path.open('r') as local_tt_fh:
-            local_tt = yaml.safe_load(local_tt_fh)
+        if local_table:
+            with open(local_table, 'r') as local_tt_fh:
+                local_tt = yaml.safe_load(local_tt_fh)
+        else:
+            LOG.info("No local table used for transform")
 
     return TranslationTable(global_tt, local_tt)
 
 
 def transform_source(
     source: str,
-    config_dir: str,
     output_dir: str,
-    curie_map: str = None,
+    global_table: str,
+    local_table: str,
 ):
-    source_path = resolve_source(source, config_dir)
-    source_metadata = source_path / 'metadata.yaml'
 
-    translation_table = get_translation_table(source, config_dir)
+    translation_table = get_translation_table(global_table, local_table)
 
-    with source_metadata.open('r') as source_fh:
+    with open(source, 'r') as source_fh:
         source_config = SourceConfig(**yaml.safe_load(source_fh))
         if not source_config.name:
             source_config.name = source
 
         source = Source(
-            source_files=source_config.source_files,
+            source_files=validate_source_files(source, source_config.source_files),
             name=source_config.name,
-            data_dir=source_config.data_dir,
             dataset_description=source_config.dataset_description,
             translation_table=translation_table,
         )
 
-        set_koza_app(source, config_dir, output_dir, curie_map)
+        koza_app = set_koza_app(source, output_dir)
+        koza_app.process_sources()
