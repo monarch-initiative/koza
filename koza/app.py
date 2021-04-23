@@ -1,10 +1,13 @@
 import importlib
+import json
 from pathlib import Path
 from typing import Dict
 
 import yaml
-import json
-
+from kgx.sink import Sink
+from kgx.sink.jsonl_sink import JsonlSink
+from kgx.transformer import Transformer
+from kgx.validator import Validator
 from pydantic.json import pydantic_encoder
 
 from koza.model.config.source_config import SourceFileConfig
@@ -40,6 +43,9 @@ class KozaApp:
         self.file_registry: Dict[str, SourceFile] = {}
         self.map_registry: Dict[str, SourceFile] = {}
         self.map_cache: Dict[str, Dict] = {}
+        self.kgx_transformer: Transformer = Transformer(stream=True)
+        self.sink: Sink
+        self.kgx_validator: Validator = Validator()
 
         for src_file in source.source_files:
             with open(src_file, 'r') as source_file_fh:
@@ -50,7 +56,8 @@ class KozaApp:
                 source_file_config.transform_code = (
                     str(Path(src_file).parent / Path(src_file).stem) + '.py'
                 )
-
+            # todo: this is likely really many per source, and this loop expects more than one source
+            self.sink = JsonlSink(filename=f"{source.name}.jsonl")
             self.file_registry[source_file_config.name] = SourceFile(source_file_config)
 
     def get_map(self, map_name: str):
