@@ -82,8 +82,6 @@ class MacromolecularMachine(GenomicEntity):
     activities, or they encode molecules which do this.
     """
 
-    _category: ClassVar[str] = 'MacromolecularMachine'
-
 
 @dataclass(config=PydanticConfig)
 class GeneOrGeneProduct(MacromolecularMachine):
@@ -91,8 +89,6 @@ class GeneOrGeneProduct(MacromolecularMachine):
     a union of genes or gene products. Frequently an identifier for one will be used
     as proxy for another
     """
-
-    _category: ClassVar[str] = 'GeneOrGeneProduct'
 
 
 @dataclass(config=PydanticConfig)

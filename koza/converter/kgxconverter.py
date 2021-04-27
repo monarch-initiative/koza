@@ -20,8 +20,18 @@ class KGXConverter:
 
         for entity in args:
             if isinstance(entity, NamedThing):
-                nodes.append(vars(entity))
+                nodes.append(self.convert_node(entity))
             elif isinstance(entity, Association):
-                edges.append(vars(entity))
+                edges.append(self.convert_association(entity))
+            else:
+                raise ValueError(
+                    "Can only convert NamedThing or Association entities to KGX compatible dictionaries"
+                )
 
         return nodes, edges
+
+    def convert_node(self, node: NamedThing) -> dict:
+        return vars(node)
+
+    def convert_association(self, association: Association) -> dict:
+        return vars(association)

@@ -6,7 +6,7 @@ from pathlib import Path
 import typer
 
 from koza.koza_runner import transform_source, validate_file
-from koza.model.config.source_config import CompressionType, FormatType
+from koza.model.config.source_config import CompressionType, FormatType, OutputFormat
 
 app = typer.Typer()
 
@@ -19,6 +19,7 @@ LOG = logging.getLogger(__name__)
 def transform(
     source: str = typer.Option(..., help="Source metadata file"),
     output_dir: str = typer.Option('./output', help="Path to output directory"),
+    output_format: OutputFormat = typer.Option("jsonl", help="Output format"),
     global_table: str = typer.Option(None, help="Path to global translation table"),
     local_table: str = typer.Option(None, help="Path to local translation table"),
     quiet: bool = False,
@@ -36,7 +37,7 @@ def transform(
     elif not output_path.exists():
         output_path.mkdir(parents=True)
 
-    transform_source(source, output_dir, global_table, local_table)
+    transform_source(source, output_dir, output_format, global_table, local_table)
 
 
 @app.command()

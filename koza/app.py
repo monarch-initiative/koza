@@ -5,12 +5,14 @@ from typing import Dict
 
 import yaml
 from kgx.sink import Sink
+from kgx.sink.json_sink import JsonSink
 from kgx.sink.jsonl_sink import JsonlSink
+from kgx.sink.tsv_sink import TsvSink
 from kgx.transformer import Transformer
 from kgx.validator import Validator
 from pydantic.json import pydantic_encoder
 
-from koza.model.config.source_config import SourceFileConfig
+from koza.model.config.source_config import OutputFormat, SourceFileConfig
 from koza.model.source import Source, SourceFile
 
 
@@ -37,9 +39,11 @@ class KozaApp:
         self,
         source: Source,
         output_dir: str = './output',
+        output_format: OutputFormat = OutputFormat('jsonl'),
     ):
         self.source = source
         self.output_dir = output_dir
+        self.output_format = output_format
         self.file_registry: Dict[str, SourceFile] = {}
         self.map_registry: Dict[str, SourceFile] = {}
         self.map_cache: Dict[str, Dict] = {}
@@ -57,8 +61,20 @@ class KozaApp:
                     str(Path(src_file).parent / Path(src_file).stem) + '.py'
                 )
             # todo: this is likely really many per source, and this loop expects more than one source
-            self.sink = JsonlSink(filename=f"{source.name}.jsonl")
+            # compression = None
+            # if source_file_config.compression == CompressionType.gzip:
+            #     compression =
+
+            self.sink = self.get_sink(output_format, source.name)
             self.file_registry[source_file_config.name] = SourceFile(source_file_config)
+
+    def get_sink(self, format: OutputFormat, source_name: str) -> Sink:
+        if format == 'jsonl':
+            return JsonlSink(filename=f"{self.output_dir}/{source_name}.jsonl")
+        elif format == 'json':
+            return JsonSink(filename=f"{self.output_dir}/{source_name}.json")
+        elif format == 'tsv':
+            return TsvSink(filename=f"{self.output_dir}/{source_name}.tsv", format='tsv')
 
     def get_map(self, map_name: str):
         pass
