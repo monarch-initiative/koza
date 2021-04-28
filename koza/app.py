@@ -1,17 +1,12 @@
 import importlib
-import json
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Iterable
 
 import yaml
-from kgx.sink import Sink
-from kgx.sink.json_sink import JsonSink
-from kgx.sink.jsonl_sink import JsonlSink
-from kgx.sink.tsv_sink import TsvSink
-from kgx.transformer import Transformer
-from kgx.validator import Validator
-from pydantic.json import pydantic_encoder
 
+from koza.io.writer.kgx_writer import KGXWriter
+from koza.io.writer.writer import KozaWriter
+from koza.model.biolink import Entity
 from koza.model.config.source_config import OutputFormat, SourceFileConfig
 from koza.model.source import Source, SourceFile
 
@@ -47,9 +42,7 @@ class KozaApp:
         self.file_registry: Dict[str, SourceFile] = {}
         self.map_registry: Dict[str, SourceFile] = {}
         self.map_cache: Dict[str, Dict] = {}
-        self.kgx_transformer: Transformer = Transformer(stream=True)
-        self.sink: Sink
-        self.kgx_validator: Validator = Validator()
+        self.writer: KozaWriter = KGXWriter(self.output_dir, self.output_format, self.source.name)
 
         for src_file in source.source_files:
             with open(src_file, 'r') as source_file_fh:
@@ -60,21 +53,8 @@ class KozaApp:
                 source_file_config.transform_code = (
                     str(Path(src_file).parent / Path(src_file).stem) + '.py'
                 )
-            # todo: this is likely really many per source, and this loop expects more than one source
-            # compression = None
-            # if source_file_config.compression == CompressionType.gzip:
-            #     compression =
 
-            self.sink = self.get_sink(output_format, source.name)
             self.file_registry[source_file_config.name] = SourceFile(source_file_config)
-
-    def get_sink(self, format: OutputFormat, source_name: str) -> Sink:
-        if format == 'jsonl':
-            return JsonlSink(filename=f"{self.output_dir}/{source_name}.jsonl")
-        elif format == 'json':
-            return JsonSink(filename=f"{self.output_dir}/{source_name}.json")
-        elif format == 'tsv':
-            return TsvSink(filename=f"{self.output_dir}/{source_name}.tsv", format='tsv')
 
     def get_map(self, map_name: str):
         pass
@@ -106,6 +86,7 @@ class KozaApp:
             else:
                 raise NotImplementedError
 
-    def write(self, *args):
-        for arg in args:
-            print(json.dumps(arg, default=pydantic_encoder))
+    def write(self, entities: Iterable[Entity]):
+        self.writer.write(entities)
+        # for arg in args:
+        #     print(json.dumps(arg, default=pydantic_encoder))

@@ -1,4 +1,6 @@
-from koza.model.biolink import Association, NamedThing
+from typing import List
+
+from koza.model.biolink import Association, Entity, NamedThing
 
 
 class KGXConverter:
@@ -13,12 +15,12 @@ class KGXConverter:
 
     """
 
-    def convert(self, *args) -> (dict, dict):
+    def convert(self, entities: List[Entity]) -> (dict, dict):
 
         nodes = []
         edges = []
 
-        for entity in args:
+        for entity in entities:
             if isinstance(entity, NamedThing):
                 nodes.append(self.convert_node(entity))
             elif isinstance(entity, Association):
