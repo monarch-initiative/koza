@@ -41,6 +41,7 @@ class KozaApp:
         self.output_format = output_format
         self.file_registry: Dict[str, SourceFile] = {}
         self.map_registry: Dict[str, SourceFile] = {}
+        self.writer_registry: Dict[str, KozaWriter] = {}
         self.map_cache: Dict[str, Dict] = {}
         self.writer: KozaWriter = KGXWriter(self.output_dir, self.output_format, self.source.name)
 
@@ -55,6 +56,9 @@ class KozaApp:
                 )
 
             self.file_registry[source_file_config.name] = SourceFile(source_file_config)
+            self.writer_registry[source_file_config.name] = KGXWriter(
+                self.output_dir, self.output_format, self.source.name
+            )
 
     def get_map(self, map_name: str):
         pass
@@ -86,7 +90,8 @@ class KozaApp:
             else:
                 raise NotImplementedError
 
-    def write(self, entities: Iterable[Entity]):
-        self.writer.write(entities)
-        # for arg in args:
-        #     print(json.dumps(arg, default=pydantic_encoder))
+            # close the writer when the source is done processing
+            self.writer_registry[source_file.config.name].finalize()
+
+    def write(self, source_name, entities: Iterable[Entity]):
+        self.writer_registry[source_name].write(entities)

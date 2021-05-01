@@ -1,3 +1,4 @@
+from dataclasses import asdict
 from typing import List
 
 from koza.model.biolink import Association, Entity, NamedThing
@@ -33,7 +34,7 @@ class KGXConverter:
         return nodes, edges
 
     def convert_node(self, node: NamedThing) -> dict:
-        return vars(node)
+        return asdict(node)
 
     def convert_association(self, association: Association) -> dict:
-        return vars(association)
+        return asdict(association)

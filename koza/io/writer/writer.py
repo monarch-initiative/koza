@@ -18,6 +18,10 @@ class KozaWriter(ABC):
         pass
 
     @abstractmethod
+    def finalize(self):
+        pass
+
+    @abstractmethod
     def writerow(self, row: Iterable[Any]) -> Optional[int]:
         pass
 

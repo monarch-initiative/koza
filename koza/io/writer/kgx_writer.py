@@ -32,6 +32,8 @@ class KGXWriter(KozaWriter):
     def get_sink(self) -> Sink:
         if self.output_format == 'jsonl':
             return JsonlSink(filename=f"{self.output_dir}/{self.source_name}.jsonl")
+        # TODO: the json writer doesn't actually make valid json, I don't think streaming into two places in one file
+        # TODO: makes any sense, this would probably have to save up and dump all at once
         elif self.output_format == 'json':
             return JsonSink(filename=f"{self.output_dir}/{self.source_name}.json")
         elif self.output_format == 'tsv':
@@ -48,20 +50,10 @@ class KGXWriter(KozaWriter):
         for edge in edges:
             graph.add_edge(edge['subject'], edge['object'], edge['id'], **edge)
 
-        # todo: trigger kgx validation as an option? probably not here...
-        # kgx_validation_errors = koza.kgx_validator.validate(graph)
-
-        # if kgx_validation_errors:
-        #    for error in kgx_validation_errors:
-        #        logging.error(str(error))
-
         self.transformer.process(self.source.parse(graph), self.sink)
-        # node and edge property lists can be passed in here, probably?
-        # output_args = {}
-        # self.transformer.save(output_args)
-        #
-        # additionally, somewhere we'll need to finalize
-        # self.sink.finalize()
+
+    def finalize(self):
+        self.sink.finalize()
 
     def writerow(self, row: Iterable[Any]) -> Optional[int]:
         pass
