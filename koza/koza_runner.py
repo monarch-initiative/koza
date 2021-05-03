@@ -13,7 +13,7 @@ from koza.io.reader.csv_reader import CSVReader
 from koza.io.reader.json_reader import JSONReader
 from koza.io.reader.jsonl_reader import JSONLReader
 from koza.io.utils import open_resource
-from koza.model.config.source_config import CompressionType, FormatType, SourceConfig
+from koza.model.config.source_config import CompressionType, FormatType, OutputFormat, SourceConfig
 from koza.model.source import Source
 from koza.model.translation_table import TranslationTable
 
@@ -25,13 +25,14 @@ KOZA_APP = None
 def set_koza_app(
     source: Source,
     output_dir: str = './output',
+    output_format: OutputFormat = OutputFormat('jsonl'),
 ) -> KozaApp:
     """
     Setter for singleton koza app object
     """
     global KOZA_APP
 
-    KOZA_APP = KozaApp(source, output_dir)
+    KOZA_APP = KozaApp(source, output_dir, output_format)
     return KOZA_APP
 
 
@@ -130,6 +131,7 @@ def get_translation_table(global_table: str, local_table: str) -> TranslationTab
 def transform_source(
     source: str,
     output_dir: str,
+    output_format: OutputFormat,
     global_table: str,
     local_table: str,
 ):
@@ -148,5 +150,5 @@ def transform_source(
             translation_table=translation_table,
         )
 
-        koza_app = set_koza_app(source, output_dir)
+        koza_app = set_koza_app(source, output_dir, output_format)
         koza_app.process_sources()

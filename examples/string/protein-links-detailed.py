@@ -5,7 +5,9 @@ from koza.koza_runner import get_koza_app
 
 koza = get_koza_app()
 
-for row in koza.file_registry['protein-links-detailed']:
+source_name = 'protein-links-detailed'
+
+for row in koza.file_registry[source_name]:
 
     protein_a = Protein()
     protein_b = Protein()
@@ -19,4 +21,4 @@ for row in koza.file_registry['protein-links-detailed']:
     pairwise_gene_to_gene_interaction.object = protein_b
     pairwise_gene_to_gene_interaction.predicate = predicate.interacts_with
 
-    koza.write(protein_a, protein_b, pairwise_gene_to_gene_interaction)
+    koza.write(source_name, [protein_a, protein_b, pairwise_gene_to_gene_interaction])
