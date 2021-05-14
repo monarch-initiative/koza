@@ -1,0 +1,14 @@
+name: 'gene-literature'
+
+delimiter: '\t'
+
+files:
+  - './examples/data/LiteratureMatchedGenesByPaper.txt'
+
+columns:
+  - 'xb_article'
+  - 'pmid'
+  - 'gene_pages'
+
+depends_on:
+  - './examples/maps/xb-genepage-to-gene.yaml'

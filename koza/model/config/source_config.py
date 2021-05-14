@@ -252,3 +252,5 @@ class PrimaryFileConfig(SourceFileConfig):
 class MapFileConfig(SourceFileConfig):
     key: str = None
     values: List[str] = None
+    curie_prefix: str = None
+    add_curie_prefix_to_columns: List[str] = None
