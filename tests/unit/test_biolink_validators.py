@@ -23,13 +23,19 @@ def test_taxon_validator_with_setter():
     """
     Test that validation occurs when using a setter
 
-    This test might be unecesarry and basically proves
+    This test might be unnecessary and basically proves
     that pydantic validates setters as well as when initializing objects
     which is why we're using it over plain dataclasses
     """
     with pytest.raises(ValidationError):
         molec_entity = MolecularEntity()
         molec_entity.in_taxon = ['taxon:foo', 'NCBITaxon:2']
+
+
+def test_taxon_validator_with_correct_prefix():
+    molec_entity = MolecularEntity()
+    molec_entity.in_taxon = ['NCBITaxon:2']
+    assert molec_entity.in_taxon == ['NCBITaxon:2']
 
 
 def test_assoc_publication_to_scalar_converter():

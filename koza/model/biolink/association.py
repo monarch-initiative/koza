@@ -11,11 +11,10 @@ from typing import ClassVar, List, Union
 
 from pydantic.dataclasses import dataclass
 
+from koza.model.biolink.named_thing import Entity, Publication
+from koza.model.config.pydantic_config import PydanticConfig
+from koza.model.curie import Curie
 from koza.validator.model_validator import convert_object_to_scalar, convert_objects_to_scalars
-
-from ..config.pydantic_config import PydanticConfig
-from ..curie import Curie
-from .named_thing import Entity, Publication
 
 
 @dataclass(config=PydanticConfig)

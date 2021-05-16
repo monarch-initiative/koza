@@ -4,7 +4,7 @@ Testing the biolink model dataclasses + pydandic
 import pytest
 from pydantic import ValidationError
 
-from koza.model.biolink.named_thing import *
+from koza.model.biolink.named_thing import Entity, Publication
 
 
 def test_bad_curie():
@@ -31,5 +31,4 @@ def test_good_curie():
     """
     entity = Entity()
     entity.id = 'HP:0000001'
-    assert 'HP:0000001' is entity.id  # noqa: F632
     assert 'HP:0000001' == entity.id

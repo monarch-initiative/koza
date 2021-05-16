@@ -7,14 +7,15 @@ https://github.com/biolink/biolink-model/blob/master/biolink-model.yaml
 """
 
 from dataclasses import field
-from typing import ClassVar, List, Optional
+from typing import ClassVar, List, Optional, Union
 
+from pydantic import validator
 from pydantic.dataclasses import dataclass
 
 from koza.model.biolink.entity import Entity
 from koza.model.config.pydantic_config import PydanticConfig
 from koza.model.curie import Curie
-from koza.validator.model_validator import valid_taxon
+from koza.validator.model_validator import curie_must_have_prefix
 
 
 @dataclass(config=PydanticConfig)
@@ -25,9 +26,11 @@ class ThingWithTaxon:
     entities; body parts; biological processes
     """
 
-    in_taxon: List[Curie] = field(default_factory=list)
+    in_taxon: List[Union[str, Curie]] = field(default_factory=list)
 
-    _validate_prefix = valid_taxon("in_taxon")
+    @validator('in_taxon')
+    def check_prefix(cls, in_taxon):
+        return curie_must_have_prefix(in_taxon, ['NCBITaxon'])
 
 
 @dataclass(config=PydanticConfig)

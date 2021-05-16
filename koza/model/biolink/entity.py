@@ -2,11 +2,11 @@ import inspect
 from dataclasses import field
 from typing import List, Union
 
-from pydantic import validator
 from pydantic.dataclasses import dataclass
 
-from ..config.pydantic_config import PydanticConfig
-from ..curie import Curie
+from koza.model.config.pydantic_config import PydanticConfig
+from koza.model.curie import Curie
+from koza.validator.model_validator import convert_scalar_to_list, convert_str_to_curie
 
 
 @dataclass(config=PydanticConfig)
@@ -15,7 +15,7 @@ class Entity:
     Root Biolink Model class for all things and informational relationships, real or imagined
     """
 
-    id: Curie = None
+    id: Union[Curie, str] = None
     name: str = ''
     category: List[str] = field(default_factory=list)
     iri: str = None
@@ -25,11 +25,8 @@ class Entity:
     provided_by: Union[str, List[str]] = field(default_factory=list)
 
     # converters
-    @validator('provided_by')
-    def convert_scalar_to_list(cls, provided_by):
-        if isinstance(provided_by, str):
-            provided_by = [provided_by]
-        return provided_by
+    _convert_str_to_curie = convert_str_to_curie('id')
+    _convert_provided_by = convert_scalar_to_list('provided_by')
 
     def __post_init__(self):
         # Initialize default categories if not set

@@ -43,12 +43,12 @@ clean:
 
 .PHONY: lint
 lint:
-	flake8 --exit-zero --max-line-length 120 koza/ tests/
-	black --check --diff koza tests
-	isort --check-only --diff koza tests
+	flake8 --exit-zero --max-line-length 120 koza/ tests/ scripts/
+	black --check --diff koza tests scripts
+	isort --check-only --diff koza tests scripts
 
 .PHONY: format
 format:
-	autoflake --remove-all-unused-imports --recursive --remove-unused-variables --in-place koza tests --exclude=__init__.py
-	isort koza tests
-	black koza tests
+	autoflake --remove-all-unused-imports --recursive --remove-unused-variables --in-place koza tests scripts --exclude=__init__.py
+	isort koza tests scripts
+	black koza tests scripts

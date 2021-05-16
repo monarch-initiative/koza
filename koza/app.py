@@ -1,10 +1,9 @@
 import importlib
+import json
 from pathlib import Path
 from typing import Dict
 
 import yaml
-import json
-
 from pydantic.json import pydantic_encoder
 
 from koza.model.config.source_config import SourceFileConfig
