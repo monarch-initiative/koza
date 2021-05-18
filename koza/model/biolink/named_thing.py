@@ -135,3 +135,13 @@ class Publication(InformationContentEntity):
     summary: str = None
     keywords: List[str] = field(default_factory=list)
     mesh_terms: List[Curie] = field(default_factory=list)
+
+
+@dataclass(config=PydanticConfig)
+class DiseaseOrPhenotypicFeature(BiologicalEntity):
+    _category = "DiseaseOrPhenotypicFeature"
+
+
+@dataclass(config=PydanticConfig)
+class PhenotypicFeature(DiseaseOrPhenotypicFeature):
+    _category: ClassVar[str] = "PhenotypicFeature"

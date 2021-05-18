@@ -1,4 +1,4 @@
-from koza.model.biolink import Gene
+from koza.model.biolink import Gene, PhenotypicFeature, GeneToPhenotypicFeatureAssociation, predicate
 from koza.manager.data_provider import inject_row, inject_translation_table
 from koza.manager.data_collector import collect
 
@@ -10,12 +10,13 @@ translation_table = inject_translation_table()
 gene = Gene()
 gene.id = 'Xenbase:' + row['SUBJECT']
 
-# todo: need PhenotypicFeature in data model
-# phenotype = PhenotypicFeature()
-# phenotype.id = row['OBJECT']
+phenotype = PhenotypicFeature()
+phenotype.id = row['OBJECT']
 
-# relation will be has_phenotype RO:0002200
+association = GeneToPhenotypicFeatureAssociation()
+association.subject = gene.id
+association.predicate = predicate.has_phenotype
+association.object = phenotype.id
+association.relation = row['RELATION'].replace('_', ':')
 
-# association will be GeneToPhenotypicFeatureAssociation()
-
-collect(gene)
+collect(source_name, gene, association, phenotype)
