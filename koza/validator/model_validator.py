@@ -4,7 +4,7 @@ See https://pydantic-docs.helpmanual.io/usage/validators/#reuse-validators
 
 These also function as converters
 """
-from typing import List, Union, Any
+from typing import Any, List, Union
 
 from pydantic import validator as pydantic_validator
 
@@ -24,7 +24,9 @@ def _check_curie_prefix(curie: str, prefix_filter: List[str]) -> str:
     return curie
 
 
-def curie_must_have_prefix(field: Union[Curie, List[Curie]], config: List[str]) -> Union[Curie, List[Curie]]:
+def curie_must_have_prefix(
+    field: Union[Curie, List[Curie]], config: List[str]
+) -> Union[Curie, List[Curie]]:
     if isinstance(field, list):
         for curie in field:
             _check_curie_prefix(curie, config)

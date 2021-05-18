@@ -11,6 +11,11 @@ class Curie(str):
 
     This class is set up to work with pydantic, see
     https://pydantic-docs.helpmanual.io/usage/types/#custom-data-types
+
+    Note this class should only be used in pydantic models, as it otherwise
+    does not validate the input string, eg
+    curie = Curie('this is not a curie')
+    does not run the validate function on 'this is not a curie'
     """
 
     @classmethod
