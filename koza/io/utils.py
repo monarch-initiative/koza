@@ -6,7 +6,7 @@ import gzip
 import tempfile
 from io import TextIOWrapper
 from os import PathLike
-from pathlib import Path
+from pathlib import Path, PosixPath
 from typing import IO, Union
 
 import requests
@@ -32,7 +32,7 @@ def open_resource(resource: Union[str, PathLike], compression: CompressionType =
     :return: str, next line in resource
 
     """
-    if Path(resource).exists():
+    if isinstance(resource, PosixPath) and Path(resource).exists():
         if compression is None:
             # Try gzip first
             try:
@@ -49,7 +49,7 @@ def open_resource(resource: Union[str, PathLike], compression: CompressionType =
 
         return file
 
-    elif resource.startswith('http'):
+    elif isinstance(resource, str) and resource.startswith('http'):
         tmp_file = tempfile.TemporaryFile('w+b')
         request = requests.get(resource)
         if request.status_code != 200:

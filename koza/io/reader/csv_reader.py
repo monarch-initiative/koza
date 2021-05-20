@@ -104,7 +104,9 @@ class CSVReader:
             fieldnames = next(
                 reader(self.io_str, **{'delimiter': self.header_delimiter, 'dialect': self.dialect})
             )
-            fieldnames[0].rstrip('# ').rstrip()
+            fieldnames[0] = fieldnames[0].lstrip('#')
+            fieldnames = [f.strip() for f in fieldnames]
+
             self.fieldnames = fieldnames
 
             if self.field_type_map:
