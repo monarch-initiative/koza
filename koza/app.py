@@ -1,6 +1,5 @@
 import importlib
 import logging
-
 from pathlib import Path
 from typing import Dict, Iterable
 
@@ -15,6 +14,7 @@ from koza.model.source import Source, SourceFile
 from koza.validator.exceptions import MapItemException
 
 LOG = logging.getLogger(__name__)
+
 
 class KozaApp:
     """
@@ -50,8 +50,7 @@ class KozaApp:
         self.map_cache: Dict[str, Dict] = {}
         self.writer: KozaWriter = KGXWriter(self.output_dir, self.output_format, self.source.name)
 
-        LOG = logging.getLogger(__name__)
-
+        logging.getLogger(__name__)
 
         for src_file in source.source_files:
 

@@ -13,8 +13,12 @@ gene_b = Gene()
 
 pairwise_gene_to_gene_interaction = PairwiseGeneToGeneInteraction()
 
-gene_a.id = 'NCBIGene:' + entrez_2_string[row['protein1']]['entrez']
-gene_b.id = 'NCBIGene:' + entrez_2_string[row['protein2']]['entrez']
+# TODO: remove the all uppercase NCBIGENE curie prefix once the curie prefix validation is fixed upstream
+
+#gene_a.id = 'NCBIGene:' + entrez_2_string[row['protein1']]['entrez']
+#gene_b.id = 'NCBIGene:' + entrez_2_string[row['protein2']]['entrez']
+gene_a.id = 'NCBIGENE:' + entrez_2_string[row['protein1']]['entrez']
+gene_b.id = 'NCBIGENE:' + entrez_2_string[row['protein2']]['entrez']
 
 pairwise_gene_to_gene_interaction.subject = gene_a
 pairwise_gene_to_gene_interaction.object = gene_b

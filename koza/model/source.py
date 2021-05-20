@@ -39,30 +39,32 @@ class SourceFile:
 
         self.config = config
         self._filter = RowFilter(config.filters)
+        self._reader = None
+        self._readers: List = []
 
         for file in config.files:
             resource_io = open_resource(file, config.compression)
             if self.config.format == 'csv':
-                self._reader = CSVReader(
+                self._readers.append(CSVReader(
                     resource_io,
                     name=config.name,
                     field_type_map=config.field_type_map,
                     delimiter=config.delimiter,
                     header_delimiter=config.header_delimiter,
                     skip_lines=config.skip_lines,
-                )
+                ))
             elif self.config.format == 'jsonl':
-                self._reader = JSONLReader(
+                self._readers.append(JSONLReader(
                     resource_io,
                     name=config.name,
                     required_properties=config.required_properties,
-                )
+                ))
             elif self.config.format == 'json':
-                self._reader = JSONReader(
+                self._readers.append(JSONReader(
                     resource_io,
                     name=config.name,
                     required_properties=config.required_properties,
-                )
+                ))
             else:
                 raise ValueError(f"File type {format} not supported")
 
@@ -70,13 +72,24 @@ class SourceFile:
         return self
 
     def __next__(self) -> Dict[str, Any]:
+        if self._reader is None:
+            self._reader = self._readers.pop()
+        try:
+            row = self._get_row()
+        except StopIteration as si:
+            if len(self._readers) == 0:
+                raise si
+            else:
+                self._reader = self._readers.pop()
+                row = self._get_row()
+        return row
+
+    def _get_row(self):
         if self._filter:
             row = next(self._reader)
             while not self._filter.include_row(row):
                 # TODO log filtered out lines
                 row = next(self._reader)
-
             return row
         else:
             row = next(self._reader)
-        return row
