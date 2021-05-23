@@ -1,4 +1,4 @@
-from koza.model.biolink import Gene, PairwiseGeneToGeneInteraction, predicate
+from koza.model.biolink.model import Gene, PairwiseGeneToGeneInteraction, predicate
 from koza.manager.data_provider import inject_row, inject_translation_table, inject_map
 from koza.manager.data_collector import collect
 

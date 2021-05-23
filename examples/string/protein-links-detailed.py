@@ -1,6 +1,6 @@
 import re
 
-from koza.model.biolink import Protein, PairwiseGeneToGeneInteraction, predicate
+from koza.model.biolink.model import Protein, PairwiseGeneToGeneInteraction, predicate
 from koza.koza_runner import get_koza_app
 
 koza = get_koza_app()

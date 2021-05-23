@@ -1,6 +1,6 @@
 import re
 
-from koza.model.biolink import Protein, PairwiseGeneToGeneInteraction, predicate
+from koza.model.biolink.model import Protein, PairwiseGeneToGeneInteraction, predicate
 from koza.manager.data_provider import inject_row, inject_translation_table
 from koza.manager.data_collector import collect
 

@@ -1,7 +1,7 @@
 """
 Testing the biolink model dataclasses + pydandic
 """
-from koza.model.biolink.named_thing import *
+from koza.model.biolink.model import MolecularEntity
 
 
 def test_default_categories():

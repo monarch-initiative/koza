@@ -14,8 +14,9 @@ Some key differences:
 - Identifier types are removed, eg Union[str, EntityId] is replaced with
   Union[str, Curie]
 
-- Curies prefixes supplied by the biolink model are validated when initializing
-  and setting attributes
+TODO -
+
+- Category attribute is inferred via class variables and the type hierarchy
 
 - Type conversions, these classes will convert the following types:
   Expected          Allowed and coerced into expected
@@ -23,7 +24,8 @@ Some key differences:
   List[Curie]       str | List[str] | Curie
   List[str]         str
 
-- Category attribute is inferred via class variables and the type hierarchy
+- Curies prefixes supplied by the biolink model are validated when initializing
+  and setting attributes
 
 
 What parts of the schema are left out (and expected downstream)
@@ -97,18 +99,31 @@ class PydanticGen(PythonGenerator):
 # description: {split_descripton}
 # license: {be(self.schema.license)}
 
+from collections import namedtuple
 from dataclasses import field
+import datetime
+import inspect
 from typing import Optional, List, Union, Dict, ClassVar, Any
 
 from pydantic.dataclasses import dataclass
 
 from koza.validator.model_validator import convert_object_to_scalar, convert_objects_to_scalars
-
 from koza.model.config.pydantic_config import PydanticConfig
 from koza.model.curie import Curie
-from koza.model.biolink.named_thing import Entity, Publication
 
 metamodel_version = "{self.schema.metamodel_version}"
+
+# Type Aliases
+Unit = Union[int, float]
+LabelType = str
+NarrativeText = str
+XSDDate = datetime.date
+TimeType = datetime.time
+SymbolType = str
+FrequencyValue = str
+PercentageFrequencyValue = float
+BiologicalSequence = str
+Quotient = float
 
 # Classes
 {self.gen_classdefs()}
@@ -118,8 +133,14 @@ metamodel_version = "{self.schema.metamodel_version}"
     def gen_classdef(self, cls: ClassDefinition) -> str:
         """ Generate python definition for class cls """
 
-        parentref = f'({self.formatted_element_name(cls.is_a, True) if cls.is_a else ""})'
+        parentref = f'{self.formatted_element_name(cls.is_a, True) if cls.is_a else ""}'
         slotdefs = self.gen_class_variables(cls)
+
+        entity_post_init = (
+            f'\n    {self._get_entity_post_init()}'
+            if self.class_or_type_name(cls.name) == 'Entity'
+            else ''
+        )
 
         wrapped_description = (
             f'\n\t"""\n\t{wrapped_annotation(be(cls.description))}\n\t"""'
@@ -129,10 +150,23 @@ metamodel_version = "{self.schema.metamodel_version}"
 
         return (
             ('\n@dataclass(config=PydanticConfig)' if slotdefs else '')
-            + f'\nclass {self.class_or_type_name(cls.name)}{parentref}:{wrapped_description}'
+            + f'\nclass {self.class_or_type_name(cls.name)}'
+            + (f'({parentref})' if parentref else '')
+            + f':{wrapped_description}\n'
             + f'{self.gen_inherited_slots(cls)}'
             + f'{self.gen_class_meta(cls)}'
-            + (f'\n\t{slotdefs}' if slotdefs else '')
+            + (f'\n    {slotdefs}' if slotdefs else '')
+            + f'{entity_post_init}'
+            + (
+                f'\n    pass'
+                if (
+                    not self.gen_inherited_slots(cls)
+                    and not self.gen_class_meta(cls)
+                    and not slotdefs
+                    and not entity_post_init
+                )
+                else ''
+            )
         )
 
     def range_cardinality(
@@ -144,13 +178,14 @@ metamodel_version = "{self.schema.metamodel_version}"
         field(default_factory={list | dict})
         """
         positional_allowed = False  # Force everything to be tag values
+        slotname = self.slot_name(slot.name)
 
         range_type, parent_type, _ = self.class_reference_type(slot, cls)
         pkey = self.class_identifier(slot.range)
         # Special case, inlined, identified range
         if pkey and slot.inlined and slot.multivalued:
             base_key = self.gen_class_reference(
-                self.class_identifier_path(slot.range, False), slot.name
+                self.class_identifier_path(slot.range, False), slotname
             )
             num_elements = len(self.schema.classes[slot.range].slots)
             dflt = None if slot.required and positional_allowed else 'field(default_factory=dict)'
@@ -197,6 +232,9 @@ metamodel_version = "{self.schema.metamodel_version}"
         :param cls: owning class.  Used for generating key references
         :return: Python class reference type, most proximal type, most proximal type name
         """
+
+        slotname = self.slot_name(slot.name)
+
         rangelist = (
             self.class_identifier_path(cls, False)
             if slot.key or slot.identifier
@@ -213,7 +251,9 @@ metamodel_version = "{self.schema.metamodel_version}"
             and self.forward_reference(slot.range, cls.name)
         ):
             rangelist[-1] = f'"{rangelist[-1]}"'
-        return str(self.gen_class_reference(rangelist, slot.name)), prox_type, prox_type_name
+
+        # return str(self.gen_class_reference(rangelist)), prox_type, prox_type_name
+        return str(self.gen_class_reference(rangelist, slotname)), prox_type, prox_type_name
 
     @staticmethod
     def gen_class_reference(rangelist: List[str], slot_name: str = None) -> str:
@@ -232,15 +272,24 @@ metamodel_version = "{self.schema.metamodel_version}"
         """
         base = rangelist[0].split('.')[-1]
 
-        class_ref = ''
-
-        if 'URIorCURIE' in rangelist:
+        if slot_name in [
+            'id',
+            'provided_by',
+            'has_qualitative_value',
+            'category',
+            'subclass_of',
+            'has_input',
+            'has_output',
+            'has_constituent',
+            'enabled_by',
+        ]:
+            class_ref = f"Union[{base}, Curie]"
+        elif 'URIorCURIE' in rangelist:
             class_ref = f"Union[{base}, Curie]"
         elif 'Entity' in rangelist:
-            if slot_name == 'id':
-                class_ref = f"Union[{base}, Curie]"
-            else:
-                class_ref = f"Union[{base}, Curie, {rangelist[-1]}]" if len(rangelist) > 1 else base
+            class_ref = f"Union[{base}, Curie, {rangelist[-1]}]" if len(rangelist) > 1 else base
+        elif 'Bool' == rangelist[-1]:
+            class_ref = 'bool'
         else:
             class_ref = f"Union[{base}, {rangelist[-1]}]" if len(rangelist) > 1 else base
 
@@ -300,10 +349,32 @@ metamodel_version = "{self.schema.metamodel_version}"
             ]
         '''
 
+    def gen_predicate_named_tuple(self):
+        predicates = []
+        for slot in self.schema.slots.values():
+            if 'related to' in self.ancestors(slot):
+                predicates.append(slot.name)
+
+        predicates = [pred.replace(' ', '_') for pred in sorted(predicates)]
+        formatted_predicates = '\n'.join([f"    '{pred}'," for pred in predicates])
+
+        return f'''
+
+predicates = [
+{formatted_predicates}
+]
+
+predicate = namedtuple('biolink_predicate', predicates)(
+    *['biolink:' + predicate for predicate in predicates]
+)
+
+'''
+
 
 def main(yamlfile: str):
     pydantic_generator = PydanticGen(yamlfile)
     print(pydantic_generator.serialize())
+    print(pydantic_generator.gen_predicate_named_tuple())
 
 
 if __name__ == "__main__":

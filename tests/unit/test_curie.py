@@ -4,7 +4,7 @@ Testing the biolink model dataclasses + pydandic
 import pytest
 from pydantic import ValidationError
 
-from koza.model.biolink.named_thing import Entity, Publication
+from koza.model.biolink.model import Entity, Publication
 
 
 def test_bad_curie():

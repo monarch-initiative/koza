@@ -8,3 +8,4 @@ class PydanticConfig:
     validate_all = True
     underscore_attrs_are_private = True
     extra = 'forbid'
+    arbitrary_types_allowed = True  # TODO re-evaluate this

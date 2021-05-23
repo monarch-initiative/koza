@@ -6,8 +6,7 @@ tests validators and converters
 import pytest
 from pydantic import ValidationError
 
-from koza.model.biolink.association import *
-from koza.model.biolink.named_thing import *
+from koza.model.biolink.model import *
 
 
 def test_taxon_validator():
