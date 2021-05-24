@@ -3,8 +3,7 @@ name: 'entrez_2_string'
 file_metadata:
   description: 'Mapping file provided by StringDB that contains entrez to protein ID mappings'
 
-# source not in the model, maybe not necessary?
-# source: 'stringdb'
+source: 'stringdb'
 
 delimiter: '\t'
 header_delimiter: '/'
