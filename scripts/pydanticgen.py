@@ -14,9 +14,10 @@ Some key differences:
 - Identifier types are removed, eg Union[str, EntityId] is replaced with
   Union[str, Curie]
 
-TODO -
-
 - Category attribute is inferred via class variables and the type hierarchy
+
+
+TODO -
 
 - Type conversions, these classes will convert the following types:
   Expected          Allowed and coerced into expected
@@ -81,6 +82,40 @@ class PydanticGen(PythonGenerator):
             **kwargs,
         )
 
+    # Overriden methods
+
+    def _sort_classes(self, clist: List[ClassDefinition]) -> List[ClassDefinition]:
+        """
+        sort classes such that if C is a child of P then C appears after P in the list
+
+        Overriden method include mixin classes
+        """
+        clist = list(clist)
+        slist = []  # sorted
+        while len(clist) > 0:
+            for i in range(len(clist)):
+                candidate = clist[i]
+                can_add = False
+                candidates = []
+                if candidate.is_a:
+                    candidates = [candidate.is_a] + candidate.mixins
+                else:
+                    candidates = candidate.mixins
+                if not candidates:
+                    can_add = True
+                else:
+                    if set(candidates) <= set([p.name for p in slist]):
+                        can_add = True
+                if can_add:
+                    slist = slist + [candidate]
+                    del clist[i]
+                    break
+            if not can_add:
+                raise ValueError(
+                    f'could not find suitable element in {clist} that does not ref {slist}'
+                )
+        return slist
+
     def gen_schema(self) -> str:
         split_descripton = '\n#              '.join(
             split_line(be(self.schema.description), split_len=100)
@@ -133,11 +168,26 @@ Quotient = float
     def gen_classdef(self, cls: ClassDefinition) -> str:
         """ Generate python definition for class cls """
 
-        parentref = f'{self.formatted_element_name(cls.is_a, True) if cls.is_a else ""}'
+        parent_class_and_mixins = ""
+
+        if cls.is_a:
+            parents = [cls.is_a]
+            if cls.mixins:
+                parents = parents + cls.mixins
+            parent_class_and_mixins = ', '.join(
+                [self.formatted_element_name(parent, True) for parent in parents]
+            )
+            parent_class_and_mixins = f'({parent_class_and_mixins})'
+        elif cls.mixins:
+            # Seems fine but more curious if this ever happens
+            self.logger.warning(f"class {cls.name} has mixins {cls.mixins} but no parent")
+            mixins = ', '.join([self.formatted_element_name(mixin, True) for mixin in cls.mixins])
+            parent_class_and_mixins = f'({mixins})'
+
         slotdefs = self.gen_class_variables(cls)
 
         entity_post_init = (
-            f'\n    {self._get_entity_post_init()}'
+            f'\n\t{self._get_entity_post_init()}'
             if self.class_or_type_name(cls.name) == 'Entity'
             else ''
         )
@@ -151,17 +201,17 @@ Quotient = float
         return (
             ('\n@dataclass(config=PydanticConfig)' if slotdefs else '')
             + f'\nclass {self.class_or_type_name(cls.name)}'
-            + (f'({parentref})' if parentref else '')
+            + parent_class_and_mixins
             + f':{wrapped_description}\n'
             + f'{self.gen_inherited_slots(cls)}'
-            + f'{self.gen_class_meta(cls)}'
-            + (f'\n    {slotdefs}' if slotdefs else '')
+            + f'{self.gen_pydantic_classvars(cls)}'
+            + (f'\n\t{slotdefs}' if slotdefs else '')
             + f'{entity_post_init}'
             + (
-                f'\n    pass'
+                f'\n\tpass'
                 if (
                     not self.gen_inherited_slots(cls)
-                    and not self.gen_class_meta(cls)
+                    and not self.gen_pydantic_classvars(cls)
                     and not slotdefs
                     and not entity_post_init
                 )
@@ -283,6 +333,11 @@ Quotient = float
             'has_constituent',
             'enabled_by',
         ]:
+            # id is here to override {ClassName}Id
+            # category is to reduce complexity
+            #
+            # The rest are due to import order errors in self._sort_classes
+            # From changing {ClassName}Id to {ClassName}
             class_ref = f"Union[{base}, Curie]"
         elif 'URIorCURIE' in rangelist:
             class_ref = f"Union[{base}, Curie]"
@@ -321,7 +376,7 @@ Quotient = float
         if identifier_slot is None:
             # return ['dict', self.class_or_type_name(cls.name)]
             # Not certain why this is dict and if it's a model smell
-            # We want everything to be str, Curie, or another Dataclass in the model
+            # We want everything to be str, Curie, List, or another Dataclass in the model
             return ['str', self.class_or_type_name(cls.name)]
 
         # We're dealing with a reference
@@ -335,21 +390,63 @@ Quotient = float
                 return self.class_identifier_path(cls.is_a, False) + [pathname]
         return self.slot_range_path(identifier_slot) + [pathname]
 
+    # New Methods
+
+    def gen_pydantic_classvars(self, cls: ClassDefinition) -> str:
+        """
+        Generate classvars specific to the pydantic dataclasses
+        """
+
+        vars = []
+
+        if not (cls.mixin or cls.abstract):
+            vars.append(f'_category: ClassVar[str] = "{camelcase(cls.name)}"')
+
+        required_slots = self._slot_iter(cls, lambda slot: slot.required)
+
+        required_slots_fmt = ',\n'.join(
+            [f'\t\t"{self.slot_name(slot.name)}"' for slot in required_slots]
+        )
+
+        if required_slots_fmt:
+            vars.append(f'_required_attributes: ClassVar[List[str]] = [\n{required_slots_fmt}\n\t]')
+
+        if vars:
+            ret_val = "\n\t" + "\n\t".join(vars) + "\n"
+        else:
+            ret_val = ""
+
+        return ret_val
+
     @staticmethod
     def _get_entity_post_init() -> str:
+        """
+        Post init for entity for inferring categories from the
+        classes in its method resolution order
+
+        requires a special classvar _category which is excluded
+        from mixins
+        """
         return '''
     def __post_init__(self):
         # Initialize default categories if not set
         # by traversing the MRO chain
         if not self.category:
-            self.category = [
-                super_class._category
-                for super_class in inspect.getmro(type(self))
-                if hasattr(super_class, '_category')
-            ]
+            self.category = list(
+                {
+                    super_class._category
+                    for super_class in inspect.getmro(type(self))
+                    if hasattr(super_class, '_category')
+                }
+            )
         '''
 
     def gen_predicate_named_tuple(self):
+        """
+        Creates a named tuple of all biolink predicates
+        which are slots that descend from 'related to'
+        :return:
+        """
         predicates = []
         for slot in self.schema.slots.values():
             if 'related to' in self.ancestors(slot):
