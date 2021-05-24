@@ -90,6 +90,6 @@ class SourceFile:
             while not self._filter.include_row(row):
                 # TODO log filtered out lines
                 row = next(self._reader)
-            return row
         else:
-            row = next(self._reader)
+          row = next(self._reader)
+        return row
