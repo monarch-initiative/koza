@@ -170,6 +170,9 @@ class SourceFileConfig:
         if self.delimiter in ['tab', '\\t']:
             object.__setattr__(self, 'delimiter', '\t')
 
+        if self.filters is None:
+            self.filters = []
+
         filtered_columns = [column_filter.column for column_filter in self.filters]
 
         all_columns = []
@@ -247,5 +250,6 @@ class PrimaryFileConfig(SourceFileConfig):
 
 @dataclass(config=PydanticConfig)
 class MapFileConfig(SourceFileConfig):
+    source: str = None
     key: str = None
     values: List[str] = None

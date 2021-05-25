@@ -5,18 +5,18 @@ file_metadata:
 
 source: 'stringdb'
 
-delimeter: '\t'
-header_delimeter: ' / '
+delimiter: '\t'
+header_delimiter: '/'
 
 # Assumes that no identifiers are overlapping
 # otherwise these should go into separate configs
 files:
-  - 'human.entrez_2_string.2018.tsv.gz'
-  - 'mouse.entrez_2_string.2018.tsv.gz'
-  - 'zebrafish.entrez_2_string.2018.tsv.gz'
-  - 'fly.entrez_2_string.2018.tsv.gz'
-  - 'celegans.entrez_2_string.2018.tsv.gz'
-  - 'yeast.entrez_2_string.2018.tsv.gz'
+  - './examples/data/human.entrez_2_string.2018.tsv.gz'
+  - './examples/data/mouse.entrez_2_string.2018.tsv.gz'
+  - './examples/data/zebrafish.entrez_2_string.2018.tsv.gz'
+  - './examples/data/fly.entrez_2_string.2018.tsv.gz'
+  - './examples/data/celegans.entrez_2_string.2018.tsv.gz'
+  - './examples/data/yeast.entrez_2_string.2018.tsv.gz'
 
 columns:
   - 'NCBI taxid'
