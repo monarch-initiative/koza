@@ -45,26 +45,32 @@ class SourceFile:
         for file in config.files:
             resource_io = open_resource(file, config.compression)
             if self.config.format == 'csv':
-                self._readers.append(CSVReader(
-                    resource_io,
-                    name=config.name,
-                    field_type_map=config.field_type_map,
-                    delimiter=config.delimiter,
-                    header_delimiter=config.header_delimiter,
-                    skip_lines=config.skip_lines,
-                ))
+                self._readers.append(
+                    CSVReader(
+                        resource_io,
+                        name=config.name,
+                        field_type_map=config.field_type_map,
+                        delimiter=config.delimiter,
+                        header_delimiter=config.header_delimiter,
+                        skip_lines=config.skip_lines,
+                    )
+                )
             elif self.config.format == 'jsonl':
-                self._readers.append(JSONLReader(
-                    resource_io,
-                    name=config.name,
-                    required_properties=config.required_properties,
-                ))
+                self._readers.append(
+                    JSONLReader(
+                        resource_io,
+                        name=config.name,
+                        required_properties=config.required_properties,
+                    )
+                )
             elif self.config.format == 'json':
-                self._readers.append(JSONReader(
-                    resource_io,
-                    name=config.name,
-                    required_properties=config.required_properties,
-                ))
+                self._readers.append(
+                    JSONReader(
+                        resource_io,
+                        name=config.name,
+                        required_properties=config.required_properties,
+                    )
+                )
             else:
                 raise ValueError(f"File type {format} not supported")
 
@@ -91,5 +97,5 @@ class SourceFile:
                 # TODO log filtered out lines
                 row = next(self._reader)
         else:
-          row = next(self._reader)
+            row = next(self._reader)
         return row
