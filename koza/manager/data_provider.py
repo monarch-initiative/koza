@@ -15,6 +15,8 @@ def inject_map(map_name: str) -> Tuple[Dict, ...]:
     :param ingest_name:
     :return:
     """
+    koza = get_koza_app()
+    return koza.map_cache[map_name]
 
 
 def inject_translation_table() -> TranslationTable:

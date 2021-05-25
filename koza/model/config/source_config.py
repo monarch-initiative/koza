@@ -250,6 +250,7 @@ class PrimaryFileConfig(SourceFileConfig):
 
 @dataclass(config=PydanticConfig)
 class MapFileConfig(SourceFileConfig):
+    source: str = None
     key: str = None
     values: List[str] = None
     curie_prefix: str = None
