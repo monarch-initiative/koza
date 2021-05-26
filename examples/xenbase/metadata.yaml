@@ -7,6 +7,7 @@ dataset_description:
   rights: 'https://www.xenbase.org/other/static-xenbase/citingMOD.jsp'
 
 source_files:
+  - 'gene-information.yaml'
   - 'gene-to-phenotype.yaml'
 #  - 'gene-literature.yaml'
 

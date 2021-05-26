@@ -101,11 +101,16 @@ class CSVReader:
                     f"configure the 'columns' property in the source yaml"
                 )
 
-            fieldnames = next(
-                reader(self.io_str, **{'delimiter': self.header_delimiter, 'dialect': self.dialect})
-            )
-            fieldnames[0] = fieldnames[0].lstrip('#')
-            fieldnames = [f.strip() for f in fieldnames]
+            if self.has_header:
+                fieldnames = next(
+                    reader(
+                        self.io_str, **{'delimiter': self.header_delimiter, 'dialect': self.dialect}
+                    )
+                )
+                fieldnames[0] = fieldnames[0].lstrip('#')
+                fieldnames = [f.strip() for f in fieldnames]
+            else:
+                fieldnames = list(self.field_type_map.keys())
 
             self.fieldnames = fieldnames
 
@@ -174,6 +179,12 @@ class CSVReader:
 
         # if we've made it here we can convert a row to a dict
         field_map = dict(zip(self.fieldnames, row))
+
+        # to avoid KeyErrors / error handling in source scripts, add missing fields to the map
+        for fieldname in self.fieldnames:
+            if fieldname not in field_map.keys():
+                field_map[fieldname] = None
+
         typed_field_map = {}
 
         for field, field_value in field_map.items():
@@ -181,6 +192,9 @@ class CSVReader:
             # Take the value and coerce it using self.field_type_map (field: FieldType)
             # FIELD_TYPE is map of the field_type enum to the python
             # built-in type or custom extras defined in koza
-            typed_field_map[field] = FIELDTYPE_CLASS[self.field_type_map[field]](field_value)
+            try:
+                typed_field_map[field] = FIELDTYPE_CLASS[self.field_type_map[field]](field_value)
+            except KeyError as key_error:
+                LOG.warning(key_error)
 
         return typed_field_map

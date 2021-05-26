@@ -1,0 +1,23 @@
+name: 'gene-information'
+
+delimiter: '\t'
+
+has_header: 'False'
+
+files:
+  - './examples/data/GenePageGeneralInfo_ManuallyCurated.txt'
+
+columns:
+  - 'gene_page_id'
+  - 'gene_symbol'
+  - 'gene_name'
+  - 'gene_function'
+  - 'gene_synonyms'
+  - 'jgi_id'
+
+# curie_prefix: 'Xenbase:'
+# add_curie_prefix_to_columns:
+#    - 'gene_page_id'
+
+depends_on:
+  - './examples/maps/genepage-2-gene.yaml'

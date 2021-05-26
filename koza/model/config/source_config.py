@@ -150,6 +150,7 @@ class SourceFileConfig:
     required_properties: List[str] = None
     delimiter: str = None
     header_delimiter: str = None
+    has_header: bool = True
     skip_lines: int = 0
     skip_blank_lines: bool = True
     compression: CompressionType = None

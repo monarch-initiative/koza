@@ -10,7 +10,7 @@ source_name = 'gene-literature'
 
 row = inject_row(source_name)
 translation_table = inject_translation_table()
-genepage2gene = inject_map('xb-genepage-to-gene')
+genepage2gene = inject_map('genepage-to-gene')
 
 entities = []
 

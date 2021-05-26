@@ -11,4 +11,4 @@ columns:
   - 'gene_pages'
 
 depends_on:
-  - './examples/maps/xb-genepage-to-gene.yaml'
+  - './examples/maps/genepage-2-gene.yaml'
