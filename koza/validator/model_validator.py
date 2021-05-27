@@ -17,22 +17,11 @@ TAXON_PREFIX = ['NCBITaxon']
 # PUBLICATION_PREFIX = []
 
 
-def _check_curie_prefix(curie: str, prefix_filter: List[str]) -> str:
+def check_curie_prefix(curie: str, prefix_filter: List[str]) -> str:
     prefix = curie.split(':')[0]
     if prefix not in prefix_filter:
         raise ValueError(f"{curie} is not prefixed with {prefix}")
     return curie
-
-
-def curie_must_have_prefix(
-    field: Union[Curie, List[Curie]], config: List[str]
-) -> Union[Curie, List[Curie]]:
-    if isinstance(field, list):
-        for curie in field:
-            _check_curie_prefix(curie, config)
-    else:
-        _check_curie_prefix(field, config)
-    return field
 
 
 def _convert_object_to_scalar(field: Any) -> str:
@@ -76,8 +65,8 @@ def convert_scalar_to_list(field: str) -> classmethod:
     return validator
 
 
-def _convert_str_to_curie(field: Union[str, Curie]) -> Curie:
-    if field and not isinstance(field, Curie):
+def _convert_str_to_curie(field: Any) -> Any:
+    if isinstance(field, str) and not isinstance(field, Curie):
         field = Curie.validate(field)
         field = Curie(field)
 

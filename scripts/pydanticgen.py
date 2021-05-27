@@ -15,7 +15,11 @@ Some key differences:
   Union[str, Curie]
 
 - Category attribute is inferred via class variables and the type hierarchy
-
+    - Note that for id and type, and sometimes other attributes these
+      are overridden anyway in the child class.  I think this happens when
+      a slot if given a new description in the child class, linkml gives
+      the a slot a unique name (child_class_id, child_class_type) to
+      attach the updated description, need to check this with Harold
 
 TODO -
 
@@ -23,7 +27,7 @@ TODO -
   Expected          Allowed and coerced into expected
   Curie             str
   List[Curie]       str | List[str] | Curie
-  List[str]         str
+  List[Union[scalar, object]]         scalar | object
 
 - Curies prefixes supplied by the biolink model are validated when initializing
   and setting attributes
@@ -93,10 +97,10 @@ class PydanticGen(PythonGenerator):
         clist = list(clist)
         slist = []  # sorted
         while len(clist) > 0:
+            can_add = False
             for i in range(len(clist)):
                 candidate = clist[i]
                 can_add = False
-                candidates = []
                 if candidate.is_a:
                     candidates = [candidate.is_a] + candidate.mixins
                 else:
@@ -141,16 +145,24 @@ import inspect
 from typing import Optional, List, Union, Dict, ClassVar, Any
 
 from pydantic.dataclasses import dataclass
+from pydantic import validator, constr
 
-from koza.validator.model_validator import convert_object_to_scalar, convert_objects_to_scalars
 from koza.model.config.pydantic_config import PydanticConfig
 from koza.model.curie import Curie
+from koza.validator.model_validator import (
+    convert_object_to_scalar,
+    convert_objects_to_scalars,
+    convert_str_to_curie,
+    _convert_str_to_curie,
+    check_curie_prefix,
+)
 
 metamodel_version = "{self.schema.metamodel_version}"
 
 # Type Aliases
 Unit = Union[int, float]
 LabelType = str
+IriType = constr(regex=r'^http')
 NarrativeText = str
 XSDDate = datetime.date
 TimeType = datetime.time
@@ -198,6 +210,8 @@ Quotient = float
             else ''
         )
 
+        pydantic_validators = self.gen_pydantic_validators(cls)
+
         return (
             ('\n@dataclass(config=PydanticConfig)' if slotdefs else '')
             + f'\nclass {self.class_or_type_name(cls.name)}'
@@ -205,7 +219,8 @@ Quotient = float
             + f':{wrapped_description}\n'
             + f'{self.gen_inherited_slots(cls)}'
             + f'{self.gen_pydantic_classvars(cls)}'
-            + (f'\n\t{slotdefs}' if slotdefs else '')
+            + (f'\t{slotdefs}\n' if slotdefs else '')
+            + f'{pydantic_validators}'
             + f'{entity_post_init}'
             + (
                 f'\n\tpass'
@@ -214,10 +229,37 @@ Quotient = float
                     and not self.gen_pydantic_classvars(cls)
                     and not slotdefs
                     and not entity_post_init
+                    and not pydantic_validators
                 )
                 else ''
             )
+            + '\n'
         )
+
+    def gen_class_variables(self, cls: ClassDefinition) -> str:
+        """
+        Generate the variable declarations for a dataclass.
+
+        Overriden to only generate variables for domain slots
+
+        :param cls: class containing variables to be rendered in inheritence hierarchy
+        :return: variable declarations for target class and its ancestors
+        """
+        initializers = []
+
+        domain_slots = self.domain_slots(cls)
+
+        # Required or key slots with default values
+        slot_variables = self._slot_iter(cls, lambda slot: slot.required and slot in domain_slots)
+        initializers += [self.gen_class_variable(cls, slot, False) for slot in slot_variables]
+
+        # Followed by everything else
+        slot_variables = self._slot_iter(
+            cls, lambda slot: not slot.required and slot in domain_slots
+        )
+        initializers += [self.gen_class_variable(cls, slot, False) for slot in slot_variables]
+
+        return '\n\t'.join(initializers)
 
     def range_cardinality(
         self, slot: SlotDefinition, cls: Optional[ClassDefinition], positional_allowed: bool
@@ -322,24 +364,24 @@ Quotient = float
         """
         base = rangelist[0].split('.')[-1]
 
-        if slot_name in [
-            'id',
-            'provided_by',
-            'has_qualitative_value',
-            'category',
-            'subclass_of',
-            'has_input',
-            'has_output',
-            'has_constituent',
-            'enabled_by',
-        ]:
+        if (
+            slot_name
+            in [
+                'id',
+                'provided_by',
+                'has_qualitative_value',
+                'category',
+                'subclass_of',
+                'has_input',
+                'has_output',
+                'has_constituent',
+                'enabled_by',
+            ]
+            or ('URIorCURIE' in rangelist and rangelist[-1] != 'IriType')
+        ):
             # id is here to override {ClassName}Id
-            # category is to reduce complexity
-            #
             # The rest are due to import order errors in self._sort_classes
             # From changing {ClassName}Id to {ClassName}
-            class_ref = f"Union[{base}, Curie]"
-        elif 'URIorCURIE' in rangelist:
             class_ref = f"Union[{base}, Curie]"
         elif 'Entity' in rangelist:
             class_ref = f"Union[{base}, Curie, {rangelist[-1]}]" if len(rangelist) > 1 else base
@@ -379,16 +421,29 @@ Quotient = float
             # We want everything to be str, Curie, List, or another Dataclass in the model
             return ['str', self.class_or_type_name(cls.name)]
 
-        # We're dealing with a reference
-        # pathname = camelcase(cls.name + ' ' + self.aliased_slot_name(identifier_slot))
-        # Instead of EntityId, which means nothing for the pydantic gen
+        # Override class name + self.aliased_slot_name
+        # For example, instead of EntityId, which means nothing for the pydantic gen
         # use the dataclass itself Entity
+        # pathname = camelcase(cls.name + ' ' + self.aliased_slot_name(identifier_slot))
         pathname = camelcase(cls.name)
         if cls.is_a:
             parent_identifier_slot = self.class_identifier(cls.is_a)
             if parent_identifier_slot:
                 return self.class_identifier_path(cls.is_a, False) + [pathname]
         return self.slot_range_path(identifier_slot) + [pathname]
+
+    def domain_slots(self, cls: ClassDefinition) -> List[SlotDefinition]:
+        """
+        Return all slots in the class definition that are owned by the class
+
+        Overridden to remove domain_of mixin(s) slots so we can use the mixin
+        slot inheritance instead
+        """
+        return [
+            slot
+            for slot in [self.schema.slots[sn] for sn in cls.slots]
+            if cls.name in slot.domain_of
+        ]
 
     # New Methods
 
@@ -441,7 +496,7 @@ Quotient = float
             )
         '''
 
-    def gen_predicate_named_tuple(self):
+    def gen_predicate_named_tuple(self) -> str:
         """
         Creates a named tuple of all biolink predicates
         which are slots that descend from 'related to'
@@ -465,6 +520,94 @@ predicate = namedtuple('biolink_predicate', predicates)(
     *['biolink:' + predicate for predicate in predicates]
 )
 
+'''
+
+    def gen_pydantic_validators(self, cls) -> str:
+        """
+
+        :param cls:
+        :return:
+        """
+        validators = []
+
+        if cls.id_prefixes and 'id' in [slot.name for slot in self.all_slots(cls)]:
+            validators.append(self._gen_id_namespace_validator(cls.id_prefixes))
+        elif 'id' in [slot.name for slot in self.domain_slots(cls)]:
+            validators.append(f'_convert_id_to_curie = convert_str_to_curie("id")')
+
+        for slot in self.domain_slots(cls):
+            slotname = self.slot_name(slot.name)
+            if slotname == 'id':
+                continue  # already handled above
+            elif slot in self.domain_slots(cls):
+                if not slot.multivalued:
+                    rangelist = (
+                        self.class_identifier_path(cls, False)
+                        if slot.key or slot.identifier
+                        else self.slot_range_path(slot)
+                    )
+
+                    if (
+                        slotname
+                        in [
+                            'provided_by',
+                            'has_qualitative_value',
+                            'category',
+                            'subclass_of',
+                            'has_input',
+                            'has_output',
+                            'has_constituent',
+                            'enabled_by',
+                        ]
+                        or ('URIorCURIE' in rangelist and rangelist[-1] != 'IriType')
+                    ):
+                        # id is here to override {ClassName}Id
+                        # The rest are due to import order errors in self._sort_classes
+                        # From changing {ClassName}Id to {ClassName}
+                        validators.append(
+                            f'_convert_{slotname}_to_curie = convert_str_to_curie("{slotname}")'
+                        )
+                    elif 'Entity' in rangelist:
+                        if len(rangelist) > 1:
+                            entity_cls = self.class_or_type_for(rangelist[-1])
+                            if entity_cls and entity_cls.id_prefixes:
+                                validators.append(
+                                    self._gen_id_namespace_validator(
+                                        entity_cls.id_prefixes, slotname
+                                    )
+                                )
+                            else:
+                                validators.append(
+                                    f'_convert_{slotname}_to_curie = convert_str_to_curie("{slotname}")'
+                                )
+
+        if validators:
+            ret_val = "\n\t# Validators\n\t" + "\n\t".join(validators) + "\n"
+        else:
+            ret_val = ""
+
+        return ret_val
+
+    @staticmethod
+    def _gen_id_namespace_validator(namespaces: List[str], slotname=None) -> str:
+        """
+        :param namespaces:
+        :return:
+        """
+        namespaces_fmt = ',\n'.join([f'\t\t\t\t"{ns}"' for ns in namespaces])
+        if not slotname:
+            slotname = 'id'
+
+        return f'''
+    @validator('{slotname}')
+    def check_{slotname}_prefix(cls, id):
+        id = _convert_str_to_curie(id)
+        return check_curie_prefix(
+            id,
+            [
+{namespaces_fmt}
+            ],
+        )
 '''
 
 
