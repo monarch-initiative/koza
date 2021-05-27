@@ -64,6 +64,7 @@ import typer
 from linkml.generators import PYTHON_GEN_VERSION
 from linkml.generators.pythongen import PythonGenerator
 from linkml.utils.formatutils import be, camelcase, split_line, wrapped_annotation
+from linkml.utils.mergeutils import alias_root
 from linkml_model.meta import ClassDefinition, ClassDefinitionName, SchemaDefinition, SlotDefinition
 
 
@@ -148,7 +149,6 @@ from pydantic.dataclasses import dataclass
 from pydantic import validator, constr
 
 from koza.model.config.pydantic_config import PydanticConfig
-from koza.model.curie import Curie
 from koza.validator.model_validator import (
     convert_object_to_scalar,
     convert_objects_to_scalars,
@@ -163,6 +163,7 @@ metamodel_version = "{self.schema.metamodel_version}"
 Unit = Union[int, float]
 LabelType = str
 IriType = constr(regex=r'^http')
+Curie = constr(regex=r'^[a-zA-Z_]?[a-zA-Z_0-9-]*:[A-Za-z0-9_][A-Za-z0-9_.-]*[A-Za-z0-9_]*$')
 NarrativeText = str
 XSDDate = datetime.date
 TimeType = datetime.time
@@ -359,6 +360,8 @@ Quotient = float
         We have a union of str, Curie, and the class, eg
         Entity -> str, Curie, Entity
 
+        TODO clean this up
+
         :param rangelist: List of types from distal to proximal
         :return:
         """
@@ -382,13 +385,19 @@ Quotient = float
             # id is here to override {ClassName}Id
             # The rest are due to import order errors in self._sort_classes
             # From changing {ClassName}Id to {ClassName}
-            class_ref = f"Union[{base}, Curie]"
+
+            # Check if base is str? for now just assume it is
+            class_ref = "Curie"
+
         elif 'Entity' in rangelist:
-            class_ref = f"Union[{base}, Curie, {rangelist[-1]}]" if len(rangelist) > 1 else base
+            class_ref = f"Union[Curie, {rangelist[-1]}]" if len(rangelist) > 1 else base
         elif 'Bool' == rangelist[-1]:
             class_ref = 'bool'
         else:
-            class_ref = f"Union[{base}, {rangelist[-1]}]" if len(rangelist) > 1 else base
+            if len(rangelist) > 1 and rangelist[-1] == 'IriType':
+                class_ref = 'IriType'
+            else:
+                class_ref = f"Union[{base}, {rangelist[-1]}]" if len(rangelist) > 1 else base
 
         return class_ref
 
@@ -530,56 +539,63 @@ predicate = namedtuple('biolink_predicate', predicates)(
         """
         validators = []
 
-        if cls.id_prefixes and 'id' in [slot.name for slot in self.all_slots(cls)]:
+        if cls.id_prefixes and 'id' in [
+            alias_root(self.schema, slot.name) for slot in self.all_slots(cls)
+        ]:
             validators.append(self._gen_id_namespace_validator(cls.id_prefixes))
         elif 'id' in [slot.name for slot in self.domain_slots(cls)]:
-            validators.append(f'_convert_id_to_curie = convert_str_to_curie("id")')
+            # validators.append(f'_convert_id_to_curie = convert_str_to_curie("id")')
+            pass
 
         for slot in self.domain_slots(cls):
             slotname = self.slot_name(slot.name)
             if slotname == 'id':
                 continue  # already handled above
             elif slot in self.domain_slots(cls):
-                if not slot.multivalued:
-                    rangelist = (
-                        self.class_identifier_path(cls, False)
-                        if slot.key or slot.identifier
-                        else self.slot_range_path(slot)
-                    )
+                rangelist = (
+                    self.class_identifier_path(cls, False)
+                    if slot.key or slot.identifier
+                    else self.slot_range_path(slot)
+                )
 
-                    if (
-                        slotname
-                        in [
-                            'provided_by',
-                            'has_qualitative_value',
-                            'category',
-                            'subclass_of',
-                            'has_input',
-                            'has_output',
-                            'has_constituent',
-                            'enabled_by',
-                        ]
-                        or ('URIorCURIE' in rangelist and rangelist[-1] != 'IriType')
-                    ):
-                        # id is here to override {ClassName}Id
-                        # The rest are due to import order errors in self._sort_classes
-                        # From changing {ClassName}Id to {ClassName}
-                        validators.append(
-                            f'_convert_{slotname}_to_curie = convert_str_to_curie("{slotname}")'
-                        )
-                    elif 'Entity' in rangelist:
-                        if len(rangelist) > 1:
-                            entity_cls = self.class_or_type_for(rangelist[-1])
-                            if entity_cls and entity_cls.id_prefixes:
+                if (
+                    slotname
+                    in [
+                        'provided_by',
+                        'has_qualitative_value',
+                        'category',
+                        'subclass_of',
+                        'has_input',
+                        'has_output',
+                        'has_constituent',
+                        'enabled_by',
+                    ]
+                    or ('URIorCURIE' in rangelist and rangelist[-1] != 'IriType')
+                ):
+                    if not slot.multivalued:
+                        # validators.append(
+                        #    f'_convert_{slotname}_to_curie = convert_str_to_curie("{slotname}")'
+                        # )
+                        pass
+                elif 'Entity' in rangelist:
+                    if len(rangelist) > 1:
+                        entity_cls = self.class_or_type_for(rangelist[-1])
+                        if entity_cls and entity_cls.id_prefixes:
+
+                            if not slot.multivalued:
                                 validators.append(
                                     self._gen_id_namespace_validator(
                                         entity_cls.id_prefixes, slotname
                                     )
                                 )
-                            else:
-                                validators.append(
-                                    f'_convert_{slotname}_to_curie = convert_str_to_curie("{slotname}")'
-                                )
+
+                        else:
+
+                            if slot.multivalued:
+                                # validators.append(
+                                #    f'_convert_{slotname}_to_curie = convert_str_to_curie("{slotname}")'
+                                # )
+                                pass
 
         if validators:
             ret_val = "\n\t# Validators\n\t" + "\n\t".join(validators) + "\n"
@@ -601,7 +617,6 @@ predicate = namedtuple('biolink_predicate', predicates)(
         return f'''
     @validator('{slotname}')
     def check_{slotname}_prefix(cls, id):
-        id = _convert_str_to_curie(id)
         return check_curie_prefix(
             id,
             [

@@ -4,13 +4,14 @@ See https://pydantic-docs.helpmanual.io/usage/validators/#reuse-validators
 
 These also function as converters
 """
+import logging
 from typing import Any, List, Union
 
 from pydantic import validator as pydantic_validator
 
 from koza.model.curie import Curie
 
-TAXON_PREFIX = ['NCBITaxon']
+LOG = logging.getLogger(__name__)
 
 # the latest definition of publication is too broad
 # to constrain to a prefix
@@ -20,7 +21,7 @@ TAXON_PREFIX = ['NCBITaxon']
 def check_curie_prefix(curie: str, prefix_filter: List[str]) -> str:
     prefix = curie.split(':')[0]
     if prefix not in prefix_filter:
-        raise ValueError(f"{curie} is not prefixed with {prefix}")
+        LOG.warning(f"{curie} is not prefixed with {prefix_filter}")
     return curie
 
 
