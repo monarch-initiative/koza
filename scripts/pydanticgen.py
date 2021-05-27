@@ -12,7 +12,7 @@ Some key differences:
   all identifiers as curies
 
 - Identifier types are removed, eg Union[str, EntityId] is replaced with
-  Union[str, Curie]
+  Curie
 
 - Category attribute is inferred via class variables and the type hierarchy
     - Note that for id and type, and sometimes other attributes these
@@ -21,17 +21,7 @@ Some key differences:
       the a slot a unique name (child_class_id, child_class_type) to
       attach the updated description, need to check this with Harold
 
-TODO -
-
-- Type conversions, these classes will convert the following types:
-  Expected          Allowed and coerced into expected
-  Curie             str
-  List[Curie]       str | List[str] | Curie
-  List[Union[scalar, object]]         scalar | object
-
-- Curies prefixes supplied by the biolink model are validated when initializing
-  and setting attributes
-
+- Type conversions, convers scalars to lists for Union[someScalar, List[someScalar]]
 
 What parts of the schema are left out (and expected downstream)
 
@@ -148,15 +138,6 @@ from typing import Optional, List, Union, Dict, ClassVar, Any
 from pydantic.dataclasses import dataclass
 from pydantic import validator, constr
 
-from koza.model.config.pydantic_config import PydanticConfig
-from koza.validator.model_validator import (
-    convert_object_to_scalar,
-    convert_objects_to_scalars,
-    convert_str_to_curie,
-    _convert_str_to_curie,
-    check_curie_prefix,
-)
-
 metamodel_version = "{self.schema.metamodel_version}"
 
 # Type Aliases
@@ -250,13 +231,27 @@ Quotient = float
 
         domain_slots = self.domain_slots(cls)
 
+        if cls.name == 'entity':
+            slot_variables = self._slot_iter(
+                cls, lambda slot: slot.name in ['id', 'type', 'category']
+            )
+            initializers += [self.gen_class_variable(cls, slot, False) for slot in slot_variables]
+
         # Required or key slots with default values
-        slot_variables = self._slot_iter(cls, lambda slot: slot.required and slot in domain_slots)
+        slot_variables = self._slot_iter(
+            cls,
+            lambda slot: slot.required
+            and slot in domain_slots
+            and alias_root(self.schema, slot.name) not in ['id', 'type', 'category'],
+        )
         initializers += [self.gen_class_variable(cls, slot, False) for slot in slot_variables]
 
         # Followed by everything else
         slot_variables = self._slot_iter(
-            cls, lambda slot: not slot.required and slot in domain_slots
+            cls,
+            lambda slot: not slot.required
+            and slot in domain_slots
+            and alias_root(self.schema, slot.name) not in ['id', 'type', 'category'],
         )
         initializers += [self.gen_class_variable(cls, slot, False) for slot in slot_variables]
 
@@ -539,63 +534,15 @@ predicate = namedtuple('biolink_predicate', predicates)(
         """
         validators = []
 
-        if cls.id_prefixes and 'id' in [
-            alias_root(self.schema, slot.name) for slot in self.all_slots(cls)
-        ]:
+        if cls.name == 'entity':
             validators.append(self._gen_id_namespace_validator(cls.id_prefixes))
-        elif 'id' in [slot.name for slot in self.domain_slots(cls)]:
-            # validators.append(f'_convert_id_to_curie = convert_str_to_curie("id")')
-            pass
 
         for slot in self.domain_slots(cls):
             slotname = self.slot_name(slot.name)
-            if slotname == 'id':
-                continue  # already handled above
-            elif slot in self.domain_slots(cls):
-                rangelist = (
-                    self.class_identifier_path(cls, False)
-                    if slot.key or slot.identifier
-                    else self.slot_range_path(slot)
+            if slot.multivalued:
+                validators.append(
+                    f'_convert_{slotname}_to_list = convert_scalar_to_list("{slotname}")'
                 )
-
-                if (
-                    slotname
-                    in [
-                        'provided_by',
-                        'has_qualitative_value',
-                        'category',
-                        'subclass_of',
-                        'has_input',
-                        'has_output',
-                        'has_constituent',
-                        'enabled_by',
-                    ]
-                    or ('URIorCURIE' in rangelist and rangelist[-1] != 'IriType')
-                ):
-                    if not slot.multivalued:
-                        # validators.append(
-                        #    f'_convert_{slotname}_to_curie = convert_str_to_curie("{slotname}")'
-                        # )
-                        pass
-                elif 'Entity' in rangelist:
-                    if len(rangelist) > 1:
-                        entity_cls = self.class_or_type_for(rangelist[-1])
-                        if entity_cls and entity_cls.id_prefixes:
-
-                            if not slot.multivalued:
-                                validators.append(
-                                    self._gen_id_namespace_validator(
-                                        entity_cls.id_prefixes, slotname
-                                    )
-                                )
-
-                        else:
-
-                            if slot.multivalued:
-                                # validators.append(
-                                #    f'_convert_{slotname}_to_curie = convert_str_to_curie("{slotname}")'
-                                # )
-                                pass
 
         if validators:
             ret_val = "\n\t# Validators\n\t" + "\n\t".join(validators) + "\n"
@@ -627,6 +574,10 @@ predicate = namedtuple('biolink_predicate', predicates)(
 
 
 def main(yamlfile: str):
+    pydantic_config = Path(__file__).parent / 'pydantic_config.py'
+    with open(pydantic_config, 'r') as py_conf:
+        for line in py_conf:
+            print(line.rstrip())
     pydantic_generator = PydanticGen(yamlfile)
     print(pydantic_generator.serialize())
     print(pydantic_generator.gen_predicate_named_tuple())

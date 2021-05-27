@@ -1,28 +1,65 @@
+"""
+Module for storing reused pydantic validators
+See https://pydantic-docs.helpmanual.io/usage/validators/#reuse-validators
+
+These also function as converters
+"""
+import logging
+from typing import Any, List
+
+from pydantic import validator as pydantic_validator
+
+LOG = logging.getLogger(__name__)
+
+
+class PydanticConfig:
+    """
+    Pydantic config
+    https://pydantic-docs.helpmanual.io/usage/model_config/
+    """
+
+    validate_assignment = True
+    validate_all = True
+    underscore_attrs_are_private = True
+    extra = 'forbid'
+    arbitrary_types_allowed = True  # TODO re-evaluate this
+
+
+def check_curie_prefix(curie: str, prefix_filter: List[str]) -> str:
+    prefix = curie.split(':')[0]
+    if prefix not in prefix_filter:
+        LOG.warning(f"{curie} is not prefixed with {prefix_filter}")
+    return curie
+
+
+def _convert_scalar_to_list(field: Any) -> List[str]:
+    if isinstance(field, list):
+        field = [field]
+    return field
+
+
+def convert_scalar_to_list(field: str) -> classmethod:
+    decorator = pydantic_validator(field, allow_reuse=True)
+    validator = decorator(_convert_scalar_to_list)
+    return validator
+
+
 # Auto generated from biolink-model.yaml by pydanticgen.py version: 0.9.0
-# Generation date: 2021-05-27 11:00
+# Generation date: 2021-05-27 18:29
 # Schema: Biolink-Model
 #
 # id: https://w3id.org/biolink/biolink-model
 # description: Entity and association taxonomy and datamodel for life-sciences data
 # license: https://creativecommons.org/publicdomain/zero/1.0/
 
-from collections import namedtuple
-from dataclasses import field
 import datetime
 import inspect
-from typing import Optional, List, Union, Dict, ClassVar, Any
+from collections import namedtuple
+from dataclasses import field
+from typing import Any, ClassVar, List, Optional, Union
 
+from pydantic import constr, validator
 from pydantic.dataclasses import dataclass
-from pydantic import validator, constr
-
-from koza.model.config.pydantic_config import PydanticConfig
-from koza.validator.model_validator import (
-    convert_object_to_scalar,
-    convert_objects_to_scalars,
-    convert_str_to_curie,
-    _convert_str_to_curie,
-    check_curie_prefix,
-)
 
 metamodel_version = "1.7.0"
 
@@ -42,6 +79,7 @@ Quotient = float
 
 # Classes
 
+
 class OntologyClass:
     """
     a concept or class in an ontology, vocabulary or thesaurus. Note that nodes in a biolink compatible KG can be
@@ -50,15 +88,11 @@ class OntologyClass:
     endocytosis (GO:0006897), use bl:BiologicalProcess as the type.
     """
 
-    pass
-
 
 class Annotation:
     """
     Biolink Model root class for entity annotations.
     """
-
-    pass
 
 
 @dataclass(config=PydanticConfig)
@@ -73,7 +107,6 @@ class QuantityValue(Annotation):
     has_numeric_value: Optional[float] = None
 
 
-
 @dataclass(config=PydanticConfig)
 class Attribute(Annotation, OntologyClass):
     """
@@ -82,25 +115,24 @@ class Attribute(Annotation, OntologyClass):
     """
 
     _category: ClassVar[str] = "Attribute"
-    _required_attributes: ClassVar[List[str]] = [
-        "has_attribute_type"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["has_attribute_type"]
     has_attribute_type: Union[str, OntologyClass] = None
     name: Optional[Union[str, LabelType]] = None
-    has_quantitative_value: Optional[Union[Union[str, QuantityValue], List[Union[str, QuantityValue]]]] = field(default_factory=list)
+    has_quantitative_value: Optional[
+        Union[Union[str, QuantityValue], List[Union[str, QuantityValue]]]
+    ] = field(default_factory=list)
     has_qualitative_value: Optional[Curie] = None
     iri: Optional[IriType] = None
     source: Optional[Union[str, LabelType]] = None
 
+    # Validators
+    _convert_has_quantitative_value_to_list = convert_scalar_to_list("has_quantitative_value")
 
 
 class BiologicalSex(Attribute):
 
     _category: ClassVar[str] = "BiologicalSex"
-    _required_attributes: ClassVar[List[str]] = [
-        "has_attribute_type"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["has_attribute_type"]
 
 
 class PhenotypicSex(BiologicalSex):
@@ -109,10 +141,7 @@ class PhenotypicSex(BiologicalSex):
     """
 
     _category: ClassVar[str] = "PhenotypicSex"
-    _required_attributes: ClassVar[List[str]] = [
-        "has_attribute_type"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["has_attribute_type"]
 
 
 class GenotypicSex(BiologicalSex):
@@ -122,10 +151,7 @@ class GenotypicSex(BiologicalSex):
     """
 
     _category: ClassVar[str] = "GenotypicSex"
-    _required_attributes: ClassVar[List[str]] = [
-        "has_attribute_type"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["has_attribute_type"]
 
 
 class SeverityValue(Attribute):
@@ -134,10 +160,7 @@ class SeverityValue(Attribute):
     """
 
     _category: ClassVar[str] = "SeverityValue"
-    _required_attributes: ClassVar[List[str]] = [
-        "has_attribute_type"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["has_attribute_type"]
 
 
 class RelationshipQuantifier:
@@ -161,8 +184,6 @@ class PathognomonicityQuantifier(SpecificityQuantifier):
     feature implies the existence of the disease
     """
 
-    pass
-
 
 @dataclass(config=PydanticConfig)
 class FrequencyQuantifier(RelationshipQuantifier):
@@ -170,7 +191,6 @@ class FrequencyQuantifier(RelationshipQuantifier):
     has_total: Optional[int] = None
     has_quotient: Optional[float] = None
     has_percentage: Optional[float] = None
-
 
 
 class ChemicalOrDrugOrTreatment:
@@ -184,19 +204,22 @@ class Entity:
     Root Biolink Model class for all things and informational relationships, real or imagined.
     """
 
-    _required_attributes: ClassVar[List[str]] = [
-        "id"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id"]
     id: Curie = None
-    iri: Optional[IriType] = None
     category: Optional[Union[Curie, List[Curie]]] = field(default_factory=list)
     type: Optional[str] = None
+    iri: Optional[IriType] = None
     name: Optional[Union[str, LabelType]] = None
     description: Optional[Union[str, NarrativeText]] = None
     source: Optional[Union[str, LabelType]] = None
     provided_by: Optional[Union[Curie, List[Curie]]] = field(default_factory=list)
-    has_attribute: Optional[Union[Union[str, Attribute], List[Union[str, Attribute]]]] = field(default_factory=list)
+    has_attribute: Optional[Union[Union[str, Attribute], List[Union[str, Attribute]]]] = field(
+        default_factory=list
+    )
 
+    _convert_category_to_list = convert_scalar_to_list("category")
+    _convert_provided_by_to_list = convert_scalar_to_list("provided_by")
+    _convert_has_attribute_to_list = convert_scalar_to_list("has_attribute")
 
     def __post_init__(self):
         # Initialize default categories if not set
@@ -211,20 +234,16 @@ class Entity:
             )
 
 
-
-@dataclass(config=PydanticConfig)
 class NamedThing(Entity):
     """
     a databased entity or concept/class
     """
 
     _category: ClassVar[str] = "NamedThing"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-    category: Union[Curie, List[Curie]] = None
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
+    # Validators
+    _convert_category_to_list = convert_scalar_to_list("category")
 
 
 class RelationshipType(OntologyClass):
@@ -235,21 +254,16 @@ class RelationshipType(OntologyClass):
     _category: ClassVar[str] = "RelationshipType"
 
 
-
 class GeneOntologyClass(OntologyClass):
     """
     an ontology class that describes a functional aspect of a gene, gene prodoct or complex
     """
-
-    pass
 
 
 class UnclassifiedOntologyClass(OntologyClass):
     """
     this is used for nodes that are taken from an ontology but are not typed using an existing biolink class
     """
-
-    pass
 
 
 class TaxonomicRank(OntologyClass):
@@ -260,7 +274,6 @@ class TaxonomicRank(OntologyClass):
     _category: ClassVar[str] = "TaxonomicRank"
 
 
-
 @dataclass(config=PydanticConfig)
 class OrganismTaxon(NamedThing):
     """
@@ -269,35 +282,17 @@ class OrganismTaxon(NamedThing):
     """
 
     _category: ClassVar[str] = "OrganismTaxon"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     has_taxonomic_rank: Optional[Union[str, TaxonomicRank]] = None
     subclass_of: Optional[Union[Curie, List[Curie]]] = field(default_factory=list)
 
     # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "NCBITaxon",
-                "MESH"
-            ],
-        )
-
-
+    _convert_subclass_of_to_list = convert_scalar_to_list("subclass_of")
 
 
 class AdministrativeEntity(NamedThing):
 
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -307,32 +302,13 @@ class Agent(AdministrativeEntity):
     """
 
     _category: ClassVar[str] = "Agent"
-    _required_attributes: ClassVar[List[str]] = [
-        "category",
-        "id"
-    ]
-    id: Curie = None
+    _required_attributes: ClassVar[List[str]] = ["category", "id"]
     affiliation: Optional[Union[Curie, List[Curie]]] = field(default_factory=list)
     address: Optional[str] = None
     name: Optional[Union[str, LabelType]] = None
 
     # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "isbn",
-                "ORCID",
-                "ScopusID",
-                "ResearchID",
-                "GSID",
-                "isni"
-            ],
-        )
-
-
+    _convert_affiliation_to_list = convert_scalar_to_list("affiliation")
 
 
 @dataclass(config=PydanticConfig)
@@ -341,27 +317,11 @@ class InformationContentEntity(NamedThing):
     a piece of information that typically describes some topic of discourse or is used as support.
     """
 
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     license: Optional[str] = None
     rights: Optional[str] = None
     format: Optional[str] = None
     creation_date: Optional[Union[str, XSDDate]] = None
-
-    # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "doi"
-            ],
-        )
-
-
 
 
 class Dataset(InformationContentEntity):
@@ -370,11 +330,7 @@ class Dataset(InformationContentEntity):
     """
 
     _category: ClassVar[str] = "Dataset"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -384,12 +340,8 @@ class DatasetDistribution(InformationContentEntity):
     """
 
     _category: ClassVar[str] = "DatasetDistribution"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     distribution_download_url: Optional[str] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -399,14 +351,10 @@ class DatasetVersion(InformationContentEntity):
     """
 
     _category: ClassVar[str] = "DatasetVersion"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     has_dataset: Optional[Union[Curie, Dataset]] = None
     ingest_date: Optional[str] = None
     has_distribution: Optional[Union[Curie, DatasetDistribution]] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -416,13 +364,9 @@ class DatasetSummary(InformationContentEntity):
     """
 
     _category: ClassVar[str] = "DatasetSummary"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     source_web_page: Optional[str] = None
     source_logo: Optional[str] = None
-
 
 
 class ConfidenceLevel(InformationContentEntity):
@@ -431,11 +375,7 @@ class ConfidenceLevel(InformationContentEntity):
     """
 
     _category: ClassVar[str] = "ConfidenceLevel"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class EvidenceType(InformationContentEntity):
@@ -444,11 +384,7 @@ class EvidenceType(InformationContentEntity):
     """
 
     _category: ClassVar[str] = "EvidenceType"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -461,13 +397,7 @@ class Publication(InformationContentEntity):
     """
 
     _category: ClassVar[str] = "Publication"
-    _required_attributes: ClassVar[List[str]] = [
-        "category",
-        "id",
-        "type"
-    ]
-    id: Curie = None
-    type: str = None
+    _required_attributes: ClassVar[List[str]] = ["category", "id", "type"]
     authors: Optional[Union[str, List[str]]] = field(default_factory=list)
     pages: Optional[Union[str, List[str]]] = field(default_factory=list)
     summary: Optional[str] = None
@@ -477,63 +407,30 @@ class Publication(InformationContentEntity):
     name: Optional[Union[str, LabelType]] = None
 
     # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "NLMID"
-            ],
-        )
+    _convert_authors_to_list = convert_scalar_to_list("authors")
+    _convert_pages_to_list = convert_scalar_to_list("pages")
+    _convert_keywords_to_list = convert_scalar_to_list("keywords")
+    _convert_mesh_terms_to_list = convert_scalar_to_list("mesh_terms")
+    _convert_xref_to_list = convert_scalar_to_list("xref")
 
 
-
-
-@dataclass(config=PydanticConfig)
 class Book(Publication):
     """
     This class may rarely be instantiated except if use cases of a given knowledge graph support its utility.
     """
 
     _category: ClassVar[str] = "Book"
-    _required_attributes: ClassVar[List[str]] = [
-        "category",
-        "id",
-        "type"
-    ]
-    id: Curie = None
-    type: str = None
-
-    # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "isbn",
-                "NLMID"
-            ],
-        )
-
-
+    _required_attributes: ClassVar[List[str]] = ["category", "id", "type"]
 
 
 @dataclass(config=PydanticConfig)
 class BookChapter(Publication):
 
     _category: ClassVar[str] = "BookChapter"
-    _required_attributes: ClassVar[List[str]] = [
-        "category",
-        "id",
-        "type",
-        "published_in"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["category", "id", "type", "published_in"]
     published_in: Curie = None
     volume: Optional[str] = None
     chapter: Optional[str] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -543,59 +440,21 @@ class Serial(Publication):
     """
 
     _category: ClassVar[str] = "Serial"
-    _required_attributes: ClassVar[List[str]] = [
-        "category",
-        "id",
-        "type"
-    ]
-    id: Curie = None
-    type: str = None
+    _required_attributes: ClassVar[List[str]] = ["category", "id", "type"]
     iso_abbreviation: Optional[str] = None
     volume: Optional[str] = None
     issue: Optional[str] = None
-
-    # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "issn",
-                "NLMID"
-            ],
-        )
-
-
 
 
 @dataclass(config=PydanticConfig)
 class Article(Publication):
 
     _category: ClassVar[str] = "Article"
-    _required_attributes: ClassVar[List[str]] = [
-        "category",
-        "id",
-        "type",
-        "published_in"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["category", "id", "type", "published_in"]
     published_in: Curie = None
     iso_abbreviation: Optional[str] = None
     volume: Optional[str] = None
     issue: Optional[str] = None
-
-    # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "PMID"
-            ],
-        )
-
-
 
 
 class PhysicalEssenceOrOccurrent:
@@ -603,15 +462,11 @@ class PhysicalEssenceOrOccurrent:
     Either a physical or processual entity.
     """
 
-    pass
-
 
 class PhysicalEssence(PhysicalEssenceOrOccurrent):
     """
     Semantic mixin concept.  Pertains to entities that have physical properties such as mass, volume, or charge.
     """
-
-    pass
 
 
 class PhysicalEntity(NamedThing, PhysicalEssence):
@@ -620,11 +475,7 @@ class PhysicalEntity(NamedThing, PhysicalEssence):
     """
 
     _category: ClassVar[str] = "PhysicalEntity"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class Occurrent(PhysicalEssenceOrOccurrent):
@@ -632,15 +483,11 @@ class Occurrent(PhysicalEssenceOrOccurrent):
     A processual entity.
     """
 
-    pass
-
 
 class ActivityAndBehavior(Occurrent):
     """
     Activity or behavior of any independent integral living, organization or mechanical actor in the world
     """
-
-    pass
 
 
 class Activity(NamedThing, ActivityAndBehavior):
@@ -650,11 +497,7 @@ class Activity(NamedThing, ActivityAndBehavior):
     """
 
     _category: ClassVar[str] = "Activity"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class Procedure(NamedThing, ActivityAndBehavior):
@@ -663,11 +506,7 @@ class Procedure(NamedThing, ActivityAndBehavior):
     """
 
     _category: ClassVar[str] = "Procedure"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class Phenomenon(NamedThing, Occurrent):
@@ -676,11 +515,7 @@ class Phenomenon(NamedThing, Occurrent):
     """
 
     _category: ClassVar[str] = "Phenomenon"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class Device(NamedThing):
@@ -689,19 +524,13 @@ class Device(NamedThing):
     """
 
     _category: ClassVar[str] = "Device"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class SubjectOfInvestigation:
     """
     An entity that has the role of being studied in an investigation, study, or experiment
     """
-
-    pass
 
 
 class MaterialSample(PhysicalEntity, SubjectOfInvestigation):
@@ -712,24 +541,7 @@ class MaterialSample(PhysicalEntity, SubjectOfInvestigation):
     """
 
     _category: ClassVar[str] = "MaterialSample"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
-    # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "BIOSAMPLE",
-                "GOLD.META"
-            ],
-        )
-
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class PlanetaryEntity(NamedThing):
@@ -738,31 +550,19 @@ class PlanetaryEntity(NamedThing):
     """
 
     _category: ClassVar[str] = "PlanetaryEntity"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class EnvironmentalProcess(PlanetaryEntity, Occurrent):
 
     _category: ClassVar[str] = "EnvironmentalProcess"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class EnvironmentalFeature(PlanetaryEntity):
 
     _category: ClassVar[str] = "EnvironmentalFeature"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -772,13 +572,9 @@ class GeographicLocation(PlanetaryEntity):
     """
 
     _category: ClassVar[str] = "GeographicLocation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     latitude: Optional[float] = None
     longitude: Optional[float] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -788,21 +584,13 @@ class GeographicLocationAtTime(GeographicLocation):
     """
 
     _category: ClassVar[str] = "GeographicLocationAtTime"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     timepoint: Optional[Union[str, TimeType]] = None
-
 
 
 class BiologicalEntity(NamedThing):
 
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -811,8 +599,13 @@ class ThingWithTaxon:
     A mixin that can be used on any entity that can be taxonomically classified. This includes individual organisms;
     genes, their products and other molecular entities; body parts; biological processes
     """
-    in_taxon: Optional[Union[Union[Curie, OrganismTaxon], List[Union[Curie, OrganismTaxon]]]] = field(default_factory=list)
 
+    in_taxon: Optional[
+        Union[Union[Curie, OrganismTaxon], List[Union[Curie, OrganismTaxon]]]
+    ] = field(default_factory=list)
+
+    # Validators
+    _convert_in_taxon_to_list = convert_scalar_to_list("in_taxon")
 
 
 class MolecularEntity(BiologicalEntity, ThingWithTaxon, PhysicalEssence, OntologyClass):
@@ -821,11 +614,7 @@ class MolecularEntity(BiologicalEntity, ThingWithTaxon, PhysicalEssence, Ontolog
     """
 
     _category: ClassVar[str] = "MolecularEntity"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -836,27 +625,15 @@ class BiologicalProcessOrActivity(BiologicalEntity, Occurrent, OntologyClass):
     """
 
     _category: ClassVar[str] = "BiologicalProcessOrActivity"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     has_input: Optional[Union[Curie, List[Curie]]] = field(default_factory=list)
     has_output: Optional[Union[Curie, List[Curie]]] = field(default_factory=list)
     enabled_by: Optional[Union[Curie, List[Curie]]] = field(default_factory=list)
 
     # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "GO",
-                "REACT"
-            ],
-        )
-
-
+    _convert_has_input_to_list = convert_scalar_to_list("has_input")
+    _convert_has_output_to_list = convert_scalar_to_list("has_output")
+    _convert_enabled_by_to_list = convert_scalar_to_list("enabled_by")
 
 
 @dataclass(config=PydanticConfig)
@@ -866,34 +643,15 @@ class MolecularActivity(BiologicalProcessOrActivity, Occurrent, OntologyClass):
     """
 
     _category: ClassVar[str] = "MolecularActivity"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     has_input: Optional[Union[Curie, List[Curie]]] = field(default_factory=list)
     has_output: Optional[Union[Curie, List[Curie]]] = field(default_factory=list)
     enabled_by: Optional[Union[Curie, List[Curie]]] = field(default_factory=list)
 
     # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "GO",
-                "REACT",
-                "RHEA",
-                "MetaCyc",
-                "EC",
-                "TCDB",
-                "KEGG.REACTION",
-                "KEGG.RCLASS",
-                "KEGG.ENZYME"
-            ],
-        )
-
-
+    _convert_has_input_to_list = convert_scalar_to_list("has_input")
+    _convert_has_output_to_list = convert_scalar_to_list("has_output")
+    _convert_enabled_by_to_list = convert_scalar_to_list("enabled_by")
 
 
 class BiologicalProcess(BiologicalProcessOrActivity, Occurrent, OntologyClass):
@@ -902,99 +660,31 @@ class BiologicalProcess(BiologicalProcessOrActivity, Occurrent, OntologyClass):
     """
 
     _category: ClassVar[str] = "BiologicalProcess"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
-    # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "GO",
-                "REACT",
-                "MetaCyc",
-                "KEGG.MODULE"
-            ],
-        )
-
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class Pathway(BiologicalProcess, OntologyClass):
 
     _category: ClassVar[str] = "Pathway"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
-    # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "GO",
-                "REACT",
-                "KEGG",
-                "SMPDB",
-                "MSigDB",
-                "PHARMGKB.PATHWAYS",
-                "WIKIPATHWAYS",
-                "FB",
-                "PANTHER.PATHWAY"
-            ],
-        )
-
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class PhysiologicalProcess(BiologicalProcess, OntologyClass):
 
     _category: ClassVar[str] = "PhysiologicalProcess"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
-    # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "GO",
-                "REACT"
-            ],
-        )
-
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class Behavior(BiologicalProcess, OntologyClass):
 
     _category: ClassVar[str] = "Behavior"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class Death(BiologicalProcess):
 
     _category: ClassVar[str] = "Death"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -1003,8 +693,11 @@ class Mixture:
     The physical combination of two or more molecular entities in which the identities are retained and are mixed in
     the form of solutions, suspensions and colloids.
     """
+
     has_constituent: Optional[Union[Curie, List[Curie]]] = field(default_factory=list)
 
+    # Validators
+    _convert_has_constituent_to_list = convert_scalar_to_list("has_constituent")
 
 
 @dataclass(config=PydanticConfig)
@@ -1015,66 +708,14 @@ class ChemicalSubstance(MolecularEntity, OntologyClass):
     """
 
     _category: ClassVar[str] = "ChemicalSubstance"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     is_metabolite: Optional[bool] = None
-
-    # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "PUBCHEM.COMPOUND",
-                "CHEMBL.COMPOUND",
-                "UNII",
-                "CHEBI",
-                "DRUGBANK",
-                "MESH",
-                "CAS",
-                "DrugCentral",
-                "GTOPDB",
-                "HMDB",
-                "KEGG.COMPOUND",
-                "ChemBank",
-                "Aeolus",
-                "PUBCHEM.SUBSTANCE",
-                "SIDER.DRUG",
-                "INCHI",
-                "INCHIKEY",
-                "KEGG.GLYCAN",
-                "KEGG.DRUG",
-                "KEGG.DGROUP",
-                "KEGG.ENVIRON"
-            ],
-        )
-
-
 
 
 class Carbohydrate(ChemicalSubstance):
 
     _category: ClassVar[str] = "Carbohydrate"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
-    # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "PUBCHEM.SUBSTANCE"
-            ],
-        )
-
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class ProcessedMaterial(ChemicalSubstance, Mixture, OntologyClass):
@@ -1083,11 +724,7 @@ class ProcessedMaterial(ChemicalSubstance, Mixture, OntologyClass):
     """
 
     _category: ClassVar[str] = "ProcessedMaterial"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class Drug(MolecularEntity, Mixture, ChemicalOrDrugOrTreatment, OntologyClass):
@@ -1096,95 +733,49 @@ class Drug(MolecularEntity, Mixture, ChemicalOrDrugOrTreatment, OntologyClass):
     """
 
     _category: ClassVar[str] = "Drug"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
-    # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "RXCUI",
-                "NDC",
-                "PHARMGKB.DRUG"
-            ],
-        )
-
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class FoodComponent(ChemicalSubstance):
 
     _category: ClassVar[str] = "FoodComponent"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class EnvironmentalFoodContaminant(ChemicalSubstance):
 
     _category: ClassVar[str] = "EnvironmentalFoodContaminant"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class FoodAdditive(ChemicalSubstance):
 
     _category: ClassVar[str] = "FoodAdditive"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class Nutrient(ChemicalSubstance):
 
     _category: ClassVar[str] = "Nutrient"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class Macronutrient(Nutrient):
 
     _category: ClassVar[str] = "Macronutrient"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class Micronutrient(Nutrient):
 
     _category: ClassVar[str] = "Micronutrient"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class Vitamin(Micronutrient):
 
     _category: ClassVar[str] = "Vitamin"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class Food(MolecularEntity, Mixture):
@@ -1193,23 +784,7 @@ class Food(MolecularEntity, Mixture):
     """
 
     _category: ClassVar[str] = "Food"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
-    # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "foodb.compound"
-            ],
-        )
-
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class Metabolite(ChemicalSubstance):
@@ -1218,11 +793,7 @@ class Metabolite(ChemicalSubstance):
     """
 
     _category: ClassVar[str] = "Metabolite"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class OrganismAttribute(Attribute):
@@ -1231,10 +802,7 @@ class OrganismAttribute(Attribute):
     """
 
     _category: ClassVar[str] = "OrganismAttribute"
-    _required_attributes: ClassVar[List[str]] = [
-        "has_attribute_type"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["has_attribute_type"]
 
 
 class PhenotypicQuality(OrganismAttribute):
@@ -1243,10 +811,7 @@ class PhenotypicQuality(OrganismAttribute):
     """
 
     _category: ClassVar[str] = "PhenotypicQuality"
-    _required_attributes: ClassVar[List[str]] = [
-        "has_attribute_type"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["has_attribute_type"]
 
 
 class Inheritance(OrganismAttribute):
@@ -1256,10 +821,7 @@ class Inheritance(OrganismAttribute):
     """
 
     _category: ClassVar[str] = "Inheritance"
-    _required_attributes: ClassVar[List[str]] = [
-        "has_attribute_type"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["has_attribute_type"]
 
 
 @dataclass(config=PydanticConfig)
@@ -1269,12 +831,13 @@ class OrganismalEntity(BiologicalEntity):
     molecular entities
     """
 
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-    has_attribute: Optional[Union[Union[str, Attribute], List[Union[str, Attribute]]]] = field(default_factory=list)
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
+    has_attribute: Optional[Union[Union[str, Attribute], List[Union[str, Attribute]]]] = field(
+        default_factory=list
+    )
 
+    # Validators
+    _convert_has_attribute_to_list = convert_scalar_to_list("has_attribute")
 
 
 class LifeStage(OrganismalEntity, ThingWithTaxon):
@@ -1283,11 +846,7 @@ class LifeStage(OrganismalEntity, ThingWithTaxon):
     """
 
     _category: ClassVar[str] = "LifeStage"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class IndividualOrganism(OrganismalEntity, ThingWithTaxon):
@@ -1297,23 +856,7 @@ class IndividualOrganism(OrganismalEntity, ThingWithTaxon):
     """
 
     _category: ClassVar[str] = "IndividualOrganism"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
-    # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "ORCID"
-            ],
-        )
-
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class PopulationOfIndividualOrganisms(OrganismalEntity, ThingWithTaxon):
@@ -1324,23 +867,7 @@ class PopulationOfIndividualOrganisms(OrganismalEntity, ThingWithTaxon):
     """
 
     _category: ClassVar[str] = "PopulationOfIndividualOrganisms"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
-    # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "HANCESTRO"
-            ],
-        )
-
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class StudyPopulation(PopulationOfIndividualOrganisms):
@@ -1349,11 +876,7 @@ class StudyPopulation(PopulationOfIndividualOrganisms):
     """
 
     _category: ClassVar[str] = "StudyPopulation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class DiseaseOrPhenotypicFeature(BiologicalEntity, ThingWithTaxon):
@@ -1363,83 +886,19 @@ class DiseaseOrPhenotypicFeature(BiologicalEntity, ThingWithTaxon):
     """
 
     _category: ClassVar[str] = "DiseaseOrPhenotypicFeature"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class Disease(DiseaseOrPhenotypicFeature):
 
     _category: ClassVar[str] = "Disease"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
-    # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "MONDO",
-                "DOID",
-                "OMIM",
-                "ORPHANET",
-                "EFO",
-                "UMLS",
-                "MESH",
-                "MEDDRA",
-                "NCIT",
-                "SNOMEDCT",
-                "medgen",
-                "ICD10",
-                "ICD9",
-                "ICD0",
-                "KEGG.DISEASE",
-                "HP",
-                "MP"
-            ],
-        )
-
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class PhenotypicFeature(DiseaseOrPhenotypicFeature):
 
     _category: ClassVar[str] = "PhenotypicFeature"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
-    # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "HP",
-                "EFO",
-                "NCIT",
-                "UMLS",
-                "MEDDRA",
-                "MP",
-                "ZP",
-                "UPHENO",
-                "APO",
-                "FBcv",
-                "WBPhenotype",
-                "SNOMEDCT",
-                "MESH"
-            ],
-        )
-
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class BehavioralFeature(PhenotypicFeature):
@@ -1448,11 +907,7 @@ class BehavioralFeature(PhenotypicFeature):
     """
 
     _category: ClassVar[str] = "BehavioralFeature"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class AnatomicalEntity(OrganismalEntity, ThingWithTaxon, PhysicalEssence):
@@ -1461,28 +916,7 @@ class AnatomicalEntity(OrganismalEntity, ThingWithTaxon, PhysicalEssence):
     """
 
     _category: ClassVar[str] = "AnatomicalEntity"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
-    # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "UBERON",
-                "GO",
-                "CL",
-                "UMLS",
-                "MESH",
-                "NCIT"
-            ],
-        )
-
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class CellularComponent(AnatomicalEntity):
@@ -1491,106 +925,25 @@ class CellularComponent(AnatomicalEntity):
     """
 
     _category: ClassVar[str] = "CellularComponent"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
-    # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "GO",
-                "MESH",
-                "UMLS",
-                "NCIT",
-                "SNOMEDCT",
-                "CL",
-                "UBERON"
-            ],
-        )
-
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class Cell(AnatomicalEntity):
 
     _category: ClassVar[str] = "Cell"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
-    # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "CL",
-                "PO",
-                "UMLS",
-                "NCIT",
-                "MESH",
-                "UBERON",
-                "SNOMEDCT"
-            ],
-        )
-
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class CellLine(OrganismalEntity):
 
     _category: ClassVar[str] = "CellLine"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
-    # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "CLO"
-            ],
-        )
-
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class GrossAnatomicalStructure(AnatomicalEntity):
 
     _category: ClassVar[str] = "GrossAnatomicalStructure"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
-    # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "UBERON",
-                "UMLS",
-                "MESH",
-                "NCIT",
-                "PO",
-                "FAO"
-            ],
-        )
-
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -1599,16 +952,14 @@ class MacromolecularMachineMixin:
     A union of gene locus, gene product, and macromolecular complex mixin. These are the basic units of function in a
     cell. They either carry out individual biological activities, or they encode molecules which do this.
     """
-    name: Optional[Union[str, SymbolType]] = None
 
+    name: Optional[Union[str, SymbolType]] = None
 
 
 class GeneOrGeneProduct(MacromolecularMachineMixin):
     """
     A union of gene loci or gene products. Frequently an identifier for one will be used as proxy for another
     """
-
-    pass
 
 
 @dataclass(config=PydanticConfig)
@@ -1617,9 +968,15 @@ class GeneProductMixin(GeneOrGeneProduct):
     The functional molecular product of a single gene locus. Gene products are either proteins or functional RNA
     molecules.
     """
-    synonym: Optional[Union[Union[str, LabelType], List[Union[str, LabelType]]]] = field(default_factory=list)
+
+    synonym: Optional[Union[Union[str, LabelType], List[Union[str, LabelType]]]] = field(
+        default_factory=list
+    )
     xref: Optional[Union[IriType, List[IriType]]] = field(default_factory=list)
 
+    # Validators
+    _convert_synonym_to_list = convert_scalar_to_list("synonym")
+    _convert_xref_to_list = convert_scalar_to_list("xref")
 
 
 class GeneProductIsoformMixin(GeneProductMixin):
@@ -1629,16 +986,12 @@ class GeneProductIsoformMixin(GeneProductMixin):
     designation of canonical or reference may be arbitrary, or it may represent the superclass of all isoforms.
     """
 
-    pass
-
 
 class MacromolecularComplexMixin(MacromolecularMachineMixin):
     """
     A stable assembly of two or more macromolecules, i.e. proteins, nucleic acids, carbohydrates or lipids, in which
     at least one component is a protein and the constituent parts function together.
     """
-
-    pass
 
 
 @dataclass(config=PydanticConfig)
@@ -1649,12 +1002,8 @@ class GenomicEntity(MolecularEntity):
     """
 
     _category: ClassVar[str] = "GenomicEntity"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     has_biological_sequence: Optional[Union[str, BiologicalSequence]] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -1665,41 +1014,16 @@ class Gene(GenomicEntity, GeneOrGeneProduct):
     """
 
     _category: ClassVar[str] = "Gene"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     symbol: Optional[str] = None
-    synonym: Optional[Union[Union[str, LabelType], List[Union[str, LabelType]]]] = field(default_factory=list)
+    synonym: Optional[Union[Union[str, LabelType], List[Union[str, LabelType]]]] = field(
+        default_factory=list
+    )
     xref: Optional[Union[IriType, List[IriType]]] = field(default_factory=list)
 
     # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "NCBIGene",
-                "ENSEMBL",
-                "HGNC",
-                "MGI",
-                "ZFIN",
-                "dictyBase",
-                "WB",
-                "WormBase",
-                "FB",
-                "FB",
-                "RGD",
-                "SGD",
-                "POMBASE",
-                "OMIM",
-                "KEGG.GENE",
-                "UMLS"
-            ],
-        )
-
-
+    _convert_synonym_to_list = convert_scalar_to_list("synonym")
+    _convert_xref_to_list = convert_scalar_to_list("xref")
 
 
 class Genome(GenomicEntity):
@@ -1708,11 +1032,7 @@ class Genome(GenomicEntity):
     """
 
     _category: ClassVar[str] = "Genome"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class Exon(GenomicEntity):
@@ -1722,11 +1042,7 @@ class Exon(GenomicEntity):
     """
 
     _category: ClassVar[str] = "Exon"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class Transcript(GenomicEntity):
@@ -1735,34 +1051,13 @@ class Transcript(GenomicEntity):
     """
 
     _category: ClassVar[str] = "Transcript"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
-    # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "ENSEMBL",
-                "FB"
-            ],
-        )
-
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class CodingSequence(GenomicEntity):
 
     _category: ClassVar[str] = "CodingSequence"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class Protein(GenomicEntity, GeneProductMixin):
@@ -1772,27 +1067,7 @@ class Protein(GenomicEntity, GeneProductMixin):
     """
 
     _category: ClassVar[str] = "Protein"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
-    # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "UniProtKB",
-                "PR",
-                "ENSEMBL",
-                "FB",
-                "UMLS"
-            ],
-        )
-
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class ProteinIsoform(Protein, GeneProductIsoformMixin):
@@ -1802,48 +1077,13 @@ class ProteinIsoform(Protein, GeneProductIsoformMixin):
     """
 
     _category: ClassVar[str] = "ProteinIsoform"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
-    # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "UniProtKB",
-                "UNIPROT.ISOFORM",
-                "PR",
-                "ENSEMBL"
-            ],
-        )
-
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class RNAProduct(Transcript, GeneProductMixin):
 
     _category: ClassVar[str] = "RNAProduct"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
-    # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "RNACENTRAL"
-            ],
-        )
-
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class RNAProductIsoform(RNAProduct, GeneProductIsoformMixin):
@@ -1852,71 +1092,19 @@ class RNAProductIsoform(RNAProduct, GeneProductIsoformMixin):
     """
 
     _category: ClassVar[str] = "RNAProductIsoform"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
-    # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "RNACENTRAL"
-            ],
-        )
-
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class NoncodingRNAProduct(RNAProduct):
 
     _category: ClassVar[str] = "NoncodingRNAProduct"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
-    # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "RNACENTRAL",
-                "NCBIGene",
-                "ENSEMBL"
-            ],
-        )
-
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class MicroRNA(NoncodingRNAProduct):
 
     _category: ClassVar[str] = "MicroRNA"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
-    # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "MIR",
-                "HGNC",
-                "WormBase"
-            ],
-        )
-
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class SiRNA(NoncodingRNAProduct):
@@ -1927,25 +1115,7 @@ class SiRNA(NoncodingRNAProduct):
     """
 
     _category: ClassVar[str] = "SiRNA"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
-    # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "MIR",
-                "HGNC",
-                "WormBase"
-            ],
-        )
-
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -1953,8 +1123,13 @@ class GeneGroupingMixin:
     """
     any grouping of multiple genes or gene products
     """
-    has_gene_or_gene_product: Optional[Union[Union[Curie, Gene], List[Union[Curie, Gene]]]] = field(default_factory=list)
 
+    has_gene_or_gene_product: Optional[Union[Union[Curie, Gene], List[Union[Curie, Gene]]]] = field(
+        default_factory=list
+    )
+
+    # Validators
+    _convert_has_gene_or_gene_product_to_list = convert_scalar_to_list("has_gene_or_gene_product")
 
 
 class GeneFamily(MolecularEntity, GeneGroupingMixin):
@@ -1963,50 +1138,13 @@ class GeneFamily(MolecularEntity, GeneGroupingMixin):
     """
 
     _category: ClassVar[str] = "GeneFamily"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
-    # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "PANTHER.FAMILY",
-                "HGNC.FAMILY",
-                "FB",
-                "interpro",
-                "CATH",
-                "CDD",
-                "HAMAP",
-                "PFAM",
-                "PIRSF",
-                "PRINTS",
-                "PRODOM",
-                "PROSITE",
-                "SMART",
-                "SUPFAM",
-                "TIGRFAM",
-                "CATH.SUPERFAMILY",
-                "RFAM",
-                "KEGG.ORTHOLOGY",
-                "EGGNOG"
-            ],
-        )
-
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class Zygosity(Attribute):
 
     _category: ClassVar[str] = "Zygosity"
-    _required_attributes: ClassVar[List[str]] = [
-        "has_attribute_type"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["has_attribute_type"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2017,25 +1155,8 @@ class Genotype(GenomicEntity):
     """
 
     _category: ClassVar[str] = "Genotype"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     has_zygosity: Optional[Union[str, Zygosity]] = None
-
-    # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "ZFIN",
-                "FB"
-            ],
-        )
-
-
 
 
 class Haplotype(GenomicEntity):
@@ -2044,11 +1165,7 @@ class Haplotype(GenomicEntity):
     """
 
     _category: ClassVar[str] = "Haplotype"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2058,36 +1175,14 @@ class SequenceVariant(GenomicEntity):
     """
 
     _category: ClassVar[str] = "SequenceVariant"
-    _required_attributes: ClassVar[List[str]] = [
-        "category",
-        "id"
-    ]
-    id: Curie = None
-    has_gene: Optional[Union[Union[Curie, Gene], List[Union[Curie, Gene]]]] = field(default_factory=list)
+    _required_attributes: ClassVar[List[str]] = ["category", "id"]
+    has_gene: Optional[Union[Union[Curie, Gene], List[Union[Curie, Gene]]]] = field(
+        default_factory=list
+    )
     has_biological_sequence: Optional[Union[str, BiologicalSequence]] = None
 
     # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "CAID",
-                "CLINVAR",
-                "ClinVarVariant",
-                "WIKIDATA",
-                "DBSNP",
-                "DBSNP",
-                "MGI",
-                "ZFIN",
-                "FB",
-                "WB",
-                "WormBase"
-            ],
-        )
-
-
+    _convert_has_gene_to_list = convert_scalar_to_list("has_gene")
 
 
 class Snv(SequenceVariant):
@@ -2096,11 +1191,7 @@ class Snv(SequenceVariant):
     """
 
     _category: ClassVar[str] = "Snv"
-    _required_attributes: ClassVar[List[str]] = [
-        "category",
-        "id"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["category", "id"]
 
 
 class ReagentTargetedGene(GenomicEntity):
@@ -2110,11 +1201,7 @@ class ReagentTargetedGene(GenomicEntity):
     """
 
     _category: ClassVar[str] = "ReagentTargetedGene"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class ClinicalAttribute(Attribute):
@@ -2123,10 +1210,7 @@ class ClinicalAttribute(Attribute):
     """
 
     _category: ClassVar[str] = "ClinicalAttribute"
-    _required_attributes: ClassVar[List[str]] = [
-        "has_attribute_type"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["has_attribute_type"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2137,11 +1221,8 @@ class ClinicalMeasurement(ClinicalAttribute):
     """
 
     _category: ClassVar[str] = "ClinicalMeasurement"
-    _required_attributes: ClassVar[List[str]] = [
-        "has_attribute_type"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["has_attribute_type"]
     has_attribute_type: Union[str, OntologyClass] = None
-
 
 
 class ClinicalModifier(ClinicalAttribute):
@@ -2151,10 +1232,7 @@ class ClinicalModifier(ClinicalAttribute):
     """
 
     _category: ClassVar[str] = "ClinicalModifier"
-    _required_attributes: ClassVar[List[str]] = [
-        "has_attribute_type"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["has_attribute_type"]
 
 
 class ClinicalCourse(ClinicalAttribute):
@@ -2164,10 +1242,7 @@ class ClinicalCourse(ClinicalAttribute):
     """
 
     _category: ClassVar[str] = "ClinicalCourse"
-    _required_attributes: ClassVar[List[str]] = [
-        "has_attribute_type"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["has_attribute_type"]
 
 
 class Onset(ClinicalCourse):
@@ -2176,10 +1251,7 @@ class Onset(ClinicalCourse):
     """
 
     _category: ClassVar[str] = "Onset"
-    _required_attributes: ClassVar[List[str]] = [
-        "has_attribute_type"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["has_attribute_type"]
 
 
 class ClinicalEntity(NamedThing):
@@ -2189,31 +1261,19 @@ class ClinicalEntity(NamedThing):
     """
 
     _category: ClassVar[str] = "ClinicalEntity"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class ClinicalTrial(ClinicalEntity):
 
     _category: ClassVar[str] = "ClinicalTrial"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class ClinicalIntervention(ClinicalEntity):
 
     _category: ClassVar[str] = "ClinicalIntervention"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2224,36 +1284,19 @@ class ClinicalFinding(PhenotypicFeature):
     """
 
     _category: ClassVar[str] = "ClinicalFinding"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-    has_attribute: Optional[Union[Union[str, ClinicalAttribute], List[Union[str, ClinicalAttribute]]]] = field(default_factory=list)
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
+    has_attribute: Optional[
+        Union[Union[str, ClinicalAttribute], List[Union[str, ClinicalAttribute]]]
+    ] = field(default_factory=list)
 
     # Validators
-
-    @validator('id')
-    def check_id_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-                "LOINC",
-                "NCIT",
-                "EFO"
-            ],
-        )
-
-
+    _convert_has_attribute_to_list = convert_scalar_to_list("has_attribute")
 
 
 class Hospitalization(ClinicalIntervention):
 
     _category: ClassVar[str] = "Hospitalization"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class SocioeconomicAttribute(Attribute):
@@ -2262,10 +1305,7 @@ class SocioeconomicAttribute(Attribute):
     """
 
     _category: ClassVar[str] = "SocioeconomicAttribute"
-    _required_attributes: ClassVar[List[str]] = [
-        "has_attribute_type"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["has_attribute_type"]
 
 
 class Case(IndividualOrganism):
@@ -2274,11 +1314,7 @@ class Case(IndividualOrganism):
     """
 
     _category: ClassVar[str] = "Case"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class Cohort(StudyPopulation):
@@ -2288,11 +1324,7 @@ class Cohort(StudyPopulation):
     """
 
     _category: ClassVar[str] = "Cohort"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2301,8 +1333,8 @@ class ExposureEvent:
     A (possibly time bounded) incidence of a feature of the environment of an organism that influences one or more
     phenotypic features of that organism, potentially mediated by genes
     """
-    timepoint: Optional[Union[str, TimeType]] = None
 
+    timepoint: Optional[Union[str, TimeType]] = None
 
 
 class GenomicBackgroundExposure(GenomicEntity, ExposureEvent, GeneGroupingMixin):
@@ -2313,19 +1345,13 @@ class GenomicBackgroundExposure(GenomicEntity, ExposureEvent, GeneGroupingMixin)
     """
 
     _category: ClassVar[str] = "GenomicBackgroundExposure"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class PathologicalEntityMixin:
     """
     A pathological (abnormal) structure or process.
     """
-
-    pass
 
 
 class PathologicalProcess(BiologicalProcess, PathologicalEntityMixin):
@@ -2335,11 +1361,7 @@ class PathologicalProcess(BiologicalProcess, PathologicalEntityMixin):
     """
 
     _category: ClassVar[str] = "PathologicalProcess"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class PathologicalProcessExposure(PathologicalProcess, ExposureEvent):
@@ -2349,11 +1371,7 @@ class PathologicalProcessExposure(PathologicalProcess, ExposureEvent):
     """
 
     _category: ClassVar[str] = "PathologicalProcessExposure"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class PathologicalAnatomicalStructure(AnatomicalEntity, PathologicalEntityMixin):
@@ -2363,11 +1381,7 @@ class PathologicalAnatomicalStructure(AnatomicalEntity, PathologicalEntityMixin)
     """
 
     _category: ClassVar[str] = "PathologicalAnatomicalStructure"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class PathologicalAnatomicalExposure(PathologicalAnatomicalStructure, ExposureEvent):
@@ -2377,14 +1391,12 @@ class PathologicalAnatomicalExposure(PathologicalAnatomicalStructure, ExposureEv
     """
 
     _category: ClassVar[str] = "PathologicalAnatomicalExposure"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
-
-class DiseaseOrPhenotypicFeatureExposure(DiseaseOrPhenotypicFeature, ExposureEvent, PathologicalEntityMixin):
+class DiseaseOrPhenotypicFeatureExposure(
+    DiseaseOrPhenotypicFeature, ExposureEvent, PathologicalEntityMixin
+):
     """
     A disease or phenotypic feature state, when viewed as an exposure, represents an precondition, leading to or
     influencing an outcome, e.g. HIV predisposing an individual to infections; a relative deficiency of skin
@@ -2392,11 +1404,7 @@ class DiseaseOrPhenotypicFeatureExposure(DiseaseOrPhenotypicFeature, ExposureEve
     """
 
     _category: ClassVar[str] = "DiseaseOrPhenotypicFeatureExposure"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class ChemicalExposure(ChemicalSubstance, ExposureEvent):
@@ -2405,11 +1413,7 @@ class ChemicalExposure(ChemicalSubstance, ExposureEvent):
     """
 
     _category: ClassVar[str] = "ChemicalExposure"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class ComplexChemicalExposure(ChemicalExposure, Mixture):
@@ -2418,11 +1422,7 @@ class ComplexChemicalExposure(ChemicalExposure, Mixture):
     """
 
     _category: ClassVar[str] = "ComplexChemicalExposure"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class DrugExposure(Drug, ExposureEvent):
@@ -2431,11 +1431,7 @@ class DrugExposure(Drug, ExposureEvent):
     """
 
     _category: ClassVar[str] = "DrugExposure"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class DrugToGeneInteractionExposure(DrugExposure, GeneGroupingMixin):
@@ -2445,11 +1441,7 @@ class DrugToGeneInteractionExposure(DrugExposure, GeneGroupingMixin):
     """
 
     _category: ClassVar[str] = "DrugToGeneInteractionExposure"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2460,14 +1452,21 @@ class Treatment(NamedThing, ExposureEvent, ChemicalOrDrugOrTreatment):
     """
 
     _category: ClassVar[str] = "Treatment"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-    has_drug: Optional[Union[Union[Curie, Drug], List[Union[Curie, Drug]]]] = field(default_factory=list)
-    has_device: Optional[Union[Union[Curie, Device], List[Union[Curie, Device]]]] = field(default_factory=list)
-    has_procedure: Optional[Union[Union[Curie, Procedure], List[Union[Curie, Procedure]]]] = field(default_factory=list)
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
+    has_drug: Optional[Union[Union[Curie, Drug], List[Union[Curie, Drug]]]] = field(
+        default_factory=list
+    )
+    has_device: Optional[Union[Union[Curie, Device], List[Union[Curie, Device]]]] = field(
+        default_factory=list
+    )
+    has_procedure: Optional[Union[Union[Curie, Procedure], List[Union[Curie, Procedure]]]] = field(
+        default_factory=list
+    )
 
+    # Validators
+    _convert_has_drug_to_list = convert_scalar_to_list("has_drug")
+    _convert_has_device_to_list = convert_scalar_to_list("has_device")
+    _convert_has_procedure_to_list = convert_scalar_to_list("has_procedure")
 
 
 class BioticExposure(OrganismTaxon, ExposureEvent):
@@ -2476,11 +1475,7 @@ class BioticExposure(OrganismTaxon, ExposureEvent):
     """
 
     _category: ClassVar[str] = "BioticExposure"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class GeographicExposure(GeographicLocation, ExposureEvent):
@@ -2489,11 +1484,7 @@ class GeographicExposure(GeographicLocation, ExposureEvent):
     """
 
     _category: ClassVar[str] = "GeographicExposure"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class EnvironmentalExposure(EnvironmentalProcess, ExposureEvent):
@@ -2503,11 +1494,7 @@ class EnvironmentalExposure(EnvironmentalProcess, ExposureEvent):
     """
 
     _category: ClassVar[str] = "EnvironmentalExposure"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class BehavioralExposure(Behavior, ExposureEvent):
@@ -2516,11 +1503,7 @@ class BehavioralExposure(Behavior, ExposureEvent):
     """
 
     _category: ClassVar[str] = "BehavioralExposure"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2531,13 +1514,13 @@ class SocioeconomicExposure(Behavior, ExposureEvent):
     """
 
     _category: ClassVar[str] = "SocioeconomicExposure"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category",
-        "has_attribute"
-    ]
-    has_attribute: Union[Union[str, SocioeconomicAttribute], List[Union[str, SocioeconomicAttribute]]] = None
+    _required_attributes: ClassVar[List[str]] = ["id", "category", "has_attribute"]
+    has_attribute: Union[
+        Union[str, SocioeconomicAttribute], List[Union[str, SocioeconomicAttribute]]
+    ] = None
 
+    # Validators
+    _convert_has_attribute_to_list = convert_scalar_to_list("has_attribute")
 
 
 class Outcome:
@@ -2546,8 +1529,6 @@ class Outcome:
     various categories of possible biological or non-biological (e.g. clinical) outcomes.
     """
 
-    pass
-
 
 class PathologicalProcessOutcome(PathologicalProcess, Outcome):
     """
@@ -2555,11 +1536,7 @@ class PathologicalProcessOutcome(PathologicalProcess, Outcome):
     """
 
     _category: ClassVar[str] = "PathologicalProcessOutcome"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class PathologicalAnatomicalOutcome(PathologicalAnatomicalStructure, Outcome):
@@ -2568,11 +1545,7 @@ class PathologicalAnatomicalOutcome(PathologicalAnatomicalStructure, Outcome):
     """
 
     _category: ClassVar[str] = "PathologicalAnatomicalOutcome"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class DiseaseOrPhenotypicFeatureOutcome(DiseaseOrPhenotypicFeature, Outcome):
@@ -2582,11 +1555,7 @@ class DiseaseOrPhenotypicFeatureOutcome(DiseaseOrPhenotypicFeature, Outcome):
     """
 
     _category: ClassVar[str] = "DiseaseOrPhenotypicFeatureOutcome"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class BehavioralOutcome(Behavior, Outcome):
@@ -2595,11 +1564,7 @@ class BehavioralOutcome(Behavior, Outcome):
     """
 
     _category: ClassVar[str] = "BehavioralOutcome"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class HospitalizationOutcome(Hospitalization, Outcome):
@@ -2609,11 +1574,7 @@ class HospitalizationOutcome(Hospitalization, Outcome):
     """
 
     _category: ClassVar[str] = "HospitalizationOutcome"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class MortalityOutcome(Death, Outcome):
@@ -2622,11 +1583,7 @@ class MortalityOutcome(Death, Outcome):
     """
 
     _category: ClassVar[str] = "MortalityOutcome"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class EpidemiologicalOutcome(BiologicalEntity, Outcome):
@@ -2635,11 +1592,7 @@ class EpidemiologicalOutcome(BiologicalEntity, Outcome):
     """
 
     _category: ClassVar[str] = "EpidemiologicalOutcome"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 class SocioeconomicOutcome(Behavior, Outcome):
@@ -2649,11 +1602,7 @@ class SocioeconomicOutcome(Behavior, Outcome):
     """
 
     _category: ClassVar[str] = "SocioeconomicOutcome"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "category"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2663,23 +1612,23 @@ class Association(Entity):
     """
 
     _category: ClassVar[str] = "Association"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "subject",
-        "predicate",
-        "object",
-        "relation"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "subject", "predicate", "object", "relation"]
     subject: Union[Curie, NamedThing] = None
     predicate: Curie = None
     object: Union[Curie, NamedThing] = None
     relation: Curie = None
     negated: Optional[bool] = None
-    qualifiers: Optional[Union[Union[str, OntologyClass], List[Union[str, OntologyClass]]]] = field(default_factory=list)
-    publications: Optional[Union[Union[Curie, Publication], List[Union[Curie, Publication]]]] = field(default_factory=list)
-    type: Optional[str] = None
-    category: Optional[Union[Curie, List[Curie]]] = field(default_factory=list)
+    qualifiers: Optional[Union[Union[str, OntologyClass], List[Union[str, OntologyClass]]]] = field(
+        default_factory=list
+    )
+    publications: Optional[
+        Union[Union[Curie, Publication], List[Union[Curie, Publication]]]
+    ] = field(default_factory=list)
 
+    # Validators
+    _convert_qualifiers_to_list = convert_scalar_to_list("qualifiers")
+    _convert_publications_to_list = convert_scalar_to_list("publications")
+    _convert_category_to_list = convert_scalar_to_list("category")
 
 
 @dataclass(config=PydanticConfig)
@@ -2689,18 +1638,16 @@ class ContributorAssociation(Association):
     """
 
     _category: ClassVar[str] = "ContributorAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "relation",
-        "subject",
-        "predicate",
-        "object"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "relation", "subject", "predicate", "object"]
     subject: Union[Curie, InformationContentEntity] = None
     predicate: Curie = None
     object: Union[Curie, Agent] = None
-    qualifiers: Optional[Union[Union[str, OntologyClass], List[Union[str, OntologyClass]]]] = field(default_factory=list)
+    qualifiers: Optional[Union[Union[str, OntologyClass], List[Union[str, OntologyClass]]]] = field(
+        default_factory=list
+    )
 
+    # Validators
+    _convert_qualifiers_to_list = convert_scalar_to_list("qualifiers")
 
 
 @dataclass(config=PydanticConfig)
@@ -2710,17 +1657,10 @@ class GenotypeToGenotypePartAssociation(Association):
     """
 
     _category: ClassVar[str] = "GenotypeToGenotypePartAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "relation",
-        "predicate",
-        "subject",
-        "object"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "relation", "predicate", "subject", "object"]
     predicate: Curie = None
     subject: Union[Curie, Genotype] = None
     object: Union[Curie, Genotype] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -2731,17 +1671,10 @@ class GenotypeToGeneAssociation(Association):
     """
 
     _category: ClassVar[str] = "GenotypeToGeneAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "relation",
-        "predicate",
-        "subject",
-        "object"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "relation", "predicate", "subject", "object"]
     predicate: Curie = None
     subject: Union[Curie, Genotype] = None
     object: Union[Curie, Gene] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -2751,17 +1684,10 @@ class GenotypeToVariantAssociation(Association):
     """
 
     _category: ClassVar[str] = "GenotypeToVariantAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "relation",
-        "predicate",
-        "subject",
-        "object"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "relation", "predicate", "subject", "object"]
     predicate: Curie = None
     subject: Union[Curie, Genotype] = None
     object: Union[Curie, SequenceVariant] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -2771,16 +1697,9 @@ class GeneToGeneAssociation(Association):
     homology and interaction.
     """
 
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "predicate",
-        "relation",
-        "subject",
-        "object"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "relation", "subject", "object"]
     subject: Union[str, GeneOrGeneProduct] = None
     object: Union[str, GeneOrGeneProduct] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -2791,15 +1710,8 @@ class GeneToGeneHomologyAssociation(GeneToGeneAssociation):
     """
 
     _category: ClassVar[str] = "GeneToGeneHomologyAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "relation",
-        "subject",
-        "object",
-        "predicate"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "relation", "subject", "object", "predicate"]
     predicate: Curie = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -2808,11 +1720,11 @@ class GeneExpressionMixin:
     Observed gene expression intensity, context (site, stage) and associated phenotypic status within which the
     expression occurs.
     """
+
     quantifier_qualifier: Optional[Union[str, OntologyClass]] = None
     expression_site: Optional[Union[Curie, AnatomicalEntity]] = None
     stage_qualifier: Optional[Union[Curie, LifeStage]] = None
     phenotypic_state: Optional[Union[Curie, DiseaseOrPhenotypicFeature]] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -2822,15 +1734,8 @@ class GeneToGeneCoexpressionAssociation(GeneToGeneAssociation, GeneExpressionMix
     """
 
     _category: ClassVar[str] = "GeneToGeneCoexpressionAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "relation",
-        "subject",
-        "object",
-        "predicate"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "relation", "subject", "object", "predicate"]
     predicate: Curie = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -2841,16 +1746,9 @@ class PairwiseGeneToGeneInteraction(GeneToGeneAssociation):
     """
 
     _category: ClassVar[str] = "PairwiseGeneToGeneInteraction"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "subject",
-        "object",
-        "predicate",
-        "relation"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "subject", "object", "predicate", "relation"]
     predicate: Curie = None
     relation: Curie = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -2860,20 +1758,12 @@ class PairwiseMolecularInteraction(PairwiseGeneToGeneInteraction):
     """
 
     _category: ClassVar[str] = "PairwiseMolecularInteraction"
-    _required_attributes: ClassVar[List[str]] = [
-        "subject",
-        "id",
-        "predicate",
-        "relation",
-        "object"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["subject", "id", "predicate", "relation", "object"]
     subject: Union[Curie, MolecularEntity] = None
-    id: Curie = None
     predicate: Curie = None
     relation: Curie = None
     object: Union[Curie, MolecularEntity] = None
     interacting_molecules_category: Optional[Union[str, OntologyClass]] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -2882,11 +1772,8 @@ class CellLineToEntityAssociationMixin:
     An relationship between a cell line and another entity
     """
 
-    _required_attributes: ClassVar[List[str]] = [
-        "subject"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["subject"]
     subject: Union[Curie, CellLine] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -2895,11 +1782,8 @@ class MolecularEntityToEntityAssociationMixin:
     An interaction between a molecular entity and another entity
     """
 
-    _required_attributes: ClassVar[List[str]] = [
-        "subject"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["subject"]
     subject: Union[Curie, MolecularEntity] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -2908,11 +1792,8 @@ class DrugToEntityAssociationMixin(MolecularEntityToEntityAssociationMixin):
     An interaction between a drug and another entity
     """
 
-    _required_attributes: ClassVar[List[str]] = [
-        "subject"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["subject"]
     subject: Union[Curie, Drug] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -2921,11 +1802,8 @@ class ChemicalToEntityAssociationMixin(MolecularEntityToEntityAssociationMixin):
     An interaction between a chemical entity and another entity
     """
 
-    _required_attributes: ClassVar[List[str]] = [
-        "subject"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["subject"]
     subject: Union[Curie, ChemicalSubstance] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -2934,11 +1812,8 @@ class CaseToEntityAssociationMixin:
     An abstract association for use where the case is the subject
     """
 
-    _required_attributes: ClassVar[List[str]] = [
-        "subject"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["subject"]
     subject: Union[Curie, Case] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -2949,15 +1824,8 @@ class ChemicalToChemicalAssociation(Association, ChemicalToEntityAssociationMixi
     """
 
     _category: ClassVar[str] = "ChemicalToChemicalAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "subject",
-        "predicate",
-        "relation",
-        "object"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "subject", "predicate", "relation", "object"]
     object: Union[Curie, ChemicalSubstance] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -2975,18 +1843,16 @@ class ChemicalToChemicalDerivationAssociation(ChemicalToChemicalAssociation):
     """
 
     _category: ClassVar[str] = "ChemicalToChemicalDerivationAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "relation",
-        "subject",
-        "object",
-        "predicate"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "relation", "subject", "object", "predicate"]
     subject: Union[Curie, ChemicalSubstance] = None
     object: Union[Curie, ChemicalSubstance] = None
     predicate: Curie = None
-    catalyst_qualifier: Optional[Union[Union[str, MacromolecularMachineMixin], List[Union[str, MacromolecularMachineMixin]]]] = field(default_factory=list)
+    catalyst_qualifier: Optional[
+        Union[Union[str, MacromolecularMachineMixin], List[Union[str, MacromolecularMachineMixin]]]
+    ] = field(default_factory=list)
 
+    # Validators
+    _convert_catalyst_qualifier_to_list = convert_scalar_to_list("catalyst_qualifier")
 
 
 @dataclass(config=PydanticConfig)
@@ -2996,15 +1862,8 @@ class ChemicalToPathwayAssociation(Association, ChemicalToEntityAssociationMixin
     """
 
     _category: ClassVar[str] = "ChemicalToPathwayAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "subject",
-        "predicate",
-        "relation",
-        "object"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "subject", "predicate", "relation", "object"]
     object: Union[Curie, Pathway] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -3014,15 +1873,8 @@ class ChemicalToGeneAssociation(Association, ChemicalToEntityAssociationMixin):
     """
 
     _category: ClassVar[str] = "ChemicalToGeneAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "subject",
-        "predicate",
-        "relation",
-        "object"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "subject", "predicate", "relation", "object"]
     object: Union[str, GeneOrGeneProduct] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -3032,15 +1884,8 @@ class DrugToGeneAssociation(Association, DrugToEntityAssociationMixin):
     """
 
     _category: ClassVar[str] = "DrugToGeneAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "subject",
-        "predicate",
-        "relation",
-        "object"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "subject", "predicate", "relation", "object"]
     object: Union[str, GeneOrGeneProduct] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -3049,11 +1894,8 @@ class MaterialSampleToEntityAssociationMixin:
     An association between a material sample and something.
     """
 
-    _required_attributes: ClassVar[List[str]] = [
-        "subject"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["subject"]
     subject: Union[Curie, MaterialSample] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -3063,27 +1905,17 @@ class MaterialSampleDerivationAssociation(Association):
     """
 
     _category: ClassVar[str] = "MaterialSampleDerivationAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "relation",
-        "subject",
-        "object",
-        "predicate"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "relation", "subject", "object", "predicate"]
     subject: Union[Curie, MaterialSample] = None
     object: Union[Curie, NamedThing] = None
     predicate: Curie = None
 
 
-
 @dataclass(config=PydanticConfig)
 class DiseaseToEntityAssociationMixin:
 
-    _required_attributes: ClassVar[List[str]] = [
-        "subject"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["subject"]
     subject: Union[Curie, Disease] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -3092,27 +1924,19 @@ class EntityToExposureEventAssociationMixin:
     An association between some entity and an exposure event.
     """
 
-    _required_attributes: ClassVar[List[str]] = [
-        "object"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["object"]
     object: Union[str, ExposureEvent] = None
 
 
-
-class DiseaseToExposureEventAssociation(Association, DiseaseToEntityAssociationMixin, EntityToExposureEventAssociationMixin):
+class DiseaseToExposureEventAssociation(
+    Association, DiseaseToEntityAssociationMixin, EntityToExposureEventAssociationMixin
+):
     """
     An association between an exposure event and a disease.
     """
 
     _category: ClassVar[str] = "DiseaseToExposureEventAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "subject",
-        "predicate",
-        "object",
-        "relation"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "subject", "predicate", "object", "relation"]
 
 
 @dataclass(config=PydanticConfig)
@@ -3121,11 +1945,8 @@ class ExposureEventToEntityAssociationMixin:
     An association between some exposure event and some entity.
     """
 
-    _required_attributes: ClassVar[List[str]] = [
-        "subject"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["subject"]
     subject: Union[str, ExposureEvent] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -3134,30 +1955,22 @@ class EntityToOutcomeAssociationMixin:
     An association between some entity and an outcome
     """
 
-    _required_attributes: ClassVar[List[str]] = [
-        "object"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["object"]
     object: Union[str, Outcome] = None
 
 
-
 @dataclass(config=PydanticConfig)
-class ExposureEventToOutcomeAssociation(Association, ExposureEventToEntityAssociationMixin, EntityToOutcomeAssociationMixin):
+class ExposureEventToOutcomeAssociation(
+    Association, ExposureEventToEntityAssociationMixin, EntityToOutcomeAssociationMixin
+):
     """
     An association between an exposure event and an outcome.
     """
 
     _category: ClassVar[str] = "ExposureEventToOutcomeAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "subject",
-        "predicate",
-        "object",
-        "relation"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "subject", "predicate", "object", "relation"]
     has_population_context: Optional[Union[Curie, PopulationOfIndividualOrganisms]] = None
     has_temporal_context: Optional[Union[str, TimeType]] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -3165,8 +1978,8 @@ class FrequencyQualifierMixin:
     """
     Qualifier for frequency type associations
     """
-    frequency_qualifier: Optional[Union[str, FrequencyValue]] = None
 
+    frequency_qualifier: Optional[Union[str, FrequencyValue]] = None
 
 
 @dataclass(config=PydanticConfig)
@@ -3174,21 +1987,18 @@ class EntityToFeatureOrDiseaseQualifiersMixin(FrequencyQualifierMixin):
     """
     Qualifiers for entity to disease or phenotype associations.
     """
+
     severity_qualifier: Optional[Union[str, SeverityValue]] = None
     onset_qualifier: Optional[Union[str, Onset]] = None
-
 
 
 @dataclass(config=PydanticConfig)
 class EntityToPhenotypicFeatureAssociationMixin(EntityToFeatureOrDiseaseQualifiersMixin):
 
-    _required_attributes: ClassVar[List[str]] = [
-        "object"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["object"]
     object: Union[Curie, PhenotypicFeature] = None
     sex_qualifier: Optional[Union[str, BiologicalSex]] = None
     description: Optional[Union[str, NarrativeText]] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -3197,272 +2007,200 @@ class EntityToDiseaseAssociationMixin(EntityToFeatureOrDiseaseQualifiersMixin):
     mixin class for any association whose object (target node) is a disease
     """
 
-    _required_attributes: ClassVar[List[str]] = [
-        "object"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["object"]
     object: Union[Curie, Disease] = None
-
 
 
 @dataclass(config=PydanticConfig)
 class DiseaseOrPhenotypicFeatureToEntityAssociationMixin:
 
-    _required_attributes: ClassVar[List[str]] = [
-        "subject"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["subject"]
     subject: Union[Curie, DiseaseOrPhenotypicFeature] = None
 
 
-
 @dataclass(config=PydanticConfig)
-class DiseaseOrPhenotypicFeatureAssociationToLocationAssociation(Association, DiseaseOrPhenotypicFeatureToEntityAssociationMixin):
+class DiseaseOrPhenotypicFeatureAssociationToLocationAssociation(
+    Association, DiseaseOrPhenotypicFeatureToEntityAssociationMixin
+):
 
     _category: ClassVar[str] = "DiseaseOrPhenotypicFeatureAssociationToLocationAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "subject",
-        "predicate",
-        "relation",
-        "object"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "subject", "predicate", "relation", "object"]
     object: Union[Curie, AnatomicalEntity] = None
 
 
-
 @dataclass(config=PydanticConfig)
-class DiseaseOrPhenotypicFeatureToLocationAssociation(Association, DiseaseOrPhenotypicFeatureToEntityAssociationMixin):
+class DiseaseOrPhenotypicFeatureToLocationAssociation(
+    Association, DiseaseOrPhenotypicFeatureToEntityAssociationMixin
+):
     """
     An association between either a disease or a phenotypic feature and an anatomical entity, where the
     disease/feature manifests in that site.
     """
 
     _category: ClassVar[str] = "DiseaseOrPhenotypicFeatureToLocationAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "subject",
-        "predicate",
-        "relation",
-        "object"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "subject", "predicate", "relation", "object"]
     object: Union[Curie, AnatomicalEntity] = None
-
 
 
 @dataclass(config=PydanticConfig)
 class EntityToDiseaseOrPhenotypicFeatureAssociationMixin:
 
-    _required_attributes: ClassVar[List[str]] = [
-        "object"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["object"]
     object: Union[Curie, DiseaseOrPhenotypicFeature] = None
 
 
-
 @dataclass(config=PydanticConfig)
-class CellLineToDiseaseOrPhenotypicFeatureAssociation(Association, CellLineToEntityAssociationMixin, EntityToDiseaseOrPhenotypicFeatureAssociationMixin):
+class CellLineToDiseaseOrPhenotypicFeatureAssociation(
+    Association,
+    CellLineToEntityAssociationMixin,
+    EntityToDiseaseOrPhenotypicFeatureAssociationMixin,
+):
     """
     An relationship between a cell line and a disease or a phenotype, where the cell line is derived from an
     individual with that disease or phenotype.
     """
 
     _category: ClassVar[str] = "CellLineToDiseaseOrPhenotypicFeatureAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "predicate",
-        "object",
-        "relation",
-        "subject"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "object", "relation", "subject"]
     subject: Union[Curie, DiseaseOrPhenotypicFeature] = None
 
 
-
 @dataclass(config=PydanticConfig)
-class ChemicalToDiseaseOrPhenotypicFeatureAssociation(Association, ChemicalToEntityAssociationMixin, EntityToDiseaseOrPhenotypicFeatureAssociationMixin):
+class ChemicalToDiseaseOrPhenotypicFeatureAssociation(
+    Association,
+    ChemicalToEntityAssociationMixin,
+    EntityToDiseaseOrPhenotypicFeatureAssociationMixin,
+):
     """
     An interaction between a chemical entity and a phenotype or disease, where the presence of the chemical gives rise
     to or exacerbates the phenotype.
     """
 
     _category: ClassVar[str] = "ChemicalToDiseaseOrPhenotypicFeatureAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "subject",
-        "predicate",
-        "relation",
-        "object"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "subject", "predicate", "relation", "object"]
     object: Union[Curie, DiseaseOrPhenotypicFeature] = None
 
 
-
-class MaterialSampleToDiseaseOrPhenotypicFeatureAssociation(Association, MaterialSampleToEntityAssociationMixin, EntityToDiseaseOrPhenotypicFeatureAssociationMixin):
+class MaterialSampleToDiseaseOrPhenotypicFeatureAssociation(
+    Association,
+    MaterialSampleToEntityAssociationMixin,
+    EntityToDiseaseOrPhenotypicFeatureAssociationMixin,
+):
     """
     An association between a material sample and a disease or phenotype.
     """
 
     _category: ClassVar[str] = "MaterialSampleToDiseaseOrPhenotypicFeatureAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "subject",
-        "predicate",
-        "object",
-        "relation"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "subject", "predicate", "object", "relation"]
 
 
 @dataclass(config=PydanticConfig)
 class GenotypeToEntityAssociationMixin:
 
-    _required_attributes: ClassVar[List[str]] = [
-        "subject"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["subject"]
     subject: Union[Curie, Genotype] = None
 
 
-
 @dataclass(config=PydanticConfig)
-class GenotypeToPhenotypicFeatureAssociation(Association, EntityToPhenotypicFeatureAssociationMixin, GenotypeToEntityAssociationMixin):
+class GenotypeToPhenotypicFeatureAssociation(
+    Association, EntityToPhenotypicFeatureAssociationMixin, GenotypeToEntityAssociationMixin
+):
     """
     Any association between one genotype and a phenotypic feature, where having the genotype confers the phenotype,
     either in isolation or through environment
     """
 
     _category: ClassVar[str] = "GenotypeToPhenotypicFeatureAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "object",
-        "relation",
-        "predicate",
-        "subject"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "object", "relation", "predicate", "subject"]
     predicate: Curie = None
     subject: Union[Curie, Genotype] = None
 
 
-
 @dataclass(config=PydanticConfig)
-class ExposureEventToPhenotypicFeatureAssociation(Association, EntityToPhenotypicFeatureAssociationMixin):
+class ExposureEventToPhenotypicFeatureAssociation(
+    Association, EntityToPhenotypicFeatureAssociationMixin
+):
     """
     Any association between an environment and a phenotypic feature, where being in the environment influences the
     phenotype.
     """
 
     _category: ClassVar[str] = "ExposureEventToPhenotypicFeatureAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "predicate",
-        "object",
-        "relation",
-        "subject"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "object", "relation", "subject"]
     subject: Union[str, ExposureEvent] = None
 
 
-
-class DiseaseToPhenotypicFeatureAssociation(Association, EntityToPhenotypicFeatureAssociationMixin, DiseaseToEntityAssociationMixin):
+class DiseaseToPhenotypicFeatureAssociation(
+    Association, EntityToPhenotypicFeatureAssociationMixin, DiseaseToEntityAssociationMixin
+):
     """
     An association between a disease and a phenotypic feature in which the phenotypic feature is associated with the
     disease in some way.
     """
 
     _category: ClassVar[str] = "DiseaseToPhenotypicFeatureAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "subject",
-        "predicate",
-        "object",
-        "relation"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "subject", "predicate", "object", "relation"]
 
 
-
-class CaseToPhenotypicFeatureAssociation(Association, EntityToPhenotypicFeatureAssociationMixin, CaseToEntityAssociationMixin):
+class CaseToPhenotypicFeatureAssociation(
+    Association, EntityToPhenotypicFeatureAssociationMixin, CaseToEntityAssociationMixin
+):
     """
     An association between a case (e.g. individual patient) and a phenotypic feature in which the individual has or
     has had the phenotype.
     """
 
     _category: ClassVar[str] = "CaseToPhenotypicFeatureAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "subject",
-        "predicate",
-        "object",
-        "relation"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "subject", "predicate", "object", "relation"]
 
 
 @dataclass(config=PydanticConfig)
-class BehaviorToBehavioralFeatureAssociation(Association, EntityToPhenotypicFeatureAssociationMixin):
+class BehaviorToBehavioralFeatureAssociation(
+    Association, EntityToPhenotypicFeatureAssociationMixin
+):
     """
     An association between an aggregate behavior and a behavioral feature manifested by the individual exhibited or
     has exhibited the behavior.
     """
 
     _category: ClassVar[str] = "BehaviorToBehavioralFeatureAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "predicate",
-        "relation",
-        "subject",
-        "object"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "relation", "subject", "object"]
     subject: Union[Curie, Behavior] = None
     object: Union[Curie, BehavioralFeature] = None
-
 
 
 @dataclass(config=PydanticConfig)
 class GeneToEntityAssociationMixin:
 
-    _required_attributes: ClassVar[List[str]] = [
-        "subject"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["subject"]
     subject: Union[str, GeneOrGeneProduct] = None
-
 
 
 @dataclass(config=PydanticConfig)
 class VariantToEntityAssociationMixin:
 
-    _required_attributes: ClassVar[List[str]] = [
-        "subject"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["subject"]
     subject: Union[Curie, SequenceVariant] = None
 
 
-
 @dataclass(config=PydanticConfig)
-class GeneToPhenotypicFeatureAssociation(Association, EntityToPhenotypicFeatureAssociationMixin, GeneToEntityAssociationMixin):
+class GeneToPhenotypicFeatureAssociation(
+    Association, EntityToPhenotypicFeatureAssociationMixin, GeneToEntityAssociationMixin
+):
 
     _category: ClassVar[str] = "GeneToPhenotypicFeatureAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "predicate",
-        "object",
-        "relation",
-        "subject"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "object", "relation", "subject"]
     subject: Union[str, GeneOrGeneProduct] = None
-
 
 
 @dataclass(config=PydanticConfig)
-class GeneToDiseaseAssociation(Association, EntityToDiseaseAssociationMixin, GeneToEntityAssociationMixin):
+class GeneToDiseaseAssociation(
+    Association, EntityToDiseaseAssociationMixin, GeneToEntityAssociationMixin
+):
 
     _category: ClassVar[str] = "GeneToDiseaseAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "predicate",
-        "object",
-        "relation",
-        "subject"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "object", "relation", "subject"]
     subject: Union[str, GeneOrGeneProduct] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -3473,16 +2211,9 @@ class VariantToGeneAssociation(Association, VariantToEntityAssociationMixin):
     """
 
     _category: ClassVar[str] = "VariantToGeneAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "subject",
-        "relation",
-        "object",
-        "predicate"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "subject", "relation", "object", "predicate"]
     object: Union[Curie, Gene] = None
     predicate: Curie = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -3492,37 +2223,25 @@ class VariantToGeneExpressionAssociation(VariantToGeneAssociation, GeneExpressio
     """
 
     _category: ClassVar[str] = "VariantToGeneExpressionAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "subject",
-        "relation",
-        "object",
-        "predicate"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "subject", "relation", "object", "predicate"]
     predicate: Curie = None
 
 
-
 @dataclass(config=PydanticConfig)
-class VariantToPopulationAssociation(Association, VariantToEntityAssociationMixin, FrequencyQuantifier, FrequencyQualifierMixin):
+class VariantToPopulationAssociation(
+    Association, VariantToEntityAssociationMixin, FrequencyQuantifier, FrequencyQualifierMixin
+):
     """
     An association between a variant and a population, where the variant has particular frequency in the population
     """
 
     _category: ClassVar[str] = "VariantToPopulationAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "predicate",
-        "relation",
-        "subject",
-        "object"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "relation", "subject", "object"]
     subject: Union[Curie, SequenceVariant] = None
     object: Union[Curie, PopulationOfIndividualOrganisms] = None
     has_quotient: Optional[float] = None
     has_count: Optional[int] = None
     has_total: Optional[int] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -3532,66 +2251,44 @@ class PopulationToPopulationAssociation(Association):
     """
 
     _category: ClassVar[str] = "PopulationToPopulationAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "relation",
-        "subject",
-        "object",
-        "predicate"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "relation", "subject", "object", "predicate"]
     subject: Union[Curie, PopulationOfIndividualOrganisms] = None
     object: Union[Curie, PopulationOfIndividualOrganisms] = None
     predicate: Curie = None
 
 
-
 @dataclass(config=PydanticConfig)
-class VariantToPhenotypicFeatureAssociation(Association, VariantToEntityAssociationMixin, EntityToPhenotypicFeatureAssociationMixin):
+class VariantToPhenotypicFeatureAssociation(
+    Association, VariantToEntityAssociationMixin, EntityToPhenotypicFeatureAssociationMixin
+):
 
     _category: ClassVar[str] = "VariantToPhenotypicFeatureAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "predicate",
-        "object",
-        "relation",
-        "subject"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "object", "relation", "subject"]
     subject: Union[Curie, SequenceVariant] = None
 
 
-
 @dataclass(config=PydanticConfig)
-class VariantToDiseaseAssociation(Association, VariantToEntityAssociationMixin, EntityToDiseaseAssociationMixin):
+class VariantToDiseaseAssociation(
+    Association, VariantToEntityAssociationMixin, EntityToDiseaseAssociationMixin
+):
 
     _category: ClassVar[str] = "VariantToDiseaseAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "relation",
-        "subject",
-        "predicate",
-        "object"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "relation", "subject", "predicate", "object"]
     subject: Union[Curie, NamedThing] = None
     predicate: Curie = None
     object: Union[Curie, NamedThing] = None
-
 
 
 @dataclass(config=PydanticConfig)
-class GenotypeToDiseaseAssociation(Association, GenotypeToEntityAssociationMixin, EntityToDiseaseAssociationMixin):
+class GenotypeToDiseaseAssociation(
+    Association, GenotypeToEntityAssociationMixin, EntityToDiseaseAssociationMixin
+):
 
     _category: ClassVar[str] = "GenotypeToDiseaseAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "relation",
-        "subject",
-        "predicate",
-        "object"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "relation", "subject", "predicate", "object"]
     subject: Union[Curie, NamedThing] = None
     predicate: Curie = None
     object: Union[Curie, NamedThing] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -3602,104 +2299,70 @@ class ModelToDiseaseAssociationMixin:
     patient carrying the disease
     """
 
-    _required_attributes: ClassVar[List[str]] = [
-        "subject",
-        "predicate"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["subject", "predicate"]
     subject: Union[Curie, NamedThing] = None
     predicate: Curie = None
 
 
-
 @dataclass(config=PydanticConfig)
-class GeneAsAModelOfDiseaseAssociation(GeneToDiseaseAssociation, ModelToDiseaseAssociationMixin, EntityToDiseaseAssociationMixin):
+class GeneAsAModelOfDiseaseAssociation(
+    GeneToDiseaseAssociation, ModelToDiseaseAssociationMixin, EntityToDiseaseAssociationMixin
+):
 
     _category: ClassVar[str] = "GeneAsAModelOfDiseaseAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "predicate",
-        "object",
-        "relation",
-        "subject"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "object", "relation", "subject"]
     subject: Union[str, GeneOrGeneProduct] = None
 
 
-
 @dataclass(config=PydanticConfig)
-class VariantAsAModelOfDiseaseAssociation(VariantToDiseaseAssociation, ModelToDiseaseAssociationMixin, EntityToDiseaseAssociationMixin):
+class VariantAsAModelOfDiseaseAssociation(
+    VariantToDiseaseAssociation, ModelToDiseaseAssociationMixin, EntityToDiseaseAssociationMixin
+):
 
     _category: ClassVar[str] = "VariantAsAModelOfDiseaseAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "relation",
-        "predicate",
-        "object",
-        "subject"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "relation", "predicate", "object", "subject"]
     subject: Union[Curie, SequenceVariant] = None
 
 
-
 @dataclass(config=PydanticConfig)
-class GenotypeAsAModelOfDiseaseAssociation(GenotypeToDiseaseAssociation, ModelToDiseaseAssociationMixin, EntityToDiseaseAssociationMixin):
+class GenotypeAsAModelOfDiseaseAssociation(
+    GenotypeToDiseaseAssociation, ModelToDiseaseAssociationMixin, EntityToDiseaseAssociationMixin
+):
 
     _category: ClassVar[str] = "GenotypeAsAModelOfDiseaseAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "relation",
-        "predicate",
-        "object",
-        "subject"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "relation", "predicate", "object", "subject"]
     subject: Union[Curie, Genotype] = None
 
 
-
 @dataclass(config=PydanticConfig)
-class CellLineAsAModelOfDiseaseAssociation(CellLineToDiseaseOrPhenotypicFeatureAssociation, ModelToDiseaseAssociationMixin, EntityToDiseaseAssociationMixin):
+class CellLineAsAModelOfDiseaseAssociation(
+    CellLineToDiseaseOrPhenotypicFeatureAssociation,
+    ModelToDiseaseAssociationMixin,
+    EntityToDiseaseAssociationMixin,
+):
 
     _category: ClassVar[str] = "CellLineAsAModelOfDiseaseAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "predicate",
-        "object",
-        "relation",
-        "subject"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "object", "relation", "subject"]
     subject: Union[Curie, CellLine] = None
 
 
-
 @dataclass(config=PydanticConfig)
-class OrganismalEntityAsAModelOfDiseaseAssociation(Association, ModelToDiseaseAssociationMixin, EntityToDiseaseAssociationMixin):
+class OrganismalEntityAsAModelOfDiseaseAssociation(
+    Association, ModelToDiseaseAssociationMixin, EntityToDiseaseAssociationMixin
+):
 
     _category: ClassVar[str] = "OrganismalEntityAsAModelOfDiseaseAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "predicate",
-        "object",
-        "relation",
-        "subject"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "object", "relation", "subject"]
     subject: Union[Curie, OrganismalEntity] = None
-
 
 
 @dataclass(config=PydanticConfig)
 class GeneHasVariantThatContributesToDiseaseAssociation(GeneToDiseaseAssociation):
 
     _category: ClassVar[str] = "GeneHasVariantThatContributesToDiseaseAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "predicate",
-        "object",
-        "relation",
-        "subject"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "object", "relation", "subject"]
     subject: Union[str, GeneOrGeneProduct] = None
     sequence_variant_qualifier: Optional[Union[Curie, SequenceVariant]] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -3709,19 +2372,12 @@ class GeneToExpressionSiteAssociation(Association):
     """
 
     _category: ClassVar[str] = "GeneToExpressionSiteAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "relation",
-        "subject",
-        "object",
-        "predicate"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "relation", "subject", "object", "predicate"]
     subject: Union[str, GeneOrGeneProduct] = None
     object: Union[Curie, AnatomicalEntity] = None
     predicate: Curie = None
     stage_qualifier: Optional[Union[Curie, LifeStage]] = None
     quantifier_qualifier: Optional[Union[str, OntologyClass]] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -3731,16 +2387,9 @@ class SequenceVariantModulatesTreatmentAssociation(Association):
     encompasses both the disease and the drug used.
     """
 
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "predicate",
-        "relation",
-        "subject",
-        "object"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "relation", "subject", "object"]
     subject: Union[Curie, SequenceVariant] = None
     object: Union[Curie, Treatment] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -3751,16 +2400,9 @@ class FunctionalAssociation(Association):
     """
 
     _category: ClassVar[str] = "FunctionalAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "predicate",
-        "relation",
-        "subject",
-        "object"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "relation", "subject", "object"]
     subject: Union[str, MacromolecularMachineMixin] = None
     object: Union[str, GeneOntologyClass] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -3769,15 +2411,14 @@ class MacromolecularMachineToEntityAssociationMixin:
     an association which has a macromolecular machine mixin as a subject
     """
 
-    _required_attributes: ClassVar[List[str]] = [
-        "subject"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["subject"]
     subject: Union[Curie, NamedThing] = None
 
 
-
 @dataclass(config=PydanticConfig)
-class MacromolecularMachineToMolecularActivityAssociation(FunctionalAssociation, MacromolecularMachineToEntityAssociationMixin):
+class MacromolecularMachineToMolecularActivityAssociation(
+    FunctionalAssociation, MacromolecularMachineToEntityAssociationMixin
+):
     """
     A functional association between a macromolecular machine (gene, gene product or complex) and a molecular activity
     (as represented in the GO molecular function branch), where the entity carries out the activity, or contributes to
@@ -3785,19 +2426,14 @@ class MacromolecularMachineToMolecularActivityAssociation(FunctionalAssociation,
     """
 
     _category: ClassVar[str] = "MacromolecularMachineToMolecularActivityAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "predicate",
-        "relation",
-        "subject",
-        "object"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "relation", "subject", "object"]
     object: Union[Curie, MolecularActivity] = None
 
 
-
 @dataclass(config=PydanticConfig)
-class MacromolecularMachineToBiologicalProcessAssociation(FunctionalAssociation, MacromolecularMachineToEntityAssociationMixin):
+class MacromolecularMachineToBiologicalProcessAssociation(
+    FunctionalAssociation, MacromolecularMachineToEntityAssociationMixin
+):
     """
     A functional association between a macromolecular machine (gene, gene product or complex) and a biological process
     or pathway (as represented in the GO biological process branch), where the entity carries out some part of the
@@ -3805,19 +2441,14 @@ class MacromolecularMachineToBiologicalProcessAssociation(FunctionalAssociation,
     """
 
     _category: ClassVar[str] = "MacromolecularMachineToBiologicalProcessAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "predicate",
-        "relation",
-        "subject",
-        "object"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "relation", "subject", "object"]
     object: Union[Curie, BiologicalProcess] = None
 
 
-
 @dataclass(config=PydanticConfig)
-class MacromolecularMachineToCellularComponentAssociation(FunctionalAssociation, MacromolecularMachineToEntityAssociationMixin):
+class MacromolecularMachineToCellularComponentAssociation(
+    FunctionalAssociation, MacromolecularMachineToEntityAssociationMixin
+):
     """
     A functional association between a macromolecular machine (gene, gene product or complex) and a cellular component
     (as represented in the GO cellular component branch), where the entity carries out its function in the cellular
@@ -3825,31 +2456,17 @@ class MacromolecularMachineToCellularComponentAssociation(FunctionalAssociation,
     """
 
     _category: ClassVar[str] = "MacromolecularMachineToCellularComponentAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "predicate",
-        "relation",
-        "subject",
-        "object"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "relation", "subject", "object"]
     object: Union[Curie, CellularComponent] = None
-
 
 
 @dataclass(config=PydanticConfig)
 class GeneToGoTermAssociation(FunctionalAssociation):
 
     _category: ClassVar[str] = "GeneToGoTermAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "predicate",
-        "relation",
-        "subject",
-        "object"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "relation", "subject", "object"]
     subject: Union[Curie, MolecularEntity] = None
     object: Union[str, GeneOntologyClass] = None
-
 
 
 class SequenceAssociation(Association):
@@ -3858,14 +2475,7 @@ class SequenceAssociation(Association):
     """
 
     _category: ClassVar[str] = "SequenceAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "subject",
-        "predicate",
-        "object",
-        "relation"
-    ]
-
+    _required_attributes: ClassVar[List[str]] = ["id", "subject", "predicate", "object", "relation"]
 
 
 @dataclass(config=PydanticConfig)
@@ -3876,13 +2486,7 @@ class GenomicSequenceLocalization(SequenceAssociation):
     """
 
     _category: ClassVar[str] = "GenomicSequenceLocalization"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "relation",
-        "subject",
-        "object",
-        "predicate"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "relation", "subject", "object", "predicate"]
     subject: Union[Curie, GenomicEntity] = None
     object: Union[Curie, GenomicEntity] = None
     predicate: Curie = None
@@ -3893,7 +2497,6 @@ class GenomicSequenceLocalization(SequenceAssociation):
     phase: Optional[str] = None
 
 
-
 @dataclass(config=PydanticConfig)
 class SequenceFeatureRelationship(Association):
     """
@@ -3901,16 +2504,9 @@ class SequenceFeatureRelationship(Association):
     """
 
     _category: ClassVar[str] = "SequenceFeatureRelationship"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "predicate",
-        "relation",
-        "subject",
-        "object"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "relation", "subject", "object"]
     subject: Union[Curie, GenomicEntity] = None
     object: Union[Curie, GenomicEntity] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -3920,16 +2516,9 @@ class TranscriptToGeneRelationship(SequenceFeatureRelationship):
     """
 
     _category: ClassVar[str] = "TranscriptToGeneRelationship"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "predicate",
-        "relation",
-        "subject",
-        "object"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "relation", "subject", "object"]
     subject: Union[Curie, Transcript] = None
     object: Union[Curie, Gene] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -3939,17 +2528,10 @@ class GeneToGeneProductRelationship(SequenceFeatureRelationship):
     """
 
     _category: ClassVar[str] = "GeneToGeneProductRelationship"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "relation",
-        "subject",
-        "object",
-        "predicate"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "relation", "subject", "object", "predicate"]
     subject: Union[Curie, Gene] = None
     object: Union[str, GeneProductMixin] = None
     predicate: Curie = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -3959,16 +2541,9 @@ class ExonToTranscriptRelationship(SequenceFeatureRelationship):
     """
 
     _category: ClassVar[str] = "ExonToTranscriptRelationship"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "predicate",
-        "relation",
-        "subject",
-        "object"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "relation", "subject", "object"]
     subject: Union[Curie, Exon] = None
     object: Union[Curie, Transcript] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -3978,36 +2553,24 @@ class GeneRegulatoryRelationship(Association):
     """
 
     _category: ClassVar[str] = "GeneRegulatoryRelationship"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "relation",
-        "predicate",
-        "subject",
-        "object"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "relation", "predicate", "subject", "object"]
     predicate: Curie = None
     subject: Union[str, GeneOrGeneProduct] = None
     object: Union[str, GeneOrGeneProduct] = None
 
 
-
 @dataclass(config=PydanticConfig)
 class AnatomicalEntityToAnatomicalEntityAssociation(Association):
 
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "predicate",
-        "relation",
-        "subject",
-        "object"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "relation", "subject", "object"]
     subject: Union[Curie, AnatomicalEntity] = None
     object: Union[Curie, AnatomicalEntity] = None
 
 
-
 @dataclass(config=PydanticConfig)
-class AnatomicalEntityToAnatomicalEntityPartOfAssociation(AnatomicalEntityToAnatomicalEntityAssociation):
+class AnatomicalEntityToAnatomicalEntityPartOfAssociation(
+    AnatomicalEntityToAnatomicalEntityAssociation
+):
     """
     A relationship between two anatomical entities where the relationship is mereological, i.e the two entities are
     related by parthood. This includes relationships between cellular components and cells, between cells and tissues,
@@ -4015,21 +2578,16 @@ class AnatomicalEntityToAnatomicalEntityPartOfAssociation(AnatomicalEntityToAnat
     """
 
     _category: ClassVar[str] = "AnatomicalEntityToAnatomicalEntityPartOfAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "relation",
-        "subject",
-        "object",
-        "predicate"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "relation", "subject", "object", "predicate"]
     subject: Union[Curie, AnatomicalEntity] = None
     object: Union[Curie, AnatomicalEntity] = None
     predicate: Curie = None
 
 
-
 @dataclass(config=PydanticConfig)
-class AnatomicalEntityToAnatomicalEntityOntogenicAssociation(AnatomicalEntityToAnatomicalEntityAssociation):
+class AnatomicalEntityToAnatomicalEntityOntogenicAssociation(
+    AnatomicalEntityToAnatomicalEntityAssociation
+):
     """
     A relationship between two anatomical entities where the relationship is ontogenic, i.e. the two entities are
     related by development. A number of different relationship types can be used to specify the precise nature of the
@@ -4037,17 +2595,10 @@ class AnatomicalEntityToAnatomicalEntityOntogenicAssociation(AnatomicalEntityToA
     """
 
     _category: ClassVar[str] = "AnatomicalEntityToAnatomicalEntityOntogenicAssociation"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "relation",
-        "subject",
-        "object",
-        "predicate"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "relation", "subject", "object", "predicate"]
     subject: Union[Curie, AnatomicalEntity] = None
     object: Union[Curie, AnatomicalEntity] = None
     predicate: Curie = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -4056,11 +2607,8 @@ class OrganismTaxonToEntityAssociation:
     An association between an organism taxon and another entity
     """
 
-    _required_attributes: ClassVar[List[str]] = [
-        "subject"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["subject"]
     subject: Union[Curie, OrganismTaxon] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -4069,16 +2617,9 @@ class OrganismTaxonToOrganismTaxonAssociation(Association, OrganismTaxonToEntity
     A relationship between two organism taxon nodes
     """
 
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "predicate",
-        "relation",
-        "subject",
-        "object"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "relation", "subject", "object"]
     subject: Union[Curie, OrganismTaxon] = None
     object: Union[Curie, OrganismTaxon] = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -4088,17 +2629,10 @@ class OrganismTaxonToOrganismTaxonSpecialization(OrganismTaxonToOrganismTaxonAss
     """
 
     _category: ClassVar[str] = "OrganismTaxonToOrganismTaxonSpecialization"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "relation",
-        "subject",
-        "object",
-        "predicate"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "relation", "subject", "object", "predicate"]
     subject: Union[Curie, OrganismTaxon] = None
     object: Union[Curie, OrganismTaxon] = None
     predicate: Curie = None
-
 
 
 @dataclass(config=PydanticConfig)
@@ -4110,37 +2644,20 @@ class OrganismTaxonToOrganismTaxonInteraction(OrganismTaxonToOrganismTaxonAssoci
     """
 
     _category: ClassVar[str] = "OrganismTaxonToOrganismTaxonInteraction"
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "relation",
-        "subject",
-        "object",
-        "predicate"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "relation", "subject", "object", "predicate"]
     subject: Union[Curie, OrganismTaxon] = None
     object: Union[Curie, OrganismTaxon] = None
     predicate: Curie = None
     associated_environmental_context: Optional[str] = None
 
 
-
 @dataclass(config=PydanticConfig)
 class OrganismTaxonToEnvironmentAssociation(Association, OrganismTaxonToEntityAssociation):
 
-    _required_attributes: ClassVar[List[str]] = [
-        "id",
-        "relation",
-        "subject",
-        "object",
-        "predicate"
-    ]
+    _required_attributes: ClassVar[List[str]] = ["id", "relation", "subject", "object", "predicate"]
     subject: Union[Curie, OrganismTaxon] = None
     object: Union[Curie, NamedThing] = None
     predicate: Curie = None
-
-
-
-
 
 
 predicates = [
