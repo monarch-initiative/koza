@@ -92,6 +92,7 @@ class CSVReader:
 
         while self.line_num < self.skip_lines:
             next(self.reader)
+            self.line_num = self.reader.line_num
 
         if self.line_num == self.skip_lines:
 
@@ -108,6 +109,7 @@ class CSVReader:
                     )
                 )
                 fieldnames[0] = fieldnames[0].lstrip('#')
+                fieldnames[0] = fieldnames[0].lstrip('!!')  # todo: maybe comment character should be specified?
                 fieldnames = [f.strip() for f in fieldnames]
             else:
                 fieldnames = list(self.field_type_map.keys())

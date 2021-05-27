@@ -1,6 +1,6 @@
 import logging
 
-from koza.manager.data_provider import inject_row, inject_map, inject_translation_table
+from koza.manager.data_provider import inject_row
 from koza.manager.data_collector import collect
 from koza.model.biolink import Gene
 
@@ -10,28 +10,13 @@ source_name = 'gene-information'
 prefix = 'Xenbase:'
 
 row = inject_row(source_name)
-translation_table = inject_translation_table()
-genepage2gene = inject_map('genepage-2-gene')
 
-entities = []
+gene = Gene()
+gene.id = prefix + row['DB_Object_ID']
+gene.symbol = row['DB_Object_Symbol']
+gene.name = row['DB_Object_Name']
+gene.synonym = row['DB_Object_Synonym(s)'].split("|") if row['DB_Object_Synonym(s)'] else []
+gene.in_taxon = [row['Taxon'].replace("taxon:", "NCBITaxon:")]  # not sure this replacement should be necessary?
+gene.xref = row['DB_Xref(s)'].split("|") if row['DB_Xref(s)'] else []
 
-gene_page_id = row['gene_page_id']
-gene_symbol = row['gene_symbol']
-gene_name = row['gene_name']
-gene_synonyms = row['gene_synonyms'].split('|') if row['gene_synonyms'] else []
-
-gene_ids = [
-    genepage2gene[gene_page_id]['tropicalis_id'],
-    genepage2gene[gene_page_id]['laevis_l_id'],
-    genepage2gene[gene_page_id]['laevis_s_id'],
-]
-
-for gene_id in gene_ids:
-    gene = Gene()
-    gene.id = prefix + gene_id
-    gene.name = gene_name
-    gene.symbol = gene_symbol
-    gene.synonym = gene_synonyms
-    entities.append(gene)
-
-collect(source_name, *entities)
+collect(source_name, gene)

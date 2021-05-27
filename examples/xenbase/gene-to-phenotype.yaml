@@ -1,22 +1,6 @@
 name: 'gene-to-phenotype'
 
-delimiter: ','
-
 files:
   - './examples/data/xb_xpo_spo_v20210511b.csv'
 
-columns:
-  - 'SUBJECT'
-  - 'SUBJECT_LABEL'
-  - 'SUBJECT_TAXON'
-  - 'SUBJECT_TAXON_LABEL'
-  - 'OBJECT'
-  - 'OBJECT_LABEL'
-  - 'RELATION'
-  - 'RELATION_LABEL'
-  - 'EVIDENCE'
-  - 'EVIDENCE_LABEL'
-  - 'SOURCE'
-  - 'IS_DEFINED_BY'
-  - 'QUALIFIER'
-
+standard: 'oban'
