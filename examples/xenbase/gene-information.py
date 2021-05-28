@@ -9,7 +9,7 @@ LOG = logging.getLogger(__name__)
 source_name = 'gene-information'
 row = inject_row(source_name)
 
-row['DB_Object_ID'] = "ZFIN:" + row['DB_Object_ID']
+row['DB_Object_ID'] = "Xenbase:" + row['DB_Object_ID']
 
 gene = gpi2gene(row)
 

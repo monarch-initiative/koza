@@ -1,8 +1,11 @@
 import re
+import logging
 
 from koza.curie_util import get_curie_map
 
 curie_regexp = re.compile(r'^[a-zA-Z_]?[a-zA-Z_0-9-]*:[A-Za-z0-9_][A-Za-z0-9_.-]*[A-Za-z0-9_]*$')
+
+LOG = logging.getLogger(__name__)
 
 
 class Curie(str):
@@ -30,7 +33,8 @@ class Curie(str):
             raise TypeError('string required')
         if not Curie.is_prefix_in_map(curie):
             prefix = curie.split(':')[0]
-            raise ValueError(f"prefix: '{prefix}' is not in curie map")
+            LOG.warning(f"prefix: '{prefix}' is not in curie map")
+            # raise ValueError(f"prefix: '{prefix}' is not in curie map")
         return curie
 
     @staticmethod
