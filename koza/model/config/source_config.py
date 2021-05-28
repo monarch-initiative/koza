@@ -31,7 +31,7 @@ class FormatType(str, Enum):
     json = 'json'
 
 
-class Standard(str, Enum):
+class StandardFormat(str, Enum):
     gpi = 'gpi'
     bgi = 'bgi'
     oban = 'oban'
@@ -151,7 +151,7 @@ class SourceFileConfig:
     name: str
     files: List[Union[str, Path]]
     format: FormatType = FormatType.csv
-    standard: Standard = None
+    standard_format: StandardFormat = None
     file_metadata: DatasetDescription = None
     columns: List[Union[str, Dict[str, FieldType]]] = None
     required_properties: List[str] = None
@@ -176,7 +176,7 @@ class SourceFileConfig:
         object.__setattr__(self, 'files', files_as_paths)
 
         # todo: where should this really be stored? defaults for a format should probably be defined in yaml
-        if self.standard == Standard.gpi:
+        if self.standard_format == StandardFormat.gpi:
             self.format = FormatType.csv
             self.delimiter = "\t"
             self.columns = ["DB",
@@ -191,7 +191,7 @@ class SourceFileConfig:
                             "Properties"]
 
             self.skip_lines = 22
-        elif self.standard == Standard.oban:
+        elif self.standard_format == StandardFormat.oban:
             self.format = FormatType.csv
             self.delimiter = ","
             self.columns = ["SUBJECT",

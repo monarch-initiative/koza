@@ -20,7 +20,7 @@ TAXON_PREFIX = ['NCBITaxon']
 def _curie_must_have_prefix(curie: str, prefix_filter: List[str]) -> str:
     prefix = curie.split(':')[0]
     if prefix not in prefix_filter:
-        raise ValueError(f"{curie} is not prefixed with {prefix}")
+        raise ValueError(f"'{prefix}:' prefix is not valid, valid prefixes are {prefix_filter}")
     return curie
 
 
