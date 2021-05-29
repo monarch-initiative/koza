@@ -49,6 +49,12 @@ lint:
 
 .PHONY: format
 format:
-	autoflake --remove-all-unused-imports --recursive --remove-unused-variables --in-place koza tests scripts --exclude=__init__.py
+	autoflake \
+		--recursive \
+		--remove-all-unused-imports \
+		--remove-unused-variables \
+		--ignore-init-module-imports \
+		--in-place koza tests scripts \
+		--exclude=scripts/pydantic_config.py
 	isort koza tests scripts
 	black koza tests scripts

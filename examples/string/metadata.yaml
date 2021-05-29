@@ -8,5 +8,3 @@ dataset_description:
 
 source_files:
   - 'protein-links-detailed.yaml'
-  - 'protein-links-detailed-2.yaml'
-

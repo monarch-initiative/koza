@@ -21,7 +21,7 @@ Some key differences:
       the a slot a unique name (child_class_id, child_class_type) to
       attach the updated description, need to check this with Harold
 
-- Type conversions, convers scalars to lists for Union[someScalar, List[someScalar]]
+- Type conversions, converts scalars to lists for Union[someScalar, List[someScalar]]
 
 What parts of the schema are left out (and expected downstream)
 
@@ -54,7 +54,6 @@ import typer
 from linkml.generators import PYTHON_GEN_VERSION
 from linkml.generators.pythongen import PythonGenerator
 from linkml.utils.formatutils import be, camelcase, split_line, wrapped_annotation
-from linkml.utils.mergeutils import alias_root
 from linkml_model.meta import ClassDefinition, ClassDefinitionName, SchemaDefinition, SlotDefinition
 
 
@@ -129,14 +128,17 @@ class PydanticGen(PythonGenerator):
 # description: {split_descripton}
 # license: {be(self.schema.license)}
 
-from collections import namedtuple
-from dataclasses import field
 import datetime
 import inspect
-from typing import Optional, List, Union, Dict, ClassVar, Any
+import logging
+from collections import namedtuple
+from dataclasses import field
+from typing import Any, ClassVar, List, Optional, Union
 
+from pydantic import constr, validator
 from pydantic.dataclasses import dataclass
-from pydantic import validator, constr
+
+LOG = logging.getLogger(__name__)
 
 metamodel_version = "{self.schema.metamodel_version}"
 
@@ -153,6 +155,12 @@ FrequencyValue = str
 PercentageFrequencyValue = float
 BiologicalSequence = str
 Quotient = float
+
+# Namespaces
+{self.gen_namespaces()}
+
+# Pydantic config and validators
+{self._get_pydantic_config_and_validators()}
 
 # Classes
 {self.gen_classdefs()}
@@ -192,15 +200,18 @@ Quotient = float
             else ''
         )
 
+        pydantic_classvars = self.gen_pydantic_classvars(cls)
+
         pydantic_validators = self.gen_pydantic_validators(cls)
 
         return (
-            ('\n@dataclass(config=PydanticConfig)' if slotdefs else '')
+            ('\n@dataclass(config=PydanticConfig)')
             + f'\nclass {self.class_or_type_name(cls.name)}'
             + parent_class_and_mixins
             + f':{wrapped_description}\n'
             + f'{self.gen_inherited_slots(cls)}'
-            + f'{self.gen_pydantic_classvars(cls)}'
+            + ('\n\t# Class Variables' if pydantic_classvars else '')
+            + f'{pydantic_classvars}'
             + (f'\t{slotdefs}\n' if slotdefs else '')
             + f'{pydantic_validators}'
             + f'{entity_post_init}'
@@ -208,7 +219,7 @@ Quotient = float
                 f'\n\tpass'
                 if (
                     not self.gen_inherited_slots(cls)
-                    and not self.gen_pydantic_classvars(cls)
+                    and not pydantic_classvars
                     and not slotdefs
                     and not entity_post_init
                     and not pydantic_validators
@@ -231,27 +242,13 @@ Quotient = float
 
         domain_slots = self.domain_slots(cls)
 
-        if cls.name == 'entity':
-            slot_variables = self._slot_iter(
-                cls, lambda slot: slot.name in ['id', 'type', 'category']
-            )
-            initializers += [self.gen_class_variable(cls, slot, False) for slot in slot_variables]
-
         # Required or key slots with default values
-        slot_variables = self._slot_iter(
-            cls,
-            lambda slot: slot.required
-            and slot in domain_slots
-            and alias_root(self.schema, slot.name) not in ['id', 'type', 'category'],
-        )
+        slot_variables = self._slot_iter(cls, lambda slot: slot.required and slot in domain_slots)
         initializers += [self.gen_class_variable(cls, slot, False) for slot in slot_variables]
 
         # Followed by everything else
         slot_variables = self._slot_iter(
-            cls,
-            lambda slot: not slot.required
-            and slot in domain_slots
-            and alias_root(self.schema, slot.name) not in ['id', 'type', 'category'],
+            cls, lambda slot: not slot.required and slot in domain_slots
         )
         initializers += [self.gen_class_variable(cls, slot, False) for slot in slot_variables]
 
@@ -362,13 +359,13 @@ Quotient = float
         """
         base = rangelist[0].split('.')[-1]
 
-        if (
+        if slot_name in ['category', 'provided_by']:
+            class_ref = "Union[str, Curie]"
+        elif (
             slot_name
             in [
                 'id',
-                'provided_by',
                 'has_qualitative_value',
-                'category',
                 'subclass_of',
                 'has_input',
                 'has_output',
@@ -449,6 +446,22 @@ Quotient = float
             if cls.name in slot.domain_of
         ]
 
+    def gen_namespaces(self) -> str:
+
+        namespaces = ',\n'.join(
+            [
+                f'\t"{pfx.replace(".", "_")}"'
+                for pfx in sorted(self.emit_prefixes)
+                if pfx in self.namespaces
+            ]
+        )
+
+        return f'''
+valid_prefix = [
+{namespaces}
+]
+'''
+
     # New Methods
 
     def gen_pydantic_classvars(self, cls: ClassDefinition) -> str:
@@ -470,35 +483,17 @@ Quotient = float
         if required_slots_fmt:
             vars.append(f'_required_attributes: ClassVar[List[str]] = [\n{required_slots_fmt}\n\t]')
 
+        id_prefixes_fmt = ',\n'.join([f'\t\t"{prefix}"' for prefix in cls.id_prefixes])
+
+        if id_prefixes_fmt:
+            vars.append(f'_id_prefixes: ClassVar[List[str]] = [\n{id_prefixes_fmt}\n\t]')
+
         if vars:
-            ret_val = "\n\t" + "\n\t".join(vars) + "\n"
+            ret_val = "\n\t" + "\n\t".join(vars) + "\n\n"
         else:
             ret_val = ""
 
         return ret_val
-
-    @staticmethod
-    def _get_entity_post_init() -> str:
-        """
-        Post init for entity for inferring categories from the
-        classes in its method resolution order
-
-        requires a special classvar _category which is excluded
-        from mixins
-        """
-        return '''
-    def __post_init__(self):
-        # Initialize default categories if not set
-        # by traversing the MRO chain
-        if not self.category:
-            self.category = list(
-                {
-                    super_class._category
-                    for super_class in inspect.getmro(type(self))
-                    if hasattr(super_class, '_category')
-                }
-            )
-        '''
 
     def gen_predicate_named_tuple(self) -> str:
         """
@@ -534,15 +529,49 @@ predicate = namedtuple('biolink_predicate', predicates)(
         """
         validators = []
 
-        if cls.name == 'entity':
-            validators.append(self._gen_id_namespace_validator(cls.id_prefixes))
-
         for slot in self.domain_slots(cls):
             slotname = self.slot_name(slot.name)
-            if slot.multivalued:
-                validators.append(
-                    f'_convert_{slotname}_to_list = convert_scalar_to_list("{slotname}")'
-                )
+            rangelist = (
+                self.class_identifier_path(cls, False)
+                if slot.key or slot.identifier
+                else self.slot_range_path(slot)
+            )
+            if slotname in ['category', 'provided_by']:
+                if slot.multivalued:
+                    validators.append(self._gen_scalar_to_list_validator(slotname))
+            elif (
+                slotname
+                in [
+                    'id',
+                    'has_qualitative_value',
+                    'subclass_of',
+                    'has_input',
+                    'has_output',
+                    'has_constituent',
+                    'enabled_by',
+                ]
+                or ('URIorCURIE' in rangelist and rangelist[-1] != 'IriType')
+            ):
+                if slot.multivalued:
+                    validators.append(self._gen_scalar_to_list_check_curies_validator(slotname))
+                else:
+                    validators.append(self._gen_curie_prefix_validator(slotname))
+            elif 'Entity' in rangelist:
+                if len(rangelist) > 1:
+                    if slot.multivalued:
+                        validators.append(
+                            self._gen_scalar_to_list_check_curies_validator(slotname, rangelist[-1])
+                        )
+                    else:
+                        validators.append(self._gen_curie_prefix_validator(slotname, rangelist[-1]))
+                else:
+                    if slot.multivalued:
+                        validators.append(self._gen_scalar_to_list_check_curies_validator(slotname))
+                    else:
+                        validators.append(self._gen_curie_prefix_validator(slotname))
+
+            elif slot.multivalued:
+                validators.append(self._gen_scalar_to_list_validator(slotname))
 
         if validators:
             ret_val = "\n\t# Validators\n\t" + "\n\t".join(validators) + "\n"
@@ -552,32 +581,130 @@ predicate = namedtuple('biolink_predicate', predicates)(
         return ret_val
 
     @staticmethod
-    def _gen_id_namespace_validator(namespaces: List[str], slotname=None) -> str:
+    def _gen_curie_prefix_validator(slotname: str, cls_name: str = 'cls') -> str:
         """
         :param namespaces:
         :return:
         """
-        namespaces_fmt = ',\n'.join([f'\t\t\t\t"{ns}"' for ns in namespaces])
-        if not slotname:
-            slotname = 'id'
-
         return f'''
     @validator('{slotname}')
-    def check_{slotname}_prefix(cls, id):
-        return check_curie_prefix(
-            id,
-            [
-{namespaces_fmt}
-            ],
-        )
+    def check_{slotname}_prefix(cls, field):
+        check_curie_prefix({cls_name}, field)
+        return field
 '''
+
+    @staticmethod
+    def _gen_scalar_to_list_check_curies_validator(slotname, cls_name: str = 'cls') -> str:
+        """
+        :param namespaces:
+        :return:
+        """
+        return f'''
+    @validator('{slotname}')
+    def convert_{slotname}_to_list_check_curies(cls, field):
+        return convert_scalar_to_list_check_curies({cls_name}, field)
+'''
+
+    @staticmethod
+    def _gen_scalar_to_list_validator(slotname) -> str:
+        """
+        :param namespaces:
+        :return:
+        """
+        return f'''
+    @validator('{slotname}')
+    def convert_{slotname}_to_list_check_curies(cls, field):
+        return convert_scalar_to_list(field)
+'''
+
+    @staticmethod
+    def _get_entity_post_init() -> str:
+        """
+        Post init for entity for inferring categories from the
+        classes in its method resolution order
+
+        requires a special classvar _category which is excluded
+        from mixins
+        """
+        return '''
+    def __post_init__(self):
+        # Initialize default categories if not set
+        # by traversing the MRO chain
+        if not self.category:
+            self.category = list(
+                {
+                    super_class._category
+                    for super_class in inspect.getmro(type(self))
+                    if hasattr(super_class, '_category')
+                }
+            )
+        '''
+
+    @staticmethod
+    def _get_pydantic_config_and_validators() -> str:
+        """
+        Pydantic config class and validator methods
+
+        See https://pydantic-docs.helpmanual.io/usage/validators/#reuse-validators
+        """
+        return '''
+class PydanticConfig:
+    """
+    Pydantic config
+    https://pydantic-docs.helpmanual.io/usage/model_config/
+    """
+
+    validate_assignment = True
+    validate_all = True
+    underscore_attrs_are_private = True
+    extra = 'forbid'
+    arbitrary_types_allowed = True  # TODO re-evaluate this
+
+
+def check_curie_prefix(cls, curie: Union[List, str, None]):
+    if isinstance(curie, list):
+        for cur in curie:
+            prefix = cur.split(':')[0]
+            if prefix not in valid_prefix:
+
+                LOG.warning(f"{curie} prefix '{prefix}' not in curie map")
+                if hasattr(cls, '_id_prefixes') and cls._id_prefixes:
+                    LOG.warning(f"Consider one of {cls._id_prefixes}")
+                else:
+                    LOG.warning(
+                        f"See https://biolink.github.io/biolink-model/context.jsonld "
+                        f"for a list of valid curie prefixes"
+                    )
+    elif curie:
+        prefix = curie.split(':')[0]
+        if prefix not in valid_prefix:
+            LOG.warning(f"{curie} prefix '{prefix}' not in curie map")
+            if hasattr(cls, '_id_prefixes') and cls._id_prefixes:
+                LOG.warning(f"Consider one of {cls._id_prefixes}")
+            else:
+                LOG.warning(
+                    f"See https://biolink.github.io/biolink-model/context.jsonld "
+                    f"for a list of valid curie prefixes"
+                )          
+
+
+def convert_scalar_to_list_check_curies(cls, field: Any) -> List[str]:
+    if not isinstance(field, list):
+        field = [field]
+    for feld in field:
+        if isinstance(feld, str):
+            check_curie_prefix(cls, feld)
+    return field
+
+
+def convert_scalar_to_list(field: Any) -> List[str]:
+    if not isinstance(field, list):
+        field = [field]
+    return field
+        '''
 
 
 def main(yamlfile: str):
-    pydantic_config = Path(__file__).parent / 'pydantic_config.py'
-    with open(pydantic_config, 'r') as py_conf:
-        for line in py_conf:
-            print(line.rstrip())
     pydantic_generator = PydanticGen(yamlfile)
     print(pydantic_generator.serialize())
     print(pydantic_generator.gen_predicate_named_tuple())
