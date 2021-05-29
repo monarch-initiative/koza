@@ -2,6 +2,8 @@ name: 'gene-literature'
 
 delimiter: '\t'
 
+has_header: False
+
 files:
   - './examples/data/LiteratureMatchedGenesByPaper.txt'
 

@@ -10,7 +10,6 @@ translation_table = inject_translation_table()
 gene = Gene()
 gene.id = 'Xenbase:' + row['SUBJECT']
 
-
 phenotype = PhenotypicFeature()
 phenotype.id = row['OBJECT']
 
