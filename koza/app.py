@@ -48,7 +48,6 @@ class KozaApp:
         self.map_registry: Dict[str, SourceFile] = {}
         self.writer_registry: Dict[str, KozaWriter] = {}
         self.map_cache: Dict[str, Dict] = {}
-        self.writer: KozaWriter = KGXWriter(self.output_dir, self.output_format, self.source.name)
 
         logging.getLogger(__name__)
 
@@ -74,7 +73,7 @@ class KozaApp:
 
             self.file_registry[source_file_config.name] = SourceFile(source_file_config)
             self.writer_registry[source_file_config.name] = KGXWriter(
-                self.output_dir, self.output_format, self.source.name
+                self.output_dir, self.output_format, f"{source.name}.{source_file_config.name}"
             )
 
     def get_map(self, map_name: str):
