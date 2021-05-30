@@ -19,6 +19,7 @@ classifiers = [
     "Operating System :: POSIX :: Linux",
 ]
 requires = [
+    "kgx >= 1.0.0",
     "pydantic >=1.0.0,<2.0.0",
     "pyyaml >=5.3.1,<6.0.0",
     "requests >=2.24.0,<3.0.0",
