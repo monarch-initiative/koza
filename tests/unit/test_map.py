@@ -1,6 +1,6 @@
 import yaml
 
-from koza.map_loader import load_map
+from koza.app import load_map
 from koza.model.config.source_config import MapFileConfig
 
 
@@ -21,3 +21,15 @@ def test_declarative_map():
     # confirm that entrez field is filled and accurate
     assert map.get("9606.ENSP00000306894")["entrez"] == "2119"
     assert map.get("7955.ENSDARP00000074307")["entrez"] == "100006444"
+
+
+def test_procedural_map():
+    map_file = "./config/maps/mimtitles.yaml"
+    with open(map_file, 'r') as map_file_fh:
+        map_file_config = MapFileConfig(**yaml.safe_load(map_file_fh))
+
+    map = load_map(map_file_config, map_file=map_file)
+
+    assert map.get("100050")
+    assert map.get("100070")
+    assert map.get("100100")

@@ -69,8 +69,7 @@ class KozaApp:
                     with open(map_file, 'r') as map_file_fh:
                         map_file_config = MapFileConfig(**yaml.safe_load(map_file_fh))
 
-                    # todo: look for a map file py alongside the config to run instead
-                    self.map_cache[map_file_config.name] = load_map(map_file_config)
+                    self.map_cache[map_file_config.name] = load_map(map_file_config, map_file)
 
             self.file_registry[source_file_config.name] = SourceFile(source_file_config)
             self.writer_registry[source_file_config.name] = KGXWriter(

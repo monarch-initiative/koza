@@ -11,8 +11,8 @@ def inject_row(ingest_name: str) -> Dict:
 
 def inject_map(map_name: str) -> Tuple[Dict, ...]:
     """
-    TODO
-    :param ingest_name:
+    Get map associated with the specified source
+    :param source_name:
     :return:
     """
     koza = get_koza_app()
