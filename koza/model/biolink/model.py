@@ -1,5 +1,5 @@
 # Auto generated from biolink-model.yaml by pydanticgen.py version: 0.9.0
-# Generation date: 2021-05-28 20:26
+# Generation date: 2021-06-01 17:53
 # Schema: Biolink-Model
 #
 # id: https://w3id.org/biolink/biolink-model
@@ -9,8 +9,9 @@
 import datetime
 import inspect
 import logging
-from collections import namedtuple
+import re
 from dataclasses import field
+from enum import Enum
 from typing import Any, ClassVar, List, Optional, Union
 
 from pydantic import constr, validator
@@ -20,11 +21,14 @@ LOG = logging.getLogger(__name__)
 
 metamodel_version = "1.7.0"
 
+curie_regexp = r'^[a-zA-Z_]?[a-zA-Z_0-9-]*:[A-Za-z0-9_][A-Za-z0-9_.-]*[A-Za-z0-9_]*$'
+curie_pattern = re.compile(curie_regexp)
+
 # Type Aliases
 Unit = Union[int, float]
 LabelType = str
 IriType = constr(regex=r'^http')
-Curie = constr(regex=r'^[a-zA-Z_]?[a-zA-Z_0-9-]*:[A-Za-z0-9_][A-Za-z0-9_.-]*[A-Za-z0-9_]*$')
+Curie = constr(regex=curie_regexp)
 NarrativeText = str
 XSDDate = datetime.date
 TimeType = datetime.time
@@ -285,18 +289,231 @@ def check_curie_prefix(cls, curie: Union[List, str, None]):
 
 
 def convert_scalar_to_list_check_curies(cls, field: Any) -> List[str]:
+    """
+    Converts list fields that have been passed a scalar to a 1-sized list
+
+    Also checks prefix checks curies.  Because curie regex constraints
+    are applied prior to running this function, we can use this for both
+    curie and non-curie fields by rechecking re.match(curie_pattern, some_string)
+    """
     if not isinstance(field, list):
         field = [field]
     for feld in field:
-        if isinstance(feld, str):
+        if isinstance(feld, str) and re.match(curie_pattern, feld):
             check_curie_prefix(cls, feld)
     return field
 
 
-def convert_scalar_to_list(field: Any) -> List[str]:
-    if not isinstance(field, list):
-        field = [field]
-    return field
+def check_value_is_not_none(slotname: str, field: Any) -> bool:
+    is_none = False
+    if isinstance(field, list) or isinstance(field, dict):
+        if not field:
+            is_none = True
+    else:
+        if field is None:
+            is_none = True
+
+    if is_none:
+        raise ValueError(f"{slotname} is required")
+
+
+# Predicates
+
+
+class Predicate(str, Enum):
+    """
+    Enum for biolink predicates
+    """
+
+    actively_involved_in = "biolink:actively_involved_in"
+    affected_by = "biolink:affected_by"
+    affects = "biolink:affects"
+    affects_abundance_of = "biolink:affects_abundance_of"
+    affects_activity_of = "biolink:affects_activity_of"
+    affects_degradation_of = "biolink:affects_degradation_of"
+    affects_expression_in = "biolink:affects_expression_in"
+    affects_expression_of = "biolink:affects_expression_of"
+    affects_folding_of = "biolink:affects_folding_of"
+    affects_localization_of = "biolink:affects_localization_of"
+    affects_metabolic_processing_of = "biolink:affects_metabolic_processing_of"
+    affects_molecular_modification_of = "biolink:affects_molecular_modification_of"
+    affects_mutation_rate_of = "biolink:affects_mutation_rate_of"
+    affects_response_to = "biolink:affects_response_to"
+    affects_risk_for = "biolink:affects_risk_for"
+    affects_secretion_of = "biolink:affects_secretion_of"
+    affects_splicing_of = "biolink:affects_splicing_of"
+    affects_stability_of = "biolink:affects_stability_of"
+    affects_synthesis_of = "biolink:affects_synthesis_of"
+    affects_transport_of = "biolink:affects_transport_of"
+    affects_uptake_of = "biolink:affects_uptake_of"
+    ameliorates = "biolink:ameliorates"
+    approved_for_treatment_by = "biolink:approved_for_treatment_by"
+    approved_to_treat = "biolink:approved_to_treat"
+    author = "biolink:author"
+    biomarker_for = "biolink:biomarker_for"
+    broad_match = "biolink:broad_match"
+    capable_of = "biolink:capable_of"
+    caused_by = "biolink:caused_by"
+    causes = "biolink:causes"
+    causes_adverse_event = "biolink:causes_adverse_event"
+    chemically_similar_to = "biolink:chemically_similar_to"
+    close_match = "biolink:close_match"
+    coexists_with = "biolink:coexists_with"
+    coexpressed_with = "biolink:coexpressed_with"
+    colocalizes_with = "biolink:colocalizes_with"
+    condition_associated_with_gene = "biolink:condition_associated_with_gene"
+    contraindicated_for = "biolink:contraindicated_for"
+    contributes_to = "biolink:contributes_to"
+    contributor = "biolink:contributor"
+    correlated_with = "biolink:correlated_with"
+    decreases_abundance_of = "biolink:decreases_abundance_of"
+    decreases_activity_of = "biolink:decreases_activity_of"
+    decreases_degradation_of = "biolink:decreases_degradation_of"
+    decreases_expression_of = "biolink:decreases_expression_of"
+    decreases_folding_of = "biolink:decreases_folding_of"
+    decreases_localization_of = "biolink:decreases_localization_of"
+    decreases_metabolic_processing_of = "biolink:decreases_metabolic_processing_of"
+    decreases_molecular_interaction = "biolink:decreases_molecular_interaction"
+    decreases_molecular_modification_of = "biolink:decreases_molecular_modification_of"
+    decreases_mutation_rate_of = "biolink:decreases_mutation_rate_of"
+    decreases_response_to = "biolink:decreases_response_to"
+    decreases_secretion_of = "biolink:decreases_secretion_of"
+    decreases_splicing_of = "biolink:decreases_splicing_of"
+    decreases_stability_of = "biolink:decreases_stability_of"
+    decreases_synthesis_of = "biolink:decreases_synthesis_of"
+    decreases_transport_of = "biolink:decreases_transport_of"
+    decreases_uptake_of = "biolink:decreases_uptake_of"
+    derives_from = "biolink:derives_from"
+    derives_into = "biolink:derives_into"
+    develops_from = "biolink:develops_from"
+    directly_interacts_with = "biolink:directly_interacts_with"
+    disease_has_basis_in = "biolink:disease_has_basis_in"
+    disrupted_by = "biolink:disrupted_by"
+    disrupts = "biolink:disrupts"
+    editor = "biolink:editor"
+    enabled_by = "biolink:enabled_by"
+    enables = "biolink:enables"
+    entity_negatively_regulated_by_entity = "biolink:entity_negatively_regulated_by_entity"
+    entity_negatively_regulates_entity = "biolink:entity_negatively_regulates_entity"
+    entity_positively_regulated_by_entity = "biolink:entity_positively_regulated_by_entity"
+    entity_positively_regulates_entity = "biolink:entity_positively_regulates_entity"
+    entity_regulated_by_entity = "biolink:entity_regulated_by_entity"
+    entity_regulates_entity = "biolink:entity_regulates_entity"
+    exacerbates = "biolink:exacerbates"
+    exact_match = "biolink:exact_match"
+    expressed_in = "biolink:expressed_in"
+    expresses = "biolink:expresses"
+    food_component_of = "biolink:food_component_of"
+    gene_associated_with_condition = "biolink:gene_associated_with_condition"
+    gene_product_of = "biolink:gene_product_of"
+    genetic_association = "biolink:genetic_association"
+    genetically_interacts_with = "biolink:genetically_interacts_with"
+    has_active_ingredient = "biolink:has_active_ingredient"
+    has_biomarker = "biolink:has_biomarker"
+    has_completed = "biolink:has_completed"
+    has_decreased_amount = "biolink:has_decreased_amount"
+    has_excipient = "biolink:has_excipient"
+    has_food_component = "biolink:has_food_component"
+    has_gene_product = "biolink:has_gene_product"
+    has_increased_amount = "biolink:has_increased_amount"
+    has_input = "biolink:has_input"
+    has_metabolite = "biolink:has_metabolite"
+    has_molecular_consequence = "biolink:has_molecular_consequence"
+    has_not_completed = "biolink:has_not_completed"
+    has_nutrient = "biolink:has_nutrient"
+    has_output = "biolink:has_output"
+    has_part = "biolink:has_part"
+    has_participant = "biolink:has_participant"
+    has_phenotype = "biolink:has_phenotype"
+    has_sequence_location = "biolink:has_sequence_location"
+    has_variant_part = "biolink:has_variant_part"
+    homologous_to = "biolink:homologous_to"
+    in_cell_population_with = "biolink:in_cell_population_with"
+    in_complex_with = "biolink:in_complex_with"
+    in_linkage_disequilibrium_with = "biolink:in_linkage_disequilibrium_with"
+    in_pathway_with = "biolink:in_pathway_with"
+    in_taxon = "biolink:in_taxon"
+    increases_abundance_of = "biolink:increases_abundance_of"
+    increases_activity_of = "biolink:increases_activity_of"
+    increases_degradation_of = "biolink:increases_degradation_of"
+    increases_expression_of = "biolink:increases_expression_of"
+    increases_folding_of = "biolink:increases_folding_of"
+    increases_localization_of = "biolink:increases_localization_of"
+    increases_metabolic_processing_of = "biolink:increases_metabolic_processing_of"
+    increases_molecular_interaction = "biolink:increases_molecular_interaction"
+    increases_molecular_modification_of = "biolink:increases_molecular_modification_of"
+    increases_mutation_rate_of = "biolink:increases_mutation_rate_of"
+    increases_response_to = "biolink:increases_response_to"
+    increases_secretion_of = "biolink:increases_secretion_of"
+    increases_splicing_of = "biolink:increases_splicing_of"
+    increases_stability_of = "biolink:increases_stability_of"
+    increases_synthesis_of = "biolink:increases_synthesis_of"
+    increases_transport_of = "biolink:increases_transport_of"
+    increases_uptake_of = "biolink:increases_uptake_of"
+    interacts_with = "biolink:interacts_with"
+    is_active_ingredient_of = "biolink:is_active_ingredient_of"
+    is_excipient_of = "biolink:is_excipient_of"
+    is_frameshift_variant_of = "biolink:is_frameshift_variant_of"
+    is_metabolite_of = "biolink:is_metabolite_of"
+    is_missense_variant_of = "biolink:is_missense_variant_of"
+    is_nearby_variant_of = "biolink:is_nearby_variant_of"
+    is_non_coding_variant_of = "biolink:is_non_coding_variant_of"
+    is_nonsense_variant_of = "biolink:is_nonsense_variant_of"
+    is_sequence_variant_of = "biolink:is_sequence_variant_of"
+    is_splice_site_variant_of = "biolink:is_splice_site_variant_of"
+    is_synonymous_variant_of = "biolink:is_synonymous_variant_of"
+    lacks_part = "biolink:lacks_part"
+    located_in = "biolink:located_in"
+    location_of = "biolink:location_of"
+    manifestation_of = "biolink:manifestation_of"
+    model_of = "biolink:model_of"
+    molecular_activity_enabled_by = "biolink:molecular_activity_enabled_by"
+    molecular_activity_has_input = "biolink:molecular_activity_has_input"
+    molecular_activity_has_output = "biolink:molecular_activity_has_output"
+    molecularly_interacts_with = "biolink:molecularly_interacts_with"
+    narrow_match = "biolink:narrow_match"
+    negatively_correlated_with = "biolink:negatively_correlated_with"
+    nutrient_of = "biolink:nutrient_of"
+    occurs_in = "biolink:occurs_in"
+    opposite_of = "biolink:opposite_of"
+    organism_taxon_subclass_of = "biolink:organism_taxon_subclass_of"
+    orthologous_to = "biolink:orthologous_to"
+    overlaps = "biolink:overlaps"
+    paralogous_to = "biolink:paralogous_to"
+    part_of = "biolink:part_of"
+    participates_in = "biolink:participates_in"
+    phenotype_of = "biolink:phenotype_of"
+    physically_interacts_with = "biolink:physically_interacts_with"
+    positively_correlated_with = "biolink:positively_correlated_with"
+    preceded_by = "biolink:preceded_by"
+    precedes = "biolink:precedes"
+    predisposes = "biolink:predisposes"
+    prevented_by = "biolink:prevented_by"
+    prevents = "biolink:prevents"
+    process_negatively_regulated_by_process = "biolink:process_negatively_regulated_by_process"
+    process_negatively_regulates_process = "biolink:process_negatively_regulates_process"
+    process_positively_regulated_by_process = "biolink:process_positively_regulated_by_process"
+    process_positively_regulates_process = "biolink:process_positively_regulates_process"
+    process_regulated_by_process = "biolink:process_regulated_by_process"
+    process_regulates_process = "biolink:process_regulates_process"
+    produced_by = "biolink:produced_by"
+    produces = "biolink:produces"
+    provider = "biolink:provider"
+    publisher = "biolink:publisher"
+    related_condition = "biolink:related_condition"
+    related_to = "biolink:related_to"
+    same_as = "biolink:same_as"
+    similar_to = "biolink:similar_to"
+    subclass_of = "biolink:subclass_of"
+    superclass_of = "biolink:superclass_of"
+    temporally_related_to = "biolink:temporally_related_to"
+    transcribed_from = "biolink:transcribed_from"
+    transcribed_to = "biolink:transcribed_to"
+    translates_to = "biolink:translates_to"
+    translation_of = "biolink:translation_of"
+    treated_by = "biolink:treated_by"
+    treats = "biolink:treats"
+    xenologous_to = "biolink:xenologous_to"
 
 
 # Classes
@@ -345,7 +562,6 @@ class Attribute(Annotation, OntologyClass):
 
     # Class Variables
     _category: ClassVar[str] = "Attribute"
-    _required_attributes: ClassVar[List[str]] = ["has_attribute_type"]
     _id_prefixes: ClassVar[List[str]] = ["EDAM-DATA", "EDAM-FORMAT", "EDAM-OPERATION", "EDAM-TOPIC"]
 
     has_attribute_type: Union[str, OntologyClass] = None
@@ -359,9 +575,14 @@ class Attribute(Annotation, OntologyClass):
 
     # Validators
 
+    @validator('has_attribute_type')
+    def validate_required_has_attribute_type(cls, field):
+        check_value_is_not_none("has_attribute_type", field)
+        return field
+
     @validator('has_quantitative_value')
     def convert_has_quantitative_value_to_list_check_curies(cls, field):
-        return convert_scalar_to_list(field)
+        return convert_scalar_to_list_check_curies(cls, field)
 
     @validator('has_qualitative_value')
     def check_has_qualitative_value_prefix(cls, field):
@@ -374,7 +595,6 @@ class BiologicalSex(Attribute):
 
     # Class Variables
     _category: ClassVar[str] = "BiologicalSex"
-    _required_attributes: ClassVar[List[str]] = ["has_attribute_type"]
 
 
 @dataclass(config=PydanticConfig)
@@ -385,7 +605,6 @@ class PhenotypicSex(BiologicalSex):
 
     # Class Variables
     _category: ClassVar[str] = "PhenotypicSex"
-    _required_attributes: ClassVar[List[str]] = ["has_attribute_type"]
 
 
 @dataclass(config=PydanticConfig)
@@ -397,7 +616,6 @@ class GenotypicSex(BiologicalSex):
 
     # Class Variables
     _category: ClassVar[str] = "GenotypicSex"
-    _required_attributes: ClassVar[List[str]] = ["has_attribute_type"]
 
 
 @dataclass(config=PydanticConfig)
@@ -408,7 +626,6 @@ class SeverityValue(Attribute):
 
     # Class Variables
     _category: ClassVar[str] = "SeverityValue"
-    _required_attributes: ClassVar[List[str]] = ["has_attribute_type"]
 
 
 @dataclass(config=PydanticConfig)
@@ -457,10 +674,7 @@ class Entity:
     Root Biolink Model class for all things and informational relationships, real or imagined.
     """
 
-    # Class Variables
-    _required_attributes: ClassVar[List[str]] = ["id"]
-
-    id: Curie = None
+    id: Union[str, Curie] = None
     iri: Optional[IriType] = None
     category: Optional[Union[Union[str, Curie], List[Union[str, Curie]]]] = field(
         default_factory=list
@@ -479,21 +693,22 @@ class Entity:
     # Validators
 
     @validator('id')
-    def check_id_prefix(cls, field):
+    def validate_required_id(cls, field):
+        check_value_is_not_none("id", field)
         check_curie_prefix(cls, field)
         return field
 
     @validator('category')
     def convert_category_to_list_check_curies(cls, field):
-        return convert_scalar_to_list(field)
+        return convert_scalar_to_list_check_curies(cls, field)
 
     @validator('provided_by')
     def convert_provided_by_to_list_check_curies(cls, field):
-        return convert_scalar_to_list(field)
+        return convert_scalar_to_list_check_curies(Agent, field)
 
     @validator('has_attribute')
     def convert_has_attribute_to_list_check_curies(cls, field):
-        return convert_scalar_to_list(field)
+        return convert_scalar_to_list_check_curies(cls, field)
 
     def __post_init__(self):
         # Initialize default categories if not set
@@ -516,15 +731,16 @@ class NamedThing(Entity):
 
     # Class Variables
     _category: ClassVar[str] = "NamedThing"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
     category: Union[Union[str, Curie], List[Union[str, Curie]]] = None
 
     # Validators
 
     @validator('category')
-    def convert_category_to_list_check_curies(cls, field):
-        return convert_scalar_to_list(field)
+    def validate_required_category(cls, field):
+        check_value_is_not_none("category", field)
+        convert_scalar_to_list_check_curies(NamedThing, field)
+        return field
 
 
 @dataclass(config=PydanticConfig)
@@ -571,7 +787,6 @@ class OrganismTaxon(NamedThing):
 
     # Class Variables
     _category: ClassVar[str] = "OrganismTaxon"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     _id_prefixes: ClassVar[List[str]] = ["NCBITaxon", "MESH"]
 
     has_taxonomic_rank: Optional[Union[str, TaxonomicRank]] = None
@@ -587,8 +802,7 @@ class OrganismTaxon(NamedThing):
 @dataclass(config=PydanticConfig)
 class AdministrativeEntity(NamedThing):
 
-    # Class Variables
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
+    pass
 
 
 @dataclass(config=PydanticConfig)
@@ -599,10 +813,9 @@ class Agent(AdministrativeEntity):
 
     # Class Variables
     _category: ClassVar[str] = "Agent"
-    _required_attributes: ClassVar[List[str]] = ["category", "id"]
     _id_prefixes: ClassVar[List[str]] = ["isbn", "ORCID", "ScopusID", "ResearchID", "GSID", "isni"]
 
-    id: Curie = None
+    id: Union[str, Curie] = None
     affiliation: Optional[Union[Curie, List[Curie]]] = field(default_factory=list)
     address: Optional[str] = None
     name: Optional[Union[str, LabelType]] = None
@@ -614,7 +827,8 @@ class Agent(AdministrativeEntity):
         return convert_scalar_to_list_check_curies(cls, field)
 
     @validator('id')
-    def check_id_prefix(cls, field):
+    def validate_required_id(cls, field):
+        check_value_is_not_none("id", field)
         check_curie_prefix(cls, field)
         return field
 
@@ -626,7 +840,6 @@ class InformationContentEntity(NamedThing):
     """
 
     # Class Variables
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     _id_prefixes: ClassVar[List[str]] = ["doi"]
 
     license: Optional[str] = None
@@ -643,7 +856,6 @@ class Dataset(InformationContentEntity):
 
     # Class Variables
     _category: ClassVar[str] = "Dataset"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -654,7 +866,6 @@ class DatasetDistribution(InformationContentEntity):
 
     # Class Variables
     _category: ClassVar[str] = "DatasetDistribution"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
     distribution_download_url: Optional[str] = None
 
@@ -667,7 +878,6 @@ class DatasetVersion(InformationContentEntity):
 
     # Class Variables
     _category: ClassVar[str] = "DatasetVersion"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
     has_dataset: Optional[Union[Curie, Dataset]] = None
     ingest_date: Optional[str] = None
@@ -694,7 +904,6 @@ class DatasetSummary(InformationContentEntity):
 
     # Class Variables
     _category: ClassVar[str] = "DatasetSummary"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
     source_web_page: Optional[str] = None
     source_logo: Optional[str] = None
@@ -708,7 +917,6 @@ class ConfidenceLevel(InformationContentEntity):
 
     # Class Variables
     _category: ClassVar[str] = "ConfidenceLevel"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -719,7 +927,6 @@ class EvidenceType(InformationContentEntity):
 
     # Class Variables
     _category: ClassVar[str] = "EvidenceType"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -733,32 +940,31 @@ class Publication(InformationContentEntity):
 
     # Class Variables
     _category: ClassVar[str] = "Publication"
-    _required_attributes: ClassVar[List[str]] = ["category", "id", "type"]
     _id_prefixes: ClassVar[List[str]] = ["NLMID"]
 
-    id: Curie = None
+    id: Union[str, Curie] = None
     type: str = None
     authors: Optional[Union[str, List[str]]] = field(default_factory=list)
     pages: Optional[Union[str, List[str]]] = field(default_factory=list)
     summary: Optional[str] = None
     keywords: Optional[Union[str, List[str]]] = field(default_factory=list)
     mesh_terms: Optional[Union[Curie, List[Curie]]] = field(default_factory=list)
-    xref: Optional[Union[IriType, List[IriType]]] = field(default_factory=list)
+    xref: Optional[Union[Curie, List[Curie]]] = field(default_factory=list)
     name: Optional[Union[str, LabelType]] = None
 
     # Validators
 
     @validator('authors')
     def convert_authors_to_list_check_curies(cls, field):
-        return convert_scalar_to_list(field)
+        return convert_scalar_to_list_check_curies(cls, field)
 
     @validator('pages')
     def convert_pages_to_list_check_curies(cls, field):
-        return convert_scalar_to_list(field)
+        return convert_scalar_to_list_check_curies(cls, field)
 
     @validator('keywords')
     def convert_keywords_to_list_check_curies(cls, field):
-        return convert_scalar_to_list(field)
+        return convert_scalar_to_list_check_curies(cls, field)
 
     @validator('mesh_terms')
     def convert_mesh_terms_to_list_check_curies(cls, field):
@@ -766,11 +972,17 @@ class Publication(InformationContentEntity):
 
     @validator('xref')
     def convert_xref_to_list_check_curies(cls, field):
-        return convert_scalar_to_list(field)
+        return convert_scalar_to_list_check_curies(cls, field)
 
     @validator('id')
-    def check_id_prefix(cls, field):
+    def validate_required_id(cls, field):
+        check_value_is_not_none("id", field)
         check_curie_prefix(cls, field)
+        return field
+
+    @validator('type')
+    def validate_required_type(cls, field):
+        check_value_is_not_none("type", field)
         return field
 
 
@@ -782,17 +994,22 @@ class Book(Publication):
 
     # Class Variables
     _category: ClassVar[str] = "Book"
-    _required_attributes: ClassVar[List[str]] = ["category", "id", "type"]
     _id_prefixes: ClassVar[List[str]] = ["isbn", "NLMID"]
 
-    id: Curie = None
+    id: Union[str, Curie] = None
     type: str = None
 
     # Validators
 
     @validator('id')
-    def check_id_prefix(cls, field):
+    def validate_required_id(cls, field):
+        check_value_is_not_none("id", field)
         check_curie_prefix(cls, field)
+        return field
+
+    @validator('type')
+    def validate_required_type(cls, field):
+        check_value_is_not_none("type", field)
         return field
 
 
@@ -801,7 +1018,6 @@ class BookChapter(Publication):
 
     # Class Variables
     _category: ClassVar[str] = "BookChapter"
-    _required_attributes: ClassVar[List[str]] = ["category", "id", "type", "published_in"]
 
     published_in: Curie = None
     volume: Optional[str] = None
@@ -810,7 +1026,8 @@ class BookChapter(Publication):
     # Validators
 
     @validator('published_in')
-    def check_published_in_prefix(cls, field):
+    def validate_required_published_in(cls, field):
+        check_value_is_not_none("published_in", field)
         check_curie_prefix(cls, field)
         return field
 
@@ -823,10 +1040,9 @@ class Serial(Publication):
 
     # Class Variables
     _category: ClassVar[str] = "Serial"
-    _required_attributes: ClassVar[List[str]] = ["category", "id", "type"]
     _id_prefixes: ClassVar[List[str]] = ["issn", "NLMID"]
 
-    id: Curie = None
+    id: Union[str, Curie] = None
     type: str = None
     iso_abbreviation: Optional[str] = None
     volume: Optional[str] = None
@@ -835,8 +1051,14 @@ class Serial(Publication):
     # Validators
 
     @validator('id')
-    def check_id_prefix(cls, field):
+    def validate_required_id(cls, field):
+        check_value_is_not_none("id", field)
         check_curie_prefix(cls, field)
+        return field
+
+    @validator('type')
+    def validate_required_type(cls, field):
+        check_value_is_not_none("type", field)
         return field
 
 
@@ -845,7 +1067,6 @@ class Article(Publication):
 
     # Class Variables
     _category: ClassVar[str] = "Article"
-    _required_attributes: ClassVar[List[str]] = ["category", "id", "type", "published_in"]
     _id_prefixes: ClassVar[List[str]] = ["PMID"]
 
     published_in: Curie = None
@@ -856,7 +1077,8 @@ class Article(Publication):
     # Validators
 
     @validator('published_in')
-    def check_published_in_prefix(cls, field):
+    def validate_required_published_in(cls, field):
+        check_value_is_not_none("published_in", field)
         check_curie_prefix(cls, field)
         return field
 
@@ -883,7 +1105,6 @@ class PhysicalEntity(NamedThing, PhysicalEssence):
 
     # Class Variables
     _category: ClassVar[str] = "PhysicalEntity"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -909,7 +1130,6 @@ class Activity(NamedThing, ActivityAndBehavior):
 
     # Class Variables
     _category: ClassVar[str] = "Activity"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -920,7 +1140,6 @@ class Procedure(NamedThing, ActivityAndBehavior):
 
     # Class Variables
     _category: ClassVar[str] = "Procedure"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -931,7 +1150,6 @@ class Phenomenon(NamedThing, Occurrent):
 
     # Class Variables
     _category: ClassVar[str] = "Phenomenon"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -942,7 +1160,6 @@ class Device(NamedThing):
 
     # Class Variables
     _category: ClassVar[str] = "Device"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -962,7 +1179,6 @@ class MaterialSample(PhysicalEntity, SubjectOfInvestigation):
 
     # Class Variables
     _category: ClassVar[str] = "MaterialSample"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     _id_prefixes: ClassVar[List[str]] = ["BIOSAMPLE", "GOLD.META"]
 
 
@@ -974,7 +1190,6 @@ class PlanetaryEntity(NamedThing):
 
     # Class Variables
     _category: ClassVar[str] = "PlanetaryEntity"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -982,7 +1197,6 @@ class EnvironmentalProcess(PlanetaryEntity, Occurrent):
 
     # Class Variables
     _category: ClassVar[str] = "EnvironmentalProcess"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -990,7 +1204,6 @@ class EnvironmentalFeature(PlanetaryEntity):
 
     # Class Variables
     _category: ClassVar[str] = "EnvironmentalFeature"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -1001,7 +1214,6 @@ class GeographicLocation(PlanetaryEntity):
 
     # Class Variables
     _category: ClassVar[str] = "GeographicLocation"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
     latitude: Optional[float] = None
     longitude: Optional[float] = None
@@ -1015,7 +1227,6 @@ class GeographicLocationAtTime(GeographicLocation):
 
     # Class Variables
     _category: ClassVar[str] = "GeographicLocationAtTime"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
     timepoint: Optional[Union[str, TimeType]] = None
 
@@ -1023,8 +1234,7 @@ class GeographicLocationAtTime(GeographicLocation):
 @dataclass(config=PydanticConfig)
 class BiologicalEntity(NamedThing):
 
-    # Class Variables
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
+    pass
 
 
 @dataclass(config=PydanticConfig)
@@ -1053,7 +1263,6 @@ class MolecularEntity(BiologicalEntity, ThingWithTaxon, PhysicalEssence, Ontolog
 
     # Class Variables
     _category: ClassVar[str] = "MolecularEntity"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -1065,7 +1274,6 @@ class BiologicalProcessOrActivity(BiologicalEntity, Occurrent, OntologyClass):
 
     # Class Variables
     _category: ClassVar[str] = "BiologicalProcessOrActivity"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     _id_prefixes: ClassVar[List[str]] = ["GO", "REACT"]
 
     has_input: Optional[Union[Curie, List[Curie]]] = field(default_factory=list)
@@ -1095,7 +1303,6 @@ class MolecularActivity(BiologicalProcessOrActivity, Occurrent, OntologyClass):
 
     # Class Variables
     _category: ClassVar[str] = "MolecularActivity"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     _id_prefixes: ClassVar[List[str]] = [
         "GO",
         "REACT",
@@ -1135,7 +1342,6 @@ class BiologicalProcess(BiologicalProcessOrActivity, Occurrent, OntologyClass):
 
     # Class Variables
     _category: ClassVar[str] = "BiologicalProcess"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     _id_prefixes: ClassVar[List[str]] = ["GO", "REACT", "MetaCyc", "KEGG.MODULE"]
 
 
@@ -1144,7 +1350,6 @@ class Pathway(BiologicalProcess, OntologyClass):
 
     # Class Variables
     _category: ClassVar[str] = "Pathway"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     _id_prefixes: ClassVar[List[str]] = [
         "GO",
         "REACT",
@@ -1163,7 +1368,6 @@ class PhysiologicalProcess(BiologicalProcess, OntologyClass):
 
     # Class Variables
     _category: ClassVar[str] = "PhysiologicalProcess"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     _id_prefixes: ClassVar[List[str]] = ["GO", "REACT"]
 
 
@@ -1172,7 +1376,6 @@ class Behavior(BiologicalProcess, OntologyClass):
 
     # Class Variables
     _category: ClassVar[str] = "Behavior"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -1180,7 +1383,6 @@ class Death(BiologicalProcess):
 
     # Class Variables
     _category: ClassVar[str] = "Death"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -1208,7 +1410,6 @@ class ChemicalSubstance(MolecularEntity, OntologyClass):
 
     # Class Variables
     _category: ClassVar[str] = "ChemicalSubstance"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     _id_prefixes: ClassVar[List[str]] = [
         "PUBCHEM.COMPOUND",
         "CHEMBL.COMPOUND",
@@ -1241,7 +1442,6 @@ class Carbohydrate(ChemicalSubstance):
 
     # Class Variables
     _category: ClassVar[str] = "Carbohydrate"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     _id_prefixes: ClassVar[List[str]] = ["PUBCHEM.SUBSTANCE"]
 
 
@@ -1253,7 +1453,6 @@ class ProcessedMaterial(ChemicalSubstance, Mixture, OntologyClass):
 
     # Class Variables
     _category: ClassVar[str] = "ProcessedMaterial"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -1264,7 +1463,6 @@ class Drug(MolecularEntity, Mixture, ChemicalOrDrugOrTreatment, OntologyClass):
 
     # Class Variables
     _category: ClassVar[str] = "Drug"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     _id_prefixes: ClassVar[List[str]] = ["RXCUI", "NDC", "PHARMGKB.DRUG"]
 
 
@@ -1273,7 +1471,6 @@ class FoodComponent(ChemicalSubstance):
 
     # Class Variables
     _category: ClassVar[str] = "FoodComponent"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -1281,7 +1478,6 @@ class EnvironmentalFoodContaminant(ChemicalSubstance):
 
     # Class Variables
     _category: ClassVar[str] = "EnvironmentalFoodContaminant"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -1289,7 +1485,6 @@ class FoodAdditive(ChemicalSubstance):
 
     # Class Variables
     _category: ClassVar[str] = "FoodAdditive"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -1297,7 +1492,6 @@ class Nutrient(ChemicalSubstance):
 
     # Class Variables
     _category: ClassVar[str] = "Nutrient"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -1305,7 +1499,6 @@ class Macronutrient(Nutrient):
 
     # Class Variables
     _category: ClassVar[str] = "Macronutrient"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -1313,7 +1506,6 @@ class Micronutrient(Nutrient):
 
     # Class Variables
     _category: ClassVar[str] = "Micronutrient"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -1321,7 +1513,6 @@ class Vitamin(Micronutrient):
 
     # Class Variables
     _category: ClassVar[str] = "Vitamin"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -1332,7 +1523,6 @@ class Food(MolecularEntity, Mixture):
 
     # Class Variables
     _category: ClassVar[str] = "Food"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     _id_prefixes: ClassVar[List[str]] = ["foodb.compound"]
 
 
@@ -1344,7 +1534,6 @@ class Metabolite(ChemicalSubstance):
 
     # Class Variables
     _category: ClassVar[str] = "Metabolite"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -1355,7 +1544,6 @@ class OrganismAttribute(Attribute):
 
     # Class Variables
     _category: ClassVar[str] = "OrganismAttribute"
-    _required_attributes: ClassVar[List[str]] = ["has_attribute_type"]
 
 
 @dataclass(config=PydanticConfig)
@@ -1366,7 +1554,6 @@ class PhenotypicQuality(OrganismAttribute):
 
     # Class Variables
     _category: ClassVar[str] = "PhenotypicQuality"
-    _required_attributes: ClassVar[List[str]] = ["has_attribute_type"]
 
 
 @dataclass(config=PydanticConfig)
@@ -1378,7 +1565,6 @@ class Inheritance(OrganismAttribute):
 
     # Class Variables
     _category: ClassVar[str] = "Inheritance"
-    _required_attributes: ClassVar[List[str]] = ["has_attribute_type"]
 
 
 @dataclass(config=PydanticConfig)
@@ -1388,9 +1574,6 @@ class OrganismalEntity(BiologicalEntity):
     molecular entities
     """
 
-    # Class Variables
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
-
     has_attribute: Optional[Union[Union[str, Attribute], List[Union[str, Attribute]]]] = field(
         default_factory=list
     )
@@ -1399,7 +1582,7 @@ class OrganismalEntity(BiologicalEntity):
 
     @validator('has_attribute')
     def convert_has_attribute_to_list_check_curies(cls, field):
-        return convert_scalar_to_list(field)
+        return convert_scalar_to_list_check_curies(cls, field)
 
 
 @dataclass(config=PydanticConfig)
@@ -1410,7 +1593,6 @@ class LifeStage(OrganismalEntity, ThingWithTaxon):
 
     # Class Variables
     _category: ClassVar[str] = "LifeStage"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -1422,7 +1604,6 @@ class IndividualOrganism(OrganismalEntity, ThingWithTaxon):
 
     # Class Variables
     _category: ClassVar[str] = "IndividualOrganism"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     _id_prefixes: ClassVar[List[str]] = ["ORCID"]
 
 
@@ -1436,7 +1617,6 @@ class PopulationOfIndividualOrganisms(OrganismalEntity, ThingWithTaxon):
 
     # Class Variables
     _category: ClassVar[str] = "PopulationOfIndividualOrganisms"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     _id_prefixes: ClassVar[List[str]] = ["HANCESTRO"]
 
 
@@ -1448,7 +1628,6 @@ class StudyPopulation(PopulationOfIndividualOrganisms):
 
     # Class Variables
     _category: ClassVar[str] = "StudyPopulation"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -1460,7 +1639,6 @@ class DiseaseOrPhenotypicFeature(BiologicalEntity, ThingWithTaxon):
 
     # Class Variables
     _category: ClassVar[str] = "DiseaseOrPhenotypicFeature"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -1468,7 +1646,6 @@ class Disease(DiseaseOrPhenotypicFeature):
 
     # Class Variables
     _category: ClassVar[str] = "Disease"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     _id_prefixes: ClassVar[List[str]] = [
         "MONDO",
         "DOID",
@@ -1495,7 +1672,6 @@ class PhenotypicFeature(DiseaseOrPhenotypicFeature):
 
     # Class Variables
     _category: ClassVar[str] = "PhenotypicFeature"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     _id_prefixes: ClassVar[List[str]] = [
         "HP",
         "EFO",
@@ -1521,7 +1697,6 @@ class BehavioralFeature(PhenotypicFeature):
 
     # Class Variables
     _category: ClassVar[str] = "BehavioralFeature"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -1532,7 +1707,6 @@ class AnatomicalEntity(OrganismalEntity, ThingWithTaxon, PhysicalEssence):
 
     # Class Variables
     _category: ClassVar[str] = "AnatomicalEntity"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     _id_prefixes: ClassVar[List[str]] = ["UBERON", "GO", "CL", "UMLS", "MESH", "NCIT"]
 
 
@@ -1544,7 +1718,6 @@ class CellularComponent(AnatomicalEntity):
 
     # Class Variables
     _category: ClassVar[str] = "CellularComponent"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     _id_prefixes: ClassVar[List[str]] = ["GO", "MESH", "UMLS", "NCIT", "SNOMEDCT", "CL", "UBERON"]
 
 
@@ -1553,7 +1726,6 @@ class Cell(AnatomicalEntity):
 
     # Class Variables
     _category: ClassVar[str] = "Cell"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     _id_prefixes: ClassVar[List[str]] = ["CL", "PO", "UMLS", "NCIT", "MESH", "UBERON", "SNOMEDCT"]
 
 
@@ -1562,7 +1734,6 @@ class CellLine(OrganismalEntity):
 
     # Class Variables
     _category: ClassVar[str] = "CellLine"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     _id_prefixes: ClassVar[List[str]] = ["CLO"]
 
 
@@ -1571,7 +1742,6 @@ class GrossAnatomicalStructure(AnatomicalEntity):
 
     # Class Variables
     _category: ClassVar[str] = "GrossAnatomicalStructure"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     _id_prefixes: ClassVar[List[str]] = ["UBERON", "UMLS", "MESH", "NCIT", "PO", "FAO"]
 
 
@@ -1608,17 +1778,17 @@ class GeneProductMixin(GeneOrGeneProduct):
     synonym: Optional[Union[Union[str, LabelType], List[Union[str, LabelType]]]] = field(
         default_factory=list
     )
-    xref: Optional[Union[IriType, List[IriType]]] = field(default_factory=list)
+    xref: Optional[Union[Curie, List[Curie]]] = field(default_factory=list)
 
     # Validators
 
     @validator('synonym')
     def convert_synonym_to_list_check_curies(cls, field):
-        return convert_scalar_to_list(field)
+        return convert_scalar_to_list_check_curies(cls, field)
 
     @validator('xref')
     def convert_xref_to_list_check_curies(cls, field):
-        return convert_scalar_to_list(field)
+        return convert_scalar_to_list_check_curies(cls, field)
 
 
 @dataclass(config=PydanticConfig)
@@ -1650,7 +1820,6 @@ class GenomicEntity(MolecularEntity):
 
     # Class Variables
     _category: ClassVar[str] = "GenomicEntity"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
     has_biological_sequence: Optional[Union[str, BiologicalSequence]] = None
 
@@ -1664,7 +1833,6 @@ class Gene(GenomicEntity, GeneOrGeneProduct):
 
     # Class Variables
     _category: ClassVar[str] = "Gene"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     _id_prefixes: ClassVar[List[str]] = [
         "NCBIGene",
         "ENSEMBL",
@@ -1688,17 +1856,17 @@ class Gene(GenomicEntity, GeneOrGeneProduct):
     synonym: Optional[Union[Union[str, LabelType], List[Union[str, LabelType]]]] = field(
         default_factory=list
     )
-    xref: Optional[Union[IriType, List[IriType]]] = field(default_factory=list)
+    xref: Optional[Union[Curie, List[Curie]]] = field(default_factory=list)
 
     # Validators
 
     @validator('synonym')
     def convert_synonym_to_list_check_curies(cls, field):
-        return convert_scalar_to_list(field)
+        return convert_scalar_to_list_check_curies(cls, field)
 
     @validator('xref')
     def convert_xref_to_list_check_curies(cls, field):
-        return convert_scalar_to_list(field)
+        return convert_scalar_to_list_check_curies(cls, field)
 
 
 @dataclass(config=PydanticConfig)
@@ -1709,7 +1877,6 @@ class Genome(GenomicEntity):
 
     # Class Variables
     _category: ClassVar[str] = "Genome"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -1721,7 +1888,6 @@ class Exon(GenomicEntity):
 
     # Class Variables
     _category: ClassVar[str] = "Exon"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -1732,7 +1898,6 @@ class Transcript(GenomicEntity):
 
     # Class Variables
     _category: ClassVar[str] = "Transcript"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     _id_prefixes: ClassVar[List[str]] = ["ENSEMBL", "FB"]
 
 
@@ -1741,7 +1906,6 @@ class CodingSequence(GenomicEntity):
 
     # Class Variables
     _category: ClassVar[str] = "CodingSequence"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -1753,7 +1917,6 @@ class Protein(GenomicEntity, GeneProductMixin):
 
     # Class Variables
     _category: ClassVar[str] = "Protein"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     _id_prefixes: ClassVar[List[str]] = ["UniProtKB", "PR", "ENSEMBL", "FB", "UMLS"]
 
 
@@ -1766,7 +1929,6 @@ class ProteinIsoform(Protein, GeneProductIsoformMixin):
 
     # Class Variables
     _category: ClassVar[str] = "ProteinIsoform"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     _id_prefixes: ClassVar[List[str]] = ["UniProtKB", "UNIPROT.ISOFORM", "PR", "ENSEMBL"]
 
 
@@ -1775,7 +1937,6 @@ class RNAProduct(Transcript, GeneProductMixin):
 
     # Class Variables
     _category: ClassVar[str] = "RNAProduct"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     _id_prefixes: ClassVar[List[str]] = ["RNACENTRAL"]
 
 
@@ -1787,7 +1948,6 @@ class RNAProductIsoform(RNAProduct, GeneProductIsoformMixin):
 
     # Class Variables
     _category: ClassVar[str] = "RNAProductIsoform"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     _id_prefixes: ClassVar[List[str]] = ["RNACENTRAL"]
 
 
@@ -1796,7 +1956,6 @@ class NoncodingRNAProduct(RNAProduct):
 
     # Class Variables
     _category: ClassVar[str] = "NoncodingRNAProduct"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     _id_prefixes: ClassVar[List[str]] = ["RNACENTRAL", "NCBIGene", "ENSEMBL"]
 
 
@@ -1805,7 +1964,6 @@ class MicroRNA(NoncodingRNAProduct):
 
     # Class Variables
     _category: ClassVar[str] = "MicroRNA"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     _id_prefixes: ClassVar[List[str]] = ["MIR", "HGNC", "WormBase"]
 
 
@@ -1819,7 +1977,6 @@ class SiRNA(NoncodingRNAProduct):
 
     # Class Variables
     _category: ClassVar[str] = "SiRNA"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     _id_prefixes: ClassVar[List[str]] = ["MIR", "HGNC", "WormBase"]
 
 
@@ -1848,7 +2005,6 @@ class GeneFamily(MolecularEntity, GeneGroupingMixin):
 
     # Class Variables
     _category: ClassVar[str] = "GeneFamily"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     _id_prefixes: ClassVar[List[str]] = [
         "PANTHER.FAMILY",
         "HGNC.FAMILY",
@@ -1877,7 +2033,6 @@ class Zygosity(Attribute):
 
     # Class Variables
     _category: ClassVar[str] = "Zygosity"
-    _required_attributes: ClassVar[List[str]] = ["has_attribute_type"]
 
 
 @dataclass(config=PydanticConfig)
@@ -1889,7 +2044,6 @@ class Genotype(GenomicEntity):
 
     # Class Variables
     _category: ClassVar[str] = "Genotype"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     _id_prefixes: ClassVar[List[str]] = ["ZFIN", "FB"]
 
     has_zygosity: Optional[Union[str, Zygosity]] = None
@@ -1903,7 +2057,6 @@ class Haplotype(GenomicEntity):
 
     # Class Variables
     _category: ClassVar[str] = "Haplotype"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -1914,7 +2067,6 @@ class SequenceVariant(GenomicEntity):
 
     # Class Variables
     _category: ClassVar[str] = "SequenceVariant"
-    _required_attributes: ClassVar[List[str]] = ["category", "id"]
     _id_prefixes: ClassVar[List[str]] = [
         "CAID",
         "CLINVAR",
@@ -1929,7 +2081,7 @@ class SequenceVariant(GenomicEntity):
         "WormBase",
     ]
 
-    id: Curie = None
+    id: Union[str, Curie] = None
     has_gene: Optional[Union[Union[Curie, Gene], List[Union[Curie, Gene]]]] = field(
         default_factory=list
     )
@@ -1942,7 +2094,8 @@ class SequenceVariant(GenomicEntity):
         return convert_scalar_to_list_check_curies(Gene, field)
 
     @validator('id')
-    def check_id_prefix(cls, field):
+    def validate_required_id(cls, field):
+        check_value_is_not_none("id", field)
         check_curie_prefix(cls, field)
         return field
 
@@ -1955,7 +2108,6 @@ class Snv(SequenceVariant):
 
     # Class Variables
     _category: ClassVar[str] = "Snv"
-    _required_attributes: ClassVar[List[str]] = ["category", "id"]
 
 
 @dataclass(config=PydanticConfig)
@@ -1967,7 +2119,6 @@ class ReagentTargetedGene(GenomicEntity):
 
     # Class Variables
     _category: ClassVar[str] = "ReagentTargetedGene"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -1978,7 +2129,6 @@ class ClinicalAttribute(Attribute):
 
     # Class Variables
     _category: ClassVar[str] = "ClinicalAttribute"
-    _required_attributes: ClassVar[List[str]] = ["has_attribute_type"]
 
 
 @dataclass(config=PydanticConfig)
@@ -1990,9 +2140,15 @@ class ClinicalMeasurement(ClinicalAttribute):
 
     # Class Variables
     _category: ClassVar[str] = "ClinicalMeasurement"
-    _required_attributes: ClassVar[List[str]] = ["has_attribute_type"]
 
     has_attribute_type: Union[str, OntologyClass] = None
+
+    # Validators
+
+    @validator('has_attribute_type')
+    def validate_required_has_attribute_type(cls, field):
+        check_value_is_not_none("has_attribute_type", field)
+        return field
 
 
 @dataclass(config=PydanticConfig)
@@ -2004,7 +2160,6 @@ class ClinicalModifier(ClinicalAttribute):
 
     # Class Variables
     _category: ClassVar[str] = "ClinicalModifier"
-    _required_attributes: ClassVar[List[str]] = ["has_attribute_type"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2016,7 +2171,6 @@ class ClinicalCourse(ClinicalAttribute):
 
     # Class Variables
     _category: ClassVar[str] = "ClinicalCourse"
-    _required_attributes: ClassVar[List[str]] = ["has_attribute_type"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2027,7 +2181,6 @@ class Onset(ClinicalCourse):
 
     # Class Variables
     _category: ClassVar[str] = "Onset"
-    _required_attributes: ClassVar[List[str]] = ["has_attribute_type"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2039,7 +2192,6 @@ class ClinicalEntity(NamedThing):
 
     # Class Variables
     _category: ClassVar[str] = "ClinicalEntity"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2047,7 +2199,6 @@ class ClinicalTrial(ClinicalEntity):
 
     # Class Variables
     _category: ClassVar[str] = "ClinicalTrial"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2055,7 +2206,6 @@ class ClinicalIntervention(ClinicalEntity):
 
     # Class Variables
     _category: ClassVar[str] = "ClinicalIntervention"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2067,7 +2217,6 @@ class ClinicalFinding(PhenotypicFeature):
 
     # Class Variables
     _category: ClassVar[str] = "ClinicalFinding"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
     _id_prefixes: ClassVar[List[str]] = ["LOINC", "NCIT", "EFO"]
 
     has_attribute: Optional[
@@ -2078,7 +2227,7 @@ class ClinicalFinding(PhenotypicFeature):
 
     @validator('has_attribute')
     def convert_has_attribute_to_list_check_curies(cls, field):
-        return convert_scalar_to_list(field)
+        return convert_scalar_to_list_check_curies(cls, field)
 
 
 @dataclass(config=PydanticConfig)
@@ -2086,7 +2235,6 @@ class Hospitalization(ClinicalIntervention):
 
     # Class Variables
     _category: ClassVar[str] = "Hospitalization"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2097,7 +2245,6 @@ class SocioeconomicAttribute(Attribute):
 
     # Class Variables
     _category: ClassVar[str] = "SocioeconomicAttribute"
-    _required_attributes: ClassVar[List[str]] = ["has_attribute_type"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2108,7 +2255,6 @@ class Case(IndividualOrganism):
 
     # Class Variables
     _category: ClassVar[str] = "Case"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2120,7 +2266,6 @@ class Cohort(StudyPopulation):
 
     # Class Variables
     _category: ClassVar[str] = "Cohort"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2143,7 +2288,6 @@ class GenomicBackgroundExposure(GenomicEntity, ExposureEvent, GeneGroupingMixin)
 
     # Class Variables
     _category: ClassVar[str] = "GenomicBackgroundExposure"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2162,7 +2306,6 @@ class PathologicalProcess(BiologicalProcess, PathologicalEntityMixin):
 
     # Class Variables
     _category: ClassVar[str] = "PathologicalProcess"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2174,7 +2317,6 @@ class PathologicalProcessExposure(PathologicalProcess, ExposureEvent):
 
     # Class Variables
     _category: ClassVar[str] = "PathologicalProcessExposure"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2186,7 +2328,6 @@ class PathologicalAnatomicalStructure(AnatomicalEntity, PathologicalEntityMixin)
 
     # Class Variables
     _category: ClassVar[str] = "PathologicalAnatomicalStructure"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2198,7 +2339,6 @@ class PathologicalAnatomicalExposure(PathologicalAnatomicalStructure, ExposureEv
 
     # Class Variables
     _category: ClassVar[str] = "PathologicalAnatomicalExposure"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2213,7 +2353,6 @@ class DiseaseOrPhenotypicFeatureExposure(
 
     # Class Variables
     _category: ClassVar[str] = "DiseaseOrPhenotypicFeatureExposure"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2224,7 +2363,6 @@ class ChemicalExposure(ChemicalSubstance, ExposureEvent):
 
     # Class Variables
     _category: ClassVar[str] = "ChemicalExposure"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2235,7 +2373,6 @@ class ComplexChemicalExposure(ChemicalExposure, Mixture):
 
     # Class Variables
     _category: ClassVar[str] = "ComplexChemicalExposure"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2246,7 +2383,6 @@ class DrugExposure(Drug, ExposureEvent):
 
     # Class Variables
     _category: ClassVar[str] = "DrugExposure"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2258,7 +2394,6 @@ class DrugToGeneInteractionExposure(DrugExposure, GeneGroupingMixin):
 
     # Class Variables
     _category: ClassVar[str] = "DrugToGeneInteractionExposure"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2270,7 +2405,6 @@ class Treatment(NamedThing, ExposureEvent, ChemicalOrDrugOrTreatment):
 
     # Class Variables
     _category: ClassVar[str] = "Treatment"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
     has_drug: Optional[Union[Union[Curie, Drug], List[Union[Curie, Drug]]]] = field(
         default_factory=list
@@ -2305,7 +2439,6 @@ class BioticExposure(OrganismTaxon, ExposureEvent):
 
     # Class Variables
     _category: ClassVar[str] = "BioticExposure"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2316,7 +2449,6 @@ class GeographicExposure(GeographicLocation, ExposureEvent):
 
     # Class Variables
     _category: ClassVar[str] = "GeographicExposure"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2328,7 +2460,6 @@ class EnvironmentalExposure(EnvironmentalProcess, ExposureEvent):
 
     # Class Variables
     _category: ClassVar[str] = "EnvironmentalExposure"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2339,7 +2470,6 @@ class BehavioralExposure(Behavior, ExposureEvent):
 
     # Class Variables
     _category: ClassVar[str] = "BehavioralExposure"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2351,7 +2481,6 @@ class SocioeconomicExposure(Behavior, ExposureEvent):
 
     # Class Variables
     _category: ClassVar[str] = "SocioeconomicExposure"
-    _required_attributes: ClassVar[List[str]] = ["id", "category", "has_attribute"]
 
     has_attribute: Union[
         Union[str, SocioeconomicAttribute], List[Union[str, SocioeconomicAttribute]]
@@ -2360,8 +2489,10 @@ class SocioeconomicExposure(Behavior, ExposureEvent):
     # Validators
 
     @validator('has_attribute')
-    def convert_has_attribute_to_list_check_curies(cls, field):
-        return convert_scalar_to_list(field)
+    def validate_required_has_attribute(cls, field):
+        check_value_is_not_none("has_attribute", field)
+        convert_scalar_to_list_check_curies(cls, field)
+        return field
 
 
 @dataclass(config=PydanticConfig)
@@ -2380,7 +2511,6 @@ class PathologicalProcessOutcome(PathologicalProcess, Outcome):
 
     # Class Variables
     _category: ClassVar[str] = "PathologicalProcessOutcome"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2391,7 +2521,6 @@ class PathologicalAnatomicalOutcome(PathologicalAnatomicalStructure, Outcome):
 
     # Class Variables
     _category: ClassVar[str] = "PathologicalAnatomicalOutcome"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2403,7 +2532,6 @@ class DiseaseOrPhenotypicFeatureOutcome(DiseaseOrPhenotypicFeature, Outcome):
 
     # Class Variables
     _category: ClassVar[str] = "DiseaseOrPhenotypicFeatureOutcome"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2414,7 +2542,6 @@ class BehavioralOutcome(Behavior, Outcome):
 
     # Class Variables
     _category: ClassVar[str] = "BehavioralOutcome"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2426,7 +2553,6 @@ class HospitalizationOutcome(Hospitalization, Outcome):
 
     # Class Variables
     _category: ClassVar[str] = "HospitalizationOutcome"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2437,7 +2563,6 @@ class MortalityOutcome(Death, Outcome):
 
     # Class Variables
     _category: ClassVar[str] = "MortalityOutcome"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2448,7 +2573,6 @@ class EpidemiologicalOutcome(BiologicalEntity, Outcome):
 
     # Class Variables
     _category: ClassVar[str] = "EpidemiologicalOutcome"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2460,7 +2584,6 @@ class SocioeconomicOutcome(Behavior, Outcome):
 
     # Class Variables
     _category: ClassVar[str] = "SocioeconomicOutcome"
-    _required_attributes: ClassVar[List[str]] = ["id", "category"]
 
 
 @dataclass(config=PydanticConfig)
@@ -2471,10 +2594,9 @@ class Association(Entity):
 
     # Class Variables
     _category: ClassVar[str] = "Association"
-    _required_attributes: ClassVar[List[str]] = ["id", "subject", "predicate", "object", "relation"]
 
     subject: Union[Curie, NamedThing] = None
-    predicate: Curie = None
+    predicate: Predicate = None
     object: Union[Curie, NamedThing] = None
     relation: Curie = None
     negated: Optional[bool] = None
@@ -2492,28 +2614,31 @@ class Association(Entity):
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(NamedThing, field)
         return field
 
     @validator('predicate')
-    def check_predicate_prefix(cls, field):
-        check_curie_prefix(cls, field)
+    def validate_required_predicate(cls, field):
+        check_value_is_not_none("predicate", field)
         return field
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(NamedThing, field)
         return field
 
     @validator('relation')
-    def check_relation_prefix(cls, field):
+    def validate_required_relation(cls, field):
+        check_value_is_not_none("relation", field)
         check_curie_prefix(cls, field)
         return field
 
     @validator('qualifiers')
     def convert_qualifiers_to_list_check_curies(cls, field):
-        return convert_scalar_to_list(field)
+        return convert_scalar_to_list_check_curies(cls, field)
 
     @validator('publications')
     def convert_publications_to_list_check_curies(cls, field):
@@ -2521,7 +2646,7 @@ class Association(Entity):
 
     @validator('category')
     def convert_category_to_list_check_curies(cls, field):
-        return convert_scalar_to_list(field)
+        return convert_scalar_to_list_check_curies(cls, field)
 
 
 @dataclass(config=PydanticConfig)
@@ -2532,10 +2657,9 @@ class ContributorAssociation(Association):
 
     # Class Variables
     _category: ClassVar[str] = "ContributorAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "relation", "subject", "predicate", "object"]
 
     subject: Union[Curie, InformationContentEntity] = None
-    predicate: Curie = None
+    predicate: Predicate = None
     object: Union[Curie, Agent] = None
     qualifiers: Optional[Union[Union[str, OntologyClass], List[Union[str, OntologyClass]]]] = field(
         default_factory=list
@@ -2544,23 +2668,25 @@ class ContributorAssociation(Association):
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(InformationContentEntity, field)
         return field
 
     @validator('predicate')
-    def check_predicate_prefix(cls, field):
-        check_curie_prefix(cls, field)
+    def validate_required_predicate(cls, field):
+        check_value_is_not_none("predicate", field)
         return field
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(Agent, field)
         return field
 
     @validator('qualifiers')
     def convert_qualifiers_to_list_check_curies(cls, field):
-        return convert_scalar_to_list(field)
+        return convert_scalar_to_list_check_curies(cls, field)
 
 
 @dataclass(config=PydanticConfig)
@@ -2571,26 +2697,27 @@ class GenotypeToGenotypePartAssociation(Association):
 
     # Class Variables
     _category: ClassVar[str] = "GenotypeToGenotypePartAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "relation", "predicate", "subject", "object"]
 
-    predicate: Curie = None
+    predicate: Predicate = None
     subject: Union[Curie, Genotype] = None
     object: Union[Curie, Genotype] = None
 
     # Validators
 
     @validator('predicate')
-    def check_predicate_prefix(cls, field):
-        check_curie_prefix(cls, field)
+    def validate_required_predicate(cls, field):
+        check_value_is_not_none("predicate", field)
         return field
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(Genotype, field)
         return field
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(Genotype, field)
         return field
 
@@ -2604,26 +2731,27 @@ class GenotypeToGeneAssociation(Association):
 
     # Class Variables
     _category: ClassVar[str] = "GenotypeToGeneAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "relation", "predicate", "subject", "object"]
 
-    predicate: Curie = None
+    predicate: Predicate = None
     subject: Union[Curie, Genotype] = None
     object: Union[Curie, Gene] = None
 
     # Validators
 
     @validator('predicate')
-    def check_predicate_prefix(cls, field):
-        check_curie_prefix(cls, field)
+    def validate_required_predicate(cls, field):
+        check_value_is_not_none("predicate", field)
         return field
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(Genotype, field)
         return field
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(Gene, field)
         return field
 
@@ -2636,26 +2764,27 @@ class GenotypeToVariantAssociation(Association):
 
     # Class Variables
     _category: ClassVar[str] = "GenotypeToVariantAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "relation", "predicate", "subject", "object"]
 
-    predicate: Curie = None
+    predicate: Predicate = None
     subject: Union[Curie, Genotype] = None
     object: Union[Curie, SequenceVariant] = None
 
     # Validators
 
     @validator('predicate')
-    def check_predicate_prefix(cls, field):
-        check_curie_prefix(cls, field)
+    def validate_required_predicate(cls, field):
+        check_value_is_not_none("predicate", field)
         return field
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(Genotype, field)
         return field
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(SequenceVariant, field)
         return field
 
@@ -2667,11 +2796,20 @@ class GeneToGeneAssociation(Association):
     homology and interaction.
     """
 
-    # Class Variables
-    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "relation", "subject", "object"]
-
     subject: Union[str, GeneOrGeneProduct] = None
     object: Union[str, GeneOrGeneProduct] = None
+
+    # Validators
+
+    @validator('subject')
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
+        return field
+
+    @validator('object')
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
+        return field
 
 
 @dataclass(config=PydanticConfig)
@@ -2683,15 +2821,14 @@ class GeneToGeneHomologyAssociation(GeneToGeneAssociation):
 
     # Class Variables
     _category: ClassVar[str] = "GeneToGeneHomologyAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "relation", "subject", "object", "predicate"]
 
-    predicate: Curie = None
+    predicate: Predicate = None
 
     # Validators
 
     @validator('predicate')
-    def check_predicate_prefix(cls, field):
-        check_curie_prefix(cls, field)
+    def validate_required_predicate(cls, field):
+        check_value_is_not_none("predicate", field)
         return field
 
 
@@ -2733,15 +2870,14 @@ class GeneToGeneCoexpressionAssociation(GeneToGeneAssociation, GeneExpressionMix
 
     # Class Variables
     _category: ClassVar[str] = "GeneToGeneCoexpressionAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "relation", "subject", "object", "predicate"]
 
-    predicate: Curie = None
+    predicate: Predicate = None
 
     # Validators
 
     @validator('predicate')
-    def check_predicate_prefix(cls, field):
-        check_curie_prefix(cls, field)
+    def validate_required_predicate(cls, field):
+        check_value_is_not_none("predicate", field)
         return field
 
 
@@ -2754,20 +2890,20 @@ class PairwiseGeneToGeneInteraction(GeneToGeneAssociation):
 
     # Class Variables
     _category: ClassVar[str] = "PairwiseGeneToGeneInteraction"
-    _required_attributes: ClassVar[List[str]] = ["id", "subject", "object", "predicate", "relation"]
 
-    predicate: Curie = None
+    predicate: Predicate = None
     relation: Curie = None
 
     # Validators
 
     @validator('predicate')
-    def check_predicate_prefix(cls, field):
-        check_curie_prefix(cls, field)
+    def validate_required_predicate(cls, field):
+        check_value_is_not_none("predicate", field)
         return field
 
     @validator('relation')
-    def check_relation_prefix(cls, field):
+    def validate_required_relation(cls, field):
+        check_value_is_not_none("relation", field)
         check_curie_prefix(cls, field)
         return field
 
@@ -2780,11 +2916,10 @@ class PairwiseMolecularInteraction(PairwiseGeneToGeneInteraction):
 
     # Class Variables
     _category: ClassVar[str] = "PairwiseMolecularInteraction"
-    _required_attributes: ClassVar[List[str]] = ["subject", "id", "predicate", "relation", "object"]
 
     subject: Union[Curie, MolecularEntity] = None
-    id: Curie = None
-    predicate: Curie = None
+    id: Union[str, Curie] = None
+    predicate: Predicate = None
     relation: Curie = None
     object: Union[Curie, MolecularEntity] = None
     interacting_molecules_category: Optional[Union[str, OntologyClass]] = None
@@ -2792,27 +2927,31 @@ class PairwiseMolecularInteraction(PairwiseGeneToGeneInteraction):
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(MolecularEntity, field)
         return field
 
     @validator('id')
-    def check_id_prefix(cls, field):
+    def validate_required_id(cls, field):
+        check_value_is_not_none("id", field)
         check_curie_prefix(cls, field)
         return field
 
     @validator('predicate')
-    def check_predicate_prefix(cls, field):
-        check_curie_prefix(cls, field)
+    def validate_required_predicate(cls, field):
+        check_value_is_not_none("predicate", field)
         return field
 
     @validator('relation')
-    def check_relation_prefix(cls, field):
+    def validate_required_relation(cls, field):
+        check_value_is_not_none("relation", field)
         check_curie_prefix(cls, field)
         return field
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(MolecularEntity, field)
         return field
 
@@ -2823,15 +2962,13 @@ class CellLineToEntityAssociationMixin:
     An relationship between a cell line and another entity
     """
 
-    # Class Variables
-    _required_attributes: ClassVar[List[str]] = ["subject"]
-
     subject: Union[Curie, CellLine] = None
 
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(CellLine, field)
         return field
 
@@ -2842,15 +2979,13 @@ class MolecularEntityToEntityAssociationMixin:
     An interaction between a molecular entity and another entity
     """
 
-    # Class Variables
-    _required_attributes: ClassVar[List[str]] = ["subject"]
-
     subject: Union[Curie, MolecularEntity] = None
 
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(MolecularEntity, field)
         return field
 
@@ -2861,15 +2996,13 @@ class DrugToEntityAssociationMixin(MolecularEntityToEntityAssociationMixin):
     An interaction between a drug and another entity
     """
 
-    # Class Variables
-    _required_attributes: ClassVar[List[str]] = ["subject"]
-
     subject: Union[Curie, Drug] = None
 
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(Drug, field)
         return field
 
@@ -2880,15 +3013,13 @@ class ChemicalToEntityAssociationMixin(MolecularEntityToEntityAssociationMixin):
     An interaction between a chemical entity and another entity
     """
 
-    # Class Variables
-    _required_attributes: ClassVar[List[str]] = ["subject"]
-
     subject: Union[Curie, ChemicalSubstance] = None
 
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(ChemicalSubstance, field)
         return field
 
@@ -2899,15 +3030,13 @@ class CaseToEntityAssociationMixin:
     An abstract association for use where the case is the subject
     """
 
-    # Class Variables
-    _required_attributes: ClassVar[List[str]] = ["subject"]
-
     subject: Union[Curie, Case] = None
 
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(Case, field)
         return field
 
@@ -2921,14 +3050,14 @@ class ChemicalToChemicalAssociation(Association, ChemicalToEntityAssociationMixi
 
     # Class Variables
     _category: ClassVar[str] = "ChemicalToChemicalAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "subject", "predicate", "relation", "object"]
 
     object: Union[Curie, ChemicalSubstance] = None
 
     # Validators
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(ChemicalSubstance, field)
         return field
 
@@ -2949,11 +3078,10 @@ class ChemicalToChemicalDerivationAssociation(ChemicalToChemicalAssociation):
 
     # Class Variables
     _category: ClassVar[str] = "ChemicalToChemicalDerivationAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "relation", "subject", "object", "predicate"]
 
     subject: Union[Curie, ChemicalSubstance] = None
     object: Union[Curie, ChemicalSubstance] = None
-    predicate: Curie = None
+    predicate: Predicate = None
     catalyst_qualifier: Optional[
         Union[Union[str, MacromolecularMachineMixin], List[Union[str, MacromolecularMachineMixin]]]
     ] = field(default_factory=list)
@@ -2962,21 +3090,23 @@ class ChemicalToChemicalDerivationAssociation(ChemicalToChemicalAssociation):
 
     @validator('catalyst_qualifier')
     def convert_catalyst_qualifier_to_list_check_curies(cls, field):
-        return convert_scalar_to_list(field)
+        return convert_scalar_to_list_check_curies(cls, field)
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(ChemicalSubstance, field)
         return field
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(ChemicalSubstance, field)
         return field
 
     @validator('predicate')
-    def check_predicate_prefix(cls, field):
-        check_curie_prefix(cls, field)
+    def validate_required_predicate(cls, field):
+        check_value_is_not_none("predicate", field)
         return field
 
 
@@ -2988,14 +3118,14 @@ class ChemicalToPathwayAssociation(Association, ChemicalToEntityAssociationMixin
 
     # Class Variables
     _category: ClassVar[str] = "ChemicalToPathwayAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "subject", "predicate", "relation", "object"]
 
     object: Union[Curie, Pathway] = None
 
     # Validators
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(Pathway, field)
         return field
 
@@ -3008,9 +3138,15 @@ class ChemicalToGeneAssociation(Association, ChemicalToEntityAssociationMixin):
 
     # Class Variables
     _category: ClassVar[str] = "ChemicalToGeneAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "subject", "predicate", "relation", "object"]
 
     object: Union[str, GeneOrGeneProduct] = None
+
+    # Validators
+
+    @validator('object')
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
+        return field
 
 
 @dataclass(config=PydanticConfig)
@@ -3021,9 +3157,15 @@ class DrugToGeneAssociation(Association, DrugToEntityAssociationMixin):
 
     # Class Variables
     _category: ClassVar[str] = "DrugToGeneAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "subject", "predicate", "relation", "object"]
 
     object: Union[str, GeneOrGeneProduct] = None
+
+    # Validators
+
+    @validator('object')
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
+        return field
 
 
 @dataclass(config=PydanticConfig)
@@ -3032,15 +3174,13 @@ class MaterialSampleToEntityAssociationMixin:
     An association between a material sample and something.
     """
 
-    # Class Variables
-    _required_attributes: ClassVar[List[str]] = ["subject"]
-
     subject: Union[Curie, MaterialSample] = None
 
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(MaterialSample, field)
         return field
 
@@ -3053,42 +3193,40 @@ class MaterialSampleDerivationAssociation(Association):
 
     # Class Variables
     _category: ClassVar[str] = "MaterialSampleDerivationAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "relation", "subject", "object", "predicate"]
 
     subject: Union[Curie, MaterialSample] = None
     object: Union[Curie, NamedThing] = None
-    predicate: Curie = None
+    predicate: Predicate = None
 
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(MaterialSample, field)
         return field
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(NamedThing, field)
         return field
 
     @validator('predicate')
-    def check_predicate_prefix(cls, field):
-        check_curie_prefix(cls, field)
+    def validate_required_predicate(cls, field):
+        check_value_is_not_none("predicate", field)
         return field
 
 
 @dataclass(config=PydanticConfig)
 class DiseaseToEntityAssociationMixin:
-
-    # Class Variables
-    _required_attributes: ClassVar[List[str]] = ["subject"]
-
     subject: Union[Curie, Disease] = None
 
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(Disease, field)
         return field
 
@@ -3099,10 +3237,14 @@ class EntityToExposureEventAssociationMixin:
     An association between some entity and an exposure event.
     """
 
-    # Class Variables
-    _required_attributes: ClassVar[List[str]] = ["object"]
-
     object: Union[str, ExposureEvent] = None
+
+    # Validators
+
+    @validator('object')
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
+        return field
 
 
 @dataclass(config=PydanticConfig)
@@ -3115,7 +3257,6 @@ class DiseaseToExposureEventAssociation(
 
     # Class Variables
     _category: ClassVar[str] = "DiseaseToExposureEventAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "subject", "predicate", "object", "relation"]
 
 
 @dataclass(config=PydanticConfig)
@@ -3124,10 +3265,14 @@ class ExposureEventToEntityAssociationMixin:
     An association between some exposure event and some entity.
     """
 
-    # Class Variables
-    _required_attributes: ClassVar[List[str]] = ["subject"]
-
     subject: Union[str, ExposureEvent] = None
+
+    # Validators
+
+    @validator('subject')
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
+        return field
 
 
 @dataclass(config=PydanticConfig)
@@ -3136,10 +3281,14 @@ class EntityToOutcomeAssociationMixin:
     An association between some entity and an outcome
     """
 
-    # Class Variables
-    _required_attributes: ClassVar[List[str]] = ["object"]
-
     object: Union[str, Outcome] = None
+
+    # Validators
+
+    @validator('object')
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
+        return field
 
 
 @dataclass(config=PydanticConfig)
@@ -3152,7 +3301,6 @@ class ExposureEventToOutcomeAssociation(
 
     # Class Variables
     _category: ClassVar[str] = "ExposureEventToOutcomeAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "subject", "predicate", "object", "relation"]
 
     has_population_context: Optional[Union[Curie, PopulationOfIndividualOrganisms]] = None
     has_temporal_context: Optional[Union[str, TimeType]] = None
@@ -3186,10 +3334,6 @@ class EntityToFeatureOrDiseaseQualifiersMixin(FrequencyQualifierMixin):
 
 @dataclass(config=PydanticConfig)
 class EntityToPhenotypicFeatureAssociationMixin(EntityToFeatureOrDiseaseQualifiersMixin):
-
-    # Class Variables
-    _required_attributes: ClassVar[List[str]] = ["object"]
-
     object: Union[Curie, PhenotypicFeature] = None
     sex_qualifier: Optional[Union[str, BiologicalSex]] = None
     description: Optional[Union[str, NarrativeText]] = None
@@ -3197,7 +3341,8 @@ class EntityToPhenotypicFeatureAssociationMixin(EntityToFeatureOrDiseaseQualifie
     # Validators
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(PhenotypicFeature, field)
         return field
 
@@ -3208,31 +3353,26 @@ class EntityToDiseaseAssociationMixin(EntityToFeatureOrDiseaseQualifiersMixin):
     mixin class for any association whose object (target node) is a disease
     """
 
-    # Class Variables
-    _required_attributes: ClassVar[List[str]] = ["object"]
-
     object: Union[Curie, Disease] = None
 
     # Validators
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(Disease, field)
         return field
 
 
 @dataclass(config=PydanticConfig)
 class DiseaseOrPhenotypicFeatureToEntityAssociationMixin:
-
-    # Class Variables
-    _required_attributes: ClassVar[List[str]] = ["subject"]
-
     subject: Union[Curie, DiseaseOrPhenotypicFeature] = None
 
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(DiseaseOrPhenotypicFeature, field)
         return field
 
@@ -3244,14 +3384,14 @@ class DiseaseOrPhenotypicFeatureAssociationToLocationAssociation(
 
     # Class Variables
     _category: ClassVar[str] = "DiseaseOrPhenotypicFeatureAssociationToLocationAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "subject", "predicate", "relation", "object"]
 
     object: Union[Curie, AnatomicalEntity] = None
 
     # Validators
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(AnatomicalEntity, field)
         return field
 
@@ -3267,30 +3407,27 @@ class DiseaseOrPhenotypicFeatureToLocationAssociation(
 
     # Class Variables
     _category: ClassVar[str] = "DiseaseOrPhenotypicFeatureToLocationAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "subject", "predicate", "relation", "object"]
 
     object: Union[Curie, AnatomicalEntity] = None
 
     # Validators
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(AnatomicalEntity, field)
         return field
 
 
 @dataclass(config=PydanticConfig)
 class EntityToDiseaseOrPhenotypicFeatureAssociationMixin:
-
-    # Class Variables
-    _required_attributes: ClassVar[List[str]] = ["object"]
-
     object: Union[Curie, DiseaseOrPhenotypicFeature] = None
 
     # Validators
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(DiseaseOrPhenotypicFeature, field)
         return field
 
@@ -3308,14 +3445,14 @@ class CellLineToDiseaseOrPhenotypicFeatureAssociation(
 
     # Class Variables
     _category: ClassVar[str] = "CellLineToDiseaseOrPhenotypicFeatureAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "object", "relation", "subject"]
 
     subject: Union[Curie, DiseaseOrPhenotypicFeature] = None
 
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(DiseaseOrPhenotypicFeature, field)
         return field
 
@@ -3333,14 +3470,14 @@ class ChemicalToDiseaseOrPhenotypicFeatureAssociation(
 
     # Class Variables
     _category: ClassVar[str] = "ChemicalToDiseaseOrPhenotypicFeatureAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "subject", "predicate", "relation", "object"]
 
     object: Union[Curie, DiseaseOrPhenotypicFeature] = None
 
     # Validators
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(DiseaseOrPhenotypicFeature, field)
         return field
 
@@ -3357,21 +3494,17 @@ class MaterialSampleToDiseaseOrPhenotypicFeatureAssociation(
 
     # Class Variables
     _category: ClassVar[str] = "MaterialSampleToDiseaseOrPhenotypicFeatureAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "subject", "predicate", "object", "relation"]
 
 
 @dataclass(config=PydanticConfig)
 class GenotypeToEntityAssociationMixin:
-
-    # Class Variables
-    _required_attributes: ClassVar[List[str]] = ["subject"]
-
     subject: Union[Curie, Genotype] = None
 
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(Genotype, field)
         return field
 
@@ -3387,20 +3520,20 @@ class GenotypeToPhenotypicFeatureAssociation(
 
     # Class Variables
     _category: ClassVar[str] = "GenotypeToPhenotypicFeatureAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "object", "relation", "predicate", "subject"]
 
-    predicate: Curie = None
+    predicate: Predicate = None
     subject: Union[Curie, Genotype] = None
 
     # Validators
 
     @validator('predicate')
-    def check_predicate_prefix(cls, field):
-        check_curie_prefix(cls, field)
+    def validate_required_predicate(cls, field):
+        check_value_is_not_none("predicate", field)
         return field
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(Genotype, field)
         return field
 
@@ -3416,9 +3549,15 @@ class ExposureEventToPhenotypicFeatureAssociation(
 
     # Class Variables
     _category: ClassVar[str] = "ExposureEventToPhenotypicFeatureAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "object", "relation", "subject"]
 
     subject: Union[str, ExposureEvent] = None
+
+    # Validators
+
+    @validator('subject')
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
+        return field
 
 
 @dataclass(config=PydanticConfig)
@@ -3432,7 +3571,6 @@ class DiseaseToPhenotypicFeatureAssociation(
 
     # Class Variables
     _category: ClassVar[str] = "DiseaseToPhenotypicFeatureAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "subject", "predicate", "object", "relation"]
 
 
 @dataclass(config=PydanticConfig)
@@ -3446,7 +3584,6 @@ class CaseToPhenotypicFeatureAssociation(
 
     # Class Variables
     _category: ClassVar[str] = "CaseToPhenotypicFeatureAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "subject", "predicate", "object", "relation"]
 
 
 @dataclass(config=PydanticConfig)
@@ -3460,7 +3597,6 @@ class BehaviorToBehavioralFeatureAssociation(
 
     # Class Variables
     _category: ClassVar[str] = "BehaviorToBehavioralFeatureAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "relation", "subject", "object"]
 
     subject: Union[Curie, Behavior] = None
     object: Union[Curie, BehavioralFeature] = None
@@ -3468,37 +3604,39 @@ class BehaviorToBehavioralFeatureAssociation(
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(Behavior, field)
         return field
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(BehavioralFeature, field)
         return field
 
 
 @dataclass(config=PydanticConfig)
 class GeneToEntityAssociationMixin:
-
-    # Class Variables
-    _required_attributes: ClassVar[List[str]] = ["subject"]
-
     subject: Union[str, GeneOrGeneProduct] = None
+
+    # Validators
+
+    @validator('subject')
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
+        return field
 
 
 @dataclass(config=PydanticConfig)
 class VariantToEntityAssociationMixin:
-
-    # Class Variables
-    _required_attributes: ClassVar[List[str]] = ["subject"]
-
     subject: Union[Curie, SequenceVariant] = None
 
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(SequenceVariant, field)
         return field
 
@@ -3510,9 +3648,15 @@ class GeneToPhenotypicFeatureAssociation(
 
     # Class Variables
     _category: ClassVar[str] = "GeneToPhenotypicFeatureAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "object", "relation", "subject"]
 
     subject: Union[str, GeneOrGeneProduct] = None
+
+    # Validators
+
+    @validator('subject')
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
+        return field
 
 
 @dataclass(config=PydanticConfig)
@@ -3522,9 +3666,15 @@ class GeneToDiseaseAssociation(
 
     # Class Variables
     _category: ClassVar[str] = "GeneToDiseaseAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "object", "relation", "subject"]
 
     subject: Union[str, GeneOrGeneProduct] = None
+
+    # Validators
+
+    @validator('subject')
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
+        return field
 
 
 @dataclass(config=PydanticConfig)
@@ -3536,21 +3686,21 @@ class VariantToGeneAssociation(Association, VariantToEntityAssociationMixin):
 
     # Class Variables
     _category: ClassVar[str] = "VariantToGeneAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "subject", "relation", "object", "predicate"]
 
     object: Union[Curie, Gene] = None
-    predicate: Curie = None
+    predicate: Predicate = None
 
     # Validators
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(Gene, field)
         return field
 
     @validator('predicate')
-    def check_predicate_prefix(cls, field):
-        check_curie_prefix(cls, field)
+    def validate_required_predicate(cls, field):
+        check_value_is_not_none("predicate", field)
         return field
 
 
@@ -3562,15 +3712,14 @@ class VariantToGeneExpressionAssociation(VariantToGeneAssociation, GeneExpressio
 
     # Class Variables
     _category: ClassVar[str] = "VariantToGeneExpressionAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "subject", "relation", "object", "predicate"]
 
-    predicate: Curie = None
+    predicate: Predicate = None
 
     # Validators
 
     @validator('predicate')
-    def check_predicate_prefix(cls, field):
-        check_curie_prefix(cls, field)
+    def validate_required_predicate(cls, field):
+        check_value_is_not_none("predicate", field)
         return field
 
 
@@ -3584,7 +3733,6 @@ class VariantToPopulationAssociation(
 
     # Class Variables
     _category: ClassVar[str] = "VariantToPopulationAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "relation", "subject", "object"]
 
     subject: Union[Curie, SequenceVariant] = None
     object: Union[Curie, PopulationOfIndividualOrganisms] = None
@@ -3595,12 +3743,14 @@ class VariantToPopulationAssociation(
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(SequenceVariant, field)
         return field
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(PopulationOfIndividualOrganisms, field)
         return field
 
@@ -3613,27 +3763,28 @@ class PopulationToPopulationAssociation(Association):
 
     # Class Variables
     _category: ClassVar[str] = "PopulationToPopulationAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "relation", "subject", "object", "predicate"]
 
     subject: Union[Curie, PopulationOfIndividualOrganisms] = None
     object: Union[Curie, PopulationOfIndividualOrganisms] = None
-    predicate: Curie = None
+    predicate: Predicate = None
 
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(PopulationOfIndividualOrganisms, field)
         return field
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(PopulationOfIndividualOrganisms, field)
         return field
 
     @validator('predicate')
-    def check_predicate_prefix(cls, field):
-        check_curie_prefix(cls, field)
+    def validate_required_predicate(cls, field):
+        check_value_is_not_none("predicate", field)
         return field
 
 
@@ -3644,14 +3795,14 @@ class VariantToPhenotypicFeatureAssociation(
 
     # Class Variables
     _category: ClassVar[str] = "VariantToPhenotypicFeatureAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "object", "relation", "subject"]
 
     subject: Union[Curie, SequenceVariant] = None
 
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(SequenceVariant, field)
         return field
 
@@ -3663,26 +3814,27 @@ class VariantToDiseaseAssociation(
 
     # Class Variables
     _category: ClassVar[str] = "VariantToDiseaseAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "relation", "subject", "predicate", "object"]
 
     subject: Union[Curie, NamedThing] = None
-    predicate: Curie = None
+    predicate: Predicate = None
     object: Union[Curie, NamedThing] = None
 
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(NamedThing, field)
         return field
 
     @validator('predicate')
-    def check_predicate_prefix(cls, field):
-        check_curie_prefix(cls, field)
+    def validate_required_predicate(cls, field):
+        check_value_is_not_none("predicate", field)
         return field
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(NamedThing, field)
         return field
 
@@ -3694,26 +3846,27 @@ class GenotypeToDiseaseAssociation(
 
     # Class Variables
     _category: ClassVar[str] = "GenotypeToDiseaseAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "relation", "subject", "predicate", "object"]
 
     subject: Union[Curie, NamedThing] = None
-    predicate: Curie = None
+    predicate: Predicate = None
     object: Union[Curie, NamedThing] = None
 
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(NamedThing, field)
         return field
 
     @validator('predicate')
-    def check_predicate_prefix(cls, field):
-        check_curie_prefix(cls, field)
+    def validate_required_predicate(cls, field):
+        check_value_is_not_none("predicate", field)
         return field
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(NamedThing, field)
         return field
 
@@ -3726,22 +3879,20 @@ class ModelToDiseaseAssociationMixin:
     patient carrying the disease
     """
 
-    # Class Variables
-    _required_attributes: ClassVar[List[str]] = ["subject", "predicate"]
-
     subject: Union[Curie, NamedThing] = None
-    predicate: Curie = None
+    predicate: Predicate = None
 
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(NamedThing, field)
         return field
 
     @validator('predicate')
-    def check_predicate_prefix(cls, field):
-        check_curie_prefix(cls, field)
+    def validate_required_predicate(cls, field):
+        check_value_is_not_none("predicate", field)
         return field
 
 
@@ -3752,9 +3903,15 @@ class GeneAsAModelOfDiseaseAssociation(
 
     # Class Variables
     _category: ClassVar[str] = "GeneAsAModelOfDiseaseAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "object", "relation", "subject"]
 
     subject: Union[str, GeneOrGeneProduct] = None
+
+    # Validators
+
+    @validator('subject')
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
+        return field
 
 
 @dataclass(config=PydanticConfig)
@@ -3764,14 +3921,14 @@ class VariantAsAModelOfDiseaseAssociation(
 
     # Class Variables
     _category: ClassVar[str] = "VariantAsAModelOfDiseaseAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "relation", "predicate", "object", "subject"]
 
     subject: Union[Curie, SequenceVariant] = None
 
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(SequenceVariant, field)
         return field
 
@@ -3783,14 +3940,14 @@ class GenotypeAsAModelOfDiseaseAssociation(
 
     # Class Variables
     _category: ClassVar[str] = "GenotypeAsAModelOfDiseaseAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "relation", "predicate", "object", "subject"]
 
     subject: Union[Curie, Genotype] = None
 
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(Genotype, field)
         return field
 
@@ -3804,14 +3961,14 @@ class CellLineAsAModelOfDiseaseAssociation(
 
     # Class Variables
     _category: ClassVar[str] = "CellLineAsAModelOfDiseaseAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "object", "relation", "subject"]
 
     subject: Union[Curie, CellLine] = None
 
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(CellLine, field)
         return field
 
@@ -3823,14 +3980,14 @@ class OrganismalEntityAsAModelOfDiseaseAssociation(
 
     # Class Variables
     _category: ClassVar[str] = "OrganismalEntityAsAModelOfDiseaseAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "object", "relation", "subject"]
 
     subject: Union[Curie, OrganismalEntity] = None
 
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(OrganismalEntity, field)
         return field
 
@@ -3840,7 +3997,6 @@ class GeneHasVariantThatContributesToDiseaseAssociation(GeneToDiseaseAssociation
 
     # Class Variables
     _category: ClassVar[str] = "GeneHasVariantThatContributesToDiseaseAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "object", "relation", "subject"]
 
     subject: Union[str, GeneOrGeneProduct] = None
     sequence_variant_qualifier: Optional[Union[Curie, SequenceVariant]] = None
@@ -3852,6 +4008,11 @@ class GeneHasVariantThatContributesToDiseaseAssociation(GeneToDiseaseAssociation
         check_curie_prefix(SequenceVariant, field)
         return field
 
+    @validator('subject')
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
+        return field
+
 
 @dataclass(config=PydanticConfig)
 class GeneToExpressionSiteAssociation(Association):
@@ -3861,11 +4022,10 @@ class GeneToExpressionSiteAssociation(Association):
 
     # Class Variables
     _category: ClassVar[str] = "GeneToExpressionSiteAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "relation", "subject", "object", "predicate"]
 
     subject: Union[str, GeneOrGeneProduct] = None
     object: Union[Curie, AnatomicalEntity] = None
-    predicate: Curie = None
+    predicate: Predicate = None
     stage_qualifier: Optional[Union[Curie, LifeStage]] = None
     quantifier_qualifier: Optional[Union[str, OntologyClass]] = None
 
@@ -3876,14 +4036,20 @@ class GeneToExpressionSiteAssociation(Association):
         check_curie_prefix(LifeStage, field)
         return field
 
+    @validator('subject')
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
+        return field
+
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(AnatomicalEntity, field)
         return field
 
     @validator('predicate')
-    def check_predicate_prefix(cls, field):
-        check_curie_prefix(cls, field)
+    def validate_required_predicate(cls, field):
+        check_value_is_not_none("predicate", field)
         return field
 
 
@@ -3894,21 +4060,20 @@ class SequenceVariantModulatesTreatmentAssociation(Association):
     encompasses both the disease and the drug used.
     """
 
-    # Class Variables
-    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "relation", "subject", "object"]
-
     subject: Union[Curie, SequenceVariant] = None
     object: Union[Curie, Treatment] = None
 
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(SequenceVariant, field)
         return field
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(Treatment, field)
         return field
 
@@ -3922,10 +4087,21 @@ class FunctionalAssociation(Association):
 
     # Class Variables
     _category: ClassVar[str] = "FunctionalAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "relation", "subject", "object"]
 
     subject: Union[str, MacromolecularMachineMixin] = None
     object: Union[str, GeneOntologyClass] = None
+
+    # Validators
+
+    @validator('subject')
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
+        return field
+
+    @validator('object')
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
+        return field
 
 
 @dataclass(config=PydanticConfig)
@@ -3934,15 +4110,13 @@ class MacromolecularMachineToEntityAssociationMixin:
     an association which has a macromolecular machine mixin as a subject
     """
 
-    # Class Variables
-    _required_attributes: ClassVar[List[str]] = ["subject"]
-
     subject: Union[Curie, NamedThing] = None
 
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(NamedThing, field)
         return field
 
@@ -3959,14 +4133,14 @@ class MacromolecularMachineToMolecularActivityAssociation(
 
     # Class Variables
     _category: ClassVar[str] = "MacromolecularMachineToMolecularActivityAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "relation", "subject", "object"]
 
     object: Union[Curie, MolecularActivity] = None
 
     # Validators
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(MolecularActivity, field)
         return field
 
@@ -3983,14 +4157,14 @@ class MacromolecularMachineToBiologicalProcessAssociation(
 
     # Class Variables
     _category: ClassVar[str] = "MacromolecularMachineToBiologicalProcessAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "relation", "subject", "object"]
 
     object: Union[Curie, BiologicalProcess] = None
 
     # Validators
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(BiologicalProcess, field)
         return field
 
@@ -4007,14 +4181,14 @@ class MacromolecularMachineToCellularComponentAssociation(
 
     # Class Variables
     _category: ClassVar[str] = "MacromolecularMachineToCellularComponentAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "relation", "subject", "object"]
 
     object: Union[Curie, CellularComponent] = None
 
     # Validators
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(CellularComponent, field)
         return field
 
@@ -4024,7 +4198,6 @@ class GeneToGoTermAssociation(FunctionalAssociation):
 
     # Class Variables
     _category: ClassVar[str] = "GeneToGoTermAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "relation", "subject", "object"]
 
     subject: Union[Curie, MolecularEntity] = None
     object: Union[str, GeneOntologyClass] = None
@@ -4032,8 +4205,14 @@ class GeneToGoTermAssociation(FunctionalAssociation):
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(MolecularEntity, field)
+        return field
+
+    @validator('object')
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         return field
 
 
@@ -4045,7 +4224,6 @@ class SequenceAssociation(Association):
 
     # Class Variables
     _category: ClassVar[str] = "SequenceAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "subject", "predicate", "object", "relation"]
 
 
 @dataclass(config=PydanticConfig)
@@ -4057,11 +4235,10 @@ class GenomicSequenceLocalization(SequenceAssociation):
 
     # Class Variables
     _category: ClassVar[str] = "GenomicSequenceLocalization"
-    _required_attributes: ClassVar[List[str]] = ["id", "relation", "subject", "object", "predicate"]
 
     subject: Union[Curie, GenomicEntity] = None
     object: Union[Curie, GenomicEntity] = None
-    predicate: Curie = None
+    predicate: Predicate = None
     start_interbase_coordinate: Optional[int] = None
     end_interbase_coordinate: Optional[int] = None
     genome_build: Optional[str] = None
@@ -4071,18 +4248,20 @@ class GenomicSequenceLocalization(SequenceAssociation):
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(GenomicEntity, field)
         return field
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(GenomicEntity, field)
         return field
 
     @validator('predicate')
-    def check_predicate_prefix(cls, field):
-        check_curie_prefix(cls, field)
+    def validate_required_predicate(cls, field):
+        check_value_is_not_none("predicate", field)
         return field
 
 
@@ -4094,7 +4273,6 @@ class SequenceFeatureRelationship(Association):
 
     # Class Variables
     _category: ClassVar[str] = "SequenceFeatureRelationship"
-    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "relation", "subject", "object"]
 
     subject: Union[Curie, GenomicEntity] = None
     object: Union[Curie, GenomicEntity] = None
@@ -4102,12 +4280,14 @@ class SequenceFeatureRelationship(Association):
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(GenomicEntity, field)
         return field
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(GenomicEntity, field)
         return field
 
@@ -4120,7 +4300,6 @@ class TranscriptToGeneRelationship(SequenceFeatureRelationship):
 
     # Class Variables
     _category: ClassVar[str] = "TranscriptToGeneRelationship"
-    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "relation", "subject", "object"]
 
     subject: Union[Curie, Transcript] = None
     object: Union[Curie, Gene] = None
@@ -4128,12 +4307,14 @@ class TranscriptToGeneRelationship(SequenceFeatureRelationship):
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(Transcript, field)
         return field
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(Gene, field)
         return field
 
@@ -4146,22 +4327,27 @@ class GeneToGeneProductRelationship(SequenceFeatureRelationship):
 
     # Class Variables
     _category: ClassVar[str] = "GeneToGeneProductRelationship"
-    _required_attributes: ClassVar[List[str]] = ["id", "relation", "subject", "object", "predicate"]
 
     subject: Union[Curie, Gene] = None
     object: Union[str, GeneProductMixin] = None
-    predicate: Curie = None
+    predicate: Predicate = None
 
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(Gene, field)
         return field
 
+    @validator('object')
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
+        return field
+
     @validator('predicate')
-    def check_predicate_prefix(cls, field):
-        check_curie_prefix(cls, field)
+    def validate_required_predicate(cls, field):
+        check_value_is_not_none("predicate", field)
         return field
 
 
@@ -4173,7 +4359,6 @@ class ExonToTranscriptRelationship(SequenceFeatureRelationship):
 
     # Class Variables
     _category: ClassVar[str] = "ExonToTranscriptRelationship"
-    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "relation", "subject", "object"]
 
     subject: Union[Curie, Exon] = None
     object: Union[Curie, Transcript] = None
@@ -4181,12 +4366,14 @@ class ExonToTranscriptRelationship(SequenceFeatureRelationship):
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(Exon, field)
         return field
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(Transcript, field)
         return field
 
@@ -4199,38 +4386,45 @@ class GeneRegulatoryRelationship(Association):
 
     # Class Variables
     _category: ClassVar[str] = "GeneRegulatoryRelationship"
-    _required_attributes: ClassVar[List[str]] = ["id", "relation", "predicate", "subject", "object"]
 
-    predicate: Curie = None
+    predicate: Predicate = None
     subject: Union[str, GeneOrGeneProduct] = None
     object: Union[str, GeneOrGeneProduct] = None
 
     # Validators
 
     @validator('predicate')
-    def check_predicate_prefix(cls, field):
-        check_curie_prefix(cls, field)
+    def validate_required_predicate(cls, field):
+        check_value_is_not_none("predicate", field)
+        return field
+
+    @validator('subject')
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
+        return field
+
+    @validator('object')
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         return field
 
 
 @dataclass(config=PydanticConfig)
 class AnatomicalEntityToAnatomicalEntityAssociation(Association):
-
-    # Class Variables
-    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "relation", "subject", "object"]
-
     subject: Union[Curie, AnatomicalEntity] = None
     object: Union[Curie, AnatomicalEntity] = None
 
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(AnatomicalEntity, field)
         return field
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(AnatomicalEntity, field)
         return field
 
@@ -4247,27 +4441,28 @@ class AnatomicalEntityToAnatomicalEntityPartOfAssociation(
 
     # Class Variables
     _category: ClassVar[str] = "AnatomicalEntityToAnatomicalEntityPartOfAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "relation", "subject", "object", "predicate"]
 
     subject: Union[Curie, AnatomicalEntity] = None
     object: Union[Curie, AnatomicalEntity] = None
-    predicate: Curie = None
+    predicate: Predicate = None
 
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(AnatomicalEntity, field)
         return field
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(AnatomicalEntity, field)
         return field
 
     @validator('predicate')
-    def check_predicate_prefix(cls, field):
-        check_curie_prefix(cls, field)
+    def validate_required_predicate(cls, field):
+        check_value_is_not_none("predicate", field)
         return field
 
 
@@ -4283,27 +4478,28 @@ class AnatomicalEntityToAnatomicalEntityOntogenicAssociation(
 
     # Class Variables
     _category: ClassVar[str] = "AnatomicalEntityToAnatomicalEntityOntogenicAssociation"
-    _required_attributes: ClassVar[List[str]] = ["id", "relation", "subject", "object", "predicate"]
 
     subject: Union[Curie, AnatomicalEntity] = None
     object: Union[Curie, AnatomicalEntity] = None
-    predicate: Curie = None
+    predicate: Predicate = None
 
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(AnatomicalEntity, field)
         return field
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(AnatomicalEntity, field)
         return field
 
     @validator('predicate')
-    def check_predicate_prefix(cls, field):
-        check_curie_prefix(cls, field)
+    def validate_required_predicate(cls, field):
+        check_value_is_not_none("predicate", field)
         return field
 
 
@@ -4313,15 +4509,13 @@ class OrganismTaxonToEntityAssociation:
     An association between an organism taxon and another entity
     """
 
-    # Class Variables
-    _required_attributes: ClassVar[List[str]] = ["subject"]
-
     subject: Union[Curie, OrganismTaxon] = None
 
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(OrganismTaxon, field)
         return field
 
@@ -4332,21 +4526,20 @@ class OrganismTaxonToOrganismTaxonAssociation(Association, OrganismTaxonToEntity
     A relationship between two organism taxon nodes
     """
 
-    # Class Variables
-    _required_attributes: ClassVar[List[str]] = ["id", "predicate", "relation", "subject", "object"]
-
     subject: Union[Curie, OrganismTaxon] = None
     object: Union[Curie, OrganismTaxon] = None
 
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(OrganismTaxon, field)
         return field
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(OrganismTaxon, field)
         return field
 
@@ -4359,27 +4552,28 @@ class OrganismTaxonToOrganismTaxonSpecialization(OrganismTaxonToOrganismTaxonAss
 
     # Class Variables
     _category: ClassVar[str] = "OrganismTaxonToOrganismTaxonSpecialization"
-    _required_attributes: ClassVar[List[str]] = ["id", "relation", "subject", "object", "predicate"]
 
     subject: Union[Curie, OrganismTaxon] = None
     object: Union[Curie, OrganismTaxon] = None
-    predicate: Curie = None
+    predicate: Predicate = None
 
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(OrganismTaxon, field)
         return field
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(OrganismTaxon, field)
         return field
 
     @validator('predicate')
-    def check_predicate_prefix(cls, field):
-        check_curie_prefix(cls, field)
+    def validate_required_predicate(cls, field):
+        check_value_is_not_none("predicate", field)
         return field
 
 
@@ -4393,251 +4587,53 @@ class OrganismTaxonToOrganismTaxonInteraction(OrganismTaxonToOrganismTaxonAssoci
 
     # Class Variables
     _category: ClassVar[str] = "OrganismTaxonToOrganismTaxonInteraction"
-    _required_attributes: ClassVar[List[str]] = ["id", "relation", "subject", "object", "predicate"]
 
     subject: Union[Curie, OrganismTaxon] = None
     object: Union[Curie, OrganismTaxon] = None
-    predicate: Curie = None
+    predicate: Predicate = None
     associated_environmental_context: Optional[str] = None
 
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(OrganismTaxon, field)
         return field
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(OrganismTaxon, field)
         return field
 
     @validator('predicate')
-    def check_predicate_prefix(cls, field):
-        check_curie_prefix(cls, field)
+    def validate_required_predicate(cls, field):
+        check_value_is_not_none("predicate", field)
         return field
 
 
 @dataclass(config=PydanticConfig)
 class OrganismTaxonToEnvironmentAssociation(Association, OrganismTaxonToEntityAssociation):
-
-    # Class Variables
-    _required_attributes: ClassVar[List[str]] = ["id", "relation", "subject", "object", "predicate"]
-
     subject: Union[Curie, OrganismTaxon] = None
     object: Union[Curie, NamedThing] = None
-    predicate: Curie = None
+    predicate: Predicate = None
 
     # Validators
 
     @validator('subject')
-    def check_subject_prefix(cls, field):
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
         check_curie_prefix(OrganismTaxon, field)
         return field
 
     @validator('object')
-    def check_object_prefix(cls, field):
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         check_curie_prefix(NamedThing, field)
         return field
 
     @validator('predicate')
-    def check_predicate_prefix(cls, field):
-        check_curie_prefix(cls, field)
+    def validate_required_predicate(cls, field):
+        check_value_is_not_none("predicate", field)
         return field
-
-
-predicates = [
-    'actively_involved_in',
-    'affected_by',
-    'affects',
-    'affects_abundance_of',
-    'affects_activity_of',
-    'affects_degradation_of',
-    'affects_expression_in',
-    'affects_expression_of',
-    'affects_folding_of',
-    'affects_localization_of',
-    'affects_metabolic_processing_of',
-    'affects_molecular_modification_of',
-    'affects_mutation_rate_of',
-    'affects_response_to',
-    'affects_risk_for',
-    'affects_secretion_of',
-    'affects_splicing_of',
-    'affects_stability_of',
-    'affects_synthesis_of',
-    'affects_transport_of',
-    'affects_uptake_of',
-    'ameliorates',
-    'approved_for_treatment_by',
-    'approved_to_treat',
-    'author',
-    'biomarker_for',
-    'broad_match',
-    'capable_of',
-    'caused_by',
-    'causes',
-    'causes_adverse_event',
-    'chemically_similar_to',
-    'close_match',
-    'coexists_with',
-    'coexpressed_with',
-    'colocalizes_with',
-    'condition_associated_with_gene',
-    'contraindicated_for',
-    'contributes_to',
-    'contributor',
-    'correlated_with',
-    'decreases_abundance_of',
-    'decreases_activity_of',
-    'decreases_degradation_of',
-    'decreases_expression_of',
-    'decreases_folding_of',
-    'decreases_localization_of',
-    'decreases_metabolic_processing_of',
-    'decreases_molecular_interaction',
-    'decreases_molecular_modification_of',
-    'decreases_mutation_rate_of',
-    'decreases_response_to',
-    'decreases_secretion_of',
-    'decreases_splicing_of',
-    'decreases_stability_of',
-    'decreases_synthesis_of',
-    'decreases_transport_of',
-    'decreases_uptake_of',
-    'derives_from',
-    'derives_into',
-    'develops_from',
-    'directly_interacts_with',
-    'disease_has_basis_in',
-    'disrupted_by',
-    'disrupts',
-    'editor',
-    'enabled_by',
-    'enables',
-    'entity_negatively_regulated_by_entity',
-    'entity_negatively_regulates_entity',
-    'entity_positively_regulated_by_entity',
-    'entity_positively_regulates_entity',
-    'entity_regulated_by_entity',
-    'entity_regulates_entity',
-    'exacerbates',
-    'exact_match',
-    'expressed_in',
-    'expresses',
-    'food_component_of',
-    'gene_associated_with_condition',
-    'gene_product_of',
-    'genetic_association',
-    'genetically_interacts_with',
-    'has_active_ingredient',
-    'has_biomarker',
-    'has_completed',
-    'has_decreased_amount',
-    'has_excipient',
-    'has_food_component',
-    'has_gene_product',
-    'has_increased_amount',
-    'has_input',
-    'has_metabolite',
-    'has_molecular_consequence',
-    'has_not_completed',
-    'has_nutrient',
-    'has_output',
-    'has_part',
-    'has_participant',
-    'has_phenotype',
-    'has_sequence_location',
-    'has_variant_part',
-    'homologous_to',
-    'in_cell_population_with',
-    'in_complex_with',
-    'in_linkage_disequilibrium_with',
-    'in_pathway_with',
-    'in_taxon',
-    'increases_abundance_of',
-    'increases_activity_of',
-    'increases_degradation_of',
-    'increases_expression_of',
-    'increases_folding_of',
-    'increases_localization_of',
-    'increases_metabolic_processing_of',
-    'increases_molecular_interaction',
-    'increases_molecular_modification_of',
-    'increases_mutation_rate_of',
-    'increases_response_to',
-    'increases_secretion_of',
-    'increases_splicing_of',
-    'increases_stability_of',
-    'increases_synthesis_of',
-    'increases_transport_of',
-    'increases_uptake_of',
-    'interacts_with',
-    'is_active_ingredient_of',
-    'is_excipient_of',
-    'is_frameshift_variant_of',
-    'is_metabolite_of',
-    'is_missense_variant_of',
-    'is_nearby_variant_of',
-    'is_non_coding_variant_of',
-    'is_nonsense_variant_of',
-    'is_sequence_variant_of',
-    'is_splice_site_variant_of',
-    'is_synonymous_variant_of',
-    'lacks_part',
-    'located_in',
-    'location_of',
-    'manifestation_of',
-    'model_of',
-    'molecular_activity_enabled_by',
-    'molecular_activity_has_input',
-    'molecular_activity_has_output',
-    'molecularly_interacts_with',
-    'narrow_match',
-    'negatively_correlated_with',
-    'nutrient_of',
-    'occurs_in',
-    'opposite_of',
-    'organism_taxon_subclass_of',
-    'orthologous_to',
-    'overlaps',
-    'paralogous_to',
-    'part_of',
-    'participates_in',
-    'phenotype_of',
-    'physically_interacts_with',
-    'positively_correlated_with',
-    'preceded_by',
-    'precedes',
-    'predisposes',
-    'prevented_by',
-    'prevents',
-    'process_negatively_regulated_by_process',
-    'process_negatively_regulates_process',
-    'process_positively_regulated_by_process',
-    'process_positively_regulates_process',
-    'process_regulated_by_process',
-    'process_regulates_process',
-    'produced_by',
-    'produces',
-    'provider',
-    'publisher',
-    'related_condition',
-    'related_to',
-    'same_as',
-    'similar_to',
-    'subclass_of',
-    'superclass_of',
-    'temporally_related_to',
-    'transcribed_from',
-    'transcribed_to',
-    'translates_to',
-    'translation_of',
-    'treated_by',
-    'treats',
-    'xenologous_to',
-]
-
-predicate = namedtuple('biolink_predicate', predicates)(
-    *['biolink:' + predicate for predicate in predicates]
-)

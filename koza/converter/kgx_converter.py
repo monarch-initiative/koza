@@ -1,7 +1,7 @@
 from dataclasses import asdict
 from typing import List
 
-from koza.model.biolink import Association, Entity, NamedThing
+from koza.model.biolink.model import Association, Entity, NamedThing
 
 
 class KGXConverter:

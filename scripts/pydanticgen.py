@@ -82,7 +82,7 @@ class PydanticGen(PythonGenerator):
         """
         sort classes such that if C is a child of P then C appears after P in the list
 
-        Overriden method include mixin classes
+        Overridden method include mixin classes
         """
         clist = list(clist)
         slist = []  # sorted
@@ -131,9 +131,10 @@ class PydanticGen(PythonGenerator):
 import datetime
 import inspect
 import logging
-from collections import namedtuple
+from enum import Enum
 from dataclasses import field
 from typing import Any, ClassVar, List, Optional, Union
+import re
 
 from pydantic import constr, validator
 from pydantic.dataclasses import dataclass
@@ -142,11 +143,14 @@ LOG = logging.getLogger(__name__)
 
 metamodel_version = "{self.schema.metamodel_version}"
 
+curie_regexp = r'^[a-zA-Z_]?[a-zA-Z_0-9-]*:[A-Za-z0-9_][A-Za-z0-9_.-]*[A-Za-z0-9_]*$'
+curie_pattern = re.compile(curie_regexp)
+
 # Type Aliases
 Unit = Union[int, float]
 LabelType = str
 IriType = constr(regex=r'^http')
-Curie = constr(regex=r'^[a-zA-Z_]?[a-zA-Z_0-9-]*:[A-Za-z0-9_][A-Za-z0-9_.-]*[A-Za-z0-9_]*$')
+Curie = constr(regex=curie_regexp)
 NarrativeText = str
 XSDDate = datetime.date
 TimeType = datetime.time
@@ -161,6 +165,9 @@ Quotient = float
 
 # Pydantic config and validators
 {self._get_pydantic_config_and_validators()}
+
+# Predicates
+{self.gen_predicate_enum()}
 
 # Classes
 {self.gen_classdefs()}
@@ -359,12 +366,14 @@ Quotient = float
         """
         base = rangelist[0].split('.')[-1]
 
-        if slot_name in ['category', 'provided_by']:
+        if slot_name in ['id', 'category', 'provided_by']:
             class_ref = "Union[str, Curie]"
+        elif slot_name == 'predicate':
+            class_ref = "Predicate"
         elif (
             slot_name
             in [
-                'id',
+                'xref',
                 'has_qualitative_value',
                 'subclass_of',
                 'has_input',
@@ -474,15 +483,6 @@ valid_prefix = [
         if not (cls.mixin or cls.abstract):
             vars.append(f'_category: ClassVar[str] = "{camelcase(cls.name)}"')
 
-        required_slots = self._slot_iter(cls, lambda slot: slot.required)
-
-        required_slots_fmt = ',\n'.join(
-            [f'\t\t"{self.slot_name(slot.name)}"' for slot in required_slots]
-        )
-
-        if required_slots_fmt:
-            vars.append(f'_required_attributes: ClassVar[List[str]] = [\n{required_slots_fmt}\n\t]')
-
         id_prefixes_fmt = ',\n'.join([f'\t\t"{prefix}"' for prefix in cls.id_prefixes])
 
         if id_prefixes_fmt:
@@ -495,7 +495,7 @@ valid_prefix = [
 
         return ret_val
 
-    def gen_predicate_named_tuple(self) -> str:
+    def gen_predicate_enum(self) -> str:
         """
         Creates a named tuple of all biolink predicates
         which are slots that descend from 'related to'
@@ -507,18 +507,15 @@ valid_prefix = [
                 predicates.append(slot.name)
 
         predicates = [pred.replace(' ', '_') for pred in sorted(predicates)]
-        formatted_predicates = '\n'.join([f"    '{pred}'," for pred in predicates])
+        formatted_predicates = '\n'.join([f'    {pred} = "biolink:{pred}"' for pred in predicates])
 
         return f'''
+class Predicate(str, Enum):
+    """
+    Enum for biolink predicates
+    """
 
-predicates = [
 {formatted_predicates}
-]
-
-predicate = namedtuple('biolink_predicate', predicates)(
-    *['biolink:' + predicate for predicate in predicates]
-)
-
 '''
 
     def gen_pydantic_validators(self, cls) -> str:
@@ -536,13 +533,11 @@ predicate = namedtuple('biolink_predicate', predicates)(
                 if slot.key or slot.identifier
                 else self.slot_range_path(slot)
             )
-            if slotname in ['category', 'provided_by']:
-                if slot.multivalued:
-                    validators.append(self._gen_scalar_to_list_validator(slotname))
-            elif (
+            if (
                 slotname
                 in [
                     'id',
+                    'xref',
                     'has_qualitative_value',
                     'subclass_of',
                     'has_input',
@@ -551,30 +546,47 @@ predicate = namedtuple('biolink_predicate', predicates)(
                     'enabled_by',
                 ]
                 or ('URIorCURIE' in rangelist and rangelist[-1] != 'IriType')
-            ):
-                if slot.multivalued:
+            ) and slotname != 'predicate':
+                if slot.required:
+                    validators.append(
+                        self._gen_required_validator(slotname, is_multivalued=slot.multivalued)
+                    )
+                elif slot.multivalued:
                     validators.append(self._gen_scalar_to_list_check_curies_validator(slotname))
                 else:
                     validators.append(self._gen_curie_prefix_validator(slotname))
             elif 'Entity' in rangelist:
                 if len(rangelist) > 1:
-                    if slot.multivalued:
+                    if slot.required:
+                        validators.append(
+                            self._gen_required_validator(slotname, rangelist[-1], slot.multivalued)
+                        )
+                    elif slot.multivalued:
                         validators.append(
                             self._gen_scalar_to_list_check_curies_validator(slotname, rangelist[-1])
                         )
                     else:
                         validators.append(self._gen_curie_prefix_validator(slotname, rangelist[-1]))
                 else:
-                    if slot.multivalued:
+                    if slot.required:
+                        validators.append(
+                            self._gen_required_validator(slotname, is_multivalued=slot.multivalued)
+                        )
+                    elif slot.multivalued:
                         validators.append(self._gen_scalar_to_list_check_curies_validator(slotname))
                     else:
                         validators.append(self._gen_curie_prefix_validator(slotname))
-
+            elif slot.required:
+                validators.append(
+                    self._gen_required_validator(
+                        slotname, is_multivalued=slot.multivalued, is_curie=False
+                    )
+                )
             elif slot.multivalued:
-                validators.append(self._gen_scalar_to_list_validator(slotname))
+                validators.append(self._gen_scalar_to_list_check_curies_validator(slotname))
 
         if validators:
-            ret_val = "\n\t# Validators\n\t" + "\n\t".join(validators) + "\n"
+            ret_val = "\n\t# Validators\n\t" + "\n\t".join(validators)
         else:
             ret_val = ""
 
@@ -590,11 +602,10 @@ predicate = namedtuple('biolink_predicate', predicates)(
     @validator('{slotname}')
     def check_{slotname}_prefix(cls, field):
         check_curie_prefix({cls_name}, field)
-        return field
-'''
+        return field'''
 
     @staticmethod
-    def _gen_scalar_to_list_check_curies_validator(slotname, cls_name: str = 'cls') -> str:
+    def _gen_scalar_to_list_check_curies_validator(slotname: str, cls_name: str = 'cls') -> str:
         """
         :param namespaces:
         :return:
@@ -602,20 +613,27 @@ predicate = namedtuple('biolink_predicate', predicates)(
         return f'''
     @validator('{slotname}')
     def convert_{slotname}_to_list_check_curies(cls, field):
-        return convert_scalar_to_list_check_curies({cls_name}, field)
-'''
+        return convert_scalar_to_list_check_curies({cls_name}, field)'''
 
     @staticmethod
-    def _gen_scalar_to_list_validator(slotname) -> str:
+    def _gen_required_validator(
+        slotname: str, cls_name: str = 'cls', is_multivalued=False, is_curie=True
+    ) -> str:
         """
         :param namespaces:
         :return:
         """
-        return f'''
+        validator = f'''
     @validator('{slotname}')
-    def convert_{slotname}_to_list_check_curies(cls, field):
-        return convert_scalar_to_list(field)
+    def validate_required_{slotname}(cls, field):
+        check_value_is_not_none("{slotname}", field)
 '''
+        if is_multivalued:
+            validator += f'\t\tconvert_scalar_to_list_check_curies({cls_name}, field)\n'
+        elif is_curie:
+            validator += f'\t\tcheck_curie_prefix({cls_name}, field)\n'
+        validator += f'\t\treturn field'
+        return validator
 
     @staticmethod
     def _get_entity_post_init() -> str:
@@ -689,25 +707,38 @@ def check_curie_prefix(cls, curie: Union[List, str, None]):
 
 
 def convert_scalar_to_list_check_curies(cls, field: Any) -> List[str]:
+    """
+    Converts list fields that have been passed a scalar to a 1-sized list
+    
+    Also checks prefix checks curies.  Because curie regex constraints
+    are applied prior to running this function, we can use this for both
+    curie and non-curie fields by rechecking re.match(curie_pattern, some_string)
+    """
     if not isinstance(field, list):
         field = [field]
     for feld in field:
-        if isinstance(feld, str):
+        if isinstance(feld, str) and re.match(curie_pattern, feld):
             check_curie_prefix(cls, feld)
     return field
+    
 
-
-def convert_scalar_to_list(field: Any) -> List[str]:
-    if not isinstance(field, list):
-        field = [field]
-    return field
+def check_value_is_not_none(slotname: str, field: Any) -> bool:
+    is_none = False
+    if isinstance(field, list) or isinstance(field, dict):
+        if not field:
+            is_none = True
+    else:
+        if field is None:
+            is_none = True
+            
+    if is_none:
+        raise ValueError(f"{slotname} is required")
         '''
 
 
 def main(yamlfile: str):
     pydantic_generator = PydanticGen(yamlfile)
     print(pydantic_generator.serialize())
-    print(pydantic_generator.gen_predicate_named_tuple())
 
 
 if __name__ == "__main__":

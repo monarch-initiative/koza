@@ -54,7 +54,6 @@ format:
 		--remove-all-unused-imports \
 		--remove-unused-variables \
 		--ignore-init-module-imports \
-		--in-place koza tests scripts \
-		--exclude=scripts/pydantic_config.py
+		--in-place koza tests scripts
 	isort koza tests scripts
 	black koza tests scripts

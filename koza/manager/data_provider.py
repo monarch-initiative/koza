@@ -1,4 +1,4 @@
-from typing import Dict, Tuple
+from typing import Dict
 
 from koza.koza_runner import get_koza_app
 from koza.model.translation_table import TranslationTable
@@ -9,7 +9,7 @@ def inject_row(ingest_name: str) -> Dict:
     return next(koza.file_registry[ingest_name])
 
 
-def inject_map(map_name: str) -> Tuple[Dict, ...]:
+def inject_map(map_name: str) -> Dict:
     """
     TODO
     :param ingest_name:
