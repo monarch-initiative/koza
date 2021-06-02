@@ -10,7 +10,7 @@ from kgx.transformer import Transformer
 
 from koza.converter.kgx_converter import KGXConverter
 from koza.io.writer.writer import KozaWriter
-from koza.model.biolink.entity import Entity
+from koza.model.biolink.model import Entity
 from koza.model.config.source_config import OutputFormat
 
 

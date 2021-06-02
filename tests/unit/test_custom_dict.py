@@ -3,8 +3,8 @@ Testing custom dictionary
 """
 import pytest
 
+from koza.exceptions import MapItemException
 from koza.model.map_dict import MapDict
-from koza.validator.exceptions import MapItemException
 
 
 def test_custom_dict_exception():
