@@ -1,5 +1,5 @@
 # Auto generated from biolink-model.yaml by pydanticgen.py version: 0.9.0
-# Generation date: 2021-06-02 09:18
+# Generation date: 2021-06-02 12:37
 # Schema: Biolink-Model
 #
 # id: https://w3id.org/biolink/biolink-model
@@ -209,9 +209,12 @@ valid_prefix = [
     "WIKIDATA_PROPERTY",
     "WIKIPATHWAYS",
     "WormBase",
+    "XPO",
+    "Xenbase",
     "ZFIN",
     "ZP",
     "alliancegenome",
+    "apollo",
     "biolink",
     "chembio",
     "dcat",
@@ -325,7 +328,27 @@ class Predicate(str, Enum):
     Enum for biolink predicates
     """
 
+    abundance_affected_by = "biolink:abundance_affected_by"
+    abundance_decreased_by = "biolink:abundance_decreased_by"
+    abundance_increased_by = "biolink:abundance_increased_by"
+    active_in = "biolink:active_in"
     actively_involved_in = "biolink:actively_involved_in"
+    actively_involves = "biolink:actively_involves"
+    activity_affected_by = "biolink:activity_affected_by"
+    activity_affects = "biolink:activity_affects"
+    activity_decreased_by = "biolink:activity_decreased_by"
+    activity_increased_by = "biolink:activity_increased_by"
+    acts_upstream_of = "biolink:acts_upstream_of"
+    acts_upstream_of_negative_effect = "biolink:acts_upstream_of_negative_effect"
+    acts_upstream_of_or_within = "biolink:acts_upstream_of_or_within"
+    acts_upstream_of_or_within_negative_effect = (
+        "biolink:acts_upstream_of_or_within_negative_effect"
+    )
+    acts_upstream_of_or_within_positive_effect = (
+        "biolink:acts_upstream_of_or_within_positive_effect"
+    )
+    acts_upstream_of_positive_effect = "biolink:acts_upstream_of_positive_effect"
+    adverse_event_caused_by = "biolink:adverse_event_caused_by"
     affected_by = "biolink:affected_by"
     affects = "biolink:affects"
     affects_abundance_of = "biolink:affects_abundance_of"
@@ -353,19 +376,24 @@ class Predicate(str, Enum):
     biomarker_for = "biolink:biomarker_for"
     broad_match = "biolink:broad_match"
     capable_of = "biolink:capable_of"
+    catalyzes = "biolink:catalyzes"
     caused_by = "biolink:caused_by"
     causes = "biolink:causes"
     causes_adverse_event = "biolink:causes_adverse_event"
+    chemically_interacts_with = "biolink:chemically_interacts_with"
     chemically_similar_to = "biolink:chemically_similar_to"
     close_match = "biolink:close_match"
     coexists_with = "biolink:coexists_with"
     coexpressed_with = "biolink:coexpressed_with"
     colocalizes_with = "biolink:colocalizes_with"
     condition_associated_with_gene = "biolink:condition_associated_with_gene"
+    consumes = "biolink:consumes"
     contraindicated_for = "biolink:contraindicated_for"
     contributes_to = "biolink:contributes_to"
+    contribution_from = "biolink:contribution_from"
     contributor = "biolink:contributor"
     correlated_with = "biolink:correlated_with"
+    decreased_amount_in = "biolink:decreased_amount_in"
     decreases_abundance_of = "biolink:decreases_abundance_of"
     decreases_activity_of = "biolink:decreases_activity_of"
     decreases_degradation_of = "biolink:decreases_degradation_of"
@@ -383,9 +411,13 @@ class Predicate(str, Enum):
     decreases_synthesis_of = "biolink:decreases_synthesis_of"
     decreases_transport_of = "biolink:decreases_transport_of"
     decreases_uptake_of = "biolink:decreases_uptake_of"
+    degradation_affected_by = "biolink:degradation_affected_by"
+    degradation_decreased_by = "biolink:degradation_decreased_by"
+    degradation_increased_by = "biolink:degradation_increased_by"
     derives_from = "biolink:derives_from"
     derives_into = "biolink:derives_into"
     develops_from = "biolink:develops_from"
+    develops_into = "biolink:develops_into"
     directly_interacts_with = "biolink:directly_interacts_with"
     disease_has_basis_in = "biolink:disease_has_basis_in"
     disrupted_by = "biolink:disrupted_by"
@@ -403,6 +435,12 @@ class Predicate(str, Enum):
     exact_match = "biolink:exact_match"
     expressed_in = "biolink:expressed_in"
     expresses = "biolink:expresses"
+    expression_affected_by = "biolink:expression_affected_by"
+    expression_decreased_by = "biolink:expression_decreased_by"
+    expression_increased_by = "biolink:expression_increased_by"
+    folding_affected_by = "biolink:folding_affected_by"
+    folding_decreased_by = "biolink:folding_decreased_by"
+    folding_increased_by = "biolink:folding_increased_by"
     food_component_of = "biolink:food_component_of"
     gene_associated_with_condition = "biolink:gene_associated_with_condition"
     gene_product_of = "biolink:gene_product_of"
@@ -411,21 +449,38 @@ class Predicate(str, Enum):
     has_active_ingredient = "biolink:has_active_ingredient"
     has_biomarker = "biolink:has_biomarker"
     has_completed = "biolink:has_completed"
+    has_contraindication = "biolink:has_contraindication"
     has_decreased_amount = "biolink:has_decreased_amount"
     has_excipient = "biolink:has_excipient"
     has_food_component = "biolink:has_food_component"
+    has_frameshift_variant = "biolink:has_frameshift_variant"
     has_gene_product = "biolink:has_gene_product"
     has_increased_amount = "biolink:has_increased_amount"
     has_input = "biolink:has_input"
+    has_manifestation = "biolink:has_manifestation"
     has_metabolite = "biolink:has_metabolite"
+    has_missense_variant = "biolink:has_missense_variant"
     has_molecular_consequence = "biolink:has_molecular_consequence"
+    has_nearby_variant = "biolink:has_nearby_variant"
+    has_negative_upstream_actor = "biolink:has_negative_upstream_actor"
+    has_negative_upstream_or_within_actor = "biolink:has_negative_upstream_or_within_actor"
+    has_non_coding_variant = "biolink:has_non_coding_variant"
+    has_nonsense_variant = "biolink:has_nonsense_variant"
     has_not_completed = "biolink:has_not_completed"
     has_nutrient = "biolink:has_nutrient"
     has_output = "biolink:has_output"
     has_part = "biolink:has_part"
     has_participant = "biolink:has_participant"
     has_phenotype = "biolink:has_phenotype"
+    has_positive_upstream_actor = "biolink:has_positive_upstream_actor"
+    has_positive_upstream_or_within_actor = "biolink:has_positive_upstream_or_within_actor"
     has_sequence_location = "biolink:has_sequence_location"
+    has_sequence_variant = "biolink:has_sequence_variant"
+    has_splice_site_variant = "biolink:has_splice_site_variant"
+    has_substrate = "biolink:has_substrate"
+    has_synonymous_variant = "biolink:has_synonymous_variant"
+    has_upstream_actor = "biolink:has_upstream_actor"
+    has_upstream_or_within_actor = "biolink:has_upstream_or_within_actor"
     has_variant_part = "biolink:has_variant_part"
     homologous_to = "biolink:homologous_to"
     in_cell_population_with = "biolink:in_cell_population_with"
@@ -433,6 +488,7 @@ class Predicate(str, Enum):
     in_linkage_disequilibrium_with = "biolink:in_linkage_disequilibrium_with"
     in_pathway_with = "biolink:in_pathway_with"
     in_taxon = "biolink:in_taxon"
+    increased_amount_of = "biolink:increased_amount_of"
     increases_abundance_of = "biolink:increases_abundance_of"
     increases_activity_of = "biolink:increases_activity_of"
     increases_degradation_of = "biolink:increases_degradation_of"
@@ -452,25 +508,46 @@ class Predicate(str, Enum):
     increases_uptake_of = "biolink:increases_uptake_of"
     interacts_with = "biolink:interacts_with"
     is_active_ingredient_of = "biolink:is_active_ingredient_of"
+    is_catalyst_of = "biolink:is_catalyst_of"
     is_excipient_of = "biolink:is_excipient_of"
     is_frameshift_variant_of = "biolink:is_frameshift_variant_of"
+    is_input_of = "biolink:is_input_of"
     is_metabolite_of = "biolink:is_metabolite_of"
     is_missense_variant_of = "biolink:is_missense_variant_of"
+    is_molecular_consequence_of = "biolink:is_molecular_consequence_of"
     is_nearby_variant_of = "biolink:is_nearby_variant_of"
     is_non_coding_variant_of = "biolink:is_non_coding_variant_of"
     is_nonsense_variant_of = "biolink:is_nonsense_variant_of"
+    is_output_of = "biolink:is_output_of"
     is_sequence_variant_of = "biolink:is_sequence_variant_of"
     is_splice_site_variant_of = "biolink:is_splice_site_variant_of"
+    is_substrate_of = "biolink:is_substrate_of"
     is_synonymous_variant_of = "biolink:is_synonymous_variant_of"
     lacks_part = "biolink:lacks_part"
+    localization_affected_by = "biolink:localization_affected_by"
+    localization_decreased_by = "biolink:localization_decreased_by"
+    localization_increased_by = "biolink:localization_increased_by"
     located_in = "biolink:located_in"
     location_of = "biolink:location_of"
     manifestation_of = "biolink:manifestation_of"
+    mentions = "biolink:mentions"
+    metabolic_processing_affected_by = "biolink:metabolic_processing_affected_by"
+    metabolic_processing_decreased_by = "biolink:metabolic_processing_decreased_by"
+    metabolic_processing_increased_by = "biolink:metabolic_processing_increased_by"
+    missing_from = "biolink:missing_from"
     model_of = "biolink:model_of"
+    models = "biolink:models"
     molecular_activity_enabled_by = "biolink:molecular_activity_enabled_by"
     molecular_activity_has_input = "biolink:molecular_activity_has_input"
     molecular_activity_has_output = "biolink:molecular_activity_has_output"
+    molecular_interaction_decreased_by = "biolink:molecular_interaction_decreased_by"
+    molecular_interaction_increased_by = "biolink:molecular_interaction_increased_by"
+    molecular_modification_affected_by = "biolink:molecular_modification_affected_by"
+    molecular_modification_decreased_by = "biolink:molecular_modification_decreased_by"
+    molecular_modification_increased_by = "biolink:molecular_modification_increased_by"
     molecularly_interacts_with = "biolink:molecularly_interacts_with"
+    mutation_rate_affected_by = "biolink:mutation_rate_affected_by"
+    mutation_rate_decreased_by = "biolink:mutation_rate_decreased_by"
     narrow_match = "biolink:narrow_match"
     negatively_correlated_with = "biolink:negatively_correlated_with"
     nutrient_of = "biolink:nutrient_of"
@@ -502,17 +579,41 @@ class Predicate(str, Enum):
     publisher = "biolink:publisher"
     related_condition = "biolink:related_condition"
     related_to = "biolink:related_to"
+    response_affected_by = "biolink:response_affected_by"
+    response_decreased_by = "biolink:response_decreased_by"
+    response_increased_by = "biolink:response_increased_by"
+    risk_affected_by = "biolink:risk_affected_by"
     same_as = "biolink:same_as"
+    secretion_affected_by = "biolink:secretion_affected_by"
+    secretion_decreased_by = "biolink:secretion_decreased_by"
+    secretion_increased_by = "biolink:secretion_increased_by"
+    sequence_location_of = "biolink:sequence_location_of"
     similar_to = "biolink:similar_to"
+    splicing_affected_by = "biolink:splicing_affected_by"
+    splicing_decreased_by = "biolink:splicing_decreased_by"
+    splicing_increased_by = "biolink:splicing_increased_by"
+    stability_affected_by = "biolink:stability_affected_by"
+    stability_decreased_by = "biolink:stability_decreased_by"
+    stability_increased_by = "biolink:stability_increased_by"
     subclass_of = "biolink:subclass_of"
     superclass_of = "biolink:superclass_of"
+    synthesis_decreased_by = "biolink:synthesis_decreased_by"
+    synthesis_increased_by = "biolink:synthesis_increased_by"
+    sythesis_affected_by = "biolink:sythesis_affected_by"
     temporally_related_to = "biolink:temporally_related_to"
     transcribed_from = "biolink:transcribed_from"
     transcribed_to = "biolink:transcribed_to"
     translates_to = "biolink:translates_to"
     translation_of = "biolink:translation_of"
+    transport_affected_by = "biolink:transport_affected_by"
+    transport_decreased_by = "biolink:transport_decreased_by"
+    transport_increased_by = "biolink:transport_increased_by"
     treated_by = "biolink:treated_by"
     treats = "biolink:treats"
+    uptake_affected_by = "biolink:uptake_affected_by"
+    uptake_decreased_by = "biolink:uptake_decreased_by"
+    uptake_increased_by = "biolink:uptake_increased_by"
+    variant_part_of = "biolink:variant_part_of"
     xenologous_to = "biolink:xenologous_to"
 
 
@@ -930,6 +1031,20 @@ class EvidenceType(InformationContentEntity):
 
 
 @dataclass(config=PydanticConfig)
+class InformationResource(InformationContentEntity):
+    """
+    A database or knowledgebase and its supporting ecosystem of interfaces and services that deliver content to
+    consumers (e.g. web portals, APIs, query endpoints, streaming services, data downloads, etc.). A single
+    Information Resource by this definition may span many different datasets or databases, and include many access
+    endpoints and user interfaces. Information Resources include project-specific resources such as a Translator
+    Knowledge Provider, and community knowledgebases like ChemBL, OMIM, or DGIdb.
+    """
+
+    # Class Variables
+    _category: ClassVar[str] = "InformationResource"
+
+
+@dataclass(config=PydanticConfig)
 class Publication(InformationContentEntity):
     """
     Any published piece of information. Can refer to a whole publication, its encompassing publication (i.e. journal
@@ -1256,13 +1371,127 @@ class ThingWithTaxon:
 
 
 @dataclass(config=PydanticConfig)
-class MolecularEntity(BiologicalEntity, ThingWithTaxon, PhysicalEssence, OntologyClass):
+class GenomicEntity(ThingWithTaxon):
+
+    pass
+
+
+@dataclass(config=PydanticConfig)
+class ChemicalEntity(NamedThing, PhysicalEssence, ChemicalOrDrugOrTreatment):
     """
-    A gene, gene product, small molecule or macromolecule (including protein complex)"
+    A chemical entity is a physical entity that pertains to chemistry or biochemistry.
+    """
+
+
+@dataclass(config=PydanticConfig)
+class MolecularEntity(ChemicalEntity):
+    """
+    A molecular entity is a chemical entity composed of individual or covalently bonded atoms.
     """
 
     # Class Variables
     _category: ClassVar[str] = "MolecularEntity"
+
+    is_metabolite: Optional[bool] = None
+
+
+@dataclass(config=PydanticConfig)
+class ChemicalSubstance:
+
+    # Class Variables
+    _category: ClassVar[str] = "ChemicalSubstance"
+
+
+@dataclass(config=PydanticConfig)
+class SmallMolecule(MolecularEntity):
+    """
+    A small molecule entity is a molecular entity characterized by availability in small-molecule databases of SMILES,
+    InChI, IUPAC, or other unambiguous representation of its precise chemical structure; for convenience of
+    representation, any valid chemical representation is included, even if it is not strictly molecular (e.g., sodium
+    ion).
+    """
+
+    # Class Variables
+    _category: ClassVar[str] = "SmallMolecule"
+    _id_prefixes: ClassVar[List[str]] = [
+        "PUBCHEM.COMPOUND",
+        "CHEMBL.COMPOUND",
+        "UNII",
+        "CHEBI",
+        "DRUGBANK",
+        "MESH",
+        "CAS",
+        "DrugCentral",
+        "GTOPDB",
+        "HMDB",
+        "KEGG.COMPOUND",
+        "ChemBank",
+        "Aeolus",
+        "PUBCHEM.SUBSTANCE",
+        "SIDER.DRUG",
+        "INCHI",
+        "INCHIKEY",
+        "KEGG.GLYCAN",
+        "KEGG.DRUG",
+        "KEGG.DGROUP",
+        "KEGG.ENVIRON",
+    ]
+
+    id: Curie = None
+
+    # Validators
+
+    @validator('id')
+    def validate_required_id(cls, field):
+        check_value_is_not_none("id", field)
+        check_curie_prefix(cls, field)
+        return field
+
+
+@dataclass(config=PydanticConfig)
+class ChemicalMixture(ChemicalEntity):
+    """
+    A chemical mixture is a chemical entity composed of two or more molecular entities.
+    """
+
+    # Class Variables
+    _category: ClassVar[str] = "ChemicalMixture"
+
+
+@dataclass(config=PydanticConfig)
+class NucleicAcidEntity(MolecularEntity, GenomicEntity):
+    """
+    A nucleic acid entity is a molecular entity characterized by availability in gene databases of nucleotide-based
+    sequence representations of its precise sequence; for convenience of representation, partial sequences of various
+    kinds are included, even if they do not represent a physical molecule.
+    """
+
+    # Class Variables
+    _category: ClassVar[str] = "NucleicAcidEntity"
+
+    has_biological_sequence: Optional[Union[str, BiologicalSequence]] = None
+
+
+@dataclass(config=PydanticConfig)
+class MolecularMixture(ChemicalMixture):
+    """
+    A molecular mixture is a chemical mixture composed of two or more molecular entities with known concentration and
+    stoichiometry.
+    """
+
+    # Class Variables
+    _category: ClassVar[str] = "MolecularMixture"
+
+
+@dataclass(config=PydanticConfig)
+class ComplexMolecularMixture(ChemicalMixture):
+    """
+    A complex molecular mixture is a chemical mixture composed of two or more molecular entities with unknown
+    concentration and stoichiometry.
+    """
+
+    # Class Variables
+    _category: ClassVar[str] = "ComplexMolecularMixture"
 
 
 @dataclass(config=PydanticConfig)
@@ -1386,69 +1615,10 @@ class Death(BiologicalProcess):
 
 
 @dataclass(config=PydanticConfig)
-class Mixture:
+class ProcessedMaterial(ChemicalMixture):
     """
-    The physical combination of two or more molecular entities in which the identities are retained and are mixed in
-    the form of solutions, suspensions and colloids.
-    """
-
-    has_constituent: Optional[Union[Curie, List[Curie]]] = field(default_factory=list)
-
-    # Validators
-
-    @validator('has_constituent')
-    def convert_has_constituent_to_list_check_curies(cls, field):
-        return convert_scalar_to_list_check_curies(cls, field)
-
-
-@dataclass(config=PydanticConfig)
-class ChemicalSubstance(MolecularEntity, OntologyClass):
-    """
-    May be a chemical entity or a formulation with a chemical entity as active ingredient, or a complex material with
-    multiple chemical entities as part
-    """
-
-    # Class Variables
-    _category: ClassVar[str] = "ChemicalSubstance"
-    _id_prefixes: ClassVar[List[str]] = [
-        "PUBCHEM.COMPOUND",
-        "CHEMBL.COMPOUND",
-        "UNII",
-        "CHEBI",
-        "DRUGBANK",
-        "MESH",
-        "CAS",
-        "DrugCentral",
-        "GTOPDB",
-        "HMDB",
-        "KEGG.COMPOUND",
-        "ChemBank",
-        "Aeolus",
-        "PUBCHEM.SUBSTANCE",
-        "SIDER.DRUG",
-        "INCHI",
-        "INCHIKEY",
-        "KEGG.GLYCAN",
-        "KEGG.DRUG",
-        "KEGG.DGROUP",
-        "KEGG.ENVIRON",
-    ]
-
-    is_metabolite: Optional[bool] = None
-
-
-@dataclass(config=PydanticConfig)
-class Carbohydrate(ChemicalSubstance):
-
-    # Class Variables
-    _category: ClassVar[str] = "Carbohydrate"
-    _id_prefixes: ClassVar[List[str]] = ["PUBCHEM.SUBSTANCE"]
-
-
-@dataclass(config=PydanticConfig)
-class ProcessedMaterial(ChemicalSubstance, Mixture, OntologyClass):
-    """
-    A chemical substance (often a mixture) processed for consumption for nutritional, medical or technical use.
+    A chemical entity (often a mixture) processed for consumption for nutritional, medical or technical use. Is a
+    material entity that is created or changed during material processing.
     """
 
     # Class Variables
@@ -1456,7 +1626,7 @@ class ProcessedMaterial(ChemicalSubstance, Mixture, OntologyClass):
 
 
 @dataclass(config=PydanticConfig)
-class Drug(MolecularEntity, Mixture, ChemicalOrDrugOrTreatment, OntologyClass):
+class Drug(MolecularMixture, ChemicalOrDrugOrTreatment, OntologyClass):
     """
     A substance intended for use in the diagnosis, cure, mitigation, treatment, or prevention of disease
     """
@@ -1467,28 +1637,21 @@ class Drug(MolecularEntity, Mixture, ChemicalOrDrugOrTreatment, OntologyClass):
 
 
 @dataclass(config=PydanticConfig)
-class FoodComponent(ChemicalSubstance):
-
-    # Class Variables
-    _category: ClassVar[str] = "FoodComponent"
-
-
-@dataclass(config=PydanticConfig)
-class EnvironmentalFoodContaminant(ChemicalSubstance):
+class EnvironmentalFoodContaminant(ChemicalEntity):
 
     # Class Variables
     _category: ClassVar[str] = "EnvironmentalFoodContaminant"
 
 
 @dataclass(config=PydanticConfig)
-class FoodAdditive(ChemicalSubstance):
+class FoodAdditive(ChemicalEntity):
 
     # Class Variables
     _category: ClassVar[str] = "FoodAdditive"
 
 
 @dataclass(config=PydanticConfig)
-class Nutrient(ChemicalSubstance):
+class Nutrient(ChemicalEntity):
 
     # Class Variables
     _category: ClassVar[str] = "Nutrient"
@@ -1516,7 +1679,7 @@ class Vitamin(Micronutrient):
 
 
 @dataclass(config=PydanticConfig)
-class Food(MolecularEntity, Mixture):
+class Food(ChemicalMixture):
     """
     A substance consumed by a living organism as a source of nutrition
     """
@@ -1524,16 +1687,6 @@ class Food(MolecularEntity, Mixture):
     # Class Variables
     _category: ClassVar[str] = "Food"
     _id_prefixes: ClassVar[List[str]] = ["foodb.compound"]
-
-
-@dataclass(config=PydanticConfig)
-class Metabolite(ChemicalSubstance):
-    """
-    Any intermediate or product resulting from metabolism. Includes primary and secondary metabolites.
-    """
-
-    # Class Variables
-    _category: ClassVar[str] = "Metabolite"
 
 
 @dataclass(config=PydanticConfig)
@@ -1571,7 +1724,7 @@ class Inheritance(OrganismAttribute):
 class OrganismalEntity(BiologicalEntity):
     """
     A named entity that is either a part of an organism, a whole organism, population or clade of organisms, excluding
-    molecular entities
+    chemical entities
     """
 
     has_attribute: Optional[Union[Union[str, Attribute], List[Union[str, Attribute]]]] = field(
@@ -1686,6 +1839,7 @@ class PhenotypicFeature(DiseaseOrPhenotypicFeature):
         "WBPhenotype",
         "SNOMEDCT",
         "MESH",
+        "XPO",
     ]
 
 
@@ -1766,6 +1920,51 @@ class GeneOrGeneProduct(MacromolecularMachineMixin):
 
 
 @dataclass(config=PydanticConfig)
+class Gene(NucleicAcidEntity, GeneOrGeneProduct, ThingWithTaxon):
+    """
+    A region (or regions) that includes all of the sequence elements necessary to encode a functional transcript. A
+    gene locus may include regulatory regions, transcribed regions and/or other functional sequence regions.
+    """
+
+    # Class Variables
+    _category: ClassVar[str] = "Gene"
+    _id_prefixes: ClassVar[List[str]] = [
+        "NCBIGene",
+        "ENSEMBL",
+        "HGNC",
+        "MGI",
+        "ZFIN",
+        "dictyBase",
+        "WB",
+        "WormBase",
+        "FB",
+        "RGD",
+        "SGD",
+        "POMBASE",
+        "OMIM",
+        "KEGG.GENE",
+        "UMLS",
+        "Xenbase",
+    ]
+
+    symbol: Optional[str] = None
+    synonym: Optional[Union[Union[str, LabelType], List[Union[str, LabelType]]]] = field(
+        default_factory=list
+    )
+    xref: Optional[Union[Curie, List[Curie]]] = field(default_factory=list)
+
+    # Validators
+
+    @validator('synonym')
+    def convert_synonym_to_list_check_curies(cls, field):
+        return convert_scalar_to_list_check_curies(cls, field)
+
+    @validator('xref')
+    def convert_xref_to_list_check_curies(cls, field):
+        return convert_scalar_to_list_check_curies(cls, field)
+
+
+@dataclass(config=PydanticConfig)
 class GeneProductMixin(GeneOrGeneProduct):
     """
     The functional molecular product of a single gene locus. Gene products are either proteins or functional RNA
@@ -1812,65 +2011,7 @@ class MacromolecularComplexMixin(MacromolecularMachineMixin):
 
 
 @dataclass(config=PydanticConfig)
-class GenomicEntity(MolecularEntity):
-    """
-    an entity that can either be directly located on a genome (gene, transcript, exon, regulatory region) or is
-    encoded in a genome (protein)
-    """
-
-    # Class Variables
-    _category: ClassVar[str] = "GenomicEntity"
-
-    has_biological_sequence: Optional[Union[str, BiologicalSequence]] = None
-
-
-@dataclass(config=PydanticConfig)
-class Gene(GenomicEntity, GeneOrGeneProduct):
-    """
-    A region (or regions) that includes all of the sequence elements necessary to encode a functional transcript. A
-    gene locus may include regulatory regions, transcribed regions and/or other functional sequence regions.
-    """
-
-    # Class Variables
-    _category: ClassVar[str] = "Gene"
-    _id_prefixes: ClassVar[List[str]] = [
-        "NCBIGene",
-        "ENSEMBL",
-        "HGNC",
-        "MGI",
-        "ZFIN",
-        "dictyBase",
-        "WB",
-        "WormBase",
-        "FB",
-        "FB",
-        "RGD",
-        "SGD",
-        "POMBASE",
-        "OMIM",
-        "KEGG.GENE",
-        "UMLS",
-    ]
-
-    symbol: Optional[str] = None
-    synonym: Optional[Union[Union[str, LabelType], List[Union[str, LabelType]]]] = field(
-        default_factory=list
-    )
-    xref: Optional[Union[Curie, List[Curie]]] = field(default_factory=list)
-
-    # Validators
-
-    @validator('synonym')
-    def convert_synonym_to_list_check_curies(cls, field):
-        return convert_scalar_to_list_check_curies(cls, field)
-
-    @validator('xref')
-    def convert_xref_to_list_check_curies(cls, field):
-        return convert_scalar_to_list_check_curies(cls, field)
-
-
-@dataclass(config=PydanticConfig)
-class Genome(GenomicEntity):
+class Genome(BiologicalEntity, GenomicEntity):
     """
     A genome is the sum of genetic material within a cell or virion.
     """
@@ -1880,7 +2021,7 @@ class Genome(GenomicEntity):
 
 
 @dataclass(config=PydanticConfig)
-class Exon(GenomicEntity):
+class Exon(NucleicAcidEntity):
     """
     A region of the transcript sequence within a gene which is not removed from the primary RNA transcript by RNA
     splicing.
@@ -1891,7 +2032,7 @@ class Exon(GenomicEntity):
 
 
 @dataclass(config=PydanticConfig)
-class Transcript(GenomicEntity):
+class Transcript(NucleicAcidEntity):
     """
     An RNA synthesized on a DNA or RNA template by an RNA polymerase.
     """
@@ -1902,14 +2043,27 @@ class Transcript(GenomicEntity):
 
 
 @dataclass(config=PydanticConfig)
-class CodingSequence(GenomicEntity):
+class CodingSequence(NucleicAcidEntity):
 
     # Class Variables
     _category: ClassVar[str] = "CodingSequence"
 
 
 @dataclass(config=PydanticConfig)
-class Protein(GenomicEntity, GeneProductMixin):
+class Polypeptide(MolecularEntity):
+    """
+    A polypeptide is a molecular entity characterized by availability in protein databases of amino-acid-based
+    sequence representations of its precise primary structure; for convenience of representation, partial sequences of
+    various kinds are included, even if they do not represent a physical molecule.
+    """
+
+    # Class Variables
+    _category: ClassVar[str] = "Polypeptide"
+    _id_prefixes: ClassVar[List[str]] = ["UniProtKB", "PR", "ENSEMBL", "FB", "UMLS"]
+
+
+@dataclass(config=PydanticConfig)
+class Protein(Polypeptide, GeneProductMixin):
     """
     A gene product that is composed of a chain of amino acid sequences and is produced by ribosome-mediated
     translation of mRNA
@@ -1917,7 +2071,6 @@ class Protein(GenomicEntity, GeneProductMixin):
 
     # Class Variables
     _category: ClassVar[str] = "Protein"
-    _id_prefixes: ClassVar[List[str]] = ["UniProtKB", "PR", "ENSEMBL", "FB", "UMLS"]
 
 
 @dataclass(config=PydanticConfig)
@@ -1998,7 +2151,7 @@ class GeneGroupingMixin:
 
 
 @dataclass(config=PydanticConfig)
-class GeneFamily(MolecularEntity, GeneGroupingMixin):
+class GeneFamily(NucleicAcidEntity, GeneGroupingMixin):
     """
     any grouping of multiple genes or gene products related by common descent
     """
@@ -2036,7 +2189,7 @@ class Zygosity(Attribute):
 
 
 @dataclass(config=PydanticConfig)
-class Genotype(GenomicEntity):
+class Genotype(BiologicalEntity, PhysicalEssence, GenomicEntity):
     """
     An information content entity that describes a genome by specifying the total variation in genomic sequence and/or
     gene expression, relative to some established background
@@ -2050,7 +2203,7 @@ class Genotype(GenomicEntity):
 
 
 @dataclass(config=PydanticConfig)
-class Haplotype(GenomicEntity):
+class Haplotype(BiologicalEntity, GenomicEntity, PhysicalEssence):
     """
     A set of zero or more Alleles on a single instance of a Sequence[VMC]
     """
@@ -2060,7 +2213,7 @@ class Haplotype(GenomicEntity):
 
 
 @dataclass(config=PydanticConfig)
-class SequenceVariant(GenomicEntity):
+class SequenceVariant(NucleicAcidEntity):
     """
     An allele that varies in its sequence from what is considered the reference allele at that locus.
     """
@@ -2111,7 +2264,7 @@ class Snv(SequenceVariant):
 
 
 @dataclass(config=PydanticConfig)
-class ReagentTargetedGene(GenomicEntity):
+class ReagentTargetedGene(NucleicAcidEntity):
     """
     A gene altered in its expression level in the context of some experiment as a result of being targeted by
     gene-knockdown reagent(s) such as a morpholino or RNAi.
@@ -2279,7 +2432,9 @@ class ExposureEvent:
 
 
 @dataclass(config=PydanticConfig)
-class GenomicBackgroundExposure(GenomicEntity, ExposureEvent, GeneGroupingMixin):
+class GenomicBackgroundExposure(
+    BiologicalEntity, ExposureEvent, GeneGroupingMixin, PhysicalEssence, GenomicEntity
+):
     """
     A genomic background exposure is where an individual's specific genomic background of genes, sequence variants or
     other pre-existing genomic conditions constitute a kind of 'exposure' to the organism, leading to or influencing
@@ -2356,9 +2511,9 @@ class DiseaseOrPhenotypicFeatureExposure(
 
 
 @dataclass(config=PydanticConfig)
-class ChemicalExposure(ChemicalSubstance, ExposureEvent):
+class ChemicalExposure(ChemicalEntity, ExposureEvent):
     """
-    A chemical exposure is an intake of a particular chemical substance, other than a drug.
+    A chemical exposure is an intake of a particular chemical entity, other than a drug.
     """
 
     # Class Variables
@@ -2366,7 +2521,7 @@ class ChemicalExposure(ChemicalSubstance, ExposureEvent):
 
 
 @dataclass(config=PydanticConfig)
-class ComplexChemicalExposure(ChemicalExposure, Mixture):
+class ComplexChemicalExposure(ChemicalExposure):
     """
     A complex chemical exposure is an intake of a chemical mixture (e.g. gasoline), other than a drug.
     """
@@ -2974,24 +3129,24 @@ class CellLineToEntityAssociationMixin:
 
 
 @dataclass(config=PydanticConfig)
-class MolecularEntityToEntityAssociationMixin:
+class ChemicalEntityToEntityAssociationMixin:
     """
-    An interaction between a molecular entity and another entity
+    An interaction between a chemical entity and another entity
     """
 
-    subject: Union[Curie, MolecularEntity] = None
+    subject: Union[Curie, ChemicalEntity] = None
 
     # Validators
 
     @validator('subject')
     def validate_required_subject(cls, field):
         check_value_is_not_none("subject", field)
-        check_curie_prefix(MolecularEntity, field)
+        check_curie_prefix(ChemicalEntity, field)
         return field
 
 
 @dataclass(config=PydanticConfig)
-class DrugToEntityAssociationMixin(MolecularEntityToEntityAssociationMixin):
+class DrugToEntityAssociationMixin(ChemicalEntityToEntityAssociationMixin):
     """
     An interaction between a drug and another entity
     """
@@ -3008,19 +3163,19 @@ class DrugToEntityAssociationMixin(MolecularEntityToEntityAssociationMixin):
 
 
 @dataclass(config=PydanticConfig)
-class ChemicalToEntityAssociationMixin(MolecularEntityToEntityAssociationMixin):
+class ChemicalToEntityAssociationMixin(ChemicalEntityToEntityAssociationMixin):
     """
     An interaction between a chemical entity and another entity
     """
 
-    subject: Union[Curie, ChemicalSubstance] = None
+    subject: Union[Curie, ChemicalEntity] = None
 
     # Validators
 
     @validator('subject')
     def validate_required_subject(cls, field):
         check_value_is_not_none("subject", field)
-        check_curie_prefix(ChemicalSubstance, field)
+        check_curie_prefix(ChemicalEntity, field)
         return field
 
 
@@ -3051,14 +3206,50 @@ class ChemicalToChemicalAssociation(Association, ChemicalToEntityAssociationMixi
     # Class Variables
     _category: ClassVar[str] = "ChemicalToChemicalAssociation"
 
-    object: Union[Curie, ChemicalSubstance] = None
+    object: Union[Curie, ChemicalEntity] = None
 
     # Validators
 
     @validator('object')
     def validate_required_object(cls, field):
         check_value_is_not_none("object", field)
-        check_curie_prefix(ChemicalSubstance, field)
+        check_curie_prefix(ChemicalEntity, field)
+        return field
+
+
+@dataclass(config=PydanticConfig)
+class ReactionToParticipantAssociation(ChemicalToChemicalAssociation):
+
+    # Class Variables
+    _category: ClassVar[str] = "ReactionToParticipantAssociation"
+
+    subject: Union[Curie, MolecularEntity] = None
+    stoichiometry: Optional[int] = None
+    reaction_direction: Optional[Union[str, "ReactionDirectionEnum"]] = None
+    reaction_side: Optional[Union[str, "ReactionSideEnum"]] = None
+
+    # Validators
+
+    @validator('subject')
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
+        check_curie_prefix(MolecularEntity, field)
+        return field
+
+
+@dataclass(config=PydanticConfig)
+class ReactionToCatalystAssociation(ReactionToParticipantAssociation):
+
+    # Class Variables
+    _category: ClassVar[str] = "ReactionToCatalystAssociation"
+
+    object: Union[str, GeneOrGeneProduct] = None
+
+    # Validators
+
+    @validator('object')
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
         return field
 
 
@@ -3079,8 +3270,8 @@ class ChemicalToChemicalDerivationAssociation(ChemicalToChemicalAssociation):
     # Class Variables
     _category: ClassVar[str] = "ChemicalToChemicalDerivationAssociation"
 
-    subject: Union[Curie, ChemicalSubstance] = None
-    object: Union[Curie, ChemicalSubstance] = None
+    subject: Union[Curie, ChemicalEntity] = None
+    object: Union[Curie, ChemicalEntity] = None
     predicate: Predicate = None
     catalyst_qualifier: Optional[
         Union[Union[str, MacromolecularMachineMixin], List[Union[str, MacromolecularMachineMixin]]]
@@ -3095,13 +3286,13 @@ class ChemicalToChemicalDerivationAssociation(ChemicalToChemicalAssociation):
     @validator('subject')
     def validate_required_subject(cls, field):
         check_value_is_not_none("subject", field)
-        check_curie_prefix(ChemicalSubstance, field)
+        check_curie_prefix(ChemicalEntity, field)
         return field
 
     @validator('object')
     def validate_required_object(cls, field):
         check_value_is_not_none("object", field)
-        check_curie_prefix(ChemicalSubstance, field)
+        check_curie_prefix(ChemicalEntity, field)
         return field
 
     @validator('predicate')
@@ -3348,6 +3539,44 @@ class EntityToPhenotypicFeatureAssociationMixin(EntityToFeatureOrDiseaseQualifie
 
 
 @dataclass(config=PydanticConfig)
+class NamedThingToInformationContentEntityAssociation(Association):
+    """
+    association between a named thing and a information content entity where the specific context of the relationship
+    between that named thing and the publication is unknown. For example, model organisms databases often capture the
+    knowledge that a gene is found in a journal article, but not specifically the context in which that gene was
+    documented in the article. In these cases, this association with the accompanying predicate 'mentions' could be
+    used. Conversely, for more specific associations (like 'gene to disease association', the publication should be
+    captured as an edge property).
+    """
+
+    # Class Variables
+    _category: ClassVar[str] = "NamedThingToInformationContentEntityAssociation"
+
+    subject: Union[Curie, NamedThing] = None
+    object: Union[Curie, Publication] = None
+    predicate: Predicate = None
+
+    # Validators
+
+    @validator('subject')
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
+        check_curie_prefix(NamedThing, field)
+        return field
+
+    @validator('object')
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
+        check_curie_prefix(Publication, field)
+        return field
+
+    @validator('predicate')
+    def validate_required_predicate(cls, field):
+        check_value_is_not_none("predicate", field)
+        return field
+
+
+@dataclass(config=PydanticConfig)
 class EntityToDiseaseAssociationMixin(EntityToFeatureOrDiseaseQualifiersMixin):
     """
     mixin class for any association whose object (target node) is a disease
@@ -3374,25 +3603,6 @@ class DiseaseOrPhenotypicFeatureToEntityAssociationMixin:
     def validate_required_subject(cls, field):
         check_value_is_not_none("subject", field)
         check_curie_prefix(DiseaseOrPhenotypicFeature, field)
-        return field
-
-
-@dataclass(config=PydanticConfig)
-class DiseaseOrPhenotypicFeatureAssociationToLocationAssociation(
-    Association, DiseaseOrPhenotypicFeatureToEntityAssociationMixin
-):
-
-    # Class Variables
-    _category: ClassVar[str] = "DiseaseOrPhenotypicFeatureAssociationToLocationAssociation"
-
-    object: Union[Curie, AnatomicalEntity] = None
-
-    # Validators
-
-    @validator('object')
-    def validate_required_object(cls, field):
-        check_value_is_not_none("object", field)
-        check_curie_prefix(AnatomicalEntity, field)
         return field
 
 
@@ -3591,8 +3801,8 @@ class BehaviorToBehavioralFeatureAssociation(
     Association, EntityToPhenotypicFeatureAssociationMixin
 ):
     """
-    An association between an aggregate behavior and a behavioral feature manifested by the individual exhibited or
-    has exhibited the behavior.
+    An association between an mixture behavior and a behavioral feature manifested by the individual exhibited or has
+    exhibited the behavior.
     """
 
     # Class Variables
@@ -3993,6 +4203,68 @@ class OrganismalEntityAsAModelOfDiseaseAssociation(
 
 
 @dataclass(config=PydanticConfig)
+class OrganismToOrganismAssociation(Association):
+
+    # Class Variables
+    _category: ClassVar[str] = "OrganismToOrganismAssociation"
+
+    subject: Union[Curie, IndividualOrganism] = None
+    relation: Curie = None
+    object: Union[Curie, IndividualOrganism] = None
+
+    # Validators
+
+    @validator('subject')
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
+        check_curie_prefix(IndividualOrganism, field)
+        return field
+
+    @validator('relation')
+    def validate_required_relation(cls, field):
+        check_value_is_not_none("relation", field)
+        check_curie_prefix(cls, field)
+        return field
+
+    @validator('object')
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
+        check_curie_prefix(IndividualOrganism, field)
+        return field
+
+
+@dataclass(config=PydanticConfig)
+class TaxonToTaxonAssociation(Association):
+
+    # Class Variables
+    _category: ClassVar[str] = "TaxonToTaxonAssociation"
+
+    subject: Union[Curie, OrganismTaxon] = None
+    relation: Curie = None
+    object: Union[Curie, OrganismTaxon] = None
+
+    # Validators
+
+    @validator('subject')
+    def validate_required_subject(cls, field):
+        check_value_is_not_none("subject", field)
+        check_curie_prefix(OrganismTaxon, field)
+        return field
+
+    @validator('relation')
+    def validate_required_relation(cls, field):
+        check_value_is_not_none("relation", field)
+        check_curie_prefix(cls, field)
+        return field
+
+    @validator('object')
+    def validate_required_object(cls, field):
+        check_value_is_not_none("object", field)
+        check_curie_prefix(OrganismTaxon, field)
+        return field
+
+
+@dataclass(config=PydanticConfig)
 class GeneHasVariantThatContributesToDiseaseAssociation(GeneToDiseaseAssociation):
 
     # Class Variables
@@ -4199,7 +4471,7 @@ class GeneToGoTermAssociation(FunctionalAssociation):
     # Class Variables
     _category: ClassVar[str] = "GeneToGoTermAssociation"
 
-    subject: Union[Curie, MolecularEntity] = None
+    subject: Union[Curie, Gene] = None
     object: Union[str, GeneOntologyClass] = None
 
     # Validators
@@ -4207,7 +4479,7 @@ class GeneToGoTermAssociation(FunctionalAssociation):
     @validator('subject')
     def validate_required_subject(cls, field):
         check_value_is_not_none("subject", field)
-        check_curie_prefix(MolecularEntity, field)
+        check_curie_prefix(Gene, field)
         return field
 
     @validator('object')
@@ -4219,7 +4491,7 @@ class GeneToGoTermAssociation(FunctionalAssociation):
 @dataclass(config=PydanticConfig)
 class SequenceAssociation(Association):
     """
-    An association between a sequence feature and a genomic entity it is localized to.
+    An association between a sequence feature and a nucleic acid entity it is localized to.
     """
 
     # Class Variables
@@ -4229,34 +4501,34 @@ class SequenceAssociation(Association):
 @dataclass(config=PydanticConfig)
 class GenomicSequenceLocalization(SequenceAssociation):
     """
-    A relationship between a sequence feature and a genomic entity it is localized to. The reference entity may be a
-    chromosome, chromosome region or information entity such as a contig.
+    A relationship between a sequence feature and a nucleic acid entity it is localized to. The reference entity may
+    be a chromosome, chromosome region or information entity such as a contig.
     """
 
     # Class Variables
     _category: ClassVar[str] = "GenomicSequenceLocalization"
 
-    subject: Union[Curie, GenomicEntity] = None
-    object: Union[Curie, GenomicEntity] = None
+    subject: Union[Curie, NucleicAcidEntity] = None
+    object: Union[Curie, NucleicAcidEntity] = None
     predicate: Predicate = None
     start_interbase_coordinate: Optional[int] = None
     end_interbase_coordinate: Optional[int] = None
-    genome_build: Optional[str] = None
-    strand: Optional[str] = None
-    phase: Optional[str] = None
+    genome_build: Optional[Union[str, "StrandEnum"]] = None
+    strand: Optional[Union[str, "StrandEnum"]] = None
+    phase: Optional[Union[str, "PhaseEnum"]] = None
 
     # Validators
 
     @validator('subject')
     def validate_required_subject(cls, field):
         check_value_is_not_none("subject", field)
-        check_curie_prefix(GenomicEntity, field)
+        check_curie_prefix(NucleicAcidEntity, field)
         return field
 
     @validator('object')
     def validate_required_object(cls, field):
         check_value_is_not_none("object", field)
-        check_curie_prefix(GenomicEntity, field)
+        check_curie_prefix(NucleicAcidEntity, field)
         return field
 
     @validator('predicate')
@@ -4274,21 +4546,21 @@ class SequenceFeatureRelationship(Association):
     # Class Variables
     _category: ClassVar[str] = "SequenceFeatureRelationship"
 
-    subject: Union[Curie, GenomicEntity] = None
-    object: Union[Curie, GenomicEntity] = None
+    subject: Union[Curie, NucleicAcidEntity] = None
+    object: Union[Curie, NucleicAcidEntity] = None
 
     # Validators
 
     @validator('subject')
     def validate_required_subject(cls, field):
         check_value_is_not_none("subject", field)
-        check_curie_prefix(GenomicEntity, field)
+        check_curie_prefix(NucleicAcidEntity, field)
         return field
 
     @validator('object')
     def validate_required_object(cls, field):
         check_value_is_not_none("object", field)
-        check_curie_prefix(GenomicEntity, field)
+        check_curie_prefix(NucleicAcidEntity, field)
         return field
 
 
