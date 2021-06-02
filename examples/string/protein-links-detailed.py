@@ -1,6 +1,6 @@
 import re
 
-from koza.model.biolink.model import Protein, PairwiseGeneToGeneInteraction, predicate
+from koza.model.biolink.model import Protein, PairwiseGeneToGeneInteraction, Predicate
 from koza.koza_runner import get_koza_app
 
 koza = get_koza_app()
@@ -19,6 +19,6 @@ for row in koza.file_registry[source_name]:
 
     pairwise_gene_to_gene_interaction.subject = protein_a
     pairwise_gene_to_gene_interaction.object = protein_b
-    pairwise_gene_to_gene_interaction.predicate = predicate.interacts_with
+    pairwise_gene_to_gene_interaction.predicate = Predicate.interacts_with
 
     koza.write(source_name, [protein_a, protein_b, pairwise_gene_to_gene_interaction])

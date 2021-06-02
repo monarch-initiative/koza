@@ -26,7 +26,7 @@ def test_association_conversion():
     pax2a = Gene(id=Curie("ZFIN:ZDB-GENE-990415-8"), symbol="pax2a", name="paired box 2a")
     pub = Publication(id=Curie("PMID:17522161"), type="MESH:foobar")
     association = GeneToGeneAssociation(
-        id='123',
+        id='uuid:123',
         subject=fgf8a.id,
         predicate=Predicate.interacts_with,
         object=pax2a.id,

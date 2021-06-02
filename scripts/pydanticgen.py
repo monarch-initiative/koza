@@ -8,11 +8,15 @@ Some key differences:
 - pydantic dataclasses instead of vanilla dataclasses,
   see https://pydantic-docs.helpmanual.io/usage/dataclasses/
 
+- PredicateType is replaced by a Predicate enum
+
 - UriOrCurie is replaced with a Curie type as a goal to represent
-  all identifiers as curies
+  all identifiers as curies, IriType is still included in a few attributes
 
 - Identifier types are removed, eg Union[str, EntityId] is replaced with
-  Curie
+  pydantic constr (Curie) constrained by a valid curie regex
+  https://www.w3.org/TR/curie/
+  https://pydantic-docs.helpmanual.io/usage/types/#arguments-to-constr
 
 - Category attribute is inferred via class variables and the type hierarchy
     - Note that for id and type, and sometimes other attributes these
@@ -23,12 +27,8 @@ Some key differences:
 
 - Type conversions, converts scalars to lists for Union[someScalar, List[someScalar]]
 
-What parts of the schema are left out (and expected downstream)
 
-- Required attributes, eg id, should be checked or supplied downstream
-
-
-Downstream code will also need to handle nested types to be compliant with
+Downstream code will need to handle nested types to be compliant with
 Neo4J's data model.  Nested types will need to be converted to some primitive type
 (string, number, or lists of a primitive type)
 
@@ -42,8 +42,6 @@ Why pydantic over standard dataclasses?
     https://github.com/samuelcolvin/pydantic/pull/2092
 
   - Built in parsing of json or yaml into nested models (ie when attributes are reference types)
-
-  - Supported by FastAPI
 
 """
 
@@ -366,13 +364,14 @@ Quotient = float
         """
         base = rangelist[0].split('.')[-1]
 
-        if slot_name in ['id', 'category', 'provided_by']:
+        if slot_name in ['category', 'provided_by']:
             class_ref = "Union[str, Curie]"
         elif slot_name == 'predicate':
             class_ref = "Predicate"
         elif (
             slot_name
             in [
+                'id',
                 'xref',
                 'has_qualitative_value',
                 'subclass_of',
@@ -651,7 +650,7 @@ class Predicate(str, Enum):
         if not self.category:
             self.category = list(
                 {
-                    super_class._category
+                    f'biolink:{super_class._category}'
                     for super_class in inspect.getmro(type(self))
                     if hasattr(super_class, '_category')
                 }

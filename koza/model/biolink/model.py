@@ -1,5 +1,5 @@
 # Auto generated from biolink-model.yaml by pydanticgen.py version: 0.9.0
-# Generation date: 2021-06-01 17:53
+# Generation date: 2021-06-02 09:18
 # Schema: Biolink-Model
 #
 # id: https://w3id.org/biolink/biolink-model
@@ -674,7 +674,7 @@ class Entity:
     Root Biolink Model class for all things and informational relationships, real or imagined.
     """
 
-    id: Union[str, Curie] = None
+    id: Curie = None
     iri: Optional[IriType] = None
     category: Optional[Union[Union[str, Curie], List[Union[str, Curie]]]] = field(
         default_factory=list
@@ -716,7 +716,7 @@ class Entity:
         if not self.category:
             self.category = list(
                 {
-                    super_class._category
+                    f'biolink:{super_class._category}'
                     for super_class in inspect.getmro(type(self))
                     if hasattr(super_class, '_category')
                 }
@@ -815,7 +815,7 @@ class Agent(AdministrativeEntity):
     _category: ClassVar[str] = "Agent"
     _id_prefixes: ClassVar[List[str]] = ["isbn", "ORCID", "ScopusID", "ResearchID", "GSID", "isni"]
 
-    id: Union[str, Curie] = None
+    id: Curie = None
     affiliation: Optional[Union[Curie, List[Curie]]] = field(default_factory=list)
     address: Optional[str] = None
     name: Optional[Union[str, LabelType]] = None
@@ -942,7 +942,7 @@ class Publication(InformationContentEntity):
     _category: ClassVar[str] = "Publication"
     _id_prefixes: ClassVar[List[str]] = ["NLMID"]
 
-    id: Union[str, Curie] = None
+    id: Curie = None
     type: str = None
     authors: Optional[Union[str, List[str]]] = field(default_factory=list)
     pages: Optional[Union[str, List[str]]] = field(default_factory=list)
@@ -996,7 +996,7 @@ class Book(Publication):
     _category: ClassVar[str] = "Book"
     _id_prefixes: ClassVar[List[str]] = ["isbn", "NLMID"]
 
-    id: Union[str, Curie] = None
+    id: Curie = None
     type: str = None
 
     # Validators
@@ -1042,7 +1042,7 @@ class Serial(Publication):
     _category: ClassVar[str] = "Serial"
     _id_prefixes: ClassVar[List[str]] = ["issn", "NLMID"]
 
-    id: Union[str, Curie] = None
+    id: Curie = None
     type: str = None
     iso_abbreviation: Optional[str] = None
     volume: Optional[str] = None
@@ -2081,7 +2081,7 @@ class SequenceVariant(GenomicEntity):
         "WormBase",
     ]
 
-    id: Union[str, Curie] = None
+    id: Curie = None
     has_gene: Optional[Union[Union[Curie, Gene], List[Union[Curie, Gene]]]] = field(
         default_factory=list
     )
@@ -2918,7 +2918,7 @@ class PairwiseMolecularInteraction(PairwiseGeneToGeneInteraction):
     _category: ClassVar[str] = "PairwiseMolecularInteraction"
 
     subject: Union[Curie, MolecularEntity] = None
-    id: Union[str, Curie] = None
+    id: Curie = None
     predicate: Predicate = None
     relation: Curie = None
     object: Union[Curie, MolecularEntity] = None
