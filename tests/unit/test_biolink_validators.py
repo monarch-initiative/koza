@@ -18,12 +18,12 @@ def test_entity_provided_by_to_list_converter():
     assert entity.provided_by == ['stringdb']
 
 
-# def test_bad_curie():
-#    """
-#    a misformatted curie returns a validation error
-#    """
-#    with pytest.raises(ValidationError):
-#        entity = Entity(id="this is not a curie")
+def test_bad_curie():
+    """
+    a misformatted curie returns a validation error
+    """
+    with pytest.raises(ValidationError):
+        entity = Entity(id="this is not a curie")
 
 
 def test_missing_required_field_raises_error():
