@@ -6,7 +6,7 @@ tests validators and converters
 import pytest
 from pydantic import ValidationError
 
-from koza.model.biolink.model import Entity, MolecularEntity, Publication
+from koza.model.biolink.model import Entity, Gene, Publication
 
 
 def test_entity_provided_by_to_list_converter():
@@ -46,7 +46,7 @@ def test_bad_curie_prefix(caplog):
     """
     Test that misformatted curie in a list returns a validation error
     """
-    mol_ent = MolecularEntity(id='NCBIGene:123', in_taxon='taxon:foo')
+    gen_ent = Gene(id='NCBIGene:123', in_taxon='taxon:foo')
     assert caplog.records[0].levelname == 'WARNING'
     assert caplog.records[0].msg.startswith("taxon:foo prefix 'taxon' not in curie map")
     assert caplog.records[1].msg.startswith("Consider one of ['NCBITaxon', 'MESH']")
