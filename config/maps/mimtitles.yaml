@@ -1,15 +1,16 @@
 name: 'mimtitles'
-data_dir: 'todo'
 
 file_metadata:
   description: 'OMIM mim Titles'
 
 source: 'omim'
 
-delimeter: '\t'
+skip_lines: 2
+
+delimiter: '\t'
 
 files:
-  - 'mimtitles.txt'
+  - './examples/data/mimtitles.txt'
 
 columns:
   - 'Prefix'

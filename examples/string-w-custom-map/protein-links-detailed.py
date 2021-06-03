@@ -8,9 +8,7 @@ source_name = 'protein-links-detailed'
 
 row = inject_row(source_name)
 translation_table = inject_translation_table()
-entrez_2_string = inject_map('entrez_2_string')
-
-# TODO: remove the all uppercase NCBIGENE curie prefix once the curie prefix validation is fixed upstream
+entrez_2_string = inject_map('custom_entrez_2_string')
 
 gene_a = Gene(id='NCBIGene:' + entrez_2_string[row['protein1']]['entrez'])
 gene_b = Gene(id='NCBIGene:' + entrez_2_string[row['protein2']]['entrez'])
@@ -20,7 +18,7 @@ pairwise_gene_to_gene_interaction = PairwiseGeneToGeneInteraction(
     subject=gene_a.id,
     object=gene_b.id,
     predicate=Predicate.interacts_with,
-    # relation=translation_table.global_table['interacts with'],
+    # relation = translation_table.global_table['interacts with'],
     relation='RO:0002436'
 )
 
