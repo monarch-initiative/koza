@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Iterable, Optional
 
-from koza.model.biolink.entity import Entity
+from koza.model.biolink.model import Entity
 
 
 class KozaWriter(ABC):

@@ -7,13 +7,13 @@ from typing import Dict, Iterable
 
 import yaml
 
+from koza.exceptions import MapItemException
 from koza.io.writer.kgx_writer import KGXWriter
 from koza.io.writer.writer import KozaWriter
-from koza.model.biolink import Entity
+from koza.model.biolink.model import Entity
 from koza.model.config.source_config import MapFileConfig, OutputFormat, PrimaryFileConfig
 from koza.model.map_dict import MapDict
 from koza.model.source import Source, SourceFile
-from koza.validator.exceptions import MapItemException
 
 LOG = logging.getLogger(__name__)
 

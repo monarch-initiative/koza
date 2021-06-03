@@ -1,4 +1,4 @@
-from koza.validator.exceptions import MapItemException
+from koza.exceptions import MapItemException
 
 
 class MapDict(dict):

@@ -1,25 +1,22 @@
 ### Koza
 
-![pupa](docs/img/pupa.png) Data ingest framework for the Biolink model
+![pupa](docs/img/pupa.png) Data transformation framework
 
 *Disclaimer*: Koza is in pre-alpha
 
+Transform csv, json, and jsonl and converting them to a target
+csv, json, or jsonl format based on your dataclass model.  Koza also can output
+data in the [KGX format](https://github.com/biolink/kgx/blob/master/specification/kgx-format.md#kgx-format-as-tsv)
+
 
 ##### Highlights
-Koza allows you to:
 
 - Author data transforms in semi-declarative Python
-- Configure source files, expected columns/json properties and path filters,
-field filters, and metadata in yaml
+- Configure source files, expected columns/json properties and path filters, field filters, and metadata in yaml
 - Import mapping files from upstream sources to be used in ingests
 (eg id mapping, type mappings)
-- Translation tables to map between source vocabulary and ontology terms
+- Create and use translation tables to map between source and target vocabularies
 
-Koza supports processing csv, json, and jsonl and converting them to the
-[Biolink model](https://biolink.github.io/biolink-model/)
-
-Koza outputs data in the
-[KGX tsv format](https://github.com/biolink/kgx/blob/master/specification/kgx-format.md#kgx-format-as-tsv)
 
 
 #### Installation
@@ -76,27 +73,19 @@ koza transform --source examples/string-declarative/metadata.yaml
 
 ##### Ingesting a source with multiple files
 
-##### Ingesting multiple sources
 
-Koza does not have out of the box support for ingesting a batch of sources.  For this we
-recommend creating a make or [snakemake](https://snakemake.readthedocs.io/en/stable/) pipeline.
-TODO, point to example
-
-
-#### Philosophy
+#### Overview
 Koza's goal is to lower the barrier for domain experts to participate in data transform workflows.
 
-As a library, our goal is to do transformations well, and let other tools tackle downloading,
-storage/caching raw data files, batch parallel processing, and uploading to a target database.
-Koza does the T in ETL (Extract Transform Load).
+Supports standard streams for chaining transforms with other koza transforms or other command line tools.
 
-For downloading source data we're currently using gnu make + wget, see
-[DipperCache](https://github.com/monarch-initiative/DipperCache) as an example.
 
-For creating batch workflows to ingest multiple sources we'll aim to use
-make or [snakemake](https://snakemake.readthedocs.io/en/stable/)
 
-For uploading KGX TSVs to a target database we're using [KGX](https://github.com/biolink/kgx)
+What is out of scope for Koza
+- Smart fetching (only pull if updated, retries, versioning)
+- Batch parallel processing (consider make, snakemake, or a workflow orchestration system)
+- Workflow Orchestration (consider Apache airflow, Luigi, Jenkins pipelines, CWL)
+- Uploading to a target database
 
 ##### Influences:
  - [Dipper](https://github.com/monarch-initiative/dipper)
