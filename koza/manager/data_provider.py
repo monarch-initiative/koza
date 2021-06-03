@@ -6,7 +6,12 @@ from koza.model.translation_table import TranslationTable
 
 def inject_row(ingest_name: str) -> Dict:
     koza = get_koza_app()
-    return next(koza.file_registry[ingest_name])
+    if ingest_name in koza.file_registry:
+        return next(koza.file_registry[ingest_name])
+    elif ingest_name in koza.map_registry:
+        return next(koza.map_registry[ingest_name])
+    else:
+        raise KeyError(f"{ingest_name} not found in file or map registry")
 
 
 def inject_map(map_name: str) -> Tuple[Dict, ...]:
