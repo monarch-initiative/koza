@@ -4,7 +4,6 @@ delimiter: ' '
 
 files:
   - './examples/data/string.tsv'
-  - './examples/data/string.tsv'
 
 columns:
   - 'protein1'
@@ -24,6 +23,5 @@ filters:
     filter_code: 'lt'
     value: 700
 
-transform_code: './examples/string/protein-links-detailed.py'
-
-transform_mode: 'loop'
+depends_on:
+  - './examples/maps/custom-entrez-2-string.yaml'

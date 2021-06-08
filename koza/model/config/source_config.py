@@ -179,34 +179,38 @@ class SourceFileConfig:
         if self.standard_format == StandardFormat.gpi:
             self.format = FormatType.csv
             self.delimiter = "\t"
-            self.columns = ["DB",
-                            "DB_Object_ID",
-                            "DB_Object_Symbol",
-                            "DB_Object_Name",
-                            "DB_Object_Synonym(s)",
-                            "DB_Object_Type",
-                            "Taxon",
-                            "Parent_Object_ID",
-                            "DB_Xref(s)",
-                            "Properties"]
+            self.columns = [
+                "DB",
+                "DB_Object_ID",
+                "DB_Object_Symbol",
+                "DB_Object_Name",
+                "DB_Object_Synonym(s)",
+                "DB_Object_Type",
+                "Taxon",
+                "Parent_Object_ID",
+                "DB_Xref(s)",
+                "Properties",
+            ]
 
             self.skip_lines = 22
         elif self.standard_format == StandardFormat.oban:
             self.format = FormatType.csv
             self.delimiter = ","
-            self.columns = ["SUBJECT",
-                            "SUBJECT_LABEL",
-                            "SUBJECT_TAXON",
-                            "SUBJECT_TAXON_LABEL",
-                            "OBJECT",
-                            "OBJECT_LABEL",
-                            "RELATION",
-                            "RELATION_LABEL",
-                            "EVIDENCE",
-                            "EVIDENCE_LABEL",
-                            "SOURCE",
-                            "IS_DEFINED_BY",
-                            "QUALIFIER"]
+            self.columns = [
+                "SUBJECT",
+                "SUBJECT_LABEL",
+                "SUBJECT_TAXON",
+                "SUBJECT_TAXON_LABEL",
+                "OBJECT",
+                "OBJECT_LABEL",
+                "RELATION",
+                "RELATION_LABEL",
+                "EVIDENCE",
+                "EVIDENCE_LABEL",
+                "SOURCE",
+                "IS_DEFINED_BY",
+                "QUALIFIER",
+            ]
 
         if self.delimiter in ['tab', '\\t']:
             object.__setattr__(self, 'delimiter', '\t')

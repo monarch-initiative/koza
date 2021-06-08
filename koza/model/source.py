@@ -41,6 +41,7 @@ class SourceFile:
         self._filter = RowFilter(config.filters)
         self._reader = None
         self._readers: List = []
+        self.last_row: Dict = None
 
         for file in config.files:
             resource_io = open_resource(file, config.compression)
@@ -99,4 +100,5 @@ class SourceFile:
                 row = next(self._reader)
         else:
             row = next(self._reader)
+        self.last_row = row
         return row

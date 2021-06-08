@@ -1,4 +1,5 @@
-from koza.model.biolink import Gene
+from koza.manager.data_provider import inject_curie_cleaner
+from koza.model.biolink.model import Gene
 
 
 def gpi2gene(row: dict) -> Gene:
@@ -10,14 +11,22 @@ def gpi2gene(row: dict) -> Gene:
     :param row: Dictionary representing a single GPI file row
     :return: biolink:Gene model representing the GPI row
     """
-    gene = Gene()
 
-    gene.source = row['DB']
-    gene.id = row['DB_Object_ID']
-    gene.symbol = row['DB_Object_Symbol']
-    gene.name = row['DB_Object_Name']
-    gene.synonym = row['DB_Object_Synonym(s)'].split("|") if row['DB_Object_Synonym(s)'] else []
-    gene.in_taxon = [row['Taxon'].replace("taxon:", "NCBITaxon:")]
-    gene.xref = row['DB_Xref(s)'].split("|") if row['DB_Xref(s)'] else []
+    curie_cleaner = inject_curie_cleaner()
+
+    xrefs = []
+    if row["DB_Xref(s)"]:
+        xrefs = [curie_cleaner.clean(xref) for xref in row["DB_Xref(s)"].split("|")]
+
+    gene = Gene(
+        id=row['DB_Object_ID'],
+        symbol=row['DB_Object_Symbol'],
+        name=row['DB_Object_Name'],
+        synonym=row['DB_Object_Synonym(s)'].split("|") if row['DB_Object_Synonym(s)'] else [],
+        # in_taxon=[row['Taxon'].replace("taxon:", "NCBITaxon:")],
+        in_taxon=[curie_cleaner.clean(row['Taxon'])],
+        xref=xrefs,
+        source=row['DB'],
+    )
 
     return gene

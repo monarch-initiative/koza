@@ -1,8 +1,9 @@
 import logging
+import uuid
 
 from koza.manager.data_provider import inject_row, inject_map, inject_translation_table
 from koza.manager.data_collector import collect
-from koza.model.biolink import Publication, Gene, NamedThingToInformationContentEntityAssociation
+from koza.model.biolink.model import Publication, Gene, NamedThingToInformationContentEntityAssociation, Predicate
 
 LOG = logging.getLogger(__name__)
 
@@ -16,8 +17,10 @@ entities = []
 
 gene_pages = row['gene_pages']
 
-publication = Publication()
-publication.id = 'PMID:' + row['pmid']
+publication = Publication(
+    id='PMID:' + row['pmid'],
+    type=translation_table.resolve_term("publication")
+)
 
 entities.append(publication)
 
@@ -29,16 +32,17 @@ for gene_page in gene_pages.split(','):
         LOG.debug(f"Could not locate genepage_id: {gene_page_id} in row {row}")
         continue
     for gene_id in gene_ids:
-        gene = Gene()
-        gene.id = gene_id
+        gene = Gene(id=gene_id)
 
         entities.append(gene)
 
-        association = NamedThingToInformationContentEntityAssociation()
-        association.subject = gene.id
-        association.predicate = "IAO:0000142"  # Mentions
-        association.object = publication.id
-        association.relation = "RO:0001019"  # Contains todo: confirm this!
+        association = NamedThingToInformationContentEntityAssociation(
+            id="uuid:" + str(uuid.uuid1()),
+            subject=gene.id,
+            predicate=Predicate.mentions,
+            object=publication.id,
+            relation="IAO:0000142"  # Mentions
+        )
 
         entities.append(association)
 

@@ -1,17 +1,17 @@
 import logging
 import re
 
-from koza.manager.data_provider import inject_files, inject_translation_table, inject_map
-from koza.manager.helper import next_row
+from koza.manager.data_provider import inject_row, inject_translation_table, inject_map
 
 LOG = logging.getLogger(__name__)
 
-_ingest_name = 'mimtitles'
+source_name = 'mimtitles'
 
-file, = inject_files(_ingest_name)
-translation_table = inject_translation_table(_ingest_name)
-map = inject_map(_ingest_name)
+row = inject_row(source_name)
+translation_table = inject_translation_table(source_name)
+map = inject_map(source_name)
 
+entry = dict()
 
 ###
 # From OMIM
@@ -36,28 +36,28 @@ map = inject_map(_ingest_name)
 # from the database or moved to another entry as indicated.
 ###
 
-if file['Prefix'] == 'Asterisk':
-    map['type'] = translation_table.global_table['gene']
+if row['Prefix'] == 'Asterisk':
+    entry['type'] = translation_table.global_table['gene']
 
-elif file['Prefix'] == 'NULL':
-    map['type'] = translation_table.global_table['Suspected']  # NCIT:C71458
+elif row['Prefix'] == 'NULL':
+    entry['type'] = translation_table.global_table['Suspected']  # NCIT:C71458
 
-elif file['Prefix'] == 'Number Sign':
-    map['type'] = translation_table.global_table['phenotype']
+elif row['Prefix'] == 'Number Sign':
+    entry['type'] = translation_table.global_table['phenotype']
 
-elif file['Prefix'] == 'Percent':
-    map['type'] = translation_table.global_table['heritable_phenotypic_marker']
+elif row['Prefix'] == 'Percent':
+    entry['type'] = translation_table.global_table['heritable_phenotypic_marker']
 
-elif file['Prefix'] == 'Plus':
-    map['type'] = translation_table.global_table['gene']
+elif row['Prefix'] == 'Plus':
+    entry['type'] = translation_table.global_table['gene']
 
-elif file['Prefix'] == 'Caret':  # moved|removed|split -> moved twice
+elif row['Prefix'] == 'Caret':  # moved|removed|split -> moved twice
     # populating a dict from an omim to a set of omims
-    map['type'] = translation_table.global_table['obsolete']
-    map['replaced by'] = []
+    entry['type'] = translation_table.global_table['obsolete']
+    entry['replaced by'] = []
 
-    if file['Preferred Title; symbol'][:9] == 'MOVED TO ':
-        token = file['Preferred Title; symbol'].split(' ')
+    if row['Preferred Title; symbol'][:9] == 'MOVED TO ':
+        token = row['Preferred Title; symbol'].split(' ')
         title_symbol = token[2]
 
         if not re.match(r'^[0-9]{6}$', title_symbol):
@@ -73,10 +73,12 @@ elif file['Prefix'] == 'Caret':  # moved|removed|split -> moved twice
                 LOG.info(f"Repaired malformed omim replacement {title_symbol}")
 
         if len(token) > 3:
-            map['replaced by'] = [title_symbol, token[4]]
+            entry['replaced by'] = [title_symbol, token[4]]
 
         else:
-            map['replaced by'] = [title_symbol]
+            entry['replaced by'] = [title_symbol]
 
 else:
-    LOG.error(f"Unknown OMIM type line {file['omim_id']}")
+    LOG.error(f"Unknown OMIM type line {row['omim_id']}")
+
+map[row['MIM Number']] = entry
