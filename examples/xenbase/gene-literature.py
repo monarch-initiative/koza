@@ -19,7 +19,7 @@ gene_pages = row['gene_pages']
 
 publication = Publication(
     id='PMID:' + row['pmid'],
-    type=translation_table.resolve_term("publication")
+    type="IAO:0000311"  # TODO: use translation_table.resolve_term("publication")
 )
 
 entities.append(publication)

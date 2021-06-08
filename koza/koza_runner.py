@@ -136,18 +136,12 @@ def transform_source(
     local_table: str,
 ):
 
+    translation_table = get_translation_table(global_table, local_table)
+
     with open(source, 'r') as source_fh:
         source_config = SourceConfig(**yaml.safe_load(source_fh))
         if not source_config.name:
             source_config.name = Path(source).stem
-
-        if source_config.translation_table:
-            translation_table = get_translation_table(
-                source_config.translation_table.global_table,
-                source_config.translation_table.global_table,
-            )
-        else:
-            translation_table = None
 
         source = Source(
             source_files=validate_source_files(source, source_config.source_files),
