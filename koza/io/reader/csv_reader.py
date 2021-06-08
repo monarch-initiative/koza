@@ -108,10 +108,9 @@ class CSVReader:
                         self.io_str, **{'delimiter': self.header_delimiter, 'dialect': self.dialect}
                     )
                 )
+                # todo: maybe comment character should be specified?
                 fieldnames[0] = fieldnames[0].lstrip('#')
-                fieldnames[0] = fieldnames[0].lstrip(
-                    '!!'
-                )  # todo: maybe comment character should be specified?
+                fieldnames[0] = fieldnames[0].lstrip('!!')
                 fieldnames = [f.strip() for f in fieldnames]
             else:
                 fieldnames = list(self.field_type_map.keys())
@@ -183,11 +182,6 @@ class CSVReader:
 
         # if we've made it here we can convert a row to a dict
         field_map = dict(zip(self.fieldnames, row))
-
-        # to avoid KeyErrors / error handling in source scripts, add missing fields to the map
-        for fieldname in self.fieldnames:
-            if fieldname not in field_map.keys():
-                field_map[fieldname] = None
 
         typed_field_map = {}
 

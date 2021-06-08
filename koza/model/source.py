@@ -100,5 +100,6 @@ class SourceFile:
                 row = next(self._reader)
         else:
             row = next(self._reader)
+        # Retain the most recent row so that it can be logged alongside validation errors
         self.last_row = row
         return row
