@@ -1,0 +1,6 @@
+name: 'gene-to-phenotype'
+
+files:
+  - './examples/data/xb_xpo_spo_v20210511b.csv'
+
+standard_format: 'oban'

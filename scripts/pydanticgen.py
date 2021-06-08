@@ -141,7 +141,7 @@ LOG = logging.getLogger(__name__)
 
 metamodel_version = "{self.schema.metamodel_version}"
 
-curie_regexp = r'^[a-zA-Z_]?[a-zA-Z_0-9-]*:[A-Za-z0-9_][A-Za-z0-9_.-]*[A-Za-z0-9_]*$'
+curie_regexp = r'^[a-zA-Z_]?[a-zA-Z_0-9-]*:([A-Za-z0-9_][A-Za-z0-9_.-]*[A-Za-z0-9_]*)?$'
 curie_pattern = re.compile(curie_regexp)
 
 # Type Aliases

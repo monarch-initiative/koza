@@ -41,6 +41,7 @@ class SourceFile:
         self._filter = RowFilter(config.filters)
         self._reader = None
         self._readers: List = []
+        self.last_row: Dict = None
 
         for file in config.files:
             resource_io = open_resource(file, config.compression)
@@ -52,6 +53,7 @@ class SourceFile:
                         field_type_map=config.field_type_map,
                         delimiter=config.delimiter,
                         header_delimiter=config.header_delimiter,
+                        has_header=config.has_header,
                         skip_lines=config.skip_lines,
                     )
                 )
@@ -98,4 +100,6 @@ class SourceFile:
                 row = next(self._reader)
         else:
             row = next(self._reader)
+        # Retain the most recent row so that it can be logged alongside validation errors
+        self.last_row = row
         return row

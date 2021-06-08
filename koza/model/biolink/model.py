@@ -1,5 +1,5 @@
 # Auto generated from biolink-model.yaml by pydanticgen.py version: 0.9.0
-# Generation date: 2021-06-02 12:37
+# Generation date: 2021-06-07 14:42
 # Schema: Biolink-Model
 #
 # id: https://w3id.org/biolink/biolink-model
@@ -21,7 +21,7 @@ LOG = logging.getLogger(__name__)
 
 metamodel_version = "1.7.0"
 
-curie_regexp = r'^[a-zA-Z_]?[a-zA-Z_0-9-]*:[A-Za-z0-9_][A-Za-z0-9_.-]*[A-Za-z0-9_]*$'
+curie_regexp = r'^[a-zA-Z_]?[a-zA-Z_0-9-]*:([A-Za-z0-9_][A-Za-z0-9_.-]*[A-Za-z0-9_]*)?$'
 curie_pattern = re.compile(curie_regexp)
 
 # Type Aliases

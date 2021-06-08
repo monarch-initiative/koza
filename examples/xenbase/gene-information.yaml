@@ -1,0 +1,8 @@
+name: 'gene-information'
+
+files:
+  - './examples/data/xenbase.gpi.gz'
+
+standard_format: 'gpi'
+
+compression: 'gzip'

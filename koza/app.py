@@ -6,12 +6,14 @@ from pathlib import Path
 from typing import Dict, Iterable
 
 import yaml
+from pydantic.error_wrappers import ValidationError
 
 from koza.exceptions import MapItemException
 from koza.io.writer.kgx_writer import KGXWriter
 from koza.io.writer.writer import KozaWriter
 from koza.model.biolink.model import Entity
 from koza.model.config.source_config import MapFileConfig, OutputFormat, PrimaryFileConfig
+from koza.model.curie_cleaner import CurieCleaner
 from koza.model.map_dict import MapDict
 from koza.model.source import Source, SourceFile
 
@@ -50,7 +52,7 @@ class KozaApp:
         self.map_registry: Dict[str, SourceFile] = {}
         self.writer_registry: Dict[str, KozaWriter] = {}
         self.map_cache: Dict[str, Dict] = {}
-        self.writer: KozaWriter = KGXWriter(self.output_dir, self.output_format, self.source.name)
+        self.curie_cleaner: CurieCleaner = CurieCleaner()
 
         logging.getLogger(__name__)
 
@@ -78,7 +80,7 @@ class KozaApp:
 
             self.file_registry[source_file_config.name] = SourceFile(source_file_config)
             self.writer_registry[source_file_config.name] = KGXWriter(
-                self.output_dir, self.output_format, self.source.name
+                self.output_dir, self.output_format, f"{source.name}.{source_file_config.name}"
             )
 
     def get_map(self, map_name: str):
@@ -111,6 +113,9 @@ class KozaApp:
                             importlib.reload(transform_module)
                     except MapItemException as mie:
                         LOG.warning(f"{str(mie)} not found in map")
+                    except ValidationError as ve:
+                        LOG.error(f"Validation error while processing: {source_file.last_row}")
+                        raise ve
                     except StopIteration:
                         break
             elif source_file.config.transform_mode == 'loop':

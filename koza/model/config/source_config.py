@@ -31,6 +31,12 @@ class FormatType(str, Enum):
     json = 'json'
 
 
+class StandardFormat(str, Enum):
+    gpi = 'gpi'
+    bgi = 'bgi'
+    oban = 'oban'
+
+
 class CompressionType(str, Enum):
     """
     Enum for supported compression
@@ -145,11 +151,13 @@ class SourceFileConfig:
     name: str
     files: List[Union[str, Path]]
     format: FormatType = FormatType.csv
+    standard_format: StandardFormat = None
     file_metadata: DatasetDescription = None
     columns: List[Union[str, Dict[str, FieldType]]] = None
     required_properties: List[str] = None
     delimiter: str = None
     header_delimiter: str = None
+    has_header: bool = True
     skip_lines: int = 0
     skip_blank_lines: bool = True
     compression: CompressionType = None
@@ -166,6 +174,43 @@ class SourceFileConfig:
             else:
                 files_as_paths.append(file)
         object.__setattr__(self, 'files', files_as_paths)
+
+        # todo: where should this really be stored? defaults for a format should probably be defined in yaml
+        if self.standard_format == StandardFormat.gpi:
+            self.format = FormatType.csv
+            self.delimiter = "\t"
+            self.columns = [
+                "DB",
+                "DB_Object_ID",
+                "DB_Object_Symbol",
+                "DB_Object_Name",
+                "DB_Object_Synonym(s)",
+                "DB_Object_Type",
+                "Taxon",
+                "Parent_Object_ID",
+                "DB_Xref(s)",
+                "Properties",
+            ]
+
+            self.skip_lines = 22
+        elif self.standard_format == StandardFormat.oban:
+            self.format = FormatType.csv
+            self.delimiter = ","
+            self.columns = [
+                "SUBJECT",
+                "SUBJECT_LABEL",
+                "SUBJECT_TAXON",
+                "SUBJECT_TAXON_LABEL",
+                "OBJECT",
+                "OBJECT_LABEL",
+                "RELATION",
+                "RELATION_LABEL",
+                "EVIDENCE",
+                "EVIDENCE_LABEL",
+                "SOURCE",
+                "IS_DEFINED_BY",
+                "QUALIFIER",
+            ]
 
         if self.delimiter in ['tab', '\\t']:
             object.__setattr__(self, 'delimiter', '\t')
@@ -253,3 +298,5 @@ class MapFileConfig(SourceFileConfig):
     source: str = None
     key: str = None
     values: List[str] = None
+    curie_prefix: str = None
+    add_curie_prefix_to_columns: List[str] = None

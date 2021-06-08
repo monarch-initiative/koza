@@ -14,7 +14,7 @@ for row in koza.file_registry[source_name]:
     protein_b = Protein(id='ENSEMBL:' + re.sub(r'\d+\.', '', row['protein2']))
 
     pairwise_gene_to_gene_interaction = PairwiseGeneToGeneInteraction(
-        id="FOO:" + str(uuid.uuid1()),  # TODO: we probably don't want to require edge IDs?
+        id="uuid:" + str(uuid.uuid1()),
         subject=protein_a.id,
         object=protein_b.id,
         predicate=Predicate.interacts_with,

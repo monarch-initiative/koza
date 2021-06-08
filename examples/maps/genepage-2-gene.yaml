@@ -1,0 +1,37 @@
+name: 'genepage-2-gene'
+file_metadata:
+  description: 'Mapping file provided by Xenbase that maps from GENEPAGE to GENE'
+
+source: 'Xenbase'
+
+delimiter: '\t'
+
+has_header: 'False'
+
+files:
+  - './examples/data/XenbaseGenepageToGeneIdMapping.txt'
+
+columns:
+  - 'gene_page_id'
+  - 'gene_page_label'
+  - 'tropicalis_id'
+  - 'tropicalis_label'
+  - 'laevis_l_id'
+  - 'laevis_l_label'
+  - 'laevis_s_id'
+  - 'laevis_s_label'
+
+#add_curie_prefix:
+#  'Xenbase:'
+#   - 'gene_page_id'
+#   - 'tropicalis_id'
+#   - 'laevis_l_id'
+#   - 'laevis_s_id'
+
+key: 'gene_page_id'
+
+values:
+  - 'tropicalis_id'
+  - 'laevis_l_id'
+  - 'laevis_s_id'
+

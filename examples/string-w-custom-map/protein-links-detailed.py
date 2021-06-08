@@ -14,7 +14,7 @@ gene_a = Gene(id='NCBIGene:' + entrez_2_string[row['protein1']]['entrez'])
 gene_b = Gene(id='NCBIGene:' + entrez_2_string[row['protein2']]['entrez'])
 
 pairwise_gene_to_gene_interaction = PairwiseGeneToGeneInteraction(
-    id="FOO:" + str(uuid.uuid1()),  # TODO: we probably don't want to require edge IDs?
+    id="uuid:" + str(uuid.uuid1()),
     subject=gene_a.id,
     object=gene_b.id,
     predicate=Predicate.interacts_with,
