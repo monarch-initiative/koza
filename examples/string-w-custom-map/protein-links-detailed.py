@@ -1,6 +1,6 @@
 import uuid
 
-from koza.model.biolink.model import Gene, PairwiseGeneToGeneInteraction, Predicate
+from biolink_model_pydantic.model import Gene, PairwiseGeneToGeneInteraction, Predicate
 from koza.manager.data_provider import inject_row, inject_translation_table, inject_map
 from koza.manager.data_collector import collect
 

@@ -1,5 +1,6 @@
+from biolink_model_pydantic.model import Gene
+
 from koza.manager.data_provider import inject_curie_cleaner
-from koza.model.biolink.model import Gene
 
 
 def gpi2gene(row: dict) -> Gene:

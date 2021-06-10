@@ -13,8 +13,7 @@ data in the [KGX format](https://github.com/biolink/kgx/blob/master/specificatio
 
 - Author data transforms in semi-declarative Python
 - Configure source files, expected columns/json properties and path filters, field filters, and metadata in yaml
-- Import mapping files from upstream sources to be used in ingests
-(eg id mapping, type mappings)
+- Create or import mapping files to be used in ingests (eg id mapping, type mappings)
 - Create and use translation tables to map between source and target vocabularies
 
 
@@ -49,47 +48,10 @@ koza validate \
   --compression gzip
 ```
 
-#### Tutorial
-
-Some test commands while we get this up and running:
+###### Example: transforming StringDB
 
 ```bash
 koza transform --source examples/string/metadata.yaml 
 
 koza transform --source examples/string-declarative/metadata.yaml 
 ```
-
-##### Configuration and filters
-
-##### Transform logic
-
-##### Adding a map from a source
-
-##### Adding transform logic
-
-##### Adding a translation table
-
-##### Adding transform logic to a map
-
-##### Ingesting a source with multiple files
-
-
-#### Overview
-Koza's goal is to lower the barrier for domain experts to participate in data transform workflows.
-
-Supports standard streams for chaining transforms with other koza transforms or other command line tools.
-
-
-
-What is out of scope for Koza
-- Smart fetching (only pull if updated, retries, versioning)
-- Batch parallel processing (consider make, snakemake, or a workflow orchestration system)
-- Workflow Orchestration (consider Apache airflow, Luigi, Jenkins pipelines, CWL)
-- Uploading to a target database
-
-##### Influences:
- - [Dipper](https://github.com/monarch-initiative/dipper)
- - [KG-COVID-19](https://github.com/Knowledge-Graph-Hub/kg-covid-19)
- - [BioThings](https://github.com/biothings)
- 
-And many others not listed here

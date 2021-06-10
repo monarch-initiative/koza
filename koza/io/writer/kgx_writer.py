@@ -1,5 +1,6 @@
 from typing import Any, Iterable, Optional
 
+from biolink_model_pydantic.model import Entity
 from kgx.graph.nx_graph import NxGraph
 from kgx.sink import Sink
 from kgx.sink.json_sink import JsonSink
@@ -10,7 +11,6 @@ from kgx.transformer import Transformer
 
 from koza.converter.kgx_converter import KGXConverter
 from koza.io.writer.writer import KozaWriter
-from koza.model.biolink.model import Entity
 from koza.model.config.source_config import OutputFormat
 
 

@@ -1,7 +1,7 @@
 import pytest
+from biolink_model_pydantic.model import Curie, Gene, GeneToGeneAssociation, Predicate, Publication
 
 from koza.converter.kgx_converter import KGXConverter
-from koza.model.biolink.model import Curie, Gene, GeneToGeneAssociation, Predicate, Publication
 
 
 def test_gene_conversion():

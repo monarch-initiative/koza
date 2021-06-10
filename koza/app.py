@@ -11,7 +11,6 @@ from pydantic.error_wrappers import ValidationError
 from koza.exceptions import MapItemException
 from koza.io.writer.kgx_writer import KGXWriter
 from koza.io.writer.writer import KozaWriter
-from koza.model.biolink.model import Entity
 from koza.model.config.source_config import MapFileConfig, OutputFormat, PrimaryFileConfig
 from koza.model.curie_cleaner import CurieCleaner
 from koza.model.map_dict import MapDict
@@ -157,5 +156,5 @@ class KozaApp:
                     key: value for key, value in row.items() if key in value_columns
                 }
 
-    def write(self, source_name, entities: Iterable[Entity]):
+    def write(self, source_name, entities: Iterable):
         self.writer_registry[source_name].write(entities)
