@@ -31,13 +31,13 @@ class KGXWriter(KozaWriter):
 
     def get_sink(self) -> Sink:
         if self.output_format == 'jsonl':
-            return JsonlSink(filename=f"{self.output_dir}/{self.source_name}.jsonl")
+            return JsonlSink(filename=f"{self.output_dir}/{self.source_name}")
         # TODO: the json writer doesn't actually make valid json, I don't think streaming into two places in one file
         # TODO: makes any sense, this would probably have to save up and dump all at once
         elif self.output_format == 'json':
-            return JsonSink(filename=f"{self.output_dir}/{self.source_name}.json")
+            return JsonSink(filename=f"{self.output_dir}/{self.source_name}")
         elif self.output_format == 'tsv':
-            return TsvSink(filename=f"{self.output_dir}/{self.source_name}.tsv", format='tsv')
+            return TsvSink(filename=f"{self.output_dir}/{self.source_name}", format='tsv')
 
     def write(self, *entities: Iterable[Entity]):
 
