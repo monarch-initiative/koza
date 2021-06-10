@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Dict, Iterator, List
+from typing import Any, Dict, Iterator, List, Optional
 
 from koza.io.reader.csv_reader import CSVReader
 from koza.io.reader.json_reader import JSONReader
@@ -41,7 +41,7 @@ class SourceFile:
         self._filter = RowFilter(config.filters)
         self._reader = None
         self._readers: List = []
-        self.last_row: Dict = None
+        self.last_row: Optional[Dict] = None
 
         for file in config.files:
             resource_io = open_resource(file, config.compression)
