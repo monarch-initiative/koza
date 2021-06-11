@@ -1,8 +1,9 @@
 import re
 import uuid
 
-from koza.model.biolink.model import Protein, PairwiseGeneToGeneInteraction, Predicate
+from biolink_model_pydantic.model import Protein, PairwiseGeneToGeneInteraction, Predicate
 from koza.manager.data_collector import collect
+
 from koza.koza_runner import get_koza_app
 
 koza = get_koza_app()
@@ -20,7 +21,7 @@ for row in koza.file_registry[source_name]:
         object=protein_b.id,
         predicate=Predicate.interacts_with,
         # relation = translation_table.global_table['interacts with'],
-        relation='RO:0002436'
+        relation='IAO:0002436'
     )
 
     collect(source_name, protein_a, protein_b, pairwise_gene_to_gene_interaction)

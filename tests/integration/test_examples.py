@@ -65,7 +65,6 @@ def test_examples(ingest, output_names, output_format):
     output_suffix = str(output_format).split('.')[1]
     output_dir = f"./test-output/{ingest}-{output_suffix}"
 
-
     output_files = [
         f(file)
         for file in output_names

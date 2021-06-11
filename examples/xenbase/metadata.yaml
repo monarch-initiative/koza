@@ -10,4 +10,3 @@ source_files:
   - 'gene-information.yaml'
   - 'gene-to-phenotype.yaml'
   - 'gene-literature.yaml'
-

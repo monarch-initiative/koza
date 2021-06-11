@@ -1,8 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Any, Iterable, Optional
 
-from koza.model.biolink.model import Entity
-
 
 class KozaWriter(ABC):
     """
@@ -14,7 +12,7 @@ class KozaWriter(ABC):
     """
 
     @abstractmethod
-    def write(self, entities: Iterable[Entity]):
+    def write(self, entities: Iterable):
         pass
 
     @abstractmethod
