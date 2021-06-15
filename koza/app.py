@@ -125,6 +125,9 @@ class KozaApp:
             # close the writer when the source is done processing
             self.writer_registry[source_file.config.name].finalize()
 
+            # remove directory from sys.path to prevent name clashes
+            sys.path.remove(str(parent_path))
+
     def load_map(self, map_file_config: MapFileConfig):
         source_file = SourceFile(map_file_config)
 
