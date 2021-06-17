@@ -43,20 +43,6 @@ from koza.model.config.source_config import OutputFormat
             ],
             OutputFormat.jsonl,
         ),
-        (
-            "string-w-map",
-            [
-                "stringdb.protein-links-detailed",
-            ],
-            OutputFormat.tsv,
-        ),
-        (
-            "string-w-map",
-            [
-                "stringdb.protein-links-detailed",
-            ],
-            OutputFormat.jsonl,
-        ),
     ],
 )
 def test_examples(ingest, output_names, output_format):
@@ -66,12 +52,12 @@ def test_examples(ingest, output_names, output_format):
     output_dir = f"./test-output/{ingest}-{output_suffix}"
 
     output_files = [
-        f(file)
+        output_file
         for file in output_names
-        for f in (
-            lambda file: f"{output_dir}/{file}_nodes.{output_suffix}",
-            lambda file: f"{output_dir}/{file}_edges.{output_suffix}",
-        )
+        for output_file in [
+            f"{output_dir}/{file}_nodes.{output_suffix}",
+            f"{output_dir}/{file}_edges.{output_suffix}",
+        ]
     ]
 
     transform_source(source, output_dir, output_format, None, None)

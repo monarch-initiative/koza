@@ -118,7 +118,10 @@ class KozaApp:
                     except StopIteration:
                         break
             elif source_file.config.transform_mode == 'loop':
-                importlib.import_module(transform_code)
+                if transform_code not in sys.modules.keys():
+                    importlib.import_module(transform_code)
+                else:
+                    importlib.reload(importlib.import_module(transform_code))
             else:
                 raise NotImplementedError
 
