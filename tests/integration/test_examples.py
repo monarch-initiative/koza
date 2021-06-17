@@ -6,7 +6,6 @@ End to end test of String load from examples/string
 import os
 
 import pytest
-from kgx.cli.cli_utils import validate
 
 from koza.koza_runner import transform_source
 from koza.model.config.source_config import OutputFormat
@@ -66,4 +65,5 @@ def test_examples(ingest, output_names, output_format):
         assert os.path.exists(file)
         assert os.path.getsize(file) > 0
 
-    validate(output_files, output_suffix, None, None, False)
+    # TODO: at some point, these assertions could get more rigorous, but knowing if we have errors/exceptions is a start
+    # TODO: kgx validation could also be added back in, especially if something programatic is done with the output
