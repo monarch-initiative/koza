@@ -1,4 +1,4 @@
-from typing import Any, Iterable, Optional
+from typing import Iterable
 
 from biolink_model_pydantic.model import Entity
 from kgx.graph.nx_graph import NxGraph
@@ -54,9 +54,3 @@ class KGXWriter(KozaWriter):
 
     def finalize(self):
         self.sink.finalize()
-
-    def writerow(self, row: Iterable[Any]) -> Optional[int]:
-        pass
-
-    def writerows(self, rows: Iterable[Iterable[Any]]) -> Optional[int]:
-        pass
