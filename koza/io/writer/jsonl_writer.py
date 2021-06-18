@@ -3,6 +3,7 @@ from dataclasses import asdict
 from typing import List
 
 from biolink_model_pydantic.model import Association, Entity, NamedThing
+
 from koza.io.writer.writer import KozaWriter
 
 
@@ -23,9 +24,7 @@ class JSONLWriter(KozaWriter):
                 edge = json.dumps(asdict(entity), ensure_ascii=False)
                 self.edges_file.write(edge + '\n')
             else:
-                raise ValueError(
-                    "Can only write NamedThing or Association entities"
-                )
+                raise ValueError("Can only write NamedThing or Association entities")
 
     def finalize(self):
         self.nodes_file.close()

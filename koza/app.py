@@ -10,7 +10,6 @@ from pydantic.error_wrappers import ValidationError
 
 from koza.exceptions import MapItemException
 from koza.io.writer.jsonl_writer import JSONLWriter
-from koza.io.writer.kgx_writer import KGXWriter
 from koza.io.writer.tsv_writer import TSVWriter
 from koza.io.writer.writer import KozaWriter
 from koza.model.config.source_config import MapFileConfig, OutputFormat, PrimaryFileConfig
@@ -87,8 +86,16 @@ class KozaApp:
     def get_writer(self, name):
         if self.output_format == OutputFormat.tsv:
             # TODO: node & edge property lists for output should move to source_file_config
-            node_properties = ["id", "category", "name", "description",	"provided_by"]
-            edge_properties = ["id", "subject",	"predicate", "object", "category", "relation", "provided_by"]
+            node_properties = ["id", "category", "name", "description", "provided_by"]
+            edge_properties = [
+                "id",
+                "subject",
+                "predicate",
+                "object",
+                "category",
+                "relation",
+                "provided_by",
+            ]
             return TSVWriter(self.output_dir, name, node_properties, edge_properties)
 
         elif self.output_format == OutputFormat.jsonl:

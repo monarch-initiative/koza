@@ -1,13 +1,15 @@
-
-from typing import List
-from biolink_model_pydantic.model import Association, Entity, NamedThing
 from dataclasses import asdict
+from typing import List
+
+from biolink_model_pydantic.model import Association, Entity, NamedThing
 
 from koza.io.writer.writer import KozaWriter
 
 
 class TSVWriter(KozaWriter):
-    def __init__(self, output_dir, source_name: str, node_properties: List[str], edge_properties: List[str]):
+    def __init__(
+        self, output_dir, source_name: str, node_properties: List[str], edge_properties: List[str]
+    ):
         self.output_dir = output_dir
         self.source_name = source_name
 
@@ -30,18 +32,16 @@ class TSVWriter(KozaWriter):
                 edge = self.convert_edge(entity)
                 self.edges_file.write(edge + '\n')
             else:
-                raise ValueError(
-                    "Can only write NamedThing or Association entities"
-                )
+                raise ValueError("Can only write NamedThing or Association entities")
 
     def finalize(self):
         self.nodes_file.close()
         self.edges_file.close()
 
-    def convert_node(self, entity:Entity):
+    def convert_node(self, entity: Entity):
         return self.convert_entity(entity, self.node_properties)
 
-    def convert_edge(self, entity:Entity):
+    def convert_edge(self, entity: Entity):
         return self.convert_entity(entity, self.edge_properties)
 
     def convert_entity(self, entity, properties: List[str]):
@@ -53,4 +53,3 @@ class TSVWriter(KozaWriter):
             values.append(value)
 
         return "\t".join(values)
-
