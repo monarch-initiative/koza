@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Iterable, Optional
+from typing import Iterable
 
 
 class KozaWriter(ABC):
@@ -17,12 +17,4 @@ class KozaWriter(ABC):
 
     @abstractmethod
     def finalize(self):
-        pass
-
-    @abstractmethod
-    def writerow(self, row: Iterable[Any]) -> Optional[int]:
-        pass
-
-    @abstractmethod
-    def writerows(self, rows: Iterable[Iterable[Any]]) -> Optional[int]:
         pass
