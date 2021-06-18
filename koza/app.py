@@ -137,12 +137,18 @@ class KozaApp:
                     except StopIteration:
                         break
             elif source_file.config.transform_mode == 'loop':
-                importlib.import_module(transform_code)
+                if transform_code not in sys.modules.keys():
+                    importlib.import_module(transform_code)
+                else:
+                    importlib.reload(importlib.import_module(transform_code))
             else:
                 raise NotImplementedError
 
             # close the writer when the source is done processing
             self.writer_registry[source_file.config.name].finalize()
+
+            # remove directory from sys.path to prevent name clashes
+            sys.path.remove(str(parent_path))
 
     def load_map(self, map_file_config: MapFileConfig):
         source_file = SourceFile(map_file_config)

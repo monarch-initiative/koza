@@ -4,7 +4,6 @@ delimiter: ' '
 
 files:
   - './examples/data/string.tsv'
-  - './examples/data/string.tsv'
 
 columns:
   - 'protein1'

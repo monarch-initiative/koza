@@ -1,4 +1,5 @@
 import json
+import os
 from dataclasses import asdict
 from typing import List
 
@@ -11,6 +12,8 @@ class JSONLWriter(KozaWriter):
     def __init__(self, output_dir: str, source_name: str):
         self.output_dir = output_dir
         self.source_name = source_name
+
+        os.makedirs(output_dir, exist_ok=True)
 
         self.nodes_file = open(f"{output_dir}/{source_name}_nodes.jsonl", "w")
         self.edges_file = open(f"{output_dir}/{source_name}_edges.jsonl", "w")
