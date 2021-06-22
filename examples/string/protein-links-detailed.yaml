@@ -27,3 +27,17 @@ filters:
 transform_code: './examples/string/protein-links-detailed.py'
 
 transform_mode: 'loop'
+
+node_properties:
+  - 'id'
+  - 'category'
+  - 'provided_by'
+
+edge_properties:
+  - 'id'
+  - 'subject'
+  - 'predicate'
+  - 'object'
+  - 'category'
+  - 'relation'
+  - 'provided_by'

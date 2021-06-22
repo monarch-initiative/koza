@@ -4,3 +4,17 @@ files:
   - './examples/data/xb_xpo_spo_v20210511b.csv'
 
 standard_format: 'oban'
+
+node_properties:
+  - 'id'
+  - 'category'
+  - 'provided_by'
+
+edge_properties:
+  - 'id'
+  - 'subject'
+  - 'predicate'
+  - 'object'
+  - 'category'
+  - 'relation'
+  - 'provided_by'

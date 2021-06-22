@@ -14,3 +14,19 @@ columns:
 
 depends_on:
   - './examples/maps/genepage-2-gene.yaml'
+
+node_properties:
+  - 'id'
+  - 'category'
+  - 'provided_by'
+  - 'type'
+
+
+edge_properties:
+  - 'id'
+  - 'subject'
+  - 'predicate'
+  - 'object'
+  - 'category'
+  - 'relation'
+  - 'provided_by'
