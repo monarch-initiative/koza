@@ -81,21 +81,10 @@ class KozaApp:
             self.file_registry[source_file_config.name] = SourceFile(source_file_config)
 
             output_name = f"{source.name}.{source_file_config.name}"
-            self.writer_registry[source_file_config.name] = self.get_writer(output_name)
+            self.writer_registry[source_file_config.name] = self.get_writer(output_name, source_file_config.node_properties, source_file_config.edge_properties)
 
-    def get_writer(self, name):
+    def get_writer(self, name, node_properties, edge_properties):
         if self.output_format == OutputFormat.tsv:
-            # TODO: node & edge property lists for output should move to source_file_config
-            node_properties = ["id", "category", "name", "description", "provided_by"]
-            edge_properties = [
-                "id",
-                "subject",
-                "predicate",
-                "object",
-                "category",
-                "relation",
-                "provided_by",
-            ]
             return TSVWriter(self.output_dir, name, node_properties, edge_properties)
 
         elif self.output_format == OutputFormat.jsonl:

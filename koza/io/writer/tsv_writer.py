@@ -14,12 +14,18 @@ class TSVWriter(KozaWriter):
         self.output_dir = output_dir
         self.source_name = source_name
 
-        self.sink = TsvSink(
-            f"{output_dir}/{source_name}",
-            "tsv",
-            node_properties=node_properties,
-            edge_properties=edge_properties,
-        )
+        if node_properties and edge_properties:
+            self.sink = TsvSink(
+                f"{output_dir}/{source_name}",
+                "tsv",
+                node_properties=node_properties,
+                edge_properties=edge_properties,
+            )
+        else: # allow the TsvSink to set defaults if no properties are specified
+            self.sink = TsvSink(
+                f"{output_dir}/{source_name}",
+                "tsv"
+            )
 
     def write(self, entities: List[Entity]):
 
