@@ -59,7 +59,7 @@ def test_examples(ingest, output_names, output_format):
         ]
     ]
 
-    transform_source(source, output_dir, output_format, None, None)
+    transform_source(source, output_dir, output_format, "examples/translation_table.yaml", None)
 
     for file in output_files:
         assert os.path.exists(file)

@@ -18,8 +18,7 @@ pairwise_gene_to_gene_interaction = PairwiseGeneToGeneInteraction(
     subject=protein_a.id,
     object=protein_b.id,
     predicate=Predicate.interacts_with,
-    #relation = translation_table.global_table['interacts with'],
-    relation='RO:0002436'
+    relation = translation_table.global_table['interacts with'],
 )
 
 write(source_name, protein_a, protein_b, pairwise_gene_to_gene_interaction)

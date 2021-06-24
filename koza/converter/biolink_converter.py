@@ -24,7 +24,6 @@ def gpi2gene(row: dict) -> Gene:
         symbol=row['DB_Object_Symbol'],
         name=row['DB_Object_Name'],
         synonym=row['DB_Object_Synonym(s)'].split("|") if row['DB_Object_Synonym(s)'] else [],
-        # in_taxon=[row['Taxon'].replace("taxon:", "NCBITaxon:")],
         in_taxon=curie_cleaner.clean(row['Taxon']),
         xref=xrefs,
         source=row['DB'],
