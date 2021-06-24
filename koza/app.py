@@ -81,7 +81,9 @@ class KozaApp:
             self.file_registry[source_file_config.name] = SourceFile(source_file_config)
 
             output_name = f"{source.name}.{source_file_config.name}"
-            self.writer_registry[source_file_config.name] = self.get_writer(output_name, source_file_config.node_properties, source_file_config.edge_properties)
+            self.writer_registry[source_file_config.name] = self.get_writer(
+                output_name, source_file_config.node_properties, source_file_config.edge_properties
+            )
 
     def get_writer(self, name, node_properties, edge_properties):
         if self.output_format == OutputFormat.tsv:

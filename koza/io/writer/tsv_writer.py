@@ -1,9 +1,9 @@
-from dataclasses import asdict
 from typing import List
 
-from biolink_model_pydantic.model import Association, Entity, NamedThing
+from biolink_model_pydantic.model import Entity
 from kgx.sink.tsv_sink import TsvSink
 
+from koza.converter.kgx_converter import KGXConverter
 from koza.io.writer.writer import KozaWriter
 
 
@@ -13,6 +13,7 @@ class TSVWriter(KozaWriter):
     ):
         self.output_dir = output_dir
         self.source_name = source_name
+        self.converter = KGXConverter()
 
         if node_properties and edge_properties:
             self.sink = TsvSink(
@@ -21,21 +22,18 @@ class TSVWriter(KozaWriter):
                 node_properties=node_properties,
                 edge_properties=edge_properties,
             )
-        else: # allow the TsvSink to set defaults if no properties are specified
-            self.sink = TsvSink(
-                f"{output_dir}/{source_name}",
-                "tsv"
-            )
+        else:  # allow the TsvSink to set defaults if no properties are specified
+            self.sink = TsvSink(f"{output_dir}/{source_name}", "tsv")
 
     def write(self, entities: List[Entity]):
 
-        for entity in entities:
-            if isinstance(entity, NamedThing):
-                self.sink.write_node(asdict(entity))
-            elif isinstance(entity, Association):
-                self.sink.write_edge(asdict(entity))
-            else:
-                raise ValueError("Can only write NamedThing or Association entities")
+        (nodes, edges) = self.converter.convert(entities)
+
+        for node in nodes:
+            self.sink.write_node(node)
+
+        for edge in edges:
+            self.sink.write_edge(edge)
 
     def finalize(self):
         self.sink.finalize()
