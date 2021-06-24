@@ -2,7 +2,7 @@ import re
 import uuid
 
 from biolink_model_pydantic.model import Protein, PairwiseGeneToGeneInteraction, Predicate
-from koza.manager.data_collector import collect
+from koza.manager.data_collector import write
 
 from koza.koza_runner import get_koza_app
 
@@ -24,4 +24,4 @@ for row in koza.file_registry[source_name]:
         relation='IAO:0002436'
     )
 
-    collect(source_name, protein_a, protein_b, pairwise_gene_to_gene_interaction)
+    write(source_name, protein_a, protein_b, pairwise_gene_to_gene_interaction)

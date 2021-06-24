@@ -2,7 +2,7 @@ import logging
 
 from koza.converter.biolink_converter import gpi2gene
 from koza.manager.data_provider import inject_row
-from koza.manager.data_collector import collect
+from koza.manager.data_collector import write
 
 LOG = logging.getLogger(__name__)
 
@@ -13,4 +13,4 @@ row['DB_Object_ID'] = "Xenbase:" + row['DB_Object_ID']
 
 gene = gpi2gene(row)
 
-collect(source_name, gene)
+write(source_name, gene)

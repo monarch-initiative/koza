@@ -2,7 +2,7 @@ import uuid
 
 from biolink_model_pydantic.model import Gene, PairwiseGeneToGeneInteraction, Predicate
 from koza.manager.data_provider import inject_row, inject_translation_table, inject_map
-from koza.manager.data_collector import collect
+from koza.manager.data_collector import write
 
 source_name = 'protein-links-detailed'
 
@@ -22,4 +22,4 @@ pairwise_gene_to_gene_interaction = PairwiseGeneToGeneInteraction(
     relation='RO:0002436'
 )
 
-collect(source_name, gene_a, gene_b, pairwise_gene_to_gene_interaction)
+write(source_name, gene_a, gene_b, pairwise_gene_to_gene_interaction)

@@ -6,7 +6,10 @@ from koza.converter.kgx_converter import KGXConverter
 
 def test_gene_conversion():
     fgf8a = Gene(
-        id=Curie("ZFIN:ZDB-GENE-990415-72"), symbol="fgf8a", name="fibroblast growth factor 8a"
+        id=Curie("ZFIN:ZDB-GENE-990415-72"),
+        symbol="fgf8a",
+        name="fibroblast growth factor 8a",
+        in_taxon=["NCBITaxon:7955"],
     )
 
     kgx_converter: KGXConverter = KGXConverter()
@@ -17,6 +20,7 @@ def test_gene_conversion():
     assert output['symbol'] == "fgf8a"
     assert 'gene' in str(output['category']).lower()
     assert output['name'] == "fibroblast growth factor 8a"
+    assert output['in_taxon'] == ["NCBITaxon:7955"]
 
 
 def test_association_conversion():
