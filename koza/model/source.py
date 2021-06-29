@@ -70,6 +70,7 @@ class SourceFile:
                     JSONReader(
                         resource_io,
                         name=config.name,
+                        json_path=config.json_path,
                         required_properties=config.required_properties,
                     )
                 )

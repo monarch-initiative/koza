@@ -193,8 +193,6 @@ class SourceFileConfig:
                 "DB_Xref(s)",
                 "Properties",
             ]
-
-            self.skip_lines = 22
         elif self.standard_format == StandardFormat.oban:
             self.format = FormatType.csv
             self.delimiter = ","
