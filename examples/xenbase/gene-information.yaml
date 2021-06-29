@@ -7,6 +7,8 @@ standard_format: 'gpi'
 
 compression: 'gzip'
 
+skip_lines: 22
+
 node_properties:
   - 'id'
   - 'category'
