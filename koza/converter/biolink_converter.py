@@ -1,4 +1,11 @@
-from biolink_model_pydantic.model import Gene
+import uuid
+
+from biolink_model_pydantic.model import (
+    Gene,
+    GeneToPhenotypicFeatureAssociation,
+    PhenotypicFeature,
+    Predicate,
+)
 
 from koza.manager.data_provider import inject_curie_cleaner
 
@@ -30,3 +37,40 @@ def gpi2gene(row: dict) -> Gene:
     )
 
     return gene
+
+
+def phaf2gene(row: dict, gene_id_prefix=None, taxon_id_prefix=None) -> Gene:
+
+    id = row['Gene systematic ID']
+    if gene_id_prefix:
+        id = gene_id_prefix + id
+    taxon = row['Taxon']
+    if taxon:
+        taxon = taxon_id_prefix + taxon
+
+    gene = Gene(id=id)
+    if taxon:
+        gene.in_taxon = taxon
+    # It appears symbols are stored in the name field
+    if row['Gene name']:
+        gene.symbol = row['Gene name']
+
+    return gene
+
+
+def phaf2phenotype(row: dict) -> PhenotypicFeature:
+    return PhenotypicFeature(id=row['FYPO ID'])
+
+
+def phaf2gene_pheno_association(
+    row, gene, phenotype, relation
+) -> GeneToPhenotypicFeatureAssociation:
+
+    return GeneToPhenotypicFeatureAssociation(
+        id="uuid:" + str(uuid.uuid1()),
+        subject=gene.id,
+        predicate=Predicate.has_phenotype,
+        object=phenotype.id,
+        relation=relation,
+        publications=[row['Reference']],
+    )
