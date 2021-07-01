@@ -212,31 +212,6 @@ class SourceFileConfig:
                 "IS_DEFINED_BY",
                 "QUALIFIER",
             ]
-        elif self.standard_format == StandardFormat.phaf:
-            self.format = FormatType.csv
-            self.delimiter = '\t'
-            self.columns = [
-                "Database name",
-                "Gene systematic ID",
-                "FYPO ID",
-                "Allele description",
-                "Expression",
-                "Parental strain",
-                "Strain name (background)",
-                "Genotype description",
-                "Gene name",
-                "Allele name",
-                "Allele synonym",
-                "Allele type",
-                "Evidence",
-                "Condition",
-                "Penetrance",
-                "Severity",
-                "Extension",
-                "Reference",
-                "Taxon",
-                "Date",
-            ]
 
         if self.delimiter in ['tab', '\\t']:
             object.__setattr__(self, 'delimiter', '\t')
