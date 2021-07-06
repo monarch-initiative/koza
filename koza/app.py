@@ -113,13 +113,18 @@ class KozaApp:
             transform_module = None
 
             if source_file.config.transform_mode == 'flat':
+                source_name = source_file.config.name
                 while True:
                     try:
                         if is_first:
                             transform_module = importlib.import_module(transform_code)
                             is_first = False
+                            entities = transform_module.transform(source_file.__next__())
+                            self.write(source_name, entities)
                         else:
-                            importlib.reload(transform_module)
+                            transform_module = importlib.reload(transform_module)
+                            entities = transform_module.transform(source_file.__next__())
+                            self.write(source_name, entities)
                     except MapItemException as mie:
                         LOG.warning(f"{str(mie)} not found in map")
                     except ValidationError as ve:
