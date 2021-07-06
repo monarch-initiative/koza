@@ -3,7 +3,7 @@ import uuid
 from biolink_model_pydantic.model import Gene, PhenotypicFeature, GeneToPhenotypicFeatureAssociation, Predicate
 
 
-def transform(row):
+def transform(row, translate_table=None, maps=None):
     gene = Gene(id='Xenbase:' + row['SUBJECT'])
 
     phenotype = PhenotypicFeature(id=row['OBJECT'])

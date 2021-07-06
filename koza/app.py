@@ -119,11 +119,19 @@ class KozaApp:
                         if is_first:
                             transform_module = importlib.import_module(transform_code)
                             is_first = False
-                            entities = transform_module.transform(source_file.__next__())
+                            entities = transform_module.transform(
+                                source_file.__next__(),
+                                self.source.translation_table,
+                                self.map_registry,
+                            )
                             self.write(source_name, entities)
                         else:
                             transform_module = importlib.reload(transform_module)
-                            entities = transform_module.transform(source_file.__next__())
+                            entities = transform_module.transform(
+                                source_file.__next__(),
+                                self.source.translation_table,
+                                self.map_registry,
+                            )
                             self.write(source_name, entities)
                     except MapItemException as mie:
                         LOG.warning(f"{str(mie)} not found in map")
