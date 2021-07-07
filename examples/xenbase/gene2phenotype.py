@@ -16,4 +16,7 @@ def transform(row, translate_table=None, maps=None):
         relation=row['RELATION'].replace('_', ':')
     )
 
+    if row['SOURCE']:
+        association.publications = [row['SOURCE']]
+
     return gene, association, phenotype

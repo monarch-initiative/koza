@@ -17,4 +17,5 @@ edge_properties:
   - 'object'
   - 'category'
   - 'relation'
+  - 'publications'
   - 'provided_by'

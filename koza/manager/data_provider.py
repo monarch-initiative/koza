@@ -31,7 +31,3 @@ def inject_translation_table() -> TranslationTable:
     koza = get_koza_app()
     return koza.source.translation_table
 
-
-def inject_curie_cleaner() -> CurieCleaner:
-    koza = get_koza_app()
-    return koza.curie_cleaner

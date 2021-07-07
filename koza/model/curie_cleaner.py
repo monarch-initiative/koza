@@ -2,9 +2,16 @@ import re
 
 
 class CurieCleaner:
-    def __init__(self):
-        # TODO: these belong in yaml, might already exist somewhere
-        self.mappings = {"taxon": "NCBITaxon", "NCBI_Gene": "NCBIGene"}
+
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            print('Creating the object')
+            cls._instance = super(CurieCleaner, cls).__new__(cls)
+            # TODO: these belong in yaml, might already exist somewhere
+            cls._instance.mappings = {"taxon": "NCBITaxon", "NCBI_Gene": "NCBIGene"}
+        return cls._instance
 
     def clean(self, curie: str) -> str:
         for curie_synonym in self.mappings:

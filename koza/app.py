@@ -13,7 +13,6 @@ from koza.io.writer.jsonl_writer import JSONLWriter
 from koza.io.writer.tsv_writer import TSVWriter
 from koza.io.writer.writer import KozaWriter
 from koza.model.config.source_config import MapFileConfig, OutputFormat, PrimaryFileConfig
-from koza.model.curie_cleaner import CurieCleaner
 from koza.model.map_dict import MapDict
 from koza.model.source import Source, SourceFile
 
@@ -52,7 +51,6 @@ class KozaApp:
         self.map_registry: Dict[str, SourceFile] = {}
         self.writer_registry: Dict[str, KozaWriter] = {}
         self.map_cache: Dict[str, Dict] = {}
-        self.curie_cleaner: CurieCleaner = CurieCleaner()
 
         logging.getLogger(__name__)
 
@@ -122,7 +120,7 @@ class KozaApp:
                             entities = transform_module.transform(
                                 source_file.__next__(),
                                 self.source.translation_table,
-                                self.map_registry,
+                                self.map_cache,
                             )
                             self.write(source_name, entities)
                         else:
@@ -130,7 +128,7 @@ class KozaApp:
                             entities = transform_module.transform(
                                 source_file.__next__(),
                                 self.source.translation_table,
-                                self.map_registry,
+                                self.map_cache,
                             )
                             self.write(source_name, entities)
                     except MapItemException as mie:
