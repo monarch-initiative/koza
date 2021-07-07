@@ -1,28 +1,16 @@
 from dataclasses import dataclass
-from typing import Any, Dict, Iterator, List, Optional
+from typing import Any, Dict, Iterator, List, Optional, Union
+
+import yaml
 
 from koza.io.reader.csv_reader import CSVReader
 from koza.io.reader.json_reader import JSONReader
 from koza.io.reader.jsonl_reader import JSONLReader
 from koza.io.utils import open_resource
-from koza.model.config.source_config import DatasetDescription, SourceFileConfig
+from koza.model.config.source_config import DatasetDescription, MapFileConfig, PrimaryFileConfig
 from koza.model.translation_table import TranslationTable
 from koza.row_filter import RowFilter
 
-
-@dataclass
-class Source:
-    """
-    For simplicity copying over all the fields
-    from source_config.SourceConfig
-
-    avoids nesting but also a DRY violation?
-    """
-
-    source_files: List[str]
-    name: str = None
-    dataset_description: DatasetDescription = None
-    translation_table: TranslationTable = None
 
 
 class SourceFile:
@@ -35,7 +23,7 @@ class SourceFile:
     and yields a dictionary
     """
 
-    def __init__(self, config: SourceFileConfig):
+    def __init__(self, config: Union[PrimaryFileConfig, MapFileConfig]):
 
         self.config = config
         self._filter = RowFilter(config.filters)
@@ -104,3 +92,40 @@ class SourceFile:
         # Retain the most recent row so that it can be logged alongside validation errors
         self.last_row = row
         return row
+
+
+@dataclass(init=False)
+class Source:
+    """
+    For simplicity copying over all the fields
+    from source_config.SourceConfig
+
+    avoids nesting but also a DRY violation?
+    """
+
+    source_files: List[SourceFile]
+    name: str = None
+    dataset_description: DatasetDescription = None
+    translation_table: TranslationTable = None
+
+    def __init__(
+            self,
+            source_files: List[Union[str, SourceFile]],
+            name: str = None,
+            dataset_description: DatasetDescription = None,
+            translation_table: TranslationTable = None
+    ):
+        self.name = name
+        self.dataset_description = dataset_description
+        self.translation_table = translation_table
+
+        tmp_source_file = []
+        for source_file in source_files:
+            if not isinstance(source_file, SourceFile):
+                with open(source_file, 'r') as source_file_fh:
+                    source_file_config = PrimaryFileConfig(**yaml.safe_load(source_file_fh))
+                    tmp_source_file.append(SourceFile[source_file_config])
+            else:
+                tmp_source_file.append(source_file)
+
+        self.source_files = tmp_source_file
