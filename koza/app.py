@@ -61,7 +61,7 @@ class KozaApp:
             if not source_file.config.transform_code:
                 # look for it alongside the source conf as a .py file
                 source_file.config.transform_code = (
-                    str(Path(source_file).parent / Path(source_file).stem) + '.py'
+                    str(source_file.config.path.parent / source_file.config.path.stem) + '.py'
                 )
 
             if source_file.config.depends_on is not None:

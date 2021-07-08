@@ -124,7 +124,8 @@ class Source:
             if not isinstance(source_file, SourceFile):
                 with open(source_file, 'r') as source_file_fh:
                     source_file_config = PrimaryFileConfig(**yaml.safe_load(source_file_fh))
-                    tmp_source_file.append(SourceFile[source_file_config])
+                    source_file_config.path = source_file
+                    tmp_source_file.append(SourceFile(source_file_config))
             else:
                 tmp_source_file.append(source_file)
 
