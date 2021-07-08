@@ -12,7 +12,7 @@ from koza.exceptions import MapItemException
 from koza.io.writer.jsonl_writer import JSONLWriter
 from koza.io.writer.tsv_writer import TSVWriter
 from koza.io.writer.writer import KozaWriter
-from koza.model.config.source_config import MapFileConfig, OutputFormat, PrimaryFileConfig
+from koza.model.config.source_config import MapFileConfig, OutputFormat
 from koza.model.curie_cleaner import CurieCleaner
 from koza.model.map_dict import MapDict
 from koza.model.source import Source, SourceFile
@@ -56,33 +56,29 @@ class KozaApp:
 
         logging.getLogger(__name__)
 
-        for src_file in source.source_files:
+        for source_file in source.source_files:
 
-            with open(src_file, 'r') as source_file_fh:
-                source_file_config = PrimaryFileConfig(**yaml.safe_load(source_file_fh))
-
-            if not source_file_config.transform_code:
+            if not source_file.config.transform_code:
                 # look for it alongside the source conf as a .py file
-                source_file_config.transform_code = (
-                    str(Path(src_file).parent / Path(src_file).stem) + '.py'
+                source_file.config.transform_code = (
+                    str(source_file.config.path.parent / source_file.config.path.stem) + '.py'
                 )
 
-            if source_file_config.depends_on is not None:
-                for map_file in source_file_config.depends_on:
-                    with open(map_file, 'r') as map_file_fh:
-                        map_file_config = MapFileConfig(**yaml.safe_load(map_file_fh))
-                        map_file_config.transform_code = (
-                            str(Path(map_file).parent / Path(map_file).stem) + '.py'
-                        )
+            if source_file.config.depends_on is not None:
+                for map_file in source_file.config.depends_on:
+                    if map_file_config.name not in self.map_cache:
+                        with open(map_file, 'r') as map_file_fh:
+                            map_file_config = MapFileConfig(**yaml.safe_load(map_file_fh))
+                            map_file_config.transform_code = (
+                                str(Path(map_file).parent / Path(map_file).stem) + '.py'
+                            )
+                        self.map_registry[map_file_config.name] = SourceFile(map_file_config)
 
-                        if map_file_config.name not in self.map_cache:
-                            self.map_registry[map_file_config.name] = SourceFile(map_file_config)
+            self.file_registry[source_file.config.name] = source_file
 
-            self.file_registry[source_file_config.name] = SourceFile(source_file_config)
-
-            output_name = f"{source.name}.{source_file_config.name}"
-            self.writer_registry[source_file_config.name] = self.get_writer(
-                output_name, source_file_config.node_properties, source_file_config.edge_properties
+            output_name = f"{source.name}.{source_file.config.name}"
+            self.writer_registry[source_file.config.name] = self.get_writer(
+                output_name, source_file.config.node_properties, source_file.config.edge_properties
             )
 
     def get_writer(self, name, node_properties, edge_properties):
