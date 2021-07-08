@@ -1,6 +1,7 @@
 import types
 from typing import Iterable
 
+import pytest
 from biolink_model_pydantic.model import (
     Gene,
     GeneToPhenotypicFeatureAssociation,
@@ -15,60 +16,64 @@ from koza.model.config.source_config import PrimaryFileConfig
 from koza.model.source import Source, SourceFile
 
 
-# This should be extracted out but for quick prototyping
-def mock_write(self, source_name, *entities):
-    self._entities = list(*entities)
+@pytest.fixture
+def mock_koza():
+
+    # This should be extracted out but for quick prototyping
+    def _mock_write(self, source_name, *entities):
+        self._entities = list(*entities)
+
+    def _make_mock_koza_app(
+        name: str,
+        data: Iterable,
+        transform_code: str,
+        map_cache=None,
+        filters=None,
+        translation_table=None,
+    ):
+        mock_source_file_config = PrimaryFileConfig(
+            name=name,
+            files=[],
+            transform_code=transform_code,
+        )
+        mock_source_file = SourceFile(mock_source_file_config)
+        mock_source_file._reader = data
+
+        mock_source = Source(source_files=[mock_source_file])
+
+        koza = KozaApp(mock_source)
+        # TODO filter mocks
+        koza.source.translation_table = translation_table
+        koza.map_cache = map_cache
+        koza.write = types.MethodType(_mock_write, koza)
+
+        return koza
+
+    def _transform(
+        name: str,
+        data: Iterable,
+        transform_code: str,
+        map_cache=None,
+        filters=None,
+        translation_table=None,
+    ):
+        koza_app = _make_mock_koza_app(
+            name,
+            data,
+            transform_code,
+            map_cache=map_cache,
+            filters=filters,
+            translation_table=translation_table,
+        )
+        set_koza(koza_app)
+        koza_app.process_sources()
+        return koza_app._entities
+
+    return _transform
 
 
-def make_mock_koza_app(
-    name: str,
-    data: Iterable,
-    transform_code: str,
-    map_cache=None,
-    filters=None,
-    translation_table=None,
-):
-    mock_source_file_config = PrimaryFileConfig(
-        name=name,
-        files=[],
-        transform_code=transform_code,
-    )
-    mock_source_file = SourceFile(mock_source_file_config)
-    mock_source_file._reader = data
-
-    mock_source = Source(source_files=[mock_source_file])
-
-    koza = KozaApp(mock_source)
-    # TODO filter mocks
-    koza.source.translation_table = translation_table
-    koza.map_cache = map_cache
-    koza.write = types.MethodType(mock_write, koza)
-
-    return koza
-
-
-def transform(
-    name: str,
-    data: Iterable,
-    transform_code: str,
-    map_cache=None,
-    filters=None,
-    translation_table=None,
-):
-    koza_app = make_mock_koza_app(
-        name,
-        data,
-        transform_code,
-        map_cache=map_cache,
-        filters=filters,
-        translation_table=translation_table,
-    )
-    set_koza(koza_app)
-    koza_app.process_sources()
-    return koza_app._entities
-
-
-def test_gene_information_transform():
+@pytest.fixture
+def gene_information_entities(mock_koza):
     row = iter(
         [
             {
@@ -86,17 +91,28 @@ def test_gene_information_transform():
         ]
     )
 
-    entities = transform('gene-information', row, './examples/xenbase/gene-information.py')
+    return mock_koza('gene-information', row, './examples/xenbase/gene-information.py')
 
-    assert len(entities) == 1
-    gene = entities[0]
+
+def test_gene_information_gene(gene_information_entities):
+    assert len(gene_information_entities) == 1
+    gene = gene_information_entities[0]
     assert gene
+
+
+def test_gene_information_synonym(gene_information_entities):
+    gene = gene_information_entities[0]
     assert gene.synonym
-    assert gene.id == 'Xenbase:XB-GENE-478054'
     assert 'xcca' in gene.synonym
 
 
-def test_gene2_phenotype_transform():
+def test_gene_information_id(gene_information_entities):
+    gene = gene_information_entities[0]
+    assert gene.id == 'Xenbase:XB-GENE-478054'
+
+
+@pytest.fixture
+def gene2phenotype_entities(mock_koza):
     row = iter(
         [
             {
@@ -116,22 +132,37 @@ def test_gene2_phenotype_transform():
             }
         ]
     )
-    entities = transform('gene-to-phenotype', row, './examples/xenbase/gene-to-phenotype.py')
+    return mock_koza('gene-to-phenotype', row, './examples/xenbase/gene-to-phenotype.py')
 
-    assert entities
-    assert len(entities) == 3
-    genes = [entity for entity in entities if isinstance(entity, Gene)]
-    phenotypes = [entity for entity in entities if isinstance(entity, PhenotypicFeature)]
+
+def test_gene2_phenotype_transform(gene2phenotype_entities):
+    assert gene2phenotype_entities
+    assert len(gene2phenotype_entities) == 3
+    genes = [entity for entity in gene2phenotype_entities if isinstance(entity, Gene)]
+    phenotypes = [
+        entity for entity in gene2phenotype_entities if isinstance(entity, PhenotypicFeature)
+    ]
     associations = [
-        entity for entity in entities if isinstance(entity, GeneToPhenotypicFeatureAssociation)
+        entity
+        for entity in gene2phenotype_entities
+        if isinstance(entity, GeneToPhenotypicFeatureAssociation)
     ]
     assert len(genes) == 1
     assert len(phenotypes) == 1
     assert len(associations) == 1
+
+
+def test_gene2_phenotype_transform_publications(gene2phenotype_entities):
+    associations = [
+        entity
+        for entity in gene2phenotype_entities
+        if isinstance(entity, GeneToPhenotypicFeatureAssociation)
+    ]
     assert 'PMID:17112317' in associations[0].publications
 
 
-def test_gene_literature_transform():
+@pytest.fixture
+def gene_literature_entities(mock_koza):
     row = iter(
         [
             {
@@ -182,7 +213,7 @@ def test_gene_literature_transform():
     }
     tt = get_translation_table("examples/translation_table.yaml", None)
 
-    entities = transform(
+    return mock_koza(
         'gene-literature',
         row,
         './examples/xenbase/gene-literature.py',
@@ -190,18 +221,30 @@ def test_gene_literature_transform():
         translation_table=tt,
     )
 
-    assert entities
-    publications = [entity for entity in entities if isinstance(entity, Publication)]
-    genes = [entity for entity in entities if isinstance(entity, Gene)]
+
+def test_gene_literature_entities(gene_literature_entities):
+    assert gene_literature_entities
+
+
+def test_gene_literature_entity_types(gene_literature_entities):
+    publications = [
+        entity for entity in gene_literature_entities if isinstance(entity, Publication)
+    ]
+    genes = [entity for entity in gene_literature_entities if isinstance(entity, Gene)]
     associations = [
         entity
-        for entity in entities
+        for entity in gene_literature_entities
         if isinstance(entity, NamedThingToInformationContentEntityAssociation)
     ]
 
     # a roundabout way of confirming that everything generated is one of these three and there's nothing else
-    assert len(entities) == len(publications) + len(genes) + len(associations)
+    assert len(gene_literature_entities) == len(publications) + len(genes) + len(associations)
     assert len(publications) == 1
+
+
+def test_gene_literature_entity(gene_literature_entities):
+    genes = [entity for entity in gene_literature_entities if isinstance(entity, Gene)]
+
     # confirm one gene id from each species
     assert 'Xenbase:XB-GENE-480983' in [gene.id for gene in genes]
     assert 'Xenbase:XB-GENE-6253888' in [gene.id for gene in genes]
