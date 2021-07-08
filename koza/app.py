@@ -66,13 +66,12 @@ class KozaApp:
 
             if source_file.config.depends_on is not None:
                 for map_file in source_file.config.depends_on:
-                    if map_file_config.name not in self.map_cache:
-                        with open(map_file, 'r') as map_file_fh:
-                            map_file_config = MapFileConfig(**yaml.safe_load(map_file_fh))
-                            map_file_config.transform_code = (
-                                str(Path(map_file).parent / Path(map_file).stem) + '.py'
-                            )
-                        self.map_registry[map_file_config.name] = SourceFile(map_file_config)
+                    with open(map_file, 'r') as map_file_fh:
+                        map_file_config = MapFileConfig(**yaml.safe_load(map_file_fh))
+                        map_file_config.transform_code = (
+                            str(Path(map_file).parent / Path(map_file).stem) + '.py'
+                        )
+                    self.map_registry[map_file_config.name] = SourceFile(map_file_config)
 
             self.file_registry[source_file.config.name] = source_file
 
