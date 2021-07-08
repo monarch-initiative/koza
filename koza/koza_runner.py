@@ -26,6 +26,7 @@ def set_koza(koza: KozaApp):
     global KOZA_APP
     KOZA_APP = koza
 
+
 def set_koza_app(
     source: Source,
     output_dir: str = './output',

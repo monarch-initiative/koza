@@ -12,7 +12,7 @@ from koza.exceptions import MapItemException
 from koza.io.writer.jsonl_writer import JSONLWriter
 from koza.io.writer.tsv_writer import TSVWriter
 from koza.io.writer.writer import KozaWriter
-from koza.model.config.source_config import MapFileConfig, OutputFormat, PrimaryFileConfig
+from koza.model.config.source_config import MapFileConfig, OutputFormat
 from koza.model.curie_cleaner import CurieCleaner
 from koza.model.map_dict import MapDict
 from koza.model.source import Source, SourceFile

@@ -12,7 +12,6 @@ from koza.model.translation_table import TranslationTable
 from koza.row_filter import RowFilter
 
 
-
 class SourceFile:
     """
     An iterator that provides a layer of abstraction over file types
@@ -109,11 +108,11 @@ class Source:
     translation_table: TranslationTable = None
 
     def __init__(
-            self,
-            source_files: List[Union[str, SourceFile]],
-            name: str = None,
-            dataset_description: DatasetDescription = None,
-            translation_table: TranslationTable = None
+        self,
+        source_files: List[Union[str, SourceFile]],
+        name: str = None,
+        dataset_description: DatasetDescription = None,
+        translation_table: TranslationTable = None,
     ):
         self.name = name
         self.dataset_description = dataset_description
