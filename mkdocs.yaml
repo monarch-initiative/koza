@@ -1,0 +1,5 @@
+site_name: Koza
+nav:
+- Home: '../'
+- Ingest Configuration: 'ingest_configuration.md'
+
