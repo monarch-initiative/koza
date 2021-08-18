@@ -151,6 +151,7 @@ class SourceFileConfig:
     name: str
     files: List[Union[str, Path]]
     format: FormatType = FormatType.csv
+    path: Path = None
     standard_format: StandardFormat = None
     file_metadata: DatasetDescription = None
     columns: List[Union[str, Dict[str, FieldType]]] = None

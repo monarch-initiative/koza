@@ -33,18 +33,18 @@ compression: 'gzip'
 
 # list of files to be ingested
 files:
-- './data/really-cool-data-1.json.gz'
-- './data/really-cool-data-2.json.gz'
+  - './data/really-cool-data-1.json.gz'
+  - './data/really-cool-data-2.json.gz'
 
 # in a JSON ingest, this will be the path to the array to be iterated over as the input collection
 json_path:
-- 'data'
+  - 'data'
 
 # Ordered list of columns for CSV files, data type can be specified as float, int or str
 columns:
-    - 'protein1'
-    - 'protein2'
-    - 'combined_score' : 'int'
+  - 'protein1'
+  - 'protein2'
+  - 'combined_score' : 'int'
 
 # Specify a delimiter for CSV files, default is a comma
 delimiter: '\t'
@@ -68,33 +68,33 @@ standard_format: 'gpi'
 
 # include a map file
 depends_on:
-- './examples/maps/alliance-gene.yaml'
+  - './examples/maps/alliance-gene.yaml'
 
 # The filter DSL allows including or excluding rows based on filter blocks
 filters: 
-- inclusion: 'include' # 'include' to include rows matching, 'exclude' to exclude rows that match
-  column: 'combined_score'
-  # filter_code  (with 'in' expecting a list of values)
-  filter_code: 'lt' # options: 'gt', 'ge', 'lt', 'le', 'eq', 'ne', 'in'  
-  value: 700
-- inclusion: 'exclude'
-  column: 'protein1'
-  filter_code: 'in' # 'in' expects the value to be a list and checks that the column value is matched within the list
-  value: 
-    - 'ABC1'
-    - 'XYZ4'
+  - inclusion: 'include' # 'include' to include rows matching, 'exclude' to exclude rows that match
+    column: 'combined_score'
+    # filter_code  (with 'in' expecting a list of values)
+    filter_code: 'lt' # options: 'gt', 'ge', 'lt', 'le', 'eq', 'ne', 'in'  
+    value: 700
+  - inclusion: 'exclude'
+    column: 'protein1'
+    filter_code: 'in' # 'in' expects the value to be a list and checks that the column value is matched within the list
+    value: 
+      - 'ABC1'
+      - 'XYZ4'
 
 # node and edge categories are required to avoid empty KGX files, the order here isn't important  
 node_properties:
-- 'id'
-- 'category'
-- 'provided_by'
+  - 'id'
+  - 'category'
+  - 'provided_by'
 
 edge_properties:
-- 'id'
-- 'subject'
-- 'predicate'
-- ...
+  - 'id'
+  - 'subject'
+  - 'predicate'
+  - ...
 
 #In 'flat' mode, the transform operates on a single row and looping doesn't need to be specified
 #In 'loop' mode, the transform code is executed only once and so the loop code that iterates over rows must be contained within the transform code
