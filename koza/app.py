@@ -90,7 +90,7 @@ class KozaApp:
     def get_map(self, map_name: str):
         pass
 
-    def process_sources(self):
+    def process_sources(self, source_file_filter: str = None):
         """
         :return:
         """
@@ -101,40 +101,41 @@ class KozaApp:
                 self.load_map(map_file.config)
 
         for source_file in self.file_registry.values():
-            parent_path = Path(source_file.config.transform_code).parent
-            transform_code = Path(source_file.config.transform_code).stem
-            sys.path.append(str(parent_path))
-            is_first = True
-            transform_module = None
+            if source_file_filter is None or source_file.config.name == source_file_filter:
+                parent_path = Path(source_file.config.transform_code).parent
+                transform_code = Path(source_file.config.transform_code).stem
+                sys.path.append(str(parent_path))
+                is_first = True
+                transform_module = None
 
-            if source_file.config.transform_mode == 'flat':
-                while True:
-                    try:
-                        if is_first:
-                            transform_module = importlib.import_module(transform_code)
-                            is_first = False
-                        else:
-                            importlib.reload(transform_module)
-                    except MapItemException as mie:
-                        LOG.warning(f"{str(mie)} not found in map")
-                    except ValidationError as ve:
-                        LOG.error(f"Validation error while processing: {source_file.last_row}")
-                        raise ve
-                    except StopIteration:
-                        break
-            elif source_file.config.transform_mode == 'loop':
-                if transform_code not in sys.modules.keys():
-                    importlib.import_module(transform_code)
+                if source_file.config.transform_mode == 'flat':
+                    while True:
+                        try:
+                            if is_first:
+                                transform_module = importlib.import_module(transform_code)
+                                is_first = False
+                            else:
+                                importlib.reload(transform_module)
+                        except MapItemException as mie:
+                            LOG.warning(f"{str(mie)} not found in map")
+                        except ValidationError as ve:
+                            LOG.error(f"Validation error while processing: {source_file.last_row}")
+                            raise ve
+                        except StopIteration:
+                            break
+                elif source_file.config.transform_mode == 'loop':
+                    if transform_code not in sys.modules.keys():
+                        importlib.import_module(transform_code)
+                    else:
+                        importlib.reload(importlib.import_module(transform_code))
                 else:
-                    importlib.reload(importlib.import_module(transform_code))
-            else:
-                raise NotImplementedError
+                    raise NotImplementedError
 
-            # close the writer when the source is done processing
-            self.writer_registry[source_file.config.name].finalize()
+                # close the writer when the source is done processing
+                self.writer_registry[source_file.config.name].finalize()
 
-            # remove directory from sys.path to prevent name clashes
-            sys.path.remove(str(parent_path))
+                # remove directory from sys.path to prevent name clashes
+                sys.path.remove(str(parent_path))
 
     def load_map(self, map_file_config: MapFileConfig):
         source_file = SourceFile(map_file_config)

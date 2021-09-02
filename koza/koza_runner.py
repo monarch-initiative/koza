@@ -139,6 +139,7 @@ def transform_source(
     output_format: OutputFormat,
     global_table: str,
     local_table: str,
+    source_file: str = None,
 ):
 
     translation_table = get_translation_table(global_table, local_table)
@@ -156,4 +157,4 @@ def transform_source(
         )
 
         koza_app = set_koza_app(source, output_dir, output_format)
-        koza_app.process_sources()
+        koza_app.process_sources(source_file_filter=source_file)

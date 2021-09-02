@@ -18,6 +18,7 @@ LOG = logging.getLogger(__name__)
 @app.command()
 def transform(
     source: str = typer.Option(..., help="Source metadata file"),
+    source_file: str = typer.Option(None, help="Limit to a single source_file"),
     output_dir: str = typer.Option('./output', help="Path to output directory"),
     output_format: OutputFormat = typer.Option("jsonl", help="Output format"),
     global_table: str = typer.Option(None, help="Path to global translation table"),
@@ -37,7 +38,9 @@ def transform(
     elif not output_path.exists():
         output_path.mkdir(parents=True)
 
-    transform_source(source, output_dir, output_format, global_table, local_table)
+    transform_source(
+        source, output_dir, output_format, global_table, local_table, source_file=source_file
+    )
 
 
 @app.command()
