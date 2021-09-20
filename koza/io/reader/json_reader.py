@@ -63,8 +63,9 @@ class JSONReader:
                 # based on some configuration? similar to
                 # on_map_error
                 raise ValueError(
-                    f"Configured properties missing in source file "
-                    f"{set(self.required_properties) - set(next_obj.keys())}"
+                    f"Required properties defined for {self.name} are missing from {self.io_str.name}\n"
+                    f"Missing properties: {set(self.required_properties) - set(next_obj.keys())}\n"
+                    f"Row: {next_obj}"
                 )
 
             # If we want to subset
