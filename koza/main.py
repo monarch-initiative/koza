@@ -1,21 +1,24 @@
 #!/usr/bin/env python3
+"""
+CLI interface for Koza
+"""
 
 import logging
 from pathlib import Path
 
 import typer
 
-from koza.koza_runner import transform_source, validate_file
+from koza.cli_runner import transform_source, validate_file
 from koza.model.config.source_config import CompressionType, FormatType, OutputFormat
 
-app = typer.Typer()
+typer_app = typer.Typer()
 
 
 logging.basicConfig()
 LOG = logging.getLogger(__name__)
 
 
-@app.command()
+@typer_app.command()
 def transform(
     source: str = typer.Option(..., help="Source metadata file"),
     output_dir: str = typer.Option('./output', help="Path to output directory"),
@@ -26,7 +29,7 @@ def transform(
     debug: bool = False,
 ):
     """
-    Run Koza
+    Transform a source file
     """
     _set_log_level(quiet, debug)
 
@@ -40,7 +43,7 @@ def transform(
     transform_source(source, output_dir, output_format, global_table, local_table)
 
 
-@app.command()
+@typer_app.command()
 def validate(
     file: str = typer.Option(..., help="Path or url to the source file"),
     format: FormatType = FormatType.csv,
@@ -51,7 +54,10 @@ def validate(
     skip_blank_lines: bool = True,
 ):
     """
-    Run a single file through koza
+    Validate a source file
+
+    Given a file and configuration checks that the file is valid, ie
+    format is as expected (tsv, json), required columns/fields are there
     """
     _set_log_level(debug=True)
 
@@ -60,12 +66,12 @@ def validate(
     )
 
 
-@app.command()
-def create():
-    """
-    TODO
-    Create a new koza project
-    """
+# @typer_app.command()
+# def create():
+#    """
+#    TODO
+#    Create a new koza project
+#    """
 
 
 def _set_log_level(quiet: bool = False, debug: bool = False):
@@ -78,4 +84,4 @@ def _set_log_level(quiet: bool = False, debug: bool = False):
 
 
 if __name__ == "__main__":
-    app()
+    typer_app()

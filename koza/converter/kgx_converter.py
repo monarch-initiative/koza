@@ -1,7 +1,7 @@
 from dataclasses import asdict
-from typing import List
+from typing import Iterable
 
-from biolink_model_pydantic.model import Association, Entity, NamedThing
+from biolink_model_pydantic.model import Association, NamedThing
 
 
 class KGXConverter:
@@ -16,7 +16,7 @@ class KGXConverter:
 
     """
 
-    def convert(self, entities: List[Entity]) -> (dict, dict):
+    def convert(self, entities: Iterable) -> (dict, dict):
 
         nodes = []
         edges = []

@@ -9,6 +9,8 @@ compression: 'gzip'
 
 skip_lines: 22
 
+metadata: './metadata.yaml'
+
 node_properties:
   - 'id'
   - 'category'
@@ -28,3 +30,5 @@ edge_properties:
   - 'category'
   - 'relation'
   - 'provided_by'
+
+transform_mode: 'flat'

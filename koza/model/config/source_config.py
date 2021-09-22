@@ -2,14 +2,19 @@
 source config data class
 map config data class
 """
+import logging
+from dataclasses import field
 from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Union
 
+import yaml
 from pydantic import StrictFloat, StrictInt, StrictStr
 from pydantic.dataclasses import dataclass
 
 from koza.model.config.pydantic_config import PydanticConfig
+
+LOG = logging.getLogger(__name__)
 
 
 class MapErrorEnum(str, Enum):
@@ -29,6 +34,8 @@ class FormatType(str, Enum):
     csv = 'csv'
     jsonl = 'jsonl'
     json = 'json'
+    yaml = 'yaml'
+    xml = 'xml'  # TODO
 
 
 class StandardFormat(str, Enum):
@@ -50,6 +57,8 @@ class FilterCode(str, Enum):
     """
     Enum for filter codes
     eg gt (greater than)
+
+    This should be aligned with https://docs.python.org/3/library/operator.html
     """
 
     gt = 'gt'
@@ -126,14 +135,6 @@ class DatasetDescription:
 
 @dataclass(config=PydanticConfig)
 class SourceConfig:
-    source_files: List[str]
-    name: str = None
-    output_format: OutputFormat = None
-    dataset_description: DatasetDescription = None
-
-
-@dataclass(config=PydanticConfig)
-class SourceFileConfig:
     """
     Base class for primary sources and mapping sources
 
@@ -151,9 +152,8 @@ class SourceFileConfig:
     name: str
     files: List[Union[str, Path]]
     format: FormatType = FormatType.csv
-    path: Path = None
     standard_format: StandardFormat = None
-    file_metadata: DatasetDescription = None
+    metadata: Union[DatasetDescription, str] = None
     columns: List[Union[str, Dict[str, FieldType]]] = None
     node_properties: List[str] = None
     edge_properties: List[str] = None
@@ -164,12 +164,17 @@ class SourceFileConfig:
     skip_lines: int = 0
     skip_blank_lines: bool = True
     compression: CompressionType = None
-    filters: List[ColumnFilter] = None
+    filters: List[ColumnFilter] = field(default_factory=list)
     json_path: List[Union[StrictStr, StrictInt]] = None
     transform_code: str = None
-    transform_mode: TransformMode = TransformMode.flat
+    transform_mode: TransformMode = TransformMode.loop
+    output_format: OutputFormat = None
 
     def __post_init_post_parse__(self):
+        """
+        TO DO figure out why we're using object.__setattr__(self, ...
+              here and document it
+        """
         files_as_paths: List[Path] = []
         for file in self.files:
             if isinstance(file, str):
@@ -177,6 +182,16 @@ class SourceFileConfig:
             else:
                 files_as_paths.append(file)
         object.__setattr__(self, 'files', files_as_paths)
+
+        if self.metadata and isinstance(self.metadata, str):
+            # If this looks like a file path attempt to load it from the yaml
+            try:
+                object.__setattr__(
+                    self, 'metadata', DatasetDescription(**yaml.safe_load(self.metadata))
+                )
+            except Exception:
+                # TODO check for more explicit exceptions
+                LOG.warning("Could not load dataset description from metadata file")
 
         # todo: where should this really be stored? defaults for a format should probably be defined in yaml
         if self.standard_format == StandardFormat.gpi:
@@ -215,9 +230,6 @@ class SourceFileConfig:
 
         if self.delimiter in ['tab', '\\t']:
             object.__setattr__(self, 'delimiter', '\t')
-
-        if self.filters is None:
-            self.filters = []
 
         filtered_columns = [column_filter.column for column_filter in self.filters]
 
@@ -289,13 +301,13 @@ class SourceFileConfig:
 
 
 @dataclass(config=PydanticConfig)
-class PrimaryFileConfig(SourceFileConfig):
-    depends_on: List[str] = None  # field(default_factory=list)
+class PrimaryFileConfig(SourceConfig):
+    depends_on: List[str] = field(default_factory=list)
     on_map_failure: MapErrorEnum = MapErrorEnum.warning
 
 
 @dataclass(config=PydanticConfig)
-class MapFileConfig(SourceFileConfig):
+class MapFileConfig(SourceConfig):
     source: str = None
     key: str = None
     values: List[str] = None

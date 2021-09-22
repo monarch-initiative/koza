@@ -7,7 +7,7 @@ import os
 
 import pytest
 
-from koza.koza_runner import transform_source
+from koza.cli_runner import transform_source
 from koza.model.config.source_config import OutputFormat
 
 

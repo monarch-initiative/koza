@@ -1,12 +1,10 @@
 import uuid
 
 from biolink_model_pydantic.model import Gene, PairwiseGeneToGeneInteraction, Predicate
-from koza.manager.data_provider import inject_row, inject_translation_table, inject_map
-from koza.manager.data_collector import write
 
-source_name = 'protein-links-detailed'
+from koza.cli_runner import koza_app
 
-row = inject_row(source_name)
+row = koza_app.get_row()
 translation_table = inject_translation_table()
 entrez_2_string = inject_map('entrez_2_string')
 

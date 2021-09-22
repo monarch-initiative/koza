@@ -1,6 +1,5 @@
-from typing import List
+from typing import Iterable, List
 
-from biolink_model_pydantic.model import Entity
 from kgx.sink.tsv_sink import TsvSink
 
 from koza.converter.kgx_converter import KGXConverter
@@ -25,7 +24,7 @@ class TSVWriter(KozaWriter):
         else:  # allow the TsvSink to set defaults if no properties are specified
             self.sink = TsvSink(f"{output_dir}/{source_name}", "tsv")
 
-    def write(self, entities: List[Entity]):
+    def write(self, entities: Iterable):
 
         (nodes, edges) = self.converter.convert(entities)
 

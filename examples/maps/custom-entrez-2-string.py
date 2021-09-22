@@ -1,10 +1,10 @@
-from koza.manager.data_provider import inject_row, inject_map
+from koza.cli_runner import koza_app
 
 source_name = "custom_entrez_2_string"
 
-row = inject_row(source_name)
+row = koza_app.get_row(source_name)
 
-map = inject_map(source_name)
+map = koza_app.get_map(source_name)
 
 entry = dict()
 
