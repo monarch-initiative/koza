@@ -2,6 +2,8 @@ import json
 import logging
 from typing import IO, Any, Dict, Iterator, List, Union
 
+import yaml
+
 LOG = logging.getLogger(__name__)
 
 
@@ -16,6 +18,7 @@ class JSONReader:
         required_properties: List[str] = None,
         json_path: List[Union[str, int]] = None,
         name: str = 'json file',
+        is_yaml: bool = False,
     ):
         """
         :param io_str: Any IO stream that yields a string
@@ -30,11 +33,17 @@ class JSONReader:
         self.name = name
 
         if self.json_path:
-            self.json_obj = json.load(self.io_str)
+            if is_yaml:
+                self.json_obj = yaml.safe_load(self.io_str)
+            else:
+                self.json_obj = json.load(self.io_str)
             for path in self.json_path:
                 self.json_obj = self.json_obj[path]
         else:
-            self.json_obj = json.load(self.io_str)
+            if is_yaml:
+                self.json_obj = yaml.safe_load(self.io_str)
+            else:
+                self.json_obj = json.load(self.io_str)
 
         if isinstance(self.json_obj, list):
             self._len = len(self.json_obj)

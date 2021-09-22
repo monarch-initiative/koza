@@ -4,6 +4,8 @@ delimiter: '\t'
 
 has_header: False
 
+metadata: './metadata.yaml'
+
 files:
   - './examples/data/LiteratureMatchedGenesByPaper.txt'
 
@@ -30,3 +32,5 @@ edge_properties:
   - 'category'
   - 'relation'
   - 'provided_by'
+
+transform_mode: 'flat'

@@ -4,9 +4,9 @@ from typing import Iterable
 import pytest
 
 from koza.app import KozaApp
-from koza.koza_runner import set_koza
+from koza.cli_runner import set_koza
 from koza.model.config.source_config import PrimaryFileConfig
-from koza.model.source import Source, SourceFile
+from koza.model.source import Source
 
 
 @pytest.fixture(scope="package")
@@ -29,14 +29,12 @@ def mock_koza():
             files=[],
             transform_code=transform_code,
         )
-        mock_source_file = SourceFile(mock_source_file_config)
+        mock_source_file = Source(mock_source_file_config)
         mock_source_file._reader = data
 
-        mock_source = Source(source_files=[mock_source_file])
-
-        koza = KozaApp(mock_source)
+        koza = KozaApp(mock_source_file)
         # TODO filter mocks
-        koza.source.translation_table = translation_table
+        koza.translation_table = translation_table
         koza.map_cache = map_cache
         koza.write = types.MethodType(_mock_write, koza)
 

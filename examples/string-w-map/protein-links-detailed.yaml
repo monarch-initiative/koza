@@ -26,3 +26,5 @@ filters:
 
 depends_on:
   - './examples/maps/entrez-2-string.yaml'
+
+transform_mode: 'flat'

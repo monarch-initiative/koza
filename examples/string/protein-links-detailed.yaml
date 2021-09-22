@@ -6,6 +6,8 @@ files:
   - './examples/data/string.tsv'
   - './examples/data/string2.tsv'
 
+metadata: './metadata.yaml'
+
 columns:
   - 'protein1'
   - 'protein2'

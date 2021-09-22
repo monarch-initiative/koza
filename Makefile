@@ -43,7 +43,7 @@ clean:
 
 .PHONY: lint
 lint:
-	flake8 --exit-zero --max-line-length 120 koza/ tests/
+	flake8 --exit-zero --max-line-length 120 koza/ tests/ examples/
 	black --check --diff koza tests
 	isort --check-only --diff koza tests
 
@@ -54,6 +54,6 @@ format:
 		--remove-all-unused-imports \
 		--remove-unused-variables \
 		--ignore-init-module-imports \
-		--in-place koza tests
-	isort koza tests
-	black koza tests
+		--in-place koza tests examples
+	isort koza tests examples
+	black koza tests examples

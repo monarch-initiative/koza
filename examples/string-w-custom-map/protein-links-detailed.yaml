@@ -6,6 +6,8 @@ files:
   - './examples/data/string.tsv'
   - './examples/data/string2.tsv'
 
+metadata: './metadata.yaml'
+
 columns:
   - 'protein1'
   - 'protein2'
@@ -26,3 +28,5 @@ filters:
 
 depends_on:
   - './examples/maps/custom-entrez-2-string.yaml'
+
+transform_mode: 'flat'

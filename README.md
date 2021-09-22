@@ -2,12 +2,13 @@
 
 ![pupa](docs/img/pupa.png) Data transformation framework
 
-*Disclaimer*: Koza is in pre-alpha
+*Disclaimer*: Koza is in beta; we are looking for beta testers
 
-Transform csv, json, and jsonl and converting them to a target
+Transform csv, json, yaml, jsonl, and xml and converting them to a target
 csv, json, or jsonl format based on your dataclass model.  Koza also can output
 data in the [KGX format](https://github.com/biolink/kgx/blob/master/specification/kgx-format.md#kgx-format-as-tsv)
 
+**Documentation**: https://koza.monarchinitiative.org/
 
 ##### Highlights
 
@@ -15,7 +16,6 @@ data in the [KGX format](https://github.com/biolink/kgx/blob/master/specificatio
 - Configure source files, expected columns/json properties and path filters, field filters, and metadata in yaml
 - Create or import mapping files to be used in ingests (eg id mapping, type mappings)
 - Create and use translation tables to map between source and target vocabularies
-
 
 
 #### Installation

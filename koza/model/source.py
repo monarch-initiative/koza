@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from typing import Any, Dict, Iterator, List, Optional, Union
 
 import yaml
@@ -7,14 +6,15 @@ from koza.io.reader.csv_reader import CSVReader
 from koza.io.reader.json_reader import JSONReader
 from koza.io.reader.jsonl_reader import JSONLReader
 from koza.io.utils import open_resource
-from koza.model.config.source_config import DatasetDescription, MapFileConfig, PrimaryFileConfig
-from koza.model.translation_table import TranslationTable
+from koza.model.config.source_config import MapFileConfig, PrimaryFileConfig, SourceConfig
 from koza.row_filter import RowFilter
 
 
-class SourceFile:
+class Source:
     """
-    An iterator that provides a layer of abstraction over file types
+    Source class for files and maps
+
+    Source is an iterator that provides a layer of abstraction over file types
     and adds filter support to the readers in io.reader
 
     config: Source config
@@ -22,13 +22,24 @@ class SourceFile:
     and yields a dictionary
     """
 
-    def __init__(self, config: Union[PrimaryFileConfig, MapFileConfig]):
+    def __init__(
+        self,
+        config: Union[PrimaryFileConfig, MapFileConfig, str],
+    ):
 
         self.config = config
         self._filter = RowFilter(config.filters)
         self._reader = None
         self._readers: List = []
         self.last_row: Optional[Dict] = None
+
+        if not isinstance(config, SourceConfig):
+            # Check to see if it's a file path
+            with open(config, 'r') as source_file_fh:
+                self.config = PrimaryFileConfig(**yaml.safe_load(source_file_fh))
+        else:
+            # TODO better error handling
+            self.config = config
 
         for file in config.files:
             resource_io = open_resource(file, config.compression)
@@ -52,13 +63,14 @@ class SourceFile:
                         required_properties=config.required_properties,
                     )
                 )
-            elif self.config.format == 'json':
+            elif self.config.format == 'json' or self.config.format == 'yaml':
                 self._readers.append(
                     JSONReader(
                         resource_io,
                         name=config.name,
                         json_path=config.json_path,
                         required_properties=config.required_properties,
+                        is_yaml=(self.config.format == 'yaml'),
                     )
                 )
             else:
@@ -91,41 +103,3 @@ class SourceFile:
         # Retain the most recent row so that it can be logged alongside validation errors
         self.last_row = row
         return row
-
-
-@dataclass(init=False)
-class Source:
-    """
-    For simplicity copying over all the fields
-    from source_config.SourceConfig
-
-    avoids nesting but also a DRY violation?
-    """
-
-    source_files: List[SourceFile]
-    name: str = None
-    dataset_description: DatasetDescription = None
-    translation_table: TranslationTable = None
-
-    def __init__(
-        self,
-        source_files: List[Union[str, SourceFile]],
-        name: str = None,
-        dataset_description: DatasetDescription = None,
-        translation_table: TranslationTable = None,
-    ):
-        self.name = name
-        self.dataset_description = dataset_description
-        self.translation_table = translation_table
-
-        tmp_source_file = []
-        for source_file in source_files:
-            if not isinstance(source_file, SourceFile):
-                with open(source_file, 'r') as source_file_fh:
-                    source_file_config = PrimaryFileConfig(**yaml.safe_load(source_file_fh))
-                    source_file_config.path = source_file
-                    tmp_source_file.append(SourceFile(source_file_config))
-            else:
-                tmp_source_file.append(source_file)
-
-        self.source_files = tmp_source_file

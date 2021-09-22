@@ -1,84 +1,72 @@
 import importlib
 import logging
-import os
 import sys
 from pathlib import Path
-from typing import Dict, Iterable
+from typing import Dict
 
 import yaml
 from pydantic.error_wrappers import ValidationError
 
-from koza.exceptions import MapItemException
+from koza.exceptions import MapItemException, NextRowException
 from koza.io.writer.jsonl_writer import JSONLWriter
 from koza.io.writer.tsv_writer import TSVWriter
 from koza.io.writer.writer import KozaWriter
 from koza.model.config.source_config import MapFileConfig, OutputFormat
 from koza.model.curie_cleaner import CurieCleaner
 from koza.model.map_dict import MapDict
-from koza.model.source import Source, SourceFile
+from koza.model.source import Source
+from koza.model.translation_table import TranslationTable
 
 LOG = logging.getLogger(__name__)
 
 
 class KozaApp:
     """
-    Class that holds all configuration information for Koza
-
-    Note that this is intended to be a singleton
-    that is instantiated in biolink_runner and that
-    object either imported in other modules, or
-    passed in via a function
-
-    Note that this borders on some anti-patterns
-    - singleton as global
-    - god object
-
-    So this particular code should be re-evaluated post prototype
-
-    Hoping that making all attributes read-only offsets some downsides
-    of this approach (multi threading would be fine)
+    Core koza class that stores the configuration
+    and performs source transforms
     """
 
     def __init__(
         self,
         source: Source,
+        translation_table: TranslationTable = None,
         output_dir: str = './output',
         output_format: OutputFormat = OutputFormat('jsonl'),
     ):
         self.source = source
+        self.translation_table = translation_table
         self.output_dir = output_dir
         self.output_format = output_format
-        self.file_registry: Dict[str, SourceFile] = {}
-        self.map_registry: Dict[str, SourceFile] = {}
-        self.writer_registry: Dict[str, KozaWriter] = {}
+        self.map_registry: Dict[str, Source] = {}
         self.map_cache: Dict[str, Dict] = {}
         self.curie_cleaner: CurieCleaner = CurieCleaner()
+        self.writer: KozaWriter = self.get_writer(
+            source.config.name, source.config.node_properties, source.config.edge_properties
+        )
 
         logging.getLogger(__name__)
 
-        for source_file in source.source_files:
+        if not source.config.transform_code:
+            # look for it alongside the source conf as a .py file
+            source.config.transform_code = str(Path(source).parent / Path(source).stem) + '.py'
 
-            if not source_file.config.transform_code:
-                # look for it alongside the source conf as a .py file
-                source_file.config.transform_code = (
-                    str(source_file.config.path.parent / source_file.config.path.stem) + '.py'
-                )
+        if source.config.depends_on is not None:
+            for map_file in source.config.depends_on:
+                with open(map_file, 'r') as map_file_fh:
+                    map_file_config = MapFileConfig(**yaml.safe_load(map_file_fh))
+                    map_file_config.transform_code = (
+                        str(Path(map_file).parent / Path(map_file).stem) + '.py'
+                    )
+                self.map_registry[map_file_config.name] = Source(map_file_config)
 
-            if source_file.config.depends_on is not None:
-                for map_file in source_file.config.depends_on:
-                    with open(map_file, 'r') as map_file_fh:
-                        map_file_config = MapFileConfig(**yaml.safe_load(map_file_fh))
-                        map_file_config.transform_code = (
-                            str(Path(map_file).parent / Path(map_file).stem) + '.py'
-                        )
-                    self.map_registry[map_file_config.name] = SourceFile(map_file_config)
+        self.writer = self.get_writer(
+            source.config.name, source.config.node_properties, source.config.edge_properties
+        )
 
-            self.file_registry[source_file.config.name] = source_file
-
-            output_name = f"{source.name}.{source_file.config.name}"
-            self.writer_registry[source_file.config.name] = self.get_writer(
-                output_name, source_file.config.node_properties, source_file.config.edge_properties
-            )
+        # load the map cache
+        for map_file in self.map_registry.values():
+            if map_file.config.name not in self.map_cache:
+                self.load_map(map_file.config)
 
     def get_writer(self, name, node_properties, edge_properties):
         if self.output_format == OutputFormat.tsv:
@@ -88,64 +76,79 @@ class KozaApp:
             return JSONLWriter(self.output_dir, name)
 
     def get_map(self, map_name: str):
-        pass
+        return self.map_cache[map_name]
+
+    def get_row(self, ingest_name: str = None) -> Dict:
+        if ingest_name and ingest_name == self.source.config.name:
+            return next(self.source)
+        elif ingest_name in self.map_registry:
+            return next(self.map_registry[ingest_name])
+        elif ingest_name:
+            raise KeyError(f"{ingest_name} is not the name of the source file or a mapping file")
+        else:
+            return next(self.source)
 
     def process_sources(self):
         """
-        :return:
+        Transform an entire file using ingest logic in a functionless python file
+        where the path to this file is stored in source.transform_code
+        or inferred by taking the name and path of the config file and looking for
+        a .py file along side it (see constructor)
+
+        Intended for decoupling ingest logic into a configuration like file
+
         """
         import sys
 
-        for map_file in self.map_registry.values():
-            if map_file.config.name not in self.map_cache:
-                self.load_map(map_file.config)
+        parent_path = Path(self.source.config.transform_code).parent
+        transform_code = Path(self.source.config.transform_code).stem
+        sys.path.append(str(parent_path))
+        is_first = True
+        transform_module = None
 
-        for source_file in self.file_registry.values():
-            parent_path = Path(source_file.config.transform_code).parent
-            transform_code = Path(source_file.config.transform_code).stem
-            sys.path.append(str(parent_path))
-            is_first = True
-            transform_module = None
-
-            if source_file.config.transform_mode == 'flat':
-                while True:
-                    try:
-                        if is_first:
-                            transform_module = importlib.import_module(transform_code)
-                            is_first = False
-                        else:
-                            importlib.reload(transform_module)
-                    except MapItemException as mie:
-                        LOG.warning(f"{str(mie)} not found in map")
-                    except ValidationError as ve:
-                        LOG.error(f"Validation error while processing: {source_file.last_row}")
-                        raise ve
-                    except StopIteration:
-                        break
-            elif source_file.config.transform_mode == 'loop':
-                if transform_code not in sys.modules.keys():
-                    importlib.import_module(transform_code)
-                else:
-                    importlib.reload(importlib.import_module(transform_code))
+        if self.source.config.transform_mode == 'flat':
+            while True:
+                try:
+                    if is_first:
+                        transform_module = importlib.import_module(transform_code)
+                        is_first = False
+                    else:
+                        importlib.reload(transform_module)
+                except MapItemException as mie:
+                    LOG.warning(f"{str(mie)} not found in map")
+                except NextRowException:
+                    continue
+                except ValidationError as ve:
+                    LOG.error(f"Validation error while processing: {self.source.last_row}")
+                    raise ve
+                except StopIteration:
+                    break
+        elif self.source.config.transform_mode == 'loop':
+            if transform_code not in sys.modules.keys():
+                importlib.import_module(transform_code)
             else:
-                raise NotImplementedError
+                importlib.reload(importlib.import_module(transform_code))
+        else:
+            raise NotImplementedError
 
-            # close the writer when the source is done processing
-            self.writer_registry[source_file.config.name].finalize()
+        # close the writer when the source is done processing
+        self.writer.finalize()
 
-            # remove directory from sys.path to prevent name clashes
-            sys.path.remove(str(parent_path))
+        # remove directory from sys.path to prevent name clashes
+        sys.path.remove(str(parent_path))
 
     def load_map(self, map_file_config: MapFileConfig):
-        source_file = SourceFile(map_file_config)
+        map_file = Source(map_file_config)
 
         map = MapDict()
 
         self.map_cache[map_file_config.name] = map
 
-        if os.path.exists(map_file_config.transform_code):
-            parent_path = Path(map_file_config.transform_code).parent
-            transform_code = Path(map_file_config.transform_code).stem
+        transform_code_pth = Path(map_file_config.transform_code)
+
+        if transform_code_pth.exists():
+            parent_path = transform_code_pth.parent
+            transform_code = transform_code_pth.stem
             sys.path.append(str(parent_path))
             is_first = True
             transform_module = None
@@ -162,10 +165,10 @@ class KozaApp:
         else:
             key_column = map_file_config.key
             value_columns = map_file_config.values
-            for row in source_file:
+            for row in map_file:
                 map[row[key_column]] = {
                     key: value for key, value in row.items() if key in value_columns
                 }
 
-    def write(self, source_name, entities: Iterable):
-        self.writer_registry[source_name].write(entities)
+    def write(self, *entities):
+        self.writer.write(entities)

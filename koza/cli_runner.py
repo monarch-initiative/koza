@@ -1,51 +1,58 @@
 """
-Module for managing koza runs
+Module for managing koza runs through the CLI
 """
 
 import logging
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 import yaml
 
 from koza.app import KozaApp
+from koza.exceptions import NextRowException
 from koza.io.reader.csv_reader import CSVReader
 from koza.io.reader.json_reader import JSONReader
 from koza.io.reader.jsonl_reader import JSONLReader
 from koza.io.utils import open_resource
-from koza.model.config.source_config import CompressionType, FormatType, OutputFormat, SourceConfig
+from koza.model.config.source_config import (
+    CompressionType,
+    FormatType,
+    OutputFormat,
+    PrimaryFileConfig,
+)
 from koza.model.source import Source
 from koza.model.translation_table import TranslationTable
 
 LOG = logging.getLogger(__name__)
 
-KOZA_APP = None
+koza_app = None
 
 
 def set_koza(koza: KozaApp):
-    global KOZA_APP
-    KOZA_APP = koza
+    global koza_app
+    koza_app = koza
 
 
 def set_koza_app(
     source: Source,
+    translation_table: TranslationTable = None,
     output_dir: str = './output',
     output_format: OutputFormat = OutputFormat('jsonl'),
 ) -> KozaApp:
     """
     Setter for singleton koza app object
     """
-    global KOZA_APP
+    global koza_app
 
-    KOZA_APP = KozaApp(source, output_dir, output_format)
-    return KOZA_APP
+    koza_app = KozaApp(source, translation_table, output_dir, output_format)
+    return koza_app
 
 
 def get_koza_app() -> Optional[KozaApp]:
     """
     Getter for singleton koza app object
     """
-    return KOZA_APP
+    return koza_app
 
 
 def validate_file(
@@ -85,31 +92,13 @@ def validate_file(
             pass
 
 
-def validate_source_files(source: str, source_files: List[str]) -> List[str]:
-    """
-    Resolve a source string to its source metadata file
-
-    :param source:
-    :param source_files:
-    :return:
-    """
-    source_dir = Path(source).parent
-    source_paths = []
-    for src_file in source_files:
-        if not (Path(src_file).exists() or Path(src_file).is_file()):
-            # check if it's in source parent
-            updated_src_file = source_dir / src_file
-            if not (Path(updated_src_file).exists() or Path(updated_src_file).is_file()):
-                raise ValueError(f"Source file doesn't exist: {src_file}")
-            else:
-                source_paths.append(updated_src_file)
-        else:
-            source_paths.append(src_file)
-    return source_paths
-
-
 def get_translation_table(global_table: str, local_table: str) -> TranslationTable:
-    # Look for translation table files
+    """
+    Create a translation table object from two file paths
+    :param global_table: str, path to global table yaml
+    :param local_table: str, path to local table yaml
+    :return: TranslationTable
+    """
 
     global_tt = {}
     local_tt = {}
@@ -144,16 +133,23 @@ def transform_source(
     translation_table = get_translation_table(global_table, local_table)
 
     with open(source, 'r') as source_fh:
-        source_config = SourceConfig(**yaml.safe_load(source_fh))
+        source_config = PrimaryFileConfig(**yaml.safe_load(source_fh))
         if not source_config.name:
             source_config.name = Path(source).stem
 
-        source = Source(
-            source_files=validate_source_files(source, source_config.source_files),
-            name=source_config.name,
-            dataset_description=source_config.dataset_description,
-            translation_table=translation_table,
-        )
+        source = Source(source_config)
 
-        koza_app = set_koza_app(source, output_dir, output_format)
+        koza_app = set_koza_app(source, translation_table, output_dir, output_format)
         koza_app.process_sources()
+
+
+def next_row():
+    """
+    Breaks out of the facade file and iterates to the next row
+    in the file
+
+    Effectively a continue statement
+    https://docs.python.org/3/reference/simple_stmts.html#continue
+    :return:
+    """
+    raise NextRowException

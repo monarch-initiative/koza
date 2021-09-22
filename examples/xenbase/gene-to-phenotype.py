@@ -1,12 +1,15 @@
 import uuid
 
-from biolink_model_pydantic.model import Gene, PhenotypicFeature, GeneToPhenotypicFeatureAssociation, Predicate
-from koza.manager.data_provider import inject_row
-from koza.manager.data_collector import write
+from biolink_model_pydantic.model import (
+    Gene,
+    GeneToPhenotypicFeatureAssociation,
+    PhenotypicFeature,
+    Predicate,
+)
 
-source_name = 'gene-to-phenotype'
+from koza.cli_runner import koza_app
 
-row = inject_row(source_name)
+row = koza_app.get_row()
 
 gene = Gene(id='Xenbase:' + row['SUBJECT'])
 
@@ -17,10 +20,10 @@ association = GeneToPhenotypicFeatureAssociation(
     subject=gene.id,
     predicate=Predicate.has_phenotype,
     object=phenotype.id,
-    relation=row['RELATION'].replace('_', ':')
+    relation=row['RELATION'].replace('_', ':'),
 )
 
 if row['SOURCE']:
     association.publications = [row['SOURCE']]
 
-write(source_name, gene, association, phenotype)
+koza_app.write(gene, association, phenotype)
