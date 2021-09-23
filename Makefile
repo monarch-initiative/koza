@@ -39,6 +39,7 @@ clean:
 	rm -rf `find . -name __pycache__`
 	rm -f `find . -type f -name '*.py[co]' `
 	rm -rf .pytest_cache
+	rm -rf test-output
 	rm -rf dist
 
 .PHONY: lint

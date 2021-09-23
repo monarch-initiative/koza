@@ -2,8 +2,6 @@ name: 'genepage-2-gene'
 metadata:
   description: 'Mapping file provided by Xenbase that maps from GENEPAGE to GENE'
 
-source: 'Xenbase'
-
 delimiter: '\t'
 
 has_header: 'False'

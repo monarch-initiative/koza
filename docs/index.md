@@ -2,9 +2,9 @@
 
 ![pupa](img/pupa.png)
 
-*Disclaimer*: Koza is in beta; we are looking for beta testers
+*Disclaimer*: Koza is in beta
 
-Transform csv, json, yaml, jsonl, and xml and converting them to a target
+Transform csv, json, jsonl, and yaml - converting them to a target
 csv, json, or jsonl format based on your dataclass model.  Koza also can output
 data in the [KGX format](https://github.com/biolink/kgx/blob/master/specification/kgx-format.md#kgx-format-as-tsv)
 
@@ -17,13 +17,19 @@ data in the [KGX format](https://github.com/biolink/kgx/blob/master/specificatio
 - Create and use translation tables to map between source and target vocabularies
 
 
-#### Installation
+### Installation
 
 ```
 pip install koza
 ```
 
-#### Getting Started
+### Getting Started
+
+#### Writing an ingest
+
+[Ingest Configuration](ingest_configuration.md)
+
+#### Running an ingest
 
 Send a local or remove csv file through Koza to get some basic information (headers, number of rows)
 
@@ -47,7 +53,7 @@ koza validate \
   --compression gzip
 ```
 
-###### Example: transforming StringDB
+##### Example: transforming StringDB
 
 ```bash
 koza transform --source examples/string/metadata.yaml 

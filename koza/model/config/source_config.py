@@ -121,6 +121,13 @@ class ColumnFilter:
 
 @dataclass(frozen=True)
 class DatasetDescription:
+    """
+    These options should be treated as being in alpha, as we need
+    to align with various efforts (hcls, translator infores)
+
+    These currently do not serve a purpose in koza other
+    than documentation
+    """
     id: str = None  # TODO constrain to a curie?
     name: str = None  # If empty use source name
     ingest_title: str = None  # Map to biolink name
@@ -139,8 +146,6 @@ class SourceConfig:
 
     TODO document fields
 
-    TODO override translation table path?
-
     delimiter:
     separator string similar to what works in str.split()
     https://docs.python.org/3/library/stdtypes.html#str.split
@@ -154,8 +159,6 @@ class SourceConfig:
     standard_format: StandardFormat = None
     metadata: Union[DatasetDescription, str] = None
     columns: List[Union[str, Dict[str, FieldType]]] = None
-    node_properties: List[str] = None
-    edge_properties: List[str] = None
     required_properties: List[str] = None
     delimiter: str = None
     header_delimiter: str = None
@@ -300,13 +303,14 @@ class SourceConfig:
 
 @dataclass(config=PydanticConfig)
 class PrimaryFileConfig(SourceConfig):
+    node_properties: List[str] = None
+    edge_properties: List[str] = None
     depends_on: List[str] = field(default_factory=list)
     on_map_failure: MapErrorEnum = MapErrorEnum.warning
 
 
 @dataclass(config=PydanticConfig)
 class MapFileConfig(SourceConfig):
-    source: str = None
     key: str = None
     values: List[str] = None
     curie_prefix: str = None
