@@ -50,7 +50,6 @@ class CompressionType(str, Enum):
     """
 
     gzip = 'gzip'
-    none = 'none'
 
 
 class FilterCode(str, Enum):
@@ -168,7 +167,6 @@ class SourceConfig:
     json_path: List[Union[StrictStr, StrictInt]] = None
     transform_code: str = None
     transform_mode: TransformMode = TransformMode.loop
-    output_format: OutputFormat = None
 
     def __post_init_post_parse__(self):
         """

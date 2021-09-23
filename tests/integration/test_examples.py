@@ -3,7 +3,7 @@ End to end test of String load from examples/string
 
 """
 
-import os
+from pathlib import Path
 
 import pytest
 
@@ -17,38 +17,38 @@ from koza.model.config.source_config import OutputFormat
         (
             "string",
             [
-                "stringdb.protein-links-detailed",
+                "protein-links-detailed",
             ],
             OutputFormat.tsv,
         ),
         (
             "string",
             [
-                "stringdb.protein-links-detailed",
+                "protein-links-detailed",
             ],
             OutputFormat.jsonl,
         ),
         (
             "string-declarative",
             [
-                "stringdb.protein-links-detailed",
+                "protein-links-detailed",
             ],
             OutputFormat.tsv,
         ),
         (
             "string-declarative",
             [
-                "stringdb.protein-links-detailed",
+                "protein-links-detailed",
             ],
             OutputFormat.jsonl,
         ),
-        ("string-w-map", ["stringdb.protein-links-detailed"], OutputFormat.tsv),
-        ("string-w-map", ["stringdb.protein-links-detailed"], OutputFormat.jsonl),
+        ("string-w-map", ["protein-links-detailed"], OutputFormat.tsv),
+        ("string-w-map", ["protein-links-detailed"], OutputFormat.jsonl),
     ],
 )
 def test_examples(ingest, output_names, output_format):
 
-    source = f"examples/{ingest}/metadata.yaml"
+    source = f"examples/{ingest}/protein-links-detailed.yaml"
     output_suffix = str(output_format).split('.')[1]
     output_dir = f"./test-output/{ingest}-{output_suffix}"
 
@@ -64,8 +64,8 @@ def test_examples(ingest, output_names, output_format):
     transform_source(source, output_dir, output_format, "examples/translation_table.yaml", None)
 
     for file in output_files:
-        assert os.path.exists(file)
-        assert os.path.getsize(file) > 0
+        assert Path(file).exists()
+        assert Path(file).stat().st_size > 0
 
     # TODO: at some point, these assertions could get more rigorous, but knowing if we have errors/exceptions is a start
     # TODO: kgx validation could also be added back in, especially if something programatic is done with the output

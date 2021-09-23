@@ -37,18 +37,14 @@ class KozaApp:
         self.translation_table = translation_table
         self.output_dir = output_dir
         self.output_format = output_format
-        self.map_registry: Dict[str, Source] = {}
-        self.map_cache: Dict[str, Dict] = {}
+        self._map_registry: Dict[str, Source] = {}
+        self._map_cache: Dict[str, Dict] = {}
         self.curie_cleaner: CurieCleaner = CurieCleaner()
-        self.writer: KozaWriter = self.get_writer(
+        self.writer: KozaWriter = self._get_writer(
             source.config.name, source.config.node_properties, source.config.edge_properties
         )
 
         logging.getLogger(__name__)
-
-        if not source.config.transform_code:
-            # look for it alongside the source conf as a .py file
-            source.config.transform_code = str(Path(source).parent / Path(source).stem) + '.py'
 
         if source.config.depends_on is not None:
             for map_file in source.config.depends_on:
@@ -57,32 +53,25 @@ class KozaApp:
                     map_file_config.transform_code = (
                         str(Path(map_file).parent / Path(map_file).stem) + '.py'
                     )
-                self.map_registry[map_file_config.name] = Source(map_file_config)
+                self._map_registry[map_file_config.name] = Source(map_file_config)
 
-        self.writer = self.get_writer(
+        self.writer = self._get_writer(
             source.config.name, source.config.node_properties, source.config.edge_properties
         )
 
         # load the map cache
-        for map_file in self.map_registry.values():
-            if map_file.config.name not in self.map_cache:
-                self.load_map(map_file.config)
-
-    def get_writer(self, name, node_properties, edge_properties):
-        if self.output_format == OutputFormat.tsv:
-            return TSVWriter(self.output_dir, name, node_properties, edge_properties)
-
-        elif self.output_format == OutputFormat.jsonl:
-            return JSONLWriter(self.output_dir, name)
+        for map_file in self._map_registry.values():
+            if map_file.config.name not in self._map_cache:
+                self._load_map(map_file.config)
 
     def get_map(self, map_name: str):
-        return self.map_cache[map_name]
+        return self._map_cache[map_name]
 
     def get_row(self, ingest_name: str = None) -> Dict:
         if ingest_name and ingest_name == self.source.config.name:
             return next(self.source)
-        elif ingest_name in self.map_registry:
-            return next(self.map_registry[ingest_name])
+        elif ingest_name in self._map_registry:
+            return next(self._map_registry[ingest_name])
         elif ingest_name:
             raise KeyError(f"{ingest_name} is not the name of the source file or a mapping file")
         else:
@@ -137,12 +126,34 @@ class KozaApp:
         # remove directory from sys.path to prevent name clashes
         sys.path.remove(str(parent_path))
 
-    def load_map(self, map_file_config: MapFileConfig):
+    @staticmethod
+    def next_row():
+        """
+        Breaks out of the facade file and iterates to the next row
+        in the file
+
+        Effectively a continue statement
+        https://docs.python.org/3/reference/simple_stmts.html#continue
+        :return:
+        """
+        raise NextRowException
+
+    def write(self, *entities):
+        self.writer.write(entities)
+
+    def _get_writer(self, name, node_properties, edge_properties):
+        if self.output_format == OutputFormat.tsv:
+            return TSVWriter(self.output_dir, name, node_properties, edge_properties)
+
+        elif self.output_format == OutputFormat.jsonl:
+            return JSONLWriter(self.output_dir, name)
+
+    def _load_map(self, map_file_config: MapFileConfig):
         map_file = Source(map_file_config)
 
         map = MapDict()
 
-        self.map_cache[map_file_config.name] = map
+        self._map_cache[map_file_config.name] = map
 
         transform_code_pth = Path(map_file_config.transform_code)
 
@@ -169,6 +180,3 @@ class KozaApp:
                 map[row[key_column]] = {
                     key: value for key, value in row.items() if key in value_columns
                 }
-
-    def write(self, *entities):
-        self.writer.write(entities)

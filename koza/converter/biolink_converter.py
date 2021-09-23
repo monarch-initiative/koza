@@ -1,6 +1,6 @@
 from biolink_model_pydantic.model import Gene
 
-from koza.manager.data_provider import inject_curie_cleaner
+from koza.cli_runner import koza_app
 
 
 def gpi2gene(row: dict) -> Gene:
@@ -13,18 +13,16 @@ def gpi2gene(row: dict) -> Gene:
     :return: biolink:Gene model representing the GPI row
     """
 
-    curie_cleaner = inject_curie_cleaner()
-
     xrefs = []
     if row["DB_Xref(s)"]:
-        xrefs = [curie_cleaner.clean(xref) for xref in row["DB_Xref(s)"].split("|")]
+        xrefs = [koza_app.curie_cleaner.clean(xref) for xref in row["DB_Xref(s)"].split("|")]
 
     gene = Gene(
         id=row['DB_Object_ID'],
         symbol=row['DB_Object_Symbol'],
         name=row['DB_Object_Name'],
         synonym=row['DB_Object_Synonym(s)'].split("|") if row['DB_Object_Synonym(s)'] else [],
-        in_taxon=curie_cleaner.clean(row['Taxon']),
+        in_taxon=koza_app.curie_cleaner.clean(row['Taxon']),
         xref=xrefs,
         source=row['DB'],
     )
