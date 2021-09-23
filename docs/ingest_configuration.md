@@ -1,23 +1,6 @@
 ## Ingest Configuration
 
-### Source (aka metadata.yaml)
-
-The Source File provides metadata for the description of the dataset and the list of Source Files to be ingested
-
-```yaml
-name: 'somethingbase'
-
-dataset_description:
-  ingest_title: 'SomethingBase'
-  ingest_url: 'https://somethingbase.org'
-  description: 'SomethingBase: A Website With Some Data'
-  rights: 'https://somethingbase.org/rights.html'
-
-# The list of source files should map 
-source_files:
-  - 'gene-information.yaml'
-  - 'gene-to-phenotype.yaml'
-```
+Ingests are configured via a single source file yaml, and optional mapping file yaml(s)
 
 ### Source File(s)
 
@@ -35,6 +18,12 @@ compression: 'gzip'
 files:
   - './data/really-cool-data-1.json.gz'
   - './data/really-cool-data-2.json.gz'
+
+# The dataset description
+metadata:
+  description: 'SomethingBase: A Website With Some Data'
+  rights: 'https://somethingbase.org/rights.html'
+
 
 # in a JSON ingest, this will be the path to the array to be iterated over as the input collection
 json_path:
@@ -104,4 +93,20 @@ transform_mode: 'loop'
 # Python code to run for ingest. Default is the same file name as the source_file yaml, but with a .py extension
 # You probably don't need to set this property
 transform_code: 'name-of-ingest.py'
+```
+
+### Map File(s)
+
+This YAML file sets properties for creating a dictionary that an ingest depends on.
+It contains the same options as a source file, excluding depends_on, node_properties,
+edge_properties, and on_map_failure.  It adds the following options:
+
+```yaml
+# The column name in which to get the key for the dictionary
+key: someKey
+
+# The column(s) in which to store as values for the key
+values:
+  - value1
+  - value2
 ```

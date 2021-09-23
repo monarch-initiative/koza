@@ -3,8 +3,6 @@ name: 'entrez_2_string'
 metadata:
   description: 'Mapping file provided by StringDB that contains entrez to protein ID mappings'
 
-source: 'stringdb'
-
 delimiter: '\t'
 header_delimiter: '/'
 
