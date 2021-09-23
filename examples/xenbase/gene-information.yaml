@@ -9,7 +9,7 @@ compression: 'gzip'
 
 skip_lines: 22
 
-metadata: './metadata.yaml'
+metadata: './examples/xenbase/metadata.yaml'
 
 node_properties:
   - 'id'

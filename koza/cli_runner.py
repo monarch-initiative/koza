@@ -9,7 +9,6 @@ from typing import Optional
 import yaml
 
 from koza.app import KozaApp
-from koza.exceptions import NextRowException
 from koza.io.reader.csv_reader import CSVReader
 from koza.io.reader.json_reader import JSONReader
 from koza.io.reader.jsonl_reader import JSONLReader
@@ -92,7 +91,7 @@ def validate_file(
             pass
 
 
-def get_translation_table(global_table: str, local_table: str) -> TranslationTable:
+def get_translation_table(global_table: str = None, local_table: str = None) -> TranslationTable:
     """
     Create a translation table object from two file paths
     :param global_table: str, path to global table yaml
@@ -126,8 +125,8 @@ def transform_source(
     source: str,
     output_dir: str,
     output_format: OutputFormat,
-    global_table: str,
-    local_table: str,
+    global_table: str = None,
+    local_table: str = None,
 ):
 
     translation_table = get_translation_table(global_table, local_table)
@@ -137,19 +136,11 @@ def transform_source(
         if not source_config.name:
             source_config.name = Path(source).stem
 
-        source = Source(source_config)
+        if not source_config.transform_code:
+            # look for it alongside the source conf as a .py file
+            source_config.transform_code = str(Path(source).parent / Path(source).stem) + '.py'
 
-        koza_app = set_koza_app(source, translation_table, output_dir, output_format)
+        koza_source = Source(source_config)
+
+        koza_app = set_koza_app(koza_source, translation_table, output_dir, output_format)
         koza_app.process_sources()
-
-
-def next_row():
-    """
-    Breaks out of the facade file and iterates to the next row
-    in the file
-
-    Effectively a continue statement
-    https://docs.python.org/3/reference/simple_stmts.html#continue
-    :return:
-    """
-    raise NextRowException

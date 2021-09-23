@@ -13,8 +13,8 @@ from koza.model.source import Source
 def mock_koza():
 
     # This should be extracted out but for quick prototyping
-    def _mock_write(self, source_name, *entities):
-        self._entities = list(*entities)
+    def _mock_write(self, *entities):
+        self._entities = list(entities)
 
     def _make_mock_koza_app(
         name: str,
@@ -35,7 +35,7 @@ def mock_koza():
         koza = KozaApp(mock_source_file)
         # TODO filter mocks
         koza.translation_table = translation_table
-        koza.map_cache = map_cache
+        koza._map_cache = map_cache
         koza.write = types.MethodType(_mock_write, koza)
 
         return koza

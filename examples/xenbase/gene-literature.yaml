@@ -4,7 +4,7 @@ delimiter: '\t'
 
 has_header: False
 
-metadata: './metadata.yaml'
+metadata: './examples/xenbase/metadata.yaml'
 
 files:
   - './examples/data/LiteratureMatchedGenesByPaper.txt'

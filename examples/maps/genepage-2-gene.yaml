@@ -1,5 +1,5 @@
 name: 'genepage-2-gene'
-file_metadata:
+metadata:
   description: 'Mapping file provided by Xenbase that maps from GENEPAGE to GENE'
 
 source: 'Xenbase'
