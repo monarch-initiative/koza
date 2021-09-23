@@ -87,24 +87,24 @@ class FieldType(str, Enum):
     str = 'str'
     int = 'int'
     float = 'float'
-    # Proportion = 'Proportion'
 
 
 class OutputFormat(str, Enum):
     """
-    Have this set up but for prototyping removing this
-    as an option to only support the TSV output format
+    Output formats
     """
 
-    tsv = 'tsv'
-    json = 'json'
+    tsv = 'tsv'  # TODO
     jsonl = 'jsonl'
+    kgx = 'kgx'
 
 
 class TransformMode(str, Enum):
     """
-    Have this set up but for prototyping removing this
-    as an option to only support the TSV output format
+    Configures how an external transform file is processed
+    flat uses importlib and watches for a StopIteration
+    exception, loop runs the code once and expects that
+    a for loop is being used to iterate over a file
     """
 
     flat = 'flat'
@@ -128,6 +128,7 @@ class DatasetDescription:
     These currently do not serve a purpose in koza other
     than documentation
     """
+
     id: str = None  # TODO constrain to a curie?
     name: str = None  # If empty use source name
     ingest_title: str = None  # Map to biolink name
@@ -303,6 +304,10 @@ class SourceConfig:
 
 @dataclass(config=PydanticConfig)
 class PrimaryFileConfig(SourceConfig):
+    """
+    node_properties and edge_properties are used for configuring
+    the KGX writer
+    """
     node_properties: List[str] = None
     edge_properties: List[str] = None
     depends_on: List[str] = field(default_factory=list)

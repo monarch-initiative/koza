@@ -151,6 +151,7 @@ class CSVReader:
 
         else:
             self.fieldnames = self.field_type_map.keys()
+
         try:
             row = next(self.reader)
         except StopIteration:
@@ -171,25 +172,32 @@ class CSVReader:
         # to determine what to do here
         fields_len = len(self.fieldnames)
         row_len = len(row)
-        if fields_len > row_len:
-            LOG.warning(
-                f"CSV file {self.name} has {fields_len - row_len} fewer columns at {self.reader.line_num}"
-            )
-        elif row_len > fields_len:
-            LOG.warning(
-                f"CSV file {self.name} has {row_len - fields_len} extra columns at {self.reader.line_num}"
-            )
 
         # if we've made it here we can convert a row to a dict
         field_map = dict(zip(self.fieldnames, row))
 
+        if fields_len > row_len:
+            raise ValueError(
+                f"CSV file {self.name} has {fields_len - row_len} fewer columns at {self.reader.line_num}"
+            )
+
+        elif fields_len < row_len:
+            LOG.warning(
+                f"CSV file {self.name} has {row_len - fields_len} extra columns at {self.reader.line_num}"
+            )
+            # Not sure if this would serve a purpose
+            #
+            # if not 'extra_cols' in self.field_type_map:
+            #     # Create a type map for extra columns
+            #     self.field_type_map['extra_cols'] = FieldType.str
+            # field_map['extra_cols'] = row[fields_len:]
+
         typed_field_map = {}
 
         for field, field_value in field_map.items():
-            # This is really unreadable - malkovich malkovich
             # Take the value and coerce it using self.field_type_map (field: FieldType)
             # FIELD_TYPE is map of the field_type enum to the python
-            # built-in type or custom extras defined in koza
+            # to built-in type or custom extras defined in the source config
             try:
                 typed_field_map[field] = FIELDTYPE_CLASS[self.field_type_map[field]](field_value)
             except KeyError as key_error:
