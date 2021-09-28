@@ -94,7 +94,7 @@ class OutputFormat(str, Enum):
     Output formats
     """
 
-    tsv = 'tsv'  # TODO
+    tsv = 'tsv'
     jsonl = 'jsonl'
     kgx = 'kgx'
 

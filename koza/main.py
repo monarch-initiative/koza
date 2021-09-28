@@ -22,7 +22,7 @@ LOG = logging.getLogger(__name__)
 def transform(
     source: str = typer.Option(..., help="Source metadata file"),
     output_dir: str = typer.Option('./output', help="Path to output directory"),
-    output_format: OutputFormat = typer.Option("jsonl", help="Output format"),
+    output_format: OutputFormat = typer.Option("tsv", help="Output format"),
     global_table: str = typer.Option(None, help="Path to global translation table"),
     local_table: str = typer.Option(None, help="Path to local translation table"),
     quiet: bool = False,
