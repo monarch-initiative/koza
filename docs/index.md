@@ -60,3 +60,13 @@ koza transform --source examples/string/metadata.yaml
 
 koza transform --source examples/string-declarative/metadata.yaml 
 ```
+#### Running an ingest from within a python script
+
+Executing a koza transform from within a python script can be done by calling transform_source from koza.cli_runner
+
+```python
+from koza.cli_runner import transform_source
+
+transform_source("./examples/string/protein-links-detailed.yaml",
+                 "output", "tsv", "./examples/translation_table.yaml", None)
+```

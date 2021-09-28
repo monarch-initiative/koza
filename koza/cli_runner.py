@@ -36,7 +36,7 @@ def set_koza_app(
     source: Source,
     translation_table: TranslationTable = None,
     output_dir: str = './output',
-    output_format: OutputFormat = OutputFormat('jsonl'),
+    output_format: OutputFormat = OutputFormat('tsv'),
 ) -> KozaApp:
     """
     Setter for singleton koza app object
@@ -124,7 +124,7 @@ def get_translation_table(global_table: str = None, local_table: str = None) -> 
 def transform_source(
     source: str,
     output_dir: str,
-    output_format: OutputFormat,
+    output_format: OutputFormat = OutputFormat('tsv'),
     global_table: str = None,
     local_table: str = None,
 ):
