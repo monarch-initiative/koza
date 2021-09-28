@@ -32,7 +32,7 @@ def open_resource(resource: Union[str, PathLike], compression: CompressionType =
     :return: str, next line in resource
 
     """
-    if isinstance(resource, PosixPath) and Path(resource).exists():
+    if Path(resource).exists():
         if compression is None:
             # Try gzip first
             try:

@@ -47,7 +47,7 @@ dev = [
 ]
 
 [tool.flit.scripts]
-koza = "koza:main.app"
+koza = "koza:main.typer_app"
 
 [tool.black]
 line_length = 100

@@ -30,7 +30,7 @@ Send a local or remove csv file through Koza to get some basic information (head
 
 ```bash
 koza validate \
-  --file https://raw.githubusercontent.com/monarch-initiative/koza/dev/tests/resources/source-files/string.tsv \
+  --file https://raw.githubusercontent.com/monarch-initiative/koza/main/examples/data/string.tsv \
   --delimiter ' '
 ```
 
@@ -51,7 +51,7 @@ koza validate \
 ###### Example: transforming StringDB
 
 ```bash
-koza transform --source examples/string/metadata.yaml 
+koza transform --source examples/string/protein-links-detailed.yaml --global-table examples/translation_table.yaml 
 
-koza transform --source examples/string-declarative/metadata.yaml 
+koza transform --source examples/string-declarative/protein-links-detailed.yaml --global-table examples/translation_table.yaml
 ```
