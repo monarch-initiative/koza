@@ -1,8 +1,8 @@
 import logging
 from csv import reader
-from typing import IO, Any, Dict, Iterator
+from typing import IO, Any, Dict, Iterator, List, Union
 
-from koza.model.config.source_config import FieldType
+from koza.model.config.source_config import FieldType, HeaderMode
 
 LOG = logging.getLogger(__name__)
 
@@ -45,10 +45,9 @@ class CSVReader:
         io_str: IO[str],
         field_type_map: Dict[str, FieldType] = None,
         delimiter: str = ",",
-        has_header: bool = True,
+        header: Union[int, HeaderMode] = HeaderMode.infer,
         header_delimiter: str = None,
         dialect: str = "excel",
-        skip_lines: int = 0,
         skip_blank_lines: bool = True,
         name: str = "csv file",
         *args,
@@ -57,26 +56,30 @@ class CSVReader:
         """
         :param io_str: Any IO stream that yields a string
                        See https://docs.python.org/3/library/io.html#io.IOBase
-        :param name: filename or alias
         :param field_type_map: A dictionary of field names and their type (using the FieldType enum)
         :param delimiter: Field delimiter (eg. '\t' ',' ' ')
-        :param has_header: true if the file has a header, default=True
+        :param header: 0 based index of the file that contains the header,
+                       or header mode 'infer'|'none' ( default='infer' )
+                       if 'infer' will use the first non-empty and uncommented line
+                       if 'none' will use the field_type_map keys, if field_type_map
         :param header_delimiter: delimiter for the header row, default = self.delimiter
         :param dialect: csv dialect, default=excel
+        :param skip_blank_lines: true to skip blank lines, false to insert NaN for blank lines,
+        :param name: filename or alias
         :param args: additional args to pass to csv.reader
         :param kwargs: additional kwargs to pass to csv.reader
         """
         self.io_str = io_str
         self.field_type_map = field_type_map
         self.dialect = dialect
-        self.has_header = has_header
+        self.header = header
         self.header_delimiter = header_delimiter if header_delimiter else delimiter
-        self.skip_lines = skip_lines
         self.skip_blank_lines = skip_blank_lines
         self.name = name
 
         self.line_num = 0
-        self.fieldnames = []
+
+        self._header = None
 
         if delimiter == '\\s':
             delimiter = ' '
@@ -90,67 +93,8 @@ class CSVReader:
 
     def __next__(self) -> Dict[str, Any]:
 
-        while self.line_num < self.skip_lines:
-            next(self.reader)
-            self.line_num = self.reader.line_num
-
-        if self.line_num == self.skip_lines:
-
-            if not self.has_header and not self.field_type_map:
-                raise ValueError(
-                    f"there is no header and columns have not been supplied\n"
-                    f"configure the 'columns' property in the source yaml"
-                )
-
-            if self.has_header:
-                fieldnames = next(
-                    reader(
-                        self.io_str, **{'delimiter': self.header_delimiter, 'dialect': self.dialect}
-                    )
-                )
-                # todo: maybe comment character should be specified?
-                fieldnames[0] = fieldnames[0].lstrip('#')
-                fieldnames[0] = fieldnames[0].lstrip('!!')
-                fieldnames = [f.strip() for f in fieldnames]
-            else:
-                fieldnames = list(self.field_type_map.keys())
-
-            self.fieldnames = fieldnames
-
-            if self.field_type_map:
-
-                configured_fields = list(self.field_type_map.keys())
-
-                if set(configured_fields) > set(fieldnames):
-                    raise ValueError(
-                        f"Configured columns missing in source file {self.name}\n"
-                        f"{set(configured_fields) - set(fieldnames)}"
-                    )
-
-                if set(fieldnames) > set(configured_fields):
-                    LOG.warning(
-                        f"Additional column(s) in source file {self.name}\n"
-                        f"{set(fieldnames) - set(configured_fields)}\n"
-                        f"Checking if new column(s) inserted at end of the row"
-                    )
-                    # add to type map
-                    for new_fields in set(fieldnames) - set(configured_fields):
-                        self.field_type_map[new_fields] = FieldType.str
-
-                # Check if the additional columns are appended
-                # not sure if this would useful or just noise
-                if fieldnames[: len(configured_fields)] != configured_fields:
-                    LOG.warning(
-                        f"Additional columns located within configured fields\n"
-                        f"given: {configured_fields}\n"
-                        f"found: {fieldnames}"
-                    )
-            else:
-                self.field_type_map = {field: FieldType.str for field in fieldnames}
-                LOG.info(f"No headers supplied for {self.name}, found {fieldnames}")
-
-        else:
-            self.fieldnames = self.field_type_map.keys()
+        if not self._header:
+            self._set_header()
 
         try:
             row = next(self.reader)
@@ -163,6 +107,8 @@ class CSVReader:
         if self.skip_blank_lines:
             while not row:
                 row = next(self.reader)
+        else:
+            row = ['NaN' for _ in range(len(self._header))]
 
         # Check row length discrepancies for each row
         # TODO currently varying line lengths will raise an exception
@@ -170,11 +116,12 @@ class CSVReader:
         # out which lines vary
         # Could also create a custom exception and allow the client code
         # to determine what to do here
-        fields_len = len(self.fieldnames)
+        fields_len = len(self._header)
         row_len = len(row)
+        stripped_row = [val.strip() for val in row]
 
         # if we've made it here we can convert a row to a dict
-        field_map = dict(zip(self.fieldnames, row))
+        field_map = dict(zip(self._header, stripped_row))
 
         if fields_len > row_len:
             raise ValueError(
@@ -204,3 +151,86 @@ class CSVReader:
                 LOG.warning(key_error)
 
         return typed_field_map
+
+    def _set_header(self):
+        if isinstance(self.header, int):
+            while self.line_num < self.header:
+                next(self.reader)
+                self.line_num = self.reader.line_num
+            self._header = self._parse_header_line()
+
+            if self.field_type_map:
+                self._compare_headers_to_supplied_columns()
+            else:
+                self.field_type_map = {field: FieldType.str for field in self._header}
+
+        elif self.header == 'infer':
+            self._header = self._parse_header_line(skip_blank_or_commented_lines=True)
+            LOG.info(f"headers for {self.name} parsed as {self._header}")
+            if self.field_type_map:
+                self._compare_headers_to_supplied_columns()
+            else:
+                self.field_type_map = {field: FieldType.str for field in self._header}
+
+        elif self.header == 'none':
+            if self.field_type_map:
+                self._header = list(self.field_type_map.keys())
+            else:
+                raise ValueError(
+                    f"there is no header and columns have not been supplied\n"
+                    f"configure the 'columns' property in the source yaml"
+                )
+
+    def _parse_header_line(self, skip_blank_or_commented_lines:bool = False) -> List[str]:
+        """
+        Parse the header line and return a list of headers
+        """
+        fieldnames = next(
+            reader(
+                self.io_str, **{'delimiter': self.header_delimiter, 'dialect': self.dialect}
+            )
+        )
+        if skip_blank_or_commented_lines:
+            while not fieldnames or fieldnames[0].startswith('#'):
+                fieldnames = next(
+                    reader(
+                        self.io_str, **{'delimiter': self.header_delimiter, 'dialect': self.dialect}
+                    )
+                )
+
+        # todo: maybe comment character should be specified?
+        fieldnames[0] = fieldnames[0].lstrip('#')
+        fieldnames[0] = fieldnames[0].lstrip('!!')
+        return [f.strip() for f in fieldnames]
+
+    def _compare_headers_to_supplied_columns(self):
+        """
+        Compares headers to supplied columns
+        :return:
+        """
+        configured_fields = list(self.field_type_map.keys())
+
+        if set(configured_fields) > set(self._header):
+            raise ValueError(
+                f"Configured columns missing in source file {self.name}\n"
+                f"{set(configured_fields) - set(self._header)}"
+            )
+
+        if set(self._header) > set(configured_fields):
+            LOG.warning(
+                f"Additional column(s) in source file {self.name}\n"
+                f"{set(self._header) - set(configured_fields)}\n"
+                f"Checking if new column(s) inserted at end of the row"
+            )
+            # add to type map
+            for new_fields in set(self._header) - set(configured_fields):
+                self.field_type_map[new_fields] = FieldType.str
+
+        # Check if the additional columns are appended
+        # not sure if this would useful or just noise
+        if self._header[: len(configured_fields)] != configured_fields:
+            LOG.warning(
+                f"Additional columns located within configured fields\n"
+                f"given: {configured_fields}\n"
+                f"found: {self._header}"
+            )

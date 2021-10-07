@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Dict, List, Union
 
 import yaml
-from pydantic import StrictFloat, StrictInt, StrictStr
+from pydantic import StrictFloat, StrictInt, StrictStr, StrictBool
 from pydantic.dataclasses import dataclass
 
 from koza.model.config.pydantic_config import PydanticConfig
@@ -111,6 +111,15 @@ class TransformMode(str, Enum):
     loop = 'loop'
 
 
+class HeaderMode(str, Enum):
+    """
+    Enum for supported header modes in addition to an index based lookup
+    """
+
+    infer = 'infer'
+    none = 'none'
+
+
 @dataclass(frozen=True)
 class ColumnFilter:
     column: str
@@ -147,6 +156,12 @@ class SourceConfig:
 
     TODO document fields
 
+    header: Optional, int|HeaderMode - the index (0 based) in which the
+            header appears in the file.  If header is set to infer
+            the headers will be set to the first line that is not blank
+            or commented with a hash.  If header is set to 'none'
+            then the columns field will be used
+
     delimiter:
     separator string similar to what works in str.split()
     https://docs.python.org/3/library/stdtypes.html#str.split
@@ -163,8 +178,7 @@ class SourceConfig:
     required_properties: List[str] = None
     delimiter: str = None
     header_delimiter: str = None
-    has_header: bool = True
-    skip_lines: int = 0
+    header: Union[int, HeaderMode] = HeaderMode.infer
     skip_blank_lines: bool = True
     compression: CompressionType = None
     filters: List[ColumnFilter] = field(default_factory=list)

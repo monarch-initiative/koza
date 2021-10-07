@@ -51,8 +51,7 @@ class Source:
                         field_type_map=config.field_type_map,
                         delimiter=config.delimiter,
                         header_delimiter=config.header_delimiter,
-                        has_header=config.has_header,
-                        skip_lines=config.skip_lines,
+                        header=config.header,
                     )
                 )
             elif self.config.format == 'jsonl':
