@@ -1,3 +1,7 @@
+[![Pyversions](https://img.shields.io/pypi/pyversions/koza.svg)](https://pypi.python.org/pypi/koza)
+![](https://github.com/monarch-initiative/koza/actions/workflows/build.yml/badge.svg)
+[![PyPi](https://img.shields.io/pypi/v/koza.svg)](https://pypi.python.org/pypi/koza)
+
 ### Koza
 
 ![pupa](docs/img/pupa.png) Data transformation framework

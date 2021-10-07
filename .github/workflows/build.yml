@@ -1,6 +1,6 @@
 # Builds and runs pytest on ubuntu-latest
 # Tests python versions >=3.6
-name: run tests
+name: Build
 
 on:
   push:
