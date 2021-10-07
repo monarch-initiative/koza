@@ -160,7 +160,8 @@ class SourceConfig:
             header appears in the file.  If header is set to infer
             the headers will be set to the first line that is not blank
             or commented with a hash.  If header is set to 'none'
-            then the columns field will be used
+            then the columns field will be used, or raise a ValueError
+            if columns are not supplied
 
     delimiter:
     separator string similar to what works in str.split()
@@ -255,6 +256,14 @@ class SourceConfig:
                 next(iter(column)) if isinstance(column, Dict) else column
                 for column in self.columns
             ]
+
+        if self.header == HeaderMode.none and not self.columns:
+            raise ValueError(
+                    f"there is no header and columns have not been supplied\n"
+                    f"configure the 'columns' field or set header to the 0-based"
+                     "index in which it appears in the file, or set this value to"
+                    "'infer'"
+            )
 
         for column in filtered_columns:
             if column not in all_columns:

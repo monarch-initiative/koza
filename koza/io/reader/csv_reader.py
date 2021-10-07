@@ -61,7 +61,9 @@ class CSVReader:
         :param header: 0 based index of the file that contains the header,
                        or header mode 'infer'|'none' ( default='infer' )
                        if 'infer' will use the first non-empty and uncommented line
-                       if 'none' will use the field_type_map keys, if field_type_map
+                       if 'none' will use the user supplied columns in field_type_map keys,
+                           if field_type_map is None this will raise a ValueError
+
         :param header_delimiter: delimiter for the header row, default = self.delimiter
         :param dialect: csv dialect, default=excel
         :param skip_blank_lines: true to skip blank lines, false to insert NaN for blank lines,
