@@ -41,11 +41,15 @@ delimiter: '\t'
 # Optional delimiter for header row
 header_delimiter: '|' 
 
-# Boolean to configure presence of header, default is true
-has_header: 'False'
-
-# Number of lines to be ignored at the head of an ingest data file, default is 0
-skip_lines: 10 
+# Optional, int | 'infer' | 'none', Default = 'infer'
+# The index (0 based) in which the header appears in the file.
+#
+# If header is set to 'infer' the headers will be set to the first
+# line that is not blank or commented with a hash.
+#
+# If header is set to 'none' then the columns field will be used,
+# or raise a ValueError if columns are not supplied
+header: 0
 
 # Boolean to skip blank lines, default is true
 skip_blank_lines: True
