@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Dict, List, Union
 
 import yaml
-from pydantic import StrictFloat, StrictInt, StrictStr, StrictBool
+from pydantic import StrictFloat, StrictInt, StrictStr
 from pydantic.dataclasses import dataclass
 
 from koza.model.config.pydantic_config import PydanticConfig
@@ -262,10 +262,10 @@ class SourceConfig:
 
         if self.header == HeaderMode.none and not self.columns:
             raise ValueError(
-                    f"there is no header and columns have not been supplied\n"
-                    f"configure the 'columns' field or set header to the 0-based"
-                     "index in which it appears in the file, or set this value to"
-                    "'infer'"
+                f"there is no header and columns have not been supplied\n"
+                f"configure the 'columns' field or set header to the 0-based"
+                "index in which it appears in the file, or set this value to"
+                "'infer'"
             )
 
         for column in filtered_columns:
@@ -334,6 +334,7 @@ class PrimaryFileConfig(SourceConfig):
     node_properties and edge_properties are used for configuring
     the KGX writer
     """
+
     node_properties: List[str] = None
     edge_properties: List[str] = None
     depends_on: List[str] = field(default_factory=list)

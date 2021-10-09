@@ -183,14 +183,12 @@ class CSVReader:
                     f"configure the 'columns' property in the source yaml"
                 )
 
-    def _parse_header_line(self, skip_blank_or_commented_lines:bool = False) -> List[str]:
+    def _parse_header_line(self, skip_blank_or_commented_lines: bool = False) -> List[str]:
         """
         Parse the header line and return a list of headers
         """
         fieldnames = next(
-            reader(
-                self.io_str, **{'delimiter': self.header_delimiter, 'dialect': self.dialect}
-            )
+            reader(self.io_str, **{'delimiter': self.header_delimiter, 'dialect': self.dialect})
         )
         if skip_blank_or_commented_lines:
             while not fieldnames or fieldnames[0].startswith('#'):

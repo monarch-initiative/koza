@@ -50,7 +50,9 @@ class KozaApp:
         if source.config.depends_on is not None:
             for map_file in source.config.depends_on:
                 with open(map_file, 'r') as map_file_fh:
-                    map_file_config = MapFileConfig(**yaml.load(map_file_fh, Loader=UniqueIncludeLoader))
+                    map_file_config = MapFileConfig(
+                        **yaml.load(map_file_fh, Loader=UniqueIncludeLoader)
+                    )
                     map_file_config.transform_code = (
                         str(Path(map_file).parent / Path(map_file).stem) + '.py'
                     )
@@ -195,5 +197,3 @@ class KozaApp:
         :param depends_on:
         :return:
         """
-        pass
-

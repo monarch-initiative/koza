@@ -7,13 +7,15 @@ x: !include some-other.yaml
 y: 1
 
 Unique key loader based on: https://stackoverflow.com/a/63215043
-Include loader based on: https://matthewpburruss.com/post/yaml/
+Include loader based on: https://matthewpburruss.com/post/yaml/ and
+                         https://stackoverflow.com/a/9577670
 """
+
+from typing import IO, Union
 
 import yaml
 from yaml import SafeLoader
 from yaml.constructor import ConstructorError
-from typing import Union, IO
 
 from koza.io.utils import open_resource
 
