@@ -6,6 +6,8 @@ Ingests are configured via a single source file yaml, and optional mapping file 
 
 This YAML file sets properties for the ingest of a single file type from a within a Source.
 
+Tip: relative paths are relative to the directory where you execute Koza.
+
 ```yaml
 name: 'name-of-ingest'
 
@@ -109,3 +111,24 @@ values:
   - value1
   - value2
 ```
+
+### Composing Configuration from Multiple Yaml Files
+
+The Koza yaml loader supports importing/including other yaml files via an !include tag.
+To reuse fields that appear in multiple ingests, such as metadata and columns:
+
+```yaml
+metadata: !include './path/to/metadata.yaml'
+columns: !include './path/to/standard-columns.yaml'
+```
+
+For example, a standard column file will be formatted as a yaml list, i.e. the parent key is omitted:
+
+```yaml
+- 'column_1'
+- 'column_2'
+- 'column_3'
+- 'column_4' : 'int'
+```
+
+Tip: '!include' tags must be values in a yaml file
