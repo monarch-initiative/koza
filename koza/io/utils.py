@@ -6,7 +6,7 @@ import gzip
 import tempfile
 from io import TextIOWrapper
 from os import PathLike
-from pathlib import Path, PosixPath
+from pathlib import Path
 from typing import IO, Union
 
 import requests
