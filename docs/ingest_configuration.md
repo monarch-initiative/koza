@@ -54,11 +54,6 @@ header: 0
 # Boolean to skip blank lines, default is true
 skip_blank_lines: True
 
-# Set pre-defined source_file properties (like column lists) for common file formats. 
-# Options: 'gpi' and 'oban'
-# Additional standard formats can be added in source_config.py. 
-standard_format: 'gpi'
-
 # include a map file
 depends_on:
   - './examples/maps/alliance-gene.yaml'

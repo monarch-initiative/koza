@@ -2,7 +2,7 @@ name: 'gene-literature'
 
 delimiter: '\t'
 
-metadata: './examples/xenbase/metadata.yaml'
+metadata: !include './examples/xenbase/metadata.yaml'
 
 files:
   - './examples/data/LiteratureMatchedGenesByPaper.txt'

@@ -185,7 +185,7 @@ class SourceConfig:
     filters: List[ColumnFilter] = field(default_factory=list)
     json_path: List[Union[StrictStr, StrictInt]] = None
     transform_code: str = None
-    transform_mode: TransformMode = TransformMode.loop
+    transform_mode: TransformMode = TransformMode.flat
 
     def __post_init_post_parse__(self):
         """
@@ -202,6 +202,8 @@ class SourceConfig:
 
         if self.metadata and isinstance(self.metadata, str):
             # If this looks like a file path attempt to load it from the yaml
+            # TODO enforce that this is imported via an include?
+            # See https://github.com/monarch-initiative/koza/issues/46
             try:
                 object.__setattr__(
                     self, 'metadata', DatasetDescription(**yaml.safe_load(self.metadata))
@@ -211,6 +213,7 @@ class SourceConfig:
                 LOG.warning("Could not load dataset description from metadata file")
 
         # todo: where should this really be stored? defaults for a format should probably be defined in yaml
+        # We will replace this with https://github.com/monarch-initiative/koza/issues/46
         if self.standard_format == StandardFormat.gpi:
             self.format = FormatType.csv
             self.delimiter = "\t"

@@ -3,7 +3,8 @@ name: 'gene-information'
 files:
   - './examples/data/xenbase.gpi.gz'
 
-standard_format: 'gpi'
+# standard_format: 'gpi'
+columns: !include './examples/standards/gpi.yaml'
 
 compression: 'gzip'
 
