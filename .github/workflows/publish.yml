@@ -18,7 +18,7 @@ jobs:
 
             - name: Install dependencies
               run: |
-                  make install
+                  make
             - name: Publish to PyPi
               env:
                   FLIT_USERNAME: ${{ secrets.PYPI_USERNAME }}
