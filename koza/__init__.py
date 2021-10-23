@@ -1,2 +1,2 @@
-"""Koza, an ETL framework for the Biolink model"""
-__version__ = '0.1.1'
+"""Koza, an ETL framework for LinkML data models"""
+__version__ = '0.1.3'

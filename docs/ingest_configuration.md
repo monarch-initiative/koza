@@ -6,6 +6,8 @@ Ingests are configured via a single source file yaml, and optional mapping file 
 
 This YAML file sets properties for the ingest of a single file type from a within a Source.
 
+Tip: relative paths are relative to the directory where you execute Koza.
+
 ```yaml
 name: 'name-of-ingest'
 
@@ -41,19 +43,18 @@ delimiter: '\t'
 # Optional delimiter for header row
 header_delimiter: '|' 
 
-# Boolean to configure presence of header, default is true
-has_header: 'False'
-
-# Number of lines to be ignored at the head of an ingest data file, default is 0
-skip_lines: 10 
+# Optional, int | 'infer' | 'none', Default = 'infer'
+# The index (0 based) in which the header appears in the file.
+#
+# If header is set to 'infer' the headers will be set to the first
+# line that is not blank or commented with a hash.
+#
+# If header is set to 'none' then the columns field will be used,
+# or raise a ValueError if columns are not supplied
+header: 0
 
 # Boolean to skip blank lines, default is true
 skip_blank_lines: True
-
-# Set pre-defined source_file properties (like column lists) for common file formats. 
-# Options: 'gpi' and 'oban'
-# Additional standard formats can be added in source_config.py. 
-standard_format: 'gpi'
 
 # include a map file
 depends_on:
@@ -110,3 +111,24 @@ values:
   - value1
   - value2
 ```
+
+### Composing Configuration from Multiple Yaml Files
+
+The Koza yaml loader supports importing/including other yaml files via an !include tag.
+To reuse fields that appear in multiple ingests, such as metadata and columns:
+
+```yaml
+metadata: !include './path/to/metadata.yaml'
+columns: !include './path/to/standard-columns.yaml'
+```
+
+For example, a standard column file will be formatted as a yaml list, i.e. the parent key is omitted:
+
+```yaml
+- 'column_1'
+- 'column_2'
+- 'column_3'
+- 'column_4' : 'int'
+```
+
+Tip: '!include' tags must be values in a yaml file

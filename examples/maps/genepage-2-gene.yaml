@@ -4,8 +4,6 @@ metadata:
 
 delimiter: '\t'
 
-has_header: 'False'
-
 files:
   - './examples/data/XenbaseGenepageToGeneIdMapping.txt'
 

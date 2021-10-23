@@ -11,6 +11,7 @@ from koza.exceptions import MapItemException, NextRowException
 from koza.io.writer.jsonl_writer import JSONLWriter
 from koza.io.writer.tsv_writer import TSVWriter
 from koza.io.writer.writer import KozaWriter
+from koza.io.yaml_loader import UniqueIncludeLoader
 from koza.model.config.source_config import MapFileConfig, OutputFormat
 from koza.model.curie_cleaner import CurieCleaner
 from koza.model.map_dict import MapDict
@@ -49,7 +50,9 @@ class KozaApp:
         if source.config.depends_on is not None:
             for map_file in source.config.depends_on:
                 with open(map_file, 'r') as map_file_fh:
-                    map_file_config = MapFileConfig(**yaml.safe_load(map_file_fh))
+                    map_file_config = MapFileConfig(
+                        **yaml.load(map_file_fh, Loader=UniqueIncludeLoader)
+                    )
                     map_file_config.transform_code = (
                         str(Path(map_file).parent / Path(map_file).stem) + '.py'
                     )
@@ -180,3 +183,17 @@ class KozaApp:
                 map[row[key_column]] = {
                     key: value for key, value in row.items() if key in value_columns
                 }
+
+    @staticmethod
+    def _map_sniffer(depends_on: str):
+        """
+        TODO a utility function to determine if a depends_on string
+        is a path to a map config file, a yaml file that should be
+        interpreted as a dictionary, or a json file that should be
+        interpreted as a dictionary
+
+        See https://github.com/monarch-initiative/koza/issues/39
+
+        :param depends_on:
+        :return:
+        """

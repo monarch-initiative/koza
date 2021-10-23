@@ -6,19 +6,9 @@ files:
   - './examples/data/string.tsv'
   - './examples/data/string2.tsv'
 
-metadata: './examples/string/metadata.yaml'
+metadata: !include './examples/string/metadata.yaml'
 
-columns:
-  - 'protein1'
-  - 'protein2'
-  - 'neighborhood'
-  - 'fusion'
-  - 'cooccurence'
-  - 'coexpression'
-  - 'experimental'
-  - 'database'
-  - 'textmining'
-  - 'combined_score' : 'int'
+columns: !include './examples/standards/string.yaml'
 
 filters:
   - inclusion: 'include'

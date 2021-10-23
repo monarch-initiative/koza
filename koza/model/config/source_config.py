@@ -94,7 +94,7 @@ class OutputFormat(str, Enum):
     Output formats
     """
 
-    tsv = 'tsv'  # TODO
+    tsv = 'tsv'
     jsonl = 'jsonl'
     kgx = 'kgx'
 
@@ -109,6 +109,15 @@ class TransformMode(str, Enum):
 
     flat = 'flat'
     loop = 'loop'
+
+
+class HeaderMode(str, Enum):
+    """
+    Enum for supported header modes in addition to an index based lookup
+    """
+
+    infer = 'infer'
+    none = 'none'
 
 
 @dataclass(frozen=True)
@@ -147,6 +156,13 @@ class SourceConfig:
 
     TODO document fields
 
+    header: Optional, int|HeaderMode - the index (0 based) in which the
+            header appears in the file.  If header is set to infer
+            the headers will be set to the first line that is not blank
+            or commented with a hash.  If header is set to 'none'
+            then the columns field will be used, or raise a ValueError
+            if columns are not supplied
+
     delimiter:
     separator string similar to what works in str.split()
     https://docs.python.org/3/library/stdtypes.html#str.split
@@ -163,14 +179,13 @@ class SourceConfig:
     required_properties: List[str] = None
     delimiter: str = None
     header_delimiter: str = None
-    has_header: bool = True
-    skip_lines: int = 0
+    header: Union[int, HeaderMode] = HeaderMode.infer
     skip_blank_lines: bool = True
     compression: CompressionType = None
     filters: List[ColumnFilter] = field(default_factory=list)
     json_path: List[Union[StrictStr, StrictInt]] = None
     transform_code: str = None
-    transform_mode: TransformMode = TransformMode.loop
+    transform_mode: TransformMode = TransformMode.flat
 
     def __post_init_post_parse__(self):
         """
@@ -187,6 +202,8 @@ class SourceConfig:
 
         if self.metadata and isinstance(self.metadata, str):
             # If this looks like a file path attempt to load it from the yaml
+            # TODO enforce that this is imported via an include?
+            # See https://github.com/monarch-initiative/koza/issues/46
             try:
                 object.__setattr__(
                     self, 'metadata', DatasetDescription(**yaml.safe_load(self.metadata))
@@ -196,6 +213,7 @@ class SourceConfig:
                 LOG.warning("Could not load dataset description from metadata file")
 
         # todo: where should this really be stored? defaults for a format should probably be defined in yaml
+        # We will replace this with https://github.com/monarch-initiative/koza/issues/46
         if self.standard_format == StandardFormat.gpi:
             self.format = FormatType.csv
             self.delimiter = "\t"
@@ -241,6 +259,14 @@ class SourceConfig:
                 next(iter(column)) if isinstance(column, Dict) else column
                 for column in self.columns
             ]
+
+        if self.header == HeaderMode.none and not self.columns:
+            raise ValueError(
+                f"there is no header and columns have not been supplied\n"
+                f"configure the 'columns' field or set header to the 0-based"
+                "index in which it appears in the file, or set this value to"
+                "'infer'"
+            )
 
         for column in filtered_columns:
             if column not in all_columns:
@@ -308,6 +334,7 @@ class PrimaryFileConfig(SourceConfig):
     node_properties and edge_properties are used for configuring
     the KGX writer
     """
+
     node_properties: List[str] = None
     edge_properties: List[str] = None
     depends_on: List[str] = field(default_factory=list)

@@ -13,6 +13,7 @@ from koza.io.reader.csv_reader import CSVReader
 from koza.io.reader.json_reader import JSONReader
 from koza.io.reader.jsonl_reader import JSONLReader
 from koza.io.utils import open_resource
+from koza.io.yaml_loader import UniqueIncludeLoader
 from koza.model.config.source_config import (
     CompressionType,
     FormatType,
@@ -36,7 +37,7 @@ def set_koza_app(
     source: Source,
     translation_table: TranslationTable = None,
     output_dir: str = './output',
-    output_format: OutputFormat = OutputFormat('jsonl'),
+    output_format: OutputFormat = OutputFormat('tsv'),
 ) -> KozaApp:
     """
     Setter for singleton koza app object
@@ -124,7 +125,7 @@ def get_translation_table(global_table: str = None, local_table: str = None) -> 
 def transform_source(
     source: str,
     output_dir: str,
-    output_format: OutputFormat,
+    output_format: OutputFormat = OutputFormat('tsv'),
     global_table: str = None,
     local_table: str = None,
 ):
@@ -132,7 +133,7 @@ def transform_source(
     translation_table = get_translation_table(global_table, local_table)
 
     with open(source, 'r') as source_fh:
-        source_config = PrimaryFileConfig(**yaml.safe_load(source_fh))
+        source_config = PrimaryFileConfig(**yaml.load(source_fh, Loader=UniqueIncludeLoader))
         if not source_config.name:
             source_config.name = Path(source).stem
 

@@ -6,6 +6,7 @@ from koza.io.reader.csv_reader import CSVReader
 from koza.io.reader.json_reader import JSONReader
 from koza.io.reader.jsonl_reader import JSONLReader
 from koza.io.utils import open_resource
+from koza.io.yaml_loader import UniqueIncludeLoader
 from koza.model.config.source_config import MapFileConfig, PrimaryFileConfig, SourceConfig
 from koza.row_filter import RowFilter
 
@@ -36,7 +37,9 @@ class Source:
         if not isinstance(config, SourceConfig):
             # Check to see if it's a file path
             with open(config, 'r') as source_file_fh:
-                self.config = PrimaryFileConfig(**yaml.safe_load(source_file_fh))
+                self.config = PrimaryFileConfig(
+                    **yaml.load(source_file_fh, Loader=UniqueIncludeLoader)
+                )
         else:
             # TODO better error handling
             self.config = config
@@ -51,8 +54,7 @@ class Source:
                         field_type_map=config.field_type_map,
                         delimiter=config.delimiter,
                         header_delimiter=config.header_delimiter,
-                        has_header=config.has_header,
-                        skip_lines=config.skip_lines,
+                        header=config.header,
                     )
                 )
             elif self.config.format == 'jsonl':

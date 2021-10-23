@@ -3,9 +3,9 @@ name: 'gene-to-phenotype'
 files:
   - './examples/data/xb_xpo_spo_v20210511b.csv'
 
-metadata: './examples/xenbase/metadata.yaml'
+metadata: !include './examples/xenbase/metadata.yaml'
 
-standard_format: 'oban'
+columns: !include './examples/standards/oban.yaml'
 
 node_properties:
   - 'id'
