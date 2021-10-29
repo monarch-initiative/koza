@@ -144,4 +144,5 @@ def transform_source(
         koza_source = Source(source_config)
 
         koza_app = set_koza_app(koza_source, translation_table, output_dir, output_format)
+        koza_app.process_maps()
         koza_app.process_sources()

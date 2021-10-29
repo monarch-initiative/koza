@@ -2,7 +2,7 @@ import importlib
 import logging
 import sys
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Union
 
 import yaml
 from pydantic.error_wrappers import ValidationError
@@ -61,11 +61,6 @@ class KozaApp:
         self.writer = self._get_writer(
             source.config.name, source.config.node_properties, source.config.edge_properties
         )
-
-        # load the map cache
-        for map_file in self._map_registry.values():
-            if map_file.config.name not in self._map_cache:
-                self._load_map(map_file.config)
 
     def get_map(self, map_name: str):
         return self._map_cache[map_name]
@@ -129,6 +124,15 @@ class KozaApp:
         # remove directory from sys.path to prevent name clashes
         sys.path.remove(str(parent_path))
 
+    def process_maps(self):
+        """
+        Initializes self._map_cache
+        :return:
+        """
+        for map_file in self._map_registry.values():
+            if map_file.config.name not in self._map_cache:
+                self._load_map(map_file.config)
+
     @staticmethod
     def next_row():
         """
@@ -144,7 +148,7 @@ class KozaApp:
     def write(self, *entities):
         self.writer.write(entities)
 
-    def _get_writer(self, name, node_properties, edge_properties):
+    def _get_writer(self, name, node_properties, edge_properties) -> Union[TSVWriter, JSONLWriter]:
         if self.output_format == OutputFormat.tsv:
             return TSVWriter(self.output_dir, name, node_properties, edge_properties)
 
