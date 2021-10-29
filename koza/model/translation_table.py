@@ -41,9 +41,6 @@ class TranslationTable:
         if not is_dictionary_bimap(self.global_table):
             raise ValueError("Global table is not a bimap")
 
-        if not is_dictionary_bimap(self.local_table):
-            raise ValueError("Local table is not a bimap")
-
     def resolve_term(
         self, word: str, mandatory: Optional[bool] = True, default: Optional[str] = None
     ):

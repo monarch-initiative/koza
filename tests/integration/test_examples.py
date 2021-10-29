@@ -44,6 +44,8 @@ from koza.model.config.source_config import OutputFormat
         ),
         ("string-w-map", ["protein-links-detailed"], OutputFormat.tsv),
         ("string-w-map", ["protein-links-detailed"], OutputFormat.jsonl),
+        ("string-w-custom-map", ["protein-links-detailed"], OutputFormat.tsv),
+        ("string-w-custom-map", ["protein-links-detailed"], OutputFormat.jsonl),
     ],
 )
 def test_examples(ingest, output_names, output_format):

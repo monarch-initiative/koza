@@ -5,7 +5,7 @@ from biolink_model_pydantic.model import Gene, PairwiseGeneToGeneInteraction, Pr
 from koza.cli_runner import koza_app
 
 row = koza_app.get_row()
-entrez_2_string = koza_app.get_map('custom_entrez_2_string')
+entrez_2_string = koza_app.get_map('custom-entrez-2-string')
 
 gene_a = Gene(id='NCBIGene:' + entrez_2_string[row['protein1']]['entrez'])
 gene_b = Gene(id='NCBIGene:' + entrez_2_string[row['protein2']]['entrez'])

@@ -1,4 +1,4 @@
-name: 'custom_entrez_2_string'
+name: 'custom-entrez-2-string'
 
 metadata:
   description: 'Mapping file provided by StringDB that contains entrez to protein ID mappings'
@@ -9,12 +9,10 @@ header_delimiter: '/'
 # Assumes that no identifiers are overlapping
 # otherwise these should go into separate configs
 files:
-  - './examples/data/human.entrez_2_string.2018.tsv.gz'
-  - './examples/data/mouse.entrez_2_string.2018.tsv.gz'
-  - './examples/data/zebrafish.entrez_2_string.2018.tsv.gz'
-  - './examples/data/fly.entrez_2_string.2018.tsv.gz'
-  - './examples/data/celegans.entrez_2_string.2018.tsv.gz'
-  - './examples/data/yeast.entrez_2_string.2018.tsv.gz'
+  - './examples/data/entrez-2-string.tsv'
+  - './examples/data/additional-entrez-2-string.tsv'
+
+header: 0
 
 columns:
   - 'NCBI taxid'
