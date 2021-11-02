@@ -50,6 +50,7 @@ class CSVReader:
         dialect: str = "excel",
         skip_blank_lines: bool = True,
         name: str = "csv file",
+        comment_char: str = "#",
         *args,
         **kwargs,
     ):
@@ -68,6 +69,7 @@ class CSVReader:
         :param dialect: csv dialect, default=excel
         :param skip_blank_lines: true to skip blank lines, false to insert NaN for blank lines,
         :param name: filename or alias
+        :param comment_char: string representing a commented line, eg # or !!
         :param args: additional args to pass to csv.reader
         :param kwargs: additional kwargs to pass to csv.reader
         """
@@ -78,6 +80,7 @@ class CSVReader:
         self.header_delimiter = header_delimiter if header_delimiter else delimiter
         self.skip_blank_lines = skip_blank_lines
         self.name = name
+        self.comment_char = comment_char
 
         self.line_num = 0
 
@@ -111,6 +114,11 @@ class CSVReader:
                 row = next(self.reader)
         else:
             row = ['NaN' for _ in range(len(self._header))]
+
+        # skip commented lines (this is for footers)
+        if self.comment_char is not None:
+            while row[0].startswith(self.comment_char):
+                row = next(self.reader)
 
         # Check row length discrepancies for each row
         # TODO currently varying line lengths will raise an exception
@@ -191,16 +199,17 @@ class CSVReader:
             reader(self.io_str, **{'delimiter': self.header_delimiter, 'dialect': self.dialect})
         )
         if skip_blank_or_commented_lines:
-            while not fieldnames or fieldnames[0].startswith('#'):
+            # there has to be a cleaner way to do this
+            while not fieldnames or (
+                self.comment_char is not None and fieldnames[0].startswith(self.comment_char)
+            ):
                 fieldnames = next(
                     reader(
                         self.io_str, **{'delimiter': self.header_delimiter, 'dialect': self.dialect}
                     )
                 )
 
-        # todo: maybe comment character should be specified?
-        fieldnames[0] = fieldnames[0].lstrip('#')
-        fieldnames[0] = fieldnames[0].lstrip('!!')
+        fieldnames[0] = fieldnames[0].lstrip(self.comment_char)
         return [f.strip() for f in fieldnames]
 
     def _compare_headers_to_supplied_columns(self):

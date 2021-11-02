@@ -6,6 +6,7 @@ metadata:
 delimiter: '\t'
 header_delimiter: '/'
 header: 0
+comment_char: '#'
 
 # Assumes that no identifiers are overlapping
 # otherwise these should go into separate configs
