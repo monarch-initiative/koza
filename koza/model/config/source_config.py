@@ -173,13 +173,13 @@ class SourceConfig:
     name: str
     files: List[Union[str, Path]]
     format: FormatType = FormatType.csv
-    standard_format: StandardFormat = None
     metadata: Union[DatasetDescription, str] = None
     columns: List[Union[str, Dict[str, FieldType]]] = None
     required_properties: List[str] = None
     delimiter: str = None
     header_delimiter: str = None
     header: Union[int, HeaderMode] = HeaderMode.infer
+    comment_char: str = '#'
     skip_blank_lines: bool = True
     compression: CompressionType = None
     filters: List[ColumnFilter] = field(default_factory=list)
@@ -211,42 +211,6 @@ class SourceConfig:
             except Exception:
                 # TODO check for more explicit exceptions
                 LOG.warning("Could not load dataset description from metadata file")
-
-        # todo: where should this really be stored? defaults for a format should probably be defined in yaml
-        # We will replace this with https://github.com/monarch-initiative/koza/issues/46
-        if self.standard_format == StandardFormat.gpi:
-            self.format = FormatType.csv
-            self.delimiter = "\t"
-            self.columns = [
-                "DB",
-                "DB_Object_ID",
-                "DB_Object_Symbol",
-                "DB_Object_Name",
-                "DB_Object_Synonym(s)",
-                "DB_Object_Type",
-                "Taxon",
-                "Parent_Object_ID",
-                "DB_Xref(s)",
-                "Properties",
-            ]
-        elif self.standard_format == StandardFormat.oban:
-            self.format = FormatType.csv
-            self.delimiter = ","
-            self.columns = [
-                "SUBJECT",
-                "SUBJECT_LABEL",
-                "SUBJECT_TAXON",
-                "SUBJECT_TAXON_LABEL",
-                "OBJECT",
-                "OBJECT_LABEL",
-                "RELATION",
-                "RELATION_LABEL",
-                "EVIDENCE",
-                "EVIDENCE_LABEL",
-                "SOURCE",
-                "IS_DEFINED_BY",
-                "QUALIFIER",
-            ]
 
         if self.delimiter in ['tab', '\\t']:
             object.__setattr__(self, 'delimiter', '\t')
