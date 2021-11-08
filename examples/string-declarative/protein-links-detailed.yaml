@@ -12,6 +12,8 @@ metadata:
   description: 'STRING: functional protein association networks'
   rights: 'https://string-db.org/cgi/access.pl?footer_active_subpage=licensing'
 
+global_table: './examples/translation_table.yaml'
+
 columns:
   - 'protein1'
   - 'protein2'

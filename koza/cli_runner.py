@@ -130,8 +130,6 @@ def transform_source(
     local_table: str = None,
 ):
 
-    translation_table = get_translation_table(global_table, local_table)
-
     with open(source, 'r') as source_fh:
         source_config = PrimaryFileConfig(**yaml.load(source_fh, Loader=UniqueIncludeLoader))
         if not source_config.name:
@@ -142,6 +140,9 @@ def transform_source(
             source_config.transform_code = str(Path(source).parent / Path(source).stem) + '.py'
 
         koza_source = Source(source_config)
+
+        translation_table = get_translation_table(global_table if global_table else source_config.global_table,
+                                                  local_table if local_table else source_config.local_table)
 
         koza_app = set_koza_app(koza_source, translation_table, output_dir, output_format)
         koza_app.process_maps()

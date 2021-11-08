@@ -26,6 +26,8 @@ metadata:
   description: 'SomethingBase: A Website With Some Data'
   rights: 'https://somethingbase.org/rights.html'
 
+global_table: './path_to/translation_table.yaml'
+local_table: './somethingbase/something-translation.yaml'
 
 # in a JSON ingest, this will be the path to the array to be iterated over as the input collection
 json_path:

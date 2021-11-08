@@ -186,6 +186,9 @@ class SourceConfig:
     json_path: List[Union[StrictStr, StrictInt]] = None
     transform_code: str = None
     transform_mode: TransformMode = TransformMode.flat
+    global_table: str = None
+    local_table: str = None
+
 
     def __post_init_post_parse__(self):
         """
