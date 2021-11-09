@@ -55,7 +55,7 @@ class Source:
                         delimiter=config.delimiter,
                         header_delimiter=config.header_delimiter,
                         header=config.header,
-                        comment_char=self.config.comment_char
+                        comment_char=self.config.comment_char,
                     )
                 )
             elif self.config.format == 'jsonl':
