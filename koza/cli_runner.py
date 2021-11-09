@@ -4,7 +4,7 @@ Module for managing koza runs through the CLI
 
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union, Dict
 
 import yaml
 
@@ -92,7 +92,7 @@ def validate_file(
             pass
 
 
-def get_translation_table(global_table: str = None, local_table: str = None) -> TranslationTable:
+def get_translation_table(global_table: Union[str, Dict] = None, local_table: Union[str, Dict] = None) -> TranslationTable:
     """
     Create a translation table object from two file paths
     :param global_table: str, path to global table yaml
@@ -110,12 +110,19 @@ def get_translation_table(global_table: str = None, local_table: str = None) -> 
             LOG.info("No global table used for transform")
     else:
 
-        with open(global_table, 'r') as global_tt_fh:
-            global_tt = yaml.safe_load(global_tt_fh)
+        if isinstance(global_table, str):
+            with open(global_table, 'r') as global_tt_fh:
+                global_tt = yaml.safe_load(global_tt_fh)
+        elif isinstance(global_table, Dict):
+            global_tt = global_table
 
         if local_table:
-            with open(local_table, 'r') as local_tt_fh:
-                local_tt = yaml.safe_load(local_tt_fh)
+            if isinstance(local_table, str):
+                with open(local_table, 'r') as local_tt_fh:
+                    local_tt = yaml.safe_load(local_tt_fh)
+            elif isinstance(local_table, Dict):
+                local_tt = local_table
+
         else:
             LOG.info("No local table used for transform")
 

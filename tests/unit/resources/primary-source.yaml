@@ -17,6 +17,9 @@ files:
   - '9606.protein.links.detailed.v11.0.txt.gz'
   - '10090.protein.links.detailed.v11.0.txt.gz'
 
+local_table:
+  "is just a little to the left of": "RO:123"
+
 columns:
   - 'protein1'
   - 'protein2'
