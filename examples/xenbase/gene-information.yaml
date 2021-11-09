@@ -8,7 +8,10 @@ columns: !include './examples/standards/gpi.yaml'
 
 compression: 'gzip'
 
-header: 23
+format: 'csv'
+delimiter: '\t'
+comment_char: '!!'
+header: 22
 
 metadata: './examples/xenbase/metadata.yaml'
 
