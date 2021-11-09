@@ -26,6 +26,14 @@ metadata:
   description: 'SomethingBase: A Website With Some Data'
   rights: 'https://somethingbase.org/rights.html'
 
+# The local and global tables can be specified either in the command line or the config
+global_table: './path_to/translation_table.yaml'
+local_table: './somethingbase/something-translation.yaml'
+
+# in addition to specifying yaml files, it's also possible to define the tables inline
+# local_table: 
+#   "around here somewhere": "RO:9999999"
+
 
 # in a JSON ingest, this will be the path to the array to be iterated over as the input collection
 json_path:
