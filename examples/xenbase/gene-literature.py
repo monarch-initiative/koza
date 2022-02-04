@@ -3,7 +3,7 @@ import uuid
 
 from biolink_model_pydantic.model import (
     Gene,
-    NamedThingToInformationContentEntityAssociation,
+    InformationContentEntityToNamedThingAssociation,
     Predicate,
     Publication,
 )
@@ -39,11 +39,11 @@ for gene_page in gene_pages.split(','):
 
         entities.append(gene)
 
-        association = NamedThingToInformationContentEntityAssociation(
+        association = InformationContentEntityToNamedThingAssociation(
             id="uuid:" + str(uuid.uuid1()),
-            subject=gene.id,
+            subject=publication.id,
+            object=gene.id,
             predicate=Predicate.mentions,
-            object=publication.id,
             relation="IAO:0000142",  # Mentions
         )
 

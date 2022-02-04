@@ -1,7 +1,7 @@
 import pytest
 from biolink_model_pydantic.model import (
     Gene,
-    NamedThingToInformationContentEntityAssociation,
+    InformationContentEntityToNamedThingAssociation,
     Publication,
 )
 
@@ -81,7 +81,7 @@ def test_gene_literature_entity_types(gene_literature_entities):
     associations = [
         entity
         for entity in gene_literature_entities
-        if isinstance(entity, NamedThingToInformationContentEntityAssociation)
+        if isinstance(entity, InformationContentEntityToNamedThingAssociation)
     ]
 
     # a roundabout way of confirming that everything generated is one of these three and there's nothing else

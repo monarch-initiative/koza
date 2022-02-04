@@ -50,7 +50,6 @@ def validate(
     delimiter: str = ',',
     header_delimiter: str = None,
     compression: CompressionType = None,
-    skip_lines: int = 0,
     skip_blank_lines: bool = True,
 ):
     """
@@ -60,9 +59,8 @@ def validate(
     format is as expected (tsv, json), required columns/fields are there
     """
     _set_log_level(debug=True)
-
     validate_file(
-        file, format, delimiter, header_delimiter, compression, skip_lines, skip_blank_lines
+        file, format, delimiter, header_delimiter, compression, skip_blank_lines
     )
 
 

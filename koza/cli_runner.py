@@ -61,7 +61,6 @@ def validate_file(
     delimiter: str = ',',
     header_delimiter: str = None,
     compression: CompressionType = None,
-    skip_lines: int = 0,
     skip_blank_lines: bool = True,
 ):
     """
@@ -78,7 +77,6 @@ def validate_file(
                 resource_io,
                 delimiter=delimiter,
                 header_delimiter=header_delimiter,
-                skip_lines=skip_lines,
                 skip_blank_lines=skip_blank_lines,
             )
         elif format == FormatType.jsonl:

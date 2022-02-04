@@ -30,3 +30,17 @@ depends_on:
   - './examples/maps/entrez-2-string.yaml'
 
 transform_mode: 'flat'
+
+node_properties:
+  - 'id'
+  - 'category'
+  - 'provided_by'
+
+edge_properties:
+  - 'id'
+  - 'subject'
+  - 'predicate'
+  - 'object'
+  - 'category'
+  - 'relation'
+  - 'provided_by'
