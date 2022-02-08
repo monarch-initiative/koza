@@ -1,8 +1,6 @@
 from dataclasses import asdict
 from typing import Iterable, Tuple
 
-#from biolink_model_pydantic.model import Association, NamedThing
-
 class KGXConverter:
     """
     Converts the biolink model to the KGX format, which splits
