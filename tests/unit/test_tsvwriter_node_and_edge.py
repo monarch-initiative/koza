@@ -14,16 +14,15 @@ def test_tsv_writer():
                                 relation="RO:0003304",
                                 predicate=Predicate.contributes_to,
                                 )
-    ent = [g, d]
+    ent = [g, d, a]
 
     node_properties = ['id','category','symbol','in_taxon','provided_by','source']
     edge_properties = ['id','subject','predicate','object','category','relation','qualifiers','publications','provided_by','source']
 
     outdir = "test-output"
-    outfile = "todd"
+    outfile = "tsvwriter-node-and-edge"
 
     t = TSVWriter(outdir, outfile, node_properties, edge_properties)
-    
     t.write(ent)
     t.finalize()
 

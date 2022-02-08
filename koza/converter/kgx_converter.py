@@ -1,7 +1,7 @@
 from dataclasses import asdict
 from typing import Iterable, Tuple
 
-from biolink_model_pydantic.model import Association, NamedThing
+#from biolink_model_pydantic.model import Association, NamedThing
 
 class KGXConverter:
     """
@@ -21,10 +21,16 @@ class KGXConverter:
         edges = []
 
         for entity in entities:
-            if isinstance(entity, NamedThing):
-                nodes.append(self.convert_node(entity))
-            elif isinstance(entity, Association):
+
+            # if entity has subject + object + predicate, treat as edge
+            if all(hasattr(entity, attr) for attr in ["subject", "object", "predicate"]):
                 edges.append(self.convert_association(entity))
+
+            # if entity has id and name, but not subject/object/predicate, treat as node
+            elif all(hasattr(entity, attr) for attr in ["id", "name"]) and not all(hasattr(entity, attr) for attr in ["subject", "object", "predicate"]):
+                nodes.append(self.convert_node(entity))
+
+            # otherwise, not a 
             else:
                 raise ValueError(
                     "Can only convert NamedThing or Association entities to KGX compatible dictionaries"
@@ -32,8 +38,8 @@ class KGXConverter:
 
         return nodes, edges
 
-    def convert_node(self, node: NamedThing) -> dict:
+    def convert_node(self, node) -> dict:
         return asdict(node)
 
-    def convert_association(self, association: Association) -> dict:
+    def convert_association(self, association) -> dict:
         return asdict(association)
