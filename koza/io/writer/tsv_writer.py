@@ -11,40 +11,25 @@ from ordered_set import OrderedSet
 from koza.converter.kgx_converter import KGXConverter
 from koza.io.utils import build_export_row
 from koza.io.writer.writer import KozaWriter
-
-#from kgx.sink.tsv_sink import TsvSink
 class TSVWriter(KozaWriter): 
     def __init__(
-        self, output_dir, source_name: str, node_properties: List[str], edge_properties: List[str]
+        self, output_dir, source_name: str, node_properties: List[str], edge_properties: Optional[List[str]]=[]
     ):
         self.dirname = output_dir
         self.basename = source_name
-
-        self.node_properties = node_properties
-        self.edge_properties = edge_properties
-
+        
         self.delimiter = "\t"
-        self.converter = KGXConverter()
-        
-        self.nodes_file_basename = f"{self.basename}_nodes.tsv"
-        self.edges_file_basename = f"{self.basename}_edges.tsv"
-        
-        if not node_properties or not edge_properties:
-            raise ValueError("node_properties and edge_properties must be provided to TSVWriter class.\nMake sure you define node and edge properties in your source config yaml.")
-
-        """
-        if core_edge_properies not in edge_properties:
-            you gotta set these
-        """
-        
-        self.ordered_node_columns = TSVWriter._order_node_columns(self.node_properties)
-        self.ordered_edge_columns = TSVWriter._order_edge_columns(self.edge_properties)
-
         self.list_delimiter = "|"
+        
+        self.converter = KGXConverter()
 
         # Create output directory
         os.makedirs(self.dirname, exist_ok=True)
 
+        self.node_properties = node_properties
+        self.nodes_file_basename = f"{self.basename}_nodes.tsv"
+        self.ordered_node_columns = TSVWriter._order_node_columns(self.node_properties)
+        
         # Create and write to nodes output file
         self.nodes_file_name = os.path.join(
             self.dirname if self.dirname else "", self.nodes_file_basename
@@ -52,12 +37,18 @@ class TSVWriter(KozaWriter):
         self.NFH = open(self.nodes_file_name, "w")
         self.NFH.write(self.delimiter.join(self.ordered_node_columns) + "\n")
 
-        # Create and write to edges output file
-        self.edges_file_name = os.path.join(
-            self.dirname if self.dirname else "", self.edges_file_basename
-        )
-        self.EFH = open(self.edges_file_name, "w")
-        self.EFH.write(self.delimiter.join(self.ordered_edge_columns) + "\n")
+        if edge_properties:
+            self.has_edge = True
+            self.edge_properties = edge_properties
+            self.edges_file_basename = f"{self.basename}_edges.tsv"
+            self.ordered_edge_columns = TSVWriter._order_edge_columns(self.edge_properties)
+
+            # Create and write to edges output file
+            self.edges_file_name = os.path.join(
+                self.dirname if self.dirname else "", self.edges_file_basename
+            )
+            self.EFH = open(self.edges_file_name, "w")
+            self.EFH.write(self.delimiter.join(self.ordered_edge_columns) + "\n")
                 
 
     def write(self, entities: Iterable):
@@ -70,8 +61,9 @@ class TSVWriter(KozaWriter):
         for node in nodes:
             self.write_node(node)
 
-        for edge in edges:
-            self.write_edge(edge)
+        if edges:
+            for edge in edges:
+                self.write_edge(edge)
 
     def write_node(self, record: Dict) -> None:
         """
@@ -114,7 +106,8 @@ class TSVWriter(KozaWriter):
         Close file handles and create an archive if compression mode is defined.
         """
         self.NFH.close()
-        self.EFH.close()
+        if hasattr(self, 'EFH'):
+            self.EFH.close() 
 
     @staticmethod
     def _order_node_columns(cols: Set) -> OrderedSet:
@@ -163,15 +156,7 @@ class TSVWriter(KozaWriter):
         """
         edge_columns = cols.copy()
         core_columns = OrderedSet(
-            [
-                "id",
-                "subject",
-                "predicate",
-                "object",
-                "category",
-                "relation",
-                "provided_by",
-            ]
+            ["id","subject","predicate","object","category","relation","provided_by"]
         )
         ordered_columns = OrderedSet()
         for c in core_columns:
