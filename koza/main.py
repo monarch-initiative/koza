@@ -27,6 +27,7 @@ def transform(
     local_table: str = typer.Option(None, help="Path to local translation table"),
     quiet: bool = False,
     debug: bool = False,
+    row_limit: int = typer.Option(None, help="Number of rows to process. If skipped, processes entire source file."),
 ):
     """
     Transform a source file
@@ -40,7 +41,7 @@ def transform(
     elif not output_path.exists():
         output_path.mkdir(parents=True)
 
-    transform_source(source, output_dir, output_format, global_table, local_table)
+    transform_source(source, output_dir, output_format, global_table, local_table, row_limit)
 
 
 @typer_app.command()

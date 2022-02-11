@@ -26,13 +26,16 @@ class Source:
     def __init__(
         self,
         config: Union[PrimaryFileConfig, MapFileConfig, str],
+        row_limit: Optional[int] = None
     ):
 
         self.config = config
+        self.row_limit = row_limit
         self._filter = RowFilter(config.filters)
         self._reader = None
         self._readers: List = []
         self.last_row: Optional[Dict] = None
+
 
         if not isinstance(config, SourceConfig):
             # Check to see if it's a file path
@@ -56,6 +59,7 @@ class Source:
                         header_delimiter=config.header_delimiter,
                         header=config.header,
                         comment_char=self.config.comment_char,
+                        row_limit = self.row_limit
                     )
                 )
             elif self.config.format == 'jsonl':
@@ -64,6 +68,7 @@ class Source:
                         resource_io,
                         name=config.name,
                         required_properties=config.required_properties,
+                        row_limit = self.row_limit
                     )
                 )
             elif self.config.format == 'json' or self.config.format == 'yaml':
@@ -74,6 +79,7 @@ class Source:
                         json_path=config.json_path,
                         required_properties=config.required_properties,
                         is_yaml=(self.config.format == 'yaml'),
+                        row_limit = self.row_limit
                     )
                 )
             else:
