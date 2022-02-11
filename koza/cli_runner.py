@@ -133,7 +133,6 @@ def transform_source(
     output_format: OutputFormat = OutputFormat('tsv'),
     global_table: str = None,
     local_table: str = None,
-    row_limit: int = None
 ):
 
     with open(source, 'r') as source_fh:
@@ -145,7 +144,7 @@ def transform_source(
             # look for it alongside the source conf as a .py file
             source_config.transform_code = str(Path(source).parent / Path(source).stem) + '.py'
 
-        koza_source = Source(source_config, row_limit)
+        koza_source = Source(source_config)
 
         translation_table = get_translation_table(global_table if global_table else source_config.global_table,
                                                   local_table if local_table else source_config.local_table)
