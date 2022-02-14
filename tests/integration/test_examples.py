@@ -1,6 +1,5 @@
 """
 End to end test of String load from examples/string
-
 """
 
 from pathlib import Path
@@ -70,4 +69,3 @@ def test_examples(ingest, output_names, output_format):
         assert Path(file).stat().st_size > 0
 
     # TODO: at some point, these assertions could get more rigorous, but knowing if we have errors/exceptions is a start
-    # TODO: kgx validation could also be added back in, especially if something programatic is done with the output
