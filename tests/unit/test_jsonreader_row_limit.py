@@ -19,9 +19,13 @@ def test_normal_case():
 
 def test_required_properties():
     with gzip.open(test_ddpheno, 'rt') as ddpheno:
-        json_reader = JSONReader(ddpheno, ['id'], json_path=json_path, row_limit=3)
+        row_limit=3
+        row_count = 0
+        json_reader = JSONReader(ddpheno, ['id'], json_path=json_path, row_limit=row_limit)
         for row in json_reader:
+            row_count += 1
             assert 'id' in row
+        assert row_count == row_limit
 
 
 def test_missing_req_property_raises_exception():

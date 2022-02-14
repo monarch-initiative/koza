@@ -71,7 +71,7 @@ class JSONReader:
 
         next_obj = self.json_obj[self._line_num]
 
-        self._line_num = self._line_num + 1
+        self._line_num += 1
 
         if self.required_properties:
             if not set(next_obj.keys()) >= set(self.required_properties):
