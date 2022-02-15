@@ -51,6 +51,7 @@ class CSVReader:
         skip_blank_lines: bool = True,
         name: str = "csv file",
         comment_char: str = "#",
+        row_limit: int = None,
         *args,
         **kwargs,
     ):
@@ -70,6 +71,7 @@ class CSVReader:
         :param skip_blank_lines: true to skip blank lines, false to insert NaN for blank lines,
         :param name: filename or alias
         :param comment_char: string representing a commented line, eg # or !!
+        :param row_limit: int number of lines to process
         :param args: additional args to pass to csv.reader
         :param kwargs: additional kwargs to pass to csv.reader
         """
@@ -81,8 +83,13 @@ class CSVReader:
         self.skip_blank_lines = skip_blank_lines
         self.name = name
         self.comment_char = comment_char
+        self.row_limit = row_limit
 
+        # used by _set_header
         self.line_num = 0
+
+        # used for row_limit
+        self.line_count = 0
 
         self._header = None
 
@@ -100,9 +107,13 @@ class CSVReader:
 
         if not self._header:
             self._set_header()
-
+                
         try:
-            row = next(self.reader)
+            if self.line_count == self.row_limit:
+                raise StopIteration
+            else:
+                row = next(self.reader)
+                self.line_count += 1
         except StopIteration:
             LOG.info(f"Finished processing {self.line_num} rows for {self.name}")
             raise StopIteration

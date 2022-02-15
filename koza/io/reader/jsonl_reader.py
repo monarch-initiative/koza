@@ -12,7 +12,10 @@ class JSONLReader:
     """
 
     def __init__(
-        self, io_str: IO[str], required_properties: List[str] = None, name: str = 'jsonl file'
+        self, io_str: IO[str], 
+        required_properties: List[str] = None, 
+        name: str = 'jsonl file',
+        row_limit: int = None,
     ):
         """
         :param io_str: Any IO stream that yields a string
@@ -24,6 +27,7 @@ class JSONLReader:
         self.required_properties = required_properties
         self.line_num = 0
         self.name = name
+        self.line_limit = row_limit
 
     def __iter__(self) -> Iterator:
         return self
@@ -34,6 +38,10 @@ class JSONLReader:
             LOG.info(f"Finished processing {self.line_num} lines")
             raise StopIteration
         self.line_num += 1
+        if self.line_limit:
+            if self.line_num == self.line_limit:
+                raise StopIteration
+                
         json_obj = json.loads(next_line)
 
         if self.required_properties:

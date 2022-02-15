@@ -19,11 +19,13 @@ class JSONReader:
         json_path: List[Union[str, int]] = None,
         name: str = 'json file',
         is_yaml: bool = False,
+        row_limit: int = None,
     ):
         """
         :param io_str: Any IO stream that yields a string
                        See https://docs.python.org/3/library/io.html#io.IOBase
         :param required_properties: required top level properties
+        :param row_limit: integer number of non-header rows to process
         :param iterate_over: todo
         :param name: todo
         """
@@ -31,7 +33,7 @@ class JSONReader:
         self.required_properties = required_properties
         self.json_path = json_path
         self.name = name
-
+        
         if self.json_path:
             if is_yaml:
                 self.json_obj = yaml.safe_load(self.io_str)
@@ -53,18 +55,23 @@ class JSONReader:
             self._len = 0
             self._line_num = 0
 
+        if row_limit:
+            self._line_limit = row_limit 
+        else:
+            self._line_limit = self._len
+
     def __iter__(self) -> Iterator:
         return self
 
     def __next__(self) -> Dict[str, Any]:
 
-        if self._line_num + 1 > self._len:
+        if self._line_num == self._line_limit:
             LOG.info(f"Finished processing {self.name}")
             raise StopIteration
 
         next_obj = self.json_obj[self._line_num]
 
-        self._line_num = self._line_num + 1
+        self._line_num += 1
 
         if self.required_properties:
             if not set(next_obj.keys()) >= set(self.required_properties):
