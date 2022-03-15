@@ -2,4 +2,6 @@ site_name: Koza
 nav:
 - Home: '../'
 - Ingest Configuration: 'ingest_configuration.md'
+site_url: https://koza.monarchinitiative.org/
+repo_url: https://github.com/monarch-initiative/koza
 
