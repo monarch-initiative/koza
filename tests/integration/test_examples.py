@@ -66,6 +66,6 @@ def test_examples(ingest, output_names, output_format):
 
     for file in output_files:
         assert Path(file).exists()
-        assert Path(file).stat().st_size > 0
+        #assert Path(file).stat().st_size > 0  # Removed this line because now node files are not
 
     # TODO: at some point, these assertions could get more rigorous, but knowing if we have errors/exceptions is a start
