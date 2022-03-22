@@ -153,7 +153,7 @@ class KozaApp:
             return TSVWriter(self.output_dir, name, node_properties, edge_properties)
 
         elif self.output_format == OutputFormat.jsonl:
-            return JSONLWriter(self.output_dir, name)
+            return JSONLWriter(self.output_dir, name, node_properties, edge_properties)
 
     def _load_map(self, map_file_config: MapFileConfig):
         map_file = Source(map_file_config)

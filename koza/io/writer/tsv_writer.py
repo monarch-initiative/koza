@@ -39,7 +39,6 @@ class TSVWriter(KozaWriter):
             self.NFH.write(self.delimiter.join(self.ordered_node_columns) + "\n")
 
         if edge_properties:
-            self.has_edge = True
             self.edge_properties = edge_properties
             self.edges_file_basename = f"{self.basename}_edges.tsv"
             self.ordered_edge_columns = TSVWriter._order_edge_columns(self.edge_properties)

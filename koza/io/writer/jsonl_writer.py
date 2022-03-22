@@ -1,13 +1,15 @@
 import json
 import os
 from dataclasses import asdict
-from typing import Iterable
+from typing import Iterable, List, Optional
 
 from koza.io.writer.writer import KozaWriter
 from koza.converter.kgx_converter import KGXConverter
 
 class JSONLWriter(KozaWriter):
-    def __init__(self, output_dir: str, source_name: str):
+    def __init__(
+        self, output_dir: str, source_name: str, node_properties: List[str], edge_properties: Optional[List[str]]=[]
+    ):
 
         self.output_dir = output_dir
         self.source_name = source_name
@@ -15,17 +17,19 @@ class JSONLWriter(KozaWriter):
         self.converter = KGXConverter()
 
         os.makedirs(output_dir, exist_ok=True)
-
-        self.nodes_file = open(f"{output_dir}/{source_name}_nodes.jsonl", "w")
-        self.edges_file = open(f"{output_dir}/{source_name}_edges.jsonl", "w")
+        if node_properties:
+            self.nodes_file = open(f"{output_dir}/{source_name}_nodes.jsonl", "w")
+        if edge_properties:
+            self.edges_file = open(f"{output_dir}/{source_name}_edges.jsonl", "w")
 
     def write(self, entities: Iterable):
 
         (nodes, edges) = self.converter.convert(entities)
 
-        for n in nodes:
-            node = json.dumps(n, ensure_ascii=False)
-            self.nodes_file.write(node + '\n')
+        if nodes:
+            for n in nodes:
+                node = json.dumps(n, ensure_ascii=False)
+                self.nodes_file.write(node + '\n')
 
         if edges:
             for e in edges:
@@ -33,5 +37,7 @@ class JSONLWriter(KozaWriter):
                 self.edges_file.write(edge + '\n')
 
     def finalize(self):
-        self.nodes_file.close()
-        self.edges_file.close()
+        if hasattr(self, 'nodes_file'):
+            self.nodes_file.close()
+        if hasattr(self, 'edge_file'):
+            self.edges_file.close()
