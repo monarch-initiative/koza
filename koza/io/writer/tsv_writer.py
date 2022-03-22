@@ -26,16 +26,17 @@ class TSVWriter(KozaWriter):
         # Create output directory
         os.makedirs(self.dirname, exist_ok=True)
 
-        self.node_properties = node_properties
-        self.nodes_file_basename = f"{self.basename}_nodes.tsv"
-        self.ordered_node_columns = TSVWriter._order_node_columns(self.node_properties)
+        if node_properties:
+            self.node_properties = node_properties
+            self.nodes_file_basename = f"{self.basename}_nodes.tsv"
+            self.ordered_node_columns = TSVWriter._order_node_columns(self.node_properties)
         
-        # Create and write to nodes output file
-        self.nodes_file_name = os.path.join(
-            self.dirname if self.dirname else "", self.nodes_file_basename
-        )
-        self.NFH = open(self.nodes_file_name, "w")
-        self.NFH.write(self.delimiter.join(self.ordered_node_columns) + "\n")
+            # Create and write to nodes output file
+            self.nodes_file_name = os.path.join(
+                self.dirname if self.dirname else "", self.nodes_file_basename
+            )
+            self.NFH = open(self.nodes_file_name, "w")
+            self.NFH.write(self.delimiter.join(self.ordered_node_columns) + "\n")
 
         if edge_properties:
             self.has_edge = True
@@ -58,8 +59,9 @@ class TSVWriter(KozaWriter):
 
         (nodes, edges) = self.converter.convert(entities)
 
-        for node in nodes:
-            self.write_node(node)
+        if nodes:
+            for node in nodes:
+                self.write_node(node)
 
         if edges:
             for edge in edges:
@@ -105,7 +107,8 @@ class TSVWriter(KozaWriter):
         """
         Close file handles and create an archive if compression mode is defined.
         """
-        self.NFH.close()
+        if hasattr(self, 'NFH'):
+            self.NFH.close() 
         if hasattr(self, 'EFH'):
             self.EFH.close() 
 
