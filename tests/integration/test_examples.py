@@ -13,39 +13,15 @@ from koza.model.config.source_config import OutputFormat
 @pytest.mark.parametrize(
     "ingest, output_names, output_format",
     [
-        (
-            "string",
-            [
-                "protein-links-detailed",
-            ],
-            OutputFormat.tsv,
-        ),
-        (
-            "string",
-            [
-                "protein-links-detailed",
-            ],
-            OutputFormat.jsonl,
-        ),
-        (
-            "string-declarative",
-            [
-                "protein-links-detailed",
-            ],
-            OutputFormat.tsv,
-        ),
-        (
-            "string-declarative",
-            [
-                "protein-links-detailed",
-            ],
-            OutputFormat.jsonl,
-        ),
+        ("string",["protein-links-detailed"],OutputFormat.tsv),
+        ("string",["protein-links-detailed"],OutputFormat.jsonl),
+        ("string-declarative",["protein-links-detailed"],OutputFormat.tsv),
+        ("string-declarative",["protein-links-detailed"],OutputFormat.jsonl),
         ("string-w-map", ["protein-links-detailed"], OutputFormat.tsv),
         ("string-w-map", ["protein-links-detailed"], OutputFormat.jsonl),
         ("string-w-custom-map", ["protein-links-detailed"], OutputFormat.tsv),
         ("string-w-custom-map", ["protein-links-detailed"], OutputFormat.jsonl),
-    ],
+    ]
 )
 def test_examples(ingest, output_names, output_format):
 
