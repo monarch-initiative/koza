@@ -160,22 +160,22 @@ class KozaApp:
             if self.output_format == OutputFormat.tsv:
                 if nodes:
                     for node in nodes:
-                        self.validator.validate(obj=node, target_class="NamedThing")    
+                        self.validator.validate(obj=node, target_class="NamedThing", strict=True)    
 
                 if edges:
                     for edge in edges:
-                        self.validator.validate(obj=edge, target_class="Association")
+                        self.validator.validate(obj=edge, target_class="Association", strict=True)
 
             elif self.output_format == OutputFormat.jsonl:            
                 if nodes:
-                    for n in nodes:
-                        node = json.dumps(n, ensure_ascii=False)
-                        self.validator.validate(obj=node, target_class="NamedThing")    
+                    for node in nodes:
+                        #node = json.dumps(n, ensure_ascii=False)
+                        self.validator.validate(obj=node, target_class="NamedThing", strict=True)    
 
                 if edges:
-                    for e in edges:
-                        edge = json.dumps(e, ensure_ascii=False)
-                        self.validator.validate(obj=edge, target_class="Association")
+                    for edge in edges:
+                        #edge = json.dumps(e, ensure_ascii=False)
+                        self.validator.validate(obj=edge, target_class="Association", strict=True)
 
         self.writer.write(entities)
 

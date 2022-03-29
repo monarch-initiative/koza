@@ -12,22 +12,23 @@ import pytest
 from koza.cli_runner import transform_source
 from koza.model.config.source_config import OutputFormat
 
-model_schema = Path(__file__).parent.parent / 'resources' / 'test-model.yaml'
+model_schema = Path(__file__).parent.parent / 'resources' / 'biolink-model.yaml'
 
 @pytest.mark.parametrize(
     "ingest, output_names, output_format, schema",
     [
-        # ("string",["protein-links-detailed"],OutputFormat.tsv, model_schema),
-        # ("string",["protein-links-detailed"],OutputFormat.jsonl, model_schema),
+        ("string",["protein-links-detailed"],OutputFormat.tsv, model_schema),
+        ("string",["protein-links-detailed"],OutputFormat.jsonl, model_schema),
         ("string-declarative",["protein-links-detailed"],OutputFormat.tsv, model_schema),
         ("string-declarative",["protein-links-detailed"],OutputFormat.jsonl, model_schema),
-        # ("string-w-map", ["protein-links-detailed"], OutputFormat.tsv, model_schema),
-        # ("string-w-map", ["protein-links-detailed"], OutputFormat.jsonl, model_schema),
-        # ("string-w-custom-map", ["protein-links-detailed"], OutputFormat.tsv, model_schema),
-        # ("string-w-custom-map", ["protein-links-detailed"], OutputFormat.jsonl, model_schema),
+        ("string-w-map", ["protein-links-detailed"], OutputFormat.tsv, model_schema),
+        ("string-w-map", ["protein-links-detailed"], OutputFormat.jsonl, model_schema),
+        ("string-w-custom-map", ["protein-links-detailed"], OutputFormat.tsv, model_schema),
+        ("string-w-custom-map", ["protein-links-detailed"], OutputFormat.jsonl, model_schema),
     ]
 )
-def test_examples(ingest, output_names, output_format, schema):
+
+def test_validator(ingest, output_names, output_format, schema):
 
     source = f"examples/{ingest}/protein-links-detailed.yaml"
     output_suffix = str(output_format).split('.')[1]
@@ -47,7 +48,6 @@ def test_examples(ingest, output_names, output_format, schema):
         output_dir,
         output_format,
         global_table="tests/resources/translation_table.yaml", 
-        #schema="tests/resources/test_model.yaml"
         schema="tests/resources/biolink-model.yaml"
     )
 
