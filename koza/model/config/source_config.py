@@ -2,13 +2,15 @@
 source config data class
 map config data class
 """
+import os
+import tarfile
+import yaml
 import logging
 from dataclasses import field
 from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Union
 
-import yaml
 from pydantic import StrictFloat, StrictInt, StrictStr
 from pydantic.dataclasses import dataclass
 
@@ -50,6 +52,7 @@ class CompressionType(str, Enum):
     """
 
     gzip = 'gzip'
+    targz = 'tar.gz'
 
 
 class FilterCode(str, Enum):
@@ -172,6 +175,7 @@ class SourceConfig:
 
     name: str
     files: List[Union[str, Path]]
+    file_archive: Union[str, Path] = None
     format: FormatType = FormatType.csv
     metadata: Union[DatasetDescription, str] = None
     columns: List[Union[str, Dict[str, FieldType]]] = None
@@ -195,8 +199,18 @@ class SourceConfig:
         TO DO figure out why we're using object.__setattr__(self, ...
               here and document it
         """
+        
+        if self.file_archive:
+            tgz = self.file_archive
+            archive_path = Path(tgz).parent#.absolute()
+            archive = tarfile.open(tgz)
+            archive.extractall(archive_path)
+            files = [os.path.join(archive_path, file) for file in self.files]
+        else:
+            files = self.files
+
         files_as_paths: List[Path] = []
-        for file in self.files:
+        for file in files:
             if isinstance(file, str):
                 files_as_paths.append(Path(file))
             else:
