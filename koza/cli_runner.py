@@ -15,7 +15,6 @@ from koza.io.reader.jsonl_reader import JSONLReader
 from koza.io.utils import open_resource
 from koza.io.yaml_loader import UniqueIncludeLoader
 from koza.model.config.source_config import (
-    CompressionType,
     FormatType,
     OutputFormat,
     PrimaryFileConfig,
@@ -60,7 +59,6 @@ def validate_file(
     format: FormatType = FormatType.csv,
     delimiter: str = ',',
     header_delimiter: str = None,
-    compression: CompressionType = None,
     skip_blank_lines: bool = True,
 ):
     """
@@ -70,7 +68,7 @@ def validate_file(
     For json and jsonl just validates them
     """
 
-    with open_resource(file, compression) as resource_io:
+    with open_resource(file) as resource_io:
 
         if format == FormatType.csv:
             reader = CSVReader(
