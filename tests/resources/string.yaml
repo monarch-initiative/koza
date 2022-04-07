@@ -6,12 +6,12 @@ delimiter: '\t'
 
 #header_delimiter: '\t'
 
-file_archive: 'resources/source-files/string.tar.gz'
+file_archive: 'tests/resources/source-files/string.tar.gz'
 
 files:
   - 'string.tsv'
 
-global_table: 'resources/translation_table.yaml'
+global_table: 'tests/resources/translation_table.yaml'
 
 columns:
   - 'protein1'

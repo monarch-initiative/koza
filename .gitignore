@@ -1,4 +1,5 @@
 koza-env/
+tests/resources/source-files/string.tsv*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

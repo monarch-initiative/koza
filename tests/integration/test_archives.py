@@ -4,9 +4,9 @@ from pathlib import Path
 from koza.model.config.source_config import PrimaryFileConfig
 from koza.io.yaml_loader import UniqueIncludeLoader
 
-source = Path('tests/resources/string.yaml')
-unzipped_data = Path('tests/resources/source-files/string.tsv.gz')
 def test_archive_targz():
+    source = Path('tests/resources/string.yaml')
+    unzipped_data = Path('tests/resources/source-files/string.tsv.gz')
     # Delete unzipped archive if it exists    
     if os.path.exists(unzipped_data.absolute()):
         os.remove(unzipped_data.absolute())
