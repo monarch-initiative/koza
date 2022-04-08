@@ -37,13 +37,14 @@ def set_koza_app(
     translation_table: TranslationTable = None,
     output_dir: str = './output',
     output_format: OutputFormat = OutputFormat('tsv'),
+    schema: str = None,
 ) -> KozaApp:
     """
     Setter for singleton koza app object
     """
     global koza_app
 
-    koza_app = KozaApp(source, translation_table, output_dir, output_format)
+    koza_app = KozaApp(source, translation_table, output_dir, output_format, schema)
     return koza_app
 
 
@@ -131,6 +132,7 @@ def transform_source(
     output_format: OutputFormat = OutputFormat('tsv'),
     global_table: str = None,
     local_table: str = None,
+    schema: str = None,
     row_limit: int = None
 ):
 
@@ -148,6 +150,6 @@ def transform_source(
         translation_table = get_translation_table(global_table if global_table else source_config.global_table,
                                                   local_table if local_table else source_config.local_table)
 
-        koza_app = set_koza_app(koza_source, translation_table, output_dir, output_format)
+        koza_app = set_koza_app(koza_source, translation_table, output_dir, output_format, schema)
         koza_app.process_maps()
         koza_app.process_sources()

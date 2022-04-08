@@ -1,10 +1,7 @@
-import importlib
-import logging
-import sys
+import sys, importlib, logging, yaml
 from pathlib import Path
 from typing import Dict, Union
 
-import yaml
 from pydantic.error_wrappers import ValidationError
 
 from koza.exceptions import MapItemException, NextRowException
@@ -18,8 +15,12 @@ from koza.model.map_dict import MapDict
 from koza.model.source import Source
 from koza.model.translation_table import TranslationTable
 
-LOG = logging.getLogger(__name__)
+# For validation
+from linkml_validator.validator import Validator
+from koza.converter.kgx_converter import KGXConverter
+import json
 
+LOG = logging.getLogger(__name__)
 
 class KozaApp:
     """
@@ -33,6 +34,7 @@ class KozaApp:
         translation_table: TranslationTable = None,
         output_dir: str = './output',
         output_format: OutputFormat = OutputFormat('jsonl'),
+        schema: str = None
     ):
         self.source = source
         self.translation_table = translation_table
@@ -44,8 +46,11 @@ class KozaApp:
         self.writer: KozaWriter = self._get_writer(
             source.config.name, source.config.node_properties, source.config.edge_properties
         )
-
         logging.getLogger(__name__)
+        
+        if schema:
+            self.validator = Validator(schema=schema)
+            self.converter = KGXConverter()
 
         if source.config.depends_on is not None:
             for map_file in source.config.depends_on:
@@ -146,6 +151,32 @@ class KozaApp:
         raise NextRowException
 
     def write(self, *entities):
+
+        # If a schema/validator is defined, validate before writing
+        if hasattr(self, 'validator'):
+            
+            (nodes, edges) = self.converter.convert(entities)
+
+            if self.output_format == OutputFormat.tsv:
+                if nodes:
+                    for node in nodes:
+                        self.validator.validate(obj=node, target_class="NamedThing", strict=True)    
+
+                if edges:
+                    for edge in edges:
+                        self.validator.validate(obj=edge, target_class="Association", strict=True)
+
+            elif self.output_format == OutputFormat.jsonl:            
+                if nodes:
+                    for node in nodes:
+                        #node = json.dumps(n, ensure_ascii=False)
+                        self.validator.validate(obj=node, target_class="NamedThing", strict=True)    
+
+                if edges:
+                    for edge in edges:
+                        #edge = json.dumps(e, ensure_ascii=False)
+                        self.validator.validate(obj=edge, target_class="Association", strict=True)
+
         self.writer.write(entities)
 
     def _get_writer(self, name, node_properties, edge_properties) -> Union[TSVWriter, JSONLWriter]:
