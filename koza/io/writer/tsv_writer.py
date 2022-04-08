@@ -11,6 +11,7 @@ from ordered_set import OrderedSet
 from koza.converter.kgx_converter import KGXConverter
 from koza.io.utils import build_export_row
 from koza.io.writer.writer import KozaWriter
+
 class TSVWriter(KozaWriter): 
     def __init__(
         self, output_dir, source_name: str, node_properties: List[str], edge_properties: Optional[List[str]]=[]

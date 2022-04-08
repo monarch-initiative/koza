@@ -1,0 +1,37 @@
+id: https://w3id.org/Example-Schema
+name: Example-Schema
+description: >-
+  An Example Schema
+version: 0.0.0
+imports:
+  - linkml:types
+
+prefixes:
+  linkml: https://w3id.org/linkml/
+  example: https://w3id.org/example/
+
+default_prefix: example
+
+classes:
+  named thing:
+    slots:
+      - id
+      - name
+      - type
+
+slots:
+  id:
+    required: true
+
+  name:
+    range: string
+
+  type:
+    range: type_enum
+
+enums:
+  type_enum:
+    permissible_values:
+      X:
+      Y:
+      Z:

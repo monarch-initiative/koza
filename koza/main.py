@@ -25,9 +25,10 @@ def transform(
     output_format: OutputFormat = typer.Option("tsv", help="Output format"),
     global_table: str = typer.Option(None, help="Path to global translation table"),
     local_table: str = typer.Option(None, help="Path to local translation table"),
+    schema: str = typer.Option(None, help='Path to schema YAML for validation in writer'),
+    row_limit: int = typer.Option(None, help="Number of rows to process (if skipped, processes entire source file)"),
     quiet: bool = False,
-    debug: bool = False,
-    row_limit: int = typer.Option(None, help="Number of rows to process. If skipped, processes entire source file."),
+    debug: bool = False
 ):
     """
     Transform a source file
@@ -41,7 +42,7 @@ def transform(
     elif not output_path.exists():
         output_path.mkdir(parents=True)
 
-    transform_source(source, output_dir, output_format, global_table, local_table, row_limit)
+    transform_source(source, output_dir, output_format, global_table, local_table, schema, row_limit)
 
 
 @typer_app.command()
