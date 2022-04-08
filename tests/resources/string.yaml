@@ -1,0 +1,45 @@
+name: 'zfin_phenotype_0'
+
+format: 'csv'
+
+delimiter: '\t'
+
+#header_delimiter: '\t'
+
+file_archive: 'tests/resources/source-files/string.tar.gz'
+
+files:
+  - 'string.tsv'
+
+global_table: 'tests/resources/translation_table.yaml'
+
+columns:
+  - 'protein1'
+  - 'protein2'
+  - 'neighborhood'
+  - 'fusion'
+  - 'cooccurence'
+  - 'coexpression'
+  - 'experimental'
+  - 'database'
+  - 'textmining'
+  - 'combined_score' : 'int'
+
+filters:
+  - column: 'combined_score'
+    inclusion: 'include'
+    filter_code: 'lt'
+    value: 700
+
+#transform_code: './examples/string/protein-links-detailed.py'
+
+#transform_mode: 'loop'
+
+edge_properties:
+  - 'id'
+  - 'subject'
+  - 'predicate'
+  - 'object'
+  - 'category'
+  - 'relation'
+  - 'provided_by'

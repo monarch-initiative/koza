@@ -11,9 +11,7 @@ from typing import IO, Union, Any, Dict
 
 import requests
 
-from koza.model.config.source_config import CompressionType
-
-def open_resource(resource: Union[str, PathLike], compression: CompressionType = None) -> IO[str]:
+def open_resource(resource: Union[str, PathLike]) -> IO[str]:
     """
     A generic function for opening a local or remote file
 
@@ -27,25 +25,17 @@ def open_resource(resource: Union[str, PathLike], compression: CompressionType =
     that requests does not support FTP (consider ftplib or urllib.request)
 
     :param resource: str or PathLike - local filepath or remote resource
-    :param compression: str or PathLike - compression type
     :return: str, next line in resource
 
     """
     if Path(resource).exists():
-        if compression is None:
-            # Try gzip first
-            try:
-                file = gzip.open(resource, 'rt')
-                file.read(1)
-                file.seek(0)
-
-            except OSError:
-                file = open(resource, 'r')
-        elif compression == CompressionType.gzip:
+        # Try gzip first
+        try:
             file = gzip.open(resource, 'rt')
-        else:
+            file.read(1)
+            file.seek(0)
+        except OSError:
             file = open(resource, 'r')
-
         return file
 
     elif isinstance(resource, str) and resource.startswith('http'):
@@ -56,7 +46,7 @@ def open_resource(resource: Union[str, PathLike], compression: CompressionType =
         tmp_file.write(request.content)
         request.close()  # not sure this is needed
         tmp_file.seek(0)
-        if resource.endswith('gz') or compression == CompressionType.gzip:
+        if resource.endswith('gz'):
             # This should be more robust, either check headers
             # or use https://github.com/ahupp/python-magic
             remote_file = gzip.open(tmp_file, 'rt')

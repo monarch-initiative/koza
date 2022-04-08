@@ -11,8 +11,6 @@ on_map_failure: 'warning'
 delimiter: '\t'
 header_delimiter: '\t'
 
-compression: 'gzip'
-
 files:
   - '9606.protein.links.detailed.v11.0.txt.gz'
   - '10090.protein.links.detailed.v11.0.txt.gz'

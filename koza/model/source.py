@@ -48,7 +48,7 @@ class Source:
             self.config = config
 
         for file in config.files:
-            resource_io = open_resource(file, config.compression)
+            resource_io = open_resource(file)
             if self.config.format == 'csv':
                 self._readers.append(
                     CSVReader(

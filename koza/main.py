@@ -9,7 +9,7 @@ from pathlib import Path
 import typer
 
 from koza.cli_runner import transform_source, validate_file
-from koza.model.config.source_config import CompressionType, FormatType, OutputFormat
+from koza.model.config.source_config import FormatType, OutputFormat
 
 typer_app = typer.Typer()
 
@@ -51,7 +51,6 @@ def validate(
     format: FormatType = FormatType.csv,
     delimiter: str = ',',
     header_delimiter: str = None,
-    compression: CompressionType = None,
     skip_blank_lines: bool = True,
 ):
     """
@@ -62,7 +61,7 @@ def validate(
     """
     _set_log_level(debug=True)
     validate_file(
-        file, format, delimiter, header_delimiter, compression, skip_blank_lines
+        file, format, delimiter, header_delimiter, skip_blank_lines
     )
 
 
