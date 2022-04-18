@@ -36,7 +36,7 @@ def transform(
     """
     # Set logging specs
     logpath = os.path.join("logs", source.split("/")[1])
-    logfile = Path(f"{logpath}/{source.split('/')[2][:-5]}.log")
+    logfile = Path(f"{logpath}_{source.split('/')[2][:-5]}.log")
     if log:
         Path(logpath).mkdir(parents=True, exist_ok=True)
     _set_log_level(quiet, debug, log, logfile)
@@ -80,14 +80,9 @@ def validate(
 
 def _set_log_level(quiet: bool = False, debug: bool = False, log: bool = False, logfile: str = 'logs/transform.log'):
     if log:
-        #log_handler = logging.StreamHandler(io.StringIO())
-        #log_handler.setLevel(logging.WARNING)
-        
         log_file_handler = logging.FileHandler(logfile)
         log_file_handler.setLevel(logging.DEBUG)
-        
         logging.getLogger().setLevel(logging.DEBUG)
-        #logging.getLogger().addHandler(log_handler)
         logging.getLogger().addHandler(log_file_handler)
     elif quiet:
         logging.getLogger().setLevel(logging.WARNING)
