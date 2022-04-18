@@ -15,7 +15,8 @@ typer_app = typer.Typer()
 from contextlib import redirect_stdout
 import logging, io
 logging.basicConfig()
-LOG = logging.getLogger(__name__)
+#global LOG 
+#LOG = logging.getLogger(__name__)
 
 @typer_app.command()
 def transform(
@@ -33,12 +34,11 @@ def transform(
     """
     Transform a source file
     """
-
     # Set logging specs
-    #logfile = f"logs/{source.split('/')[1]}/{source.split('/')[2][:-5]}.log"
     logpath = os.path.join("logs", source.split("/")[1])
-    Path(logpath).mkdir(parents=True, exist_ok=True)
     logfile = Path(f"{logpath}/{source.split('/')[2][:-5]}.log")
+    if log:
+        Path(logpath).mkdir(parents=True, exist_ok=True)
     _set_log_level(quiet, debug, log, logfile)
 
     output_path = Path(output_dir)
@@ -48,17 +48,6 @@ def transform(
     elif not output_path.exists():
         output_path.mkdir(parents=True)
 
-    # if log:
-    #     logpath = os.path.join("logs", source.split("/")[1])
-    #     Path(logpath).mkdir(parents=True, exist_ok=True)
-    #     logfile = Path(f"{logpath}/{source.split('/')[2][:-5]}.log")
-    #     if os.path.exists(logfile):
-    #         os.remove(logfile)
-    #     Path(logfile).touch()
-    #     with open(outfile, 'w') as f:
-    #         with redirect_stdout(f):
-    #             transform_source(source, output_dir, output_format, global_table, local_table, schema, row_limit)
-    #             return
     transform_source(source, output_dir, output_format, global_table, local_table, schema, row_limit)
 
 @typer_app.command()
@@ -89,25 +78,24 @@ def validate(
 #    Create a new koza project
 #    """
 
-
-def _set_log_level(quiet: bool = False, debug: bool = False, log: bool = False, logfile: str = "logs/transform.log"):
+def _set_log_level(quiet: bool = False, debug: bool = False, log: bool = False, logfile: str = 'logs/transform.log'):
     if log:
+        #log_handler = logging.StreamHandler(io.StringIO())
+        #log_handler.setLevel(logging.WARNING)
         
-        # We stream the KGX logs to their own output to capture them
-        # and also set up log output to a file which will accompany the transformed output
-        log_stream = io.StringIO()
-        log_handler = logging.StreamHandler(log_stream)
         log_file_handler = logging.FileHandler(logfile)
-        log_handler.setLevel(logging.DEBUG)
         log_file_handler.setLevel(logging.DEBUG)
-        #logging.basicConfig(filename=logfile, level=logging.INFO)
+        
+        logging.getLogger().setLevel(logging.DEBUG)
+        #logging.getLogger().addHandler(log_handler)
+        logging.getLogger().addHandler(log_file_handler)
     elif quiet:
         logging.getLogger().setLevel(logging.WARNING)
     elif debug:
         logging.getLogger().setLevel(logging.DEBUG)
     else:
         logging.getLogger().setLevel(logging.INFO)
-
+    logging.warning(f"Logger set. Output file: {logfile}")
 
 if __name__ == "__main__":
     typer_app()
