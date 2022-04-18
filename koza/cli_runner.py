@@ -22,10 +22,9 @@ from koza.model.config.source_config import (
 from koza.model.source import Source
 from koza.model.translation_table import TranslationTable
 
-LOG = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 koza_app = None
-
 
 def set_koza(koza: KozaApp):
     global koza_app
@@ -104,7 +103,7 @@ def get_translation_table(global_table: Union[str, Dict] = None, local_table: Un
         if local_table:
             raise ValueError("Local table without a global table not allowed")
         else:
-            LOG.info("No global table used for transform")
+            logger.info("No global table used for transform")
     else:
 
         if isinstance(global_table, str):
@@ -121,7 +120,7 @@ def get_translation_table(global_table: Union[str, Dict] = None, local_table: Un
                 local_tt = local_table
 
         else:
-            LOG.info("No local table used for transform")
+            logger.info("No local table used for transform")
 
     return TranslationTable(global_tt, local_tt)
 

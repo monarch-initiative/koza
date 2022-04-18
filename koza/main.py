@@ -35,10 +35,9 @@ def transform(
     Transform a source file
     """
     # Set logging specs
-    logpath = os.path.join("logs", source.split("/")[1])
-    logfile = Path(f"{logpath}_{source.split('/')[2][:-5]}.log")
+    logfile = Path(f"logs/{source.split('/')[1]}_{source.split('/')[2][:-5]}.log")
     if log:
-        Path(logpath).mkdir(parents=True, exist_ok=True)
+        Path("logs").mkdir(parents=True, exist_ok=True)
     _set_log_level(quiet, debug, log, logfile)
 
     output_path = Path(output_dir)
