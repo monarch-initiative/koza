@@ -14,20 +14,20 @@ from koza.model.config.source_config import OutputFormat
 
 model_schema = Path(__file__).parent.parent / 'resources' / 'biolink-model.yaml'
 
+
 @pytest.mark.parametrize(
     "ingest, output_names, output_format, schema",
     [
-        ("string",["protein-links-detailed"],OutputFormat.tsv, model_schema),
-        ("string",["protein-links-detailed"],OutputFormat.jsonl, model_schema),
-        ("string-declarative",["protein-links-detailed"],OutputFormat.tsv, model_schema),
-        ("string-declarative",["protein-links-detailed"],OutputFormat.jsonl, model_schema),
+        ("string", ["protein-links-detailed"], OutputFormat.tsv, model_schema),
+        ("string", ["protein-links-detailed"], OutputFormat.jsonl, model_schema),
+        ("string-declarative", ["protein-links-detailed"], OutputFormat.tsv, model_schema),
+        ("string-declarative", ["protein-links-detailed"], OutputFormat.jsonl, model_schema),
         ("string-w-map", ["protein-links-detailed"], OutputFormat.tsv, model_schema),
         ("string-w-map", ["protein-links-detailed"], OutputFormat.jsonl, model_schema),
         ("string-w-custom-map", ["protein-links-detailed"], OutputFormat.tsv, model_schema),
         ("string-w-custom-map", ["protein-links-detailed"], OutputFormat.jsonl, model_schema),
-    ]
+    ],
 )
-
 def test_validator(ingest, output_names, output_format, schema):
 
     source = f"examples/{ingest}/protein-links-detailed.yaml"
@@ -47,10 +47,10 @@ def test_validator(ingest, output_names, output_format, schema):
         source,
         output_dir,
         output_format,
-        global_table="tests/resources/translation_table.yaml", 
-        schema="tests/resources/biolink-model.yaml"
+        global_table="tests/resources/translation_table.yaml",
+        schema="tests/resources/biolink-model.yaml",
     )
 
     for file in output_files:
         assert Path(file).exists()
-        #assert Path(file).stat().st_size > 0  # Removed this line because now node files are not
+        # assert Path(file).stat().st_size > 0  # Removed this line because now node files are not

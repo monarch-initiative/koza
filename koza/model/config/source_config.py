@@ -2,14 +2,16 @@
 source config data class
 map config data class
 """
-import os, logging
-import tarfile, zipfile
-import yaml
+import logging
+import os
+import tarfile
+import zipfile
 from dataclasses import field
 from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Union
 
+import yaml
 from pydantic import StrictFloat, StrictInt, StrictStr
 from pydantic.dataclasses import dataclass
 
@@ -26,6 +28,7 @@ class MapErrorEnum(str, Enum):
     warning = 'warning'
     error = 'error'
 
+
 class FormatType(str, Enum):
     """
     Enum for supported file types
@@ -37,10 +40,12 @@ class FormatType(str, Enum):
     yaml = 'yaml'
     xml = 'xml'  # TODO
 
+
 class StandardFormat(str, Enum):
     gpi = 'gpi'
     bgi = 'bgi'
     oban = 'oban'
+
 
 class FilterCode(str, Enum):
     """
@@ -58,6 +63,7 @@ class FilterCode(str, Enum):
     ne = 'ne'
     inlist = 'in'
 
+
 class FilterInclusion(str, Enum):
     """
     Enum for filter inclusion/exclusion
@@ -65,6 +71,7 @@ class FilterInclusion(str, Enum):
 
     include = 'include'
     exclude = 'exclude'
+
 
 class FieldType(str, Enum):
     """
@@ -76,6 +83,7 @@ class FieldType(str, Enum):
     int = 'int'
     float = 'float'
 
+
 class OutputFormat(str, Enum):
     """
     Output formats
@@ -84,6 +92,7 @@ class OutputFormat(str, Enum):
     tsv = 'tsv'
     jsonl = 'jsonl'
     kgx = 'kgx'
+
 
 class TransformMode(str, Enum):
     """
@@ -96,6 +105,7 @@ class TransformMode(str, Enum):
     flat = 'flat'
     loop = 'loop'
 
+
 class HeaderMode(str, Enum):
     """
     Enum for supported header modes in addition to an index based lookup
@@ -104,12 +114,14 @@ class HeaderMode(str, Enum):
     infer = 'infer'
     none = 'none'
 
+
 @dataclass(frozen=True)
 class ColumnFilter:
     column: str
     inclusion: FilterInclusion
     filter_code: FilterCode
     value: Union[StrictInt, StrictFloat, StrictStr, List[Union[StrictInt, StrictFloat, StrictStr]]]
+
 
 @dataclass(frozen=True)
 class DatasetDescription:
@@ -130,6 +142,7 @@ class DatasetDescription:
     provided_by: str = None
     license: str = None
     rights: str = None
+
 
 @dataclass(config=PydanticConfig)
 class SourceConfig:
@@ -172,7 +185,7 @@ class SourceConfig:
     local_table: Union[str, Dict] = None
 
     def extract_archive(self):
-        archive_path = Path(self.file_archive).parent#.absolute()
+        archive_path = Path(self.file_archive).parent  # .absolute()
         if self.file_archive.endswith('.tar.gz') or self.file_archive.endswith('.tar'):
             with tarfile.open(self.file_archive) as archive:
                 archive.extractall(archive_path)
@@ -293,6 +306,7 @@ class SourceConfig:
     def field_type_map(self):
         return self._field_type_map
 
+
 @dataclass(config=PydanticConfig)
 class PrimaryFileConfig(SourceConfig):
     """
@@ -304,6 +318,7 @@ class PrimaryFileConfig(SourceConfig):
     edge_properties: List[str] = None
     depends_on: List[str] = field(default_factory=list)
     on_map_failure: MapErrorEnum = MapErrorEnum.warning
+
 
 @dataclass(config=PydanticConfig)
 class MapFileConfig(SourceConfig):

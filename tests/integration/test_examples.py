@@ -13,15 +13,15 @@ from koza.model.config.source_config import OutputFormat
 @pytest.mark.parametrize(
     "ingest, output_names, output_format",
     [
-        ("string",["protein-links-detailed"],OutputFormat.tsv),
-        ("string",["protein-links-detailed"],OutputFormat.jsonl),
-        ("string-declarative",["protein-links-detailed"],OutputFormat.tsv),
-        ("string-declarative",["protein-links-detailed"],OutputFormat.jsonl),
+        ("string", ["protein-links-detailed"], OutputFormat.tsv),
+        ("string", ["protein-links-detailed"], OutputFormat.jsonl),
+        ("string-declarative", ["protein-links-detailed"], OutputFormat.tsv),
+        ("string-declarative", ["protein-links-detailed"], OutputFormat.jsonl),
         ("string-w-map", ["protein-links-detailed"], OutputFormat.tsv),
         ("string-w-map", ["protein-links-detailed"], OutputFormat.jsonl),
         ("string-w-custom-map", ["protein-links-detailed"], OutputFormat.tsv),
         ("string-w-custom-map", ["protein-links-detailed"], OutputFormat.jsonl),
-    ]
+    ],
 )
 def test_examples(ingest, output_names, output_format):
 
@@ -42,6 +42,6 @@ def test_examples(ingest, output_names, output_format):
 
     for file in output_files:
         assert Path(file).exists()
-        #assert Path(file).stat().st_size > 0  # Removed this line because now node files are not
+        # assert Path(file).stat().st_size > 0  # Removed this line because now node files are not
 
     # TODO: at some point, these assertions could get more rigorous, but knowing if we have errors/exceptions is a start

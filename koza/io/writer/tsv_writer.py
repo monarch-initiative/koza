@@ -1,27 +1,32 @@
 #### TSV Writer ####
 #
-# Notes: 
+# Notes:
 # - May want to rename to KGXWriter at some point, if we develop writers for other models non biolink/kgx specific
 
 import os
+from typing import Dict, Iterable, List, Optional, Set
 
-from typing import Iterable, List, Dict, Set, Optional
 from ordered_set import OrderedSet
 
 from koza.converter.kgx_converter import KGXConverter
 from koza.io.utils import build_export_row
 from koza.io.writer.writer import KozaWriter
 
-class TSVWriter(KozaWriter): 
+
+class TSVWriter(KozaWriter):
     def __init__(
-        self, output_dir, source_name: str, node_properties: List[str], edge_properties: Optional[List[str]]=[]
+        self,
+        output_dir,
+        source_name: str,
+        node_properties: List[str],
+        edge_properties: Optional[List[str]] = [],
     ):
         self.dirname = output_dir
         self.basename = source_name
-        
+
         self.delimiter = "\t"
         self.list_delimiter = "|"
-        
+
         self.converter = KGXConverter()
 
         # Create output directory
@@ -31,7 +36,7 @@ class TSVWriter(KozaWriter):
             self.node_properties = node_properties
             self.nodes_file_basename = f"{self.basename}_nodes.tsv"
             self.ordered_node_columns = TSVWriter._order_node_columns(self.node_properties)
-        
+
             # Create and write to nodes output file
             self.nodes_file_name = os.path.join(
                 self.dirname if self.dirname else "", self.nodes_file_basename
@@ -50,7 +55,6 @@ class TSVWriter(KozaWriter):
             )
             self.EFH = open(self.edges_file_name, "w")
             self.EFH.write(self.delimiter.join(self.ordered_edge_columns) + "\n")
-                
 
     def write(self, entities: Iterable):
         """
@@ -102,15 +106,14 @@ class TSVWriter(KozaWriter):
                 values.append("")
         self.EFH.write(self.delimiter.join(values) + "\n")
 
-
     def finalize(self):
         """
         Close file handles and create an archive if compression mode is defined.
         """
         if hasattr(self, 'NFH'):
-            self.NFH.close() 
+            self.NFH.close()
         if hasattr(self, 'EFH'):
-            self.EFH.close() 
+            self.EFH.close()
 
     @staticmethod
     def _order_node_columns(cols: Set) -> OrderedSet:
@@ -159,7 +162,7 @@ class TSVWriter(KozaWriter):
         """
         edge_columns = cols.copy()
         core_columns = OrderedSet(
-            ["id","subject","predicate","object","category","relation","provided_by"]
+            ["id", "subject", "predicate", "object", "category", "relation", "provided_by"]
         )
         ordered_columns = OrderedSet()
         for c in core_columns:

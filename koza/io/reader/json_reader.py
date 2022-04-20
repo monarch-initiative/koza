@@ -33,7 +33,7 @@ class JSONReader:
         self.required_properties = required_properties
         self.json_path = json_path
         self.name = name
-        
+
         if self.json_path:
             if is_yaml:
                 self.json_obj = yaml.safe_load(self.io_str)
@@ -56,7 +56,7 @@ class JSONReader:
             self._line_num = 0
 
         if row_limit:
-            self._line_limit = row_limit 
+            self._line_limit = row_limit
         else:
             self._line_limit = self._len
 

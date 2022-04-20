@@ -4,7 +4,7 @@ Module for managing koza runs through the CLI
 
 import logging
 from pathlib import Path
-from typing import Optional, Union, Dict
+from typing import Dict, Optional, Union
 
 import yaml
 
@@ -14,11 +14,7 @@ from koza.io.reader.json_reader import JSONReader
 from koza.io.reader.jsonl_reader import JSONLReader
 from koza.io.utils import open_resource
 from koza.io.yaml_loader import UniqueIncludeLoader
-from koza.model.config.source_config import (
-    FormatType,
-    OutputFormat,
-    PrimaryFileConfig,
-)
+from koza.model.config.source_config import FormatType, OutputFormat, PrimaryFileConfig
 from koza.model.source import Source
 from koza.model.translation_table import TranslationTable
 
@@ -89,7 +85,9 @@ def validate_file(
             pass
 
 
-def get_translation_table(global_table: Union[str, Dict] = None, local_table: Union[str, Dict] = None) -> TranslationTable:
+def get_translation_table(
+    global_table: Union[str, Dict] = None, local_table: Union[str, Dict] = None
+) -> TranslationTable:
     """
     Create a translation table object from two file paths
     :param global_table: str, path to global table yaml
@@ -133,7 +131,7 @@ def transform_source(
     global_table: str = None,
     local_table: str = None,
     schema: str = None,
-    row_limit: int = None
+    row_limit: int = None,
 ):
 
     with open(source, 'r') as source_fh:
@@ -147,8 +145,10 @@ def transform_source(
 
         koza_source = Source(source_config, row_limit)
 
-        translation_table = get_translation_table(global_table if global_table else source_config.global_table,
-                                                  local_table if local_table else source_config.local_table)
+        translation_table = get_translation_table(
+            global_table if global_table else source_config.global_table,
+            local_table if local_table else source_config.local_table,
+        )
 
         koza_app = set_koza_app(koza_source, translation_table, output_dir, output_format, schema)
         koza_app.process_maps()

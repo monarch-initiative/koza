@@ -11,8 +11,8 @@ https://github.com/monarch-initiative/dipper/blob/682560f/tests/test_udp.py#L85
 
 import pytest
 
-from koza.io.utils import _sanitize_export_property
 from koza.io.utils import *
+from koza.io.utils import _sanitize_export_property
 
 
 def test_404():
@@ -20,6 +20,7 @@ def test_404():
     with pytest.raises(ValueError):
         with open_resource(resource) as _:
             pass
+
 
 @pytest.mark.parametrize(
     "query",

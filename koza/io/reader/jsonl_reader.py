@@ -12,8 +12,9 @@ class JSONLReader:
     """
 
     def __init__(
-        self, io_str: IO[str], 
-        required_properties: List[str] = None, 
+        self,
+        io_str: IO[str],
+        required_properties: List[str] = None,
         name: str = 'jsonl file',
         row_limit: int = None,
     ):
@@ -41,7 +42,7 @@ class JSONLReader:
         if self.line_limit:
             if self.line_num == self.line_limit:
                 raise StopIteration
-                
+
         json_obj = json.loads(next_line)
 
         if self.required_properties:

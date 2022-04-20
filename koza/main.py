@@ -26,9 +26,11 @@ def transform(
     global_table: str = typer.Option(None, help="Path to global translation table"),
     local_table: str = typer.Option(None, help="Path to local translation table"),
     schema: str = typer.Option(None, help='Path to schema YAML for validation in writer'),
-    row_limit: int = typer.Option(None, help="Number of rows to process (if skipped, processes entire source file)"),
+    row_limit: int = typer.Option(
+        None, help="Number of rows to process (if skipped, processes entire source file)"
+    ),
     quiet: bool = False,
-    debug: bool = False
+    debug: bool = False,
 ):
     """
     Transform a source file
@@ -42,7 +44,9 @@ def transform(
     elif not output_path.exists():
         output_path.mkdir(parents=True)
 
-    transform_source(source, output_dir, output_format, global_table, local_table, schema, row_limit)
+    transform_source(
+        source, output_dir, output_format, global_table, local_table, schema, row_limit
+    )
 
 
 @typer_app.command()
@@ -60,9 +64,7 @@ def validate(
     format is as expected (tsv, json), required columns/fields are there
     """
     _set_log_level(debug=True)
-    validate_file(
-        file, format, delimiter, header_delimiter, skip_blank_lines
-    )
+    validate_file(file, format, delimiter, header_delimiter, skip_blank_lines)
 
 
 # @typer_app.command()

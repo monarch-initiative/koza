@@ -1,6 +1,9 @@
 import os
-from biolink_model_pydantic.model import Gene, Disease, GeneToDiseaseAssociation, Predicate
+
+from biolink_model_pydantic.model import Disease, Gene
+
 from koza.io.writer.tsv_writer import TSVWriter
+
 
 def test_tsv_writer():
     """
@@ -11,8 +14,8 @@ def test_tsv_writer():
 
     ent = [g, d]
 
-    node_properties = ['id','category','symbol','in_taxon','provided_by','source']
-    
+    node_properties = ['id', 'category', 'symbol', 'in_taxon', 'provided_by', 'source']
+
     outdir = "test-output"
     outfile = "tsvwriter-node-only"
 
