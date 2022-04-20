@@ -7,10 +7,8 @@ from typing import Dict, Union
 import yaml
 
 # For validation
-from linkml_validator.validator import Validator
 from pydantic.error_wrappers import ValidationError
 
-from koza.converter.kgx_converter import KGXConverter
 from koza.exceptions import MapItemException, NextRowException
 from koza.io.writer.jsonl_writer import JSONLWriter
 from koza.io.writer.tsv_writer import TSVWriter
@@ -23,9 +21,6 @@ from koza.model.source import Source
 from koza.model.translation_table import TranslationTable
 
 # For validation
-from linkml_validator.validator import Validator
-from koza.converter.kgx_converter import KGXConverter
-import json
 
 logger = logging.getLogger(__name__)
 

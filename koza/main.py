@@ -3,20 +3,21 @@
 CLI interface for Koza
 """
 
-from koza.cli_runner import transform_source, validate_file
-from koza.model.config.source_config import FormatType, OutputFormat
-
-import os, sys
 from pathlib import Path
 
 import typer
+
+from koza.cli_runner import transform_source, validate_file
+from koza.model.config.source_config import FormatType, OutputFormat
+
 typer_app = typer.Typer()
 
-from contextlib import redirect_stdout
-import logging, io
+import logging
+
 logging.basicConfig()
-#global LOG 
-#LOG = logging.getLogger(__name__)
+# global LOG
+# LOG = logging.getLogger(__name__)
+
 
 @typer_app.command()
 def transform(
@@ -26,10 +27,14 @@ def transform(
     global_table: str = typer.Option(None, help="Path to global translation table"),
     local_table: str = typer.Option(None, help="Path to local translation table"),
     schema: str = typer.Option(None, help='Path to schema YAML for validation in writer'),
-    row_limit: int = typer.Option(None, help="Number of rows to process (if skipped, processes entire source file)"),
+    row_limit: int = typer.Option(
+        None, help="Number of rows to process (if skipped, processes entire source file)"
+    ),
     quiet: bool = typer.Option(False, help="Optional quiet mode - set true to suppress output"),
-    debug: bool = typer.Option(False, help="Optional debug mode - set true for additional debug output"),
-    log: bool = typer.Option(False, help='Optional log mode - set true to save output to ./logs')
+    debug: bool = typer.Option(
+        False, help="Optional debug mode - set true for additional debug output"
+    ),
+    log: bool = typer.Option(False, help='Optional log mode - set true to save output to ./logs'),
 ) -> None:
     """
     Transform a source file
@@ -51,6 +56,7 @@ def transform(
         source, output_dir, output_format, global_table, local_table, schema, row_limit
     )
 
+
 @typer_app.command()
 def validate(
     file: str = typer.Option(..., help="Path or url to the source file"),
@@ -67,9 +73,7 @@ def validate(
     """
     _set_log_level(debug=True)
 
-    validate_file(
-        file, format, delimiter, header_delimiter, skip_blank_lines
-    )
+    validate_file(file, format, delimiter, header_delimiter, skip_blank_lines)
 
 
 # @typer_app.command()
@@ -79,8 +83,11 @@ def validate(
 #    Create a new koza project
 #    """
 
-def _set_log_level(quiet: bool = False, debug: bool = False, log: bool = False, logfile: str = 'logs/transform.log'):
-    
+
+def _set_log_level(
+    quiet: bool = False, debug: bool = False, log: bool = False, logfile: str = 'logs/transform.log'
+):
+
     if log:
         # Reset root logger in case it was configured elsewhere
         logger = logging.getLogger()
@@ -99,7 +106,7 @@ def _set_log_level(quiet: bool = False, debug: bool = False, log: bool = False, 
         file_handler.setFormatter(file_formatter)
         file_handler.setLevel(logging.DEBUG)
         logger.addHandler(file_handler)
-        
+
         # Set root logger level
         logger.setLevel(logging.DEBUG)
     elif quiet:
@@ -108,6 +115,7 @@ def _set_log_level(quiet: bool = False, debug: bool = False, log: bool = False, 
         logging.getLogger().setLevel(logging.DEBUG)
     else:
         logging.getLogger().setLevel(logging.INFO)
+
 
 if __name__ == "__main__":
     typer_app()

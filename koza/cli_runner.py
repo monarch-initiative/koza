@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 koza_app = None
 
+
 def set_koza(koza: KozaApp):
     global koza_app
     koza_app = koza
