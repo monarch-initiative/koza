@@ -8,6 +8,8 @@ import yaml
 
 # For validation
 from pydantic.error_wrappers import ValidationError
+from linkml_validator.validator import Validator
+from koza.converter.kgx_converter import KGXConverter
 
 from koza.exceptions import MapItemException, NextRowException
 from koza.io.writer.jsonl_writer import JSONLWriter
@@ -49,7 +51,12 @@ class KozaApp:
         self.writer: KozaWriter = self._get_writer(
             source.config.name, source.config.node_properties, source.config.edge_properties
         )
+        
         if schema:
+            self.validator = Validator(schema=schema)
+            self.converter = KGXConverter
+
+        if source.config.depends_on is not None:
             for map_file in source.config.depends_on:
                 with open(map_file, 'r') as map_file_fh:
                     map_file_config = MapFileConfig(
