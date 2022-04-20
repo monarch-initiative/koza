@@ -6,7 +6,7 @@ CLI interface for Koza
 from koza.cli_runner import transform_source, validate_file
 from koza.model.config.source_config import FormatType, OutputFormat
 
-import os
+import os, sys
 from pathlib import Path
 
 import typer
@@ -78,18 +78,34 @@ def validate(
 #    """
 
 def _set_log_level(quiet: bool = False, debug: bool = False, log: bool = False, logfile: str = 'logs/transform.log'):
+    
     if log:
-        log_file_handler = logging.FileHandler(logfile)
-        log_file_handler.setLevel(logging.DEBUG)
-        logging.getLogger().setLevel(logging.DEBUG)
-        logging.getLogger().addHandler(log_file_handler)
+        # Reset root logger in case it was configured elsewhere
+        logger = logging.getLogger()
+        logging.root.handlers = []
+
+        # Set a handler for console output
+        stream_handler = logging.StreamHandler()
+        stream_formatter = logging.Formatter(':%(name)-20s: %(levelname)-8s: %(message)s')
+        stream_handler.setFormatter(stream_formatter)
+        stream_handler.setLevel(logging.WARNING)
+        logger.addHandler(stream_handler)
+
+        # Set a handler for file output
+        file_handler = logging.FileHandler(logfile, mode='w')
+        file_formatter = logging.Formatter("%(name)-26s: %(levelname)-8s: %(message)s")
+        file_handler.setFormatter(file_formatter)
+        file_handler.setLevel(logging.DEBUG)
+        logger.addHandler(file_handler)
+        
+        # Set root logger level
+        logger.setLevel(logging.DEBUG)
     elif quiet:
         logging.getLogger().setLevel(logging.WARNING)
     elif debug:
         logging.getLogger().setLevel(logging.DEBUG)
     else:
         logging.getLogger().setLevel(logging.INFO)
-    logging.warning(f"Logger set. Output file: {logfile}")
 
 if __name__ == "__main__":
     typer_app()
