@@ -54,7 +54,7 @@ class KozaApp:
         
         if schema:
             self.validator = Validator(schema=schema)
-            self.converter = KGXConverter
+            self.converter = KGXConverter()
 
         if source.config.depends_on is not None:
             for map_file in source.config.depends_on:
