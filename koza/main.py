@@ -47,7 +47,9 @@ def transform(
     elif not output_path.exists():
         output_path.mkdir(parents=True)
 
-    transform_source(source, output_dir, output_format, global_table, local_table, schema, row_limit)
+    transform_source(
+        source, output_dir, output_format, global_table, local_table, schema, row_limit
+    )
 
 @typer_app.command()
 def validate(

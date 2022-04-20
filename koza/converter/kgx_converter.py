@@ -1,6 +1,7 @@
 from dataclasses import asdict
 from typing import Iterable, Tuple
 
+
 class KGXConverter:
     """
     Converts the biolink model to the KGX format, which splits
@@ -25,10 +26,12 @@ class KGXConverter:
                 edges.append(self.convert_association(entity))
 
             # if entity has id and name, but not subject/object/predicate, treat as node
-            elif all(hasattr(entity, attr) for attr in ["id", "name"]) and not all(hasattr(entity, attr) for attr in ["subject", "object", "predicate"]):
+            elif all(hasattr(entity, attr) for attr in ["id", "name"]) and not all(
+                hasattr(entity, attr) for attr in ["subject", "object", "predicate"]
+            ):
                 nodes.append(self.convert_node(entity))
 
-            # otherwise, not a 
+            # otherwise, not a
             else:
                 raise ValueError(
                     "Can only convert NamedThing or Association entities to KGX compatible dictionaries"

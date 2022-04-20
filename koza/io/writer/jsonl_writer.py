@@ -1,14 +1,18 @@
 import json
 import os
-from dataclasses import asdict
 from typing import Iterable, List, Optional
 
-from koza.io.writer.writer import KozaWriter
 from koza.converter.kgx_converter import KGXConverter
+from koza.io.writer.writer import KozaWriter
+
 
 class JSONLWriter(KozaWriter):
     def __init__(
-        self, output_dir: str, source_name: str, node_properties: List[str], edge_properties: Optional[List[str]]=[]
+        self,
+        output_dir: str,
+        source_name: str,
+        node_properties: List[str],
+        edge_properties: Optional[List[str]] = [],
     ):
 
         self.output_dir = output_dir

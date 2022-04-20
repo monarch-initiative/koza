@@ -107,7 +107,7 @@ class CSVReader:
 
         if not self._header:
             self._set_header()
-                
+
         try:
             if self.line_count == self.row_limit:
                 raise StopIteration

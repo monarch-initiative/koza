@@ -19,7 +19,7 @@ def test_normal_case():
 
 def test_required_properties():
     with gzip.open(test_ddpheno, 'rt') as ddpheno:
-        row_limit=3
+        row_limit = 3
         row_count = 0
         json_reader = JSONReader(ddpheno, ['id'], json_path=json_path, row_limit=row_limit)
         for row in json_reader:

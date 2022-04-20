@@ -16,10 +16,12 @@ def test_source_primary_config():
     with open(base_config, 'r') as config:
         PrimaryFileConfig(**yaml.safe_load(config))
 
+
 def test_inline_local_table():
     with open(base_config, 'r') as config:
         config = PrimaryFileConfig(**yaml.safe_load(config))
     assert config.local_table["is just a little to the left of"] == "RO:123"
+
 
 @pytest.mark.parametrize(
     "inclusion, column, filter_code, value",
