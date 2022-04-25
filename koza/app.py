@@ -7,10 +7,10 @@ from typing import Dict, Union
 import yaml
 
 # For validation
-from linkml_validator.validator import Validator
 from pydantic.error_wrappers import ValidationError
-
+from linkml_validator.validator import Validator
 from koza.converter.kgx_converter import KGXConverter
+
 from koza.exceptions import MapItemException, NextRowException
 from koza.io.writer.jsonl_writer import JSONLWriter
 from koza.io.writer.tsv_writer import TSVWriter
@@ -22,7 +22,9 @@ from koza.model.map_dict import MapDict
 from koza.model.source import Source
 from koza.model.translation_table import TranslationTable
 
-LOG = logging.getLogger(__name__)
+# For validation
+
+logger = logging.getLogger(__name__)
 
 
 class KozaApp:
@@ -49,8 +51,7 @@ class KozaApp:
         self.writer: KozaWriter = self._get_writer(
             source.config.name, source.config.node_properties, source.config.edge_properties
         )
-        logging.getLogger(__name__)
-
+        
         if schema:
             self.validator = Validator(schema=schema)
             self.converter = KGXConverter()
@@ -110,11 +111,11 @@ class KozaApp:
                     else:
                         importlib.reload(transform_module)
                 except MapItemException as mie:
-                    LOG.warning(f"{str(mie)} not found in map")
+                    logger.warning(f"{str(mie)} not found in map")
                 except NextRowException:
                     continue
                 except ValidationError as ve:
-                    LOG.error(f"Validation error while processing: {self.source.last_row}")
+                    logger.error(f"Validation error while processing: {self.source.last_row}")
                     raise ve
                 except StopIteration:
                     break

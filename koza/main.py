@@ -3,7 +3,6 @@
 CLI interface for Koza
 """
 
-import logging
 from pathlib import Path
 
 import typer
@@ -13,9 +12,11 @@ from koza.model.config.source_config import FormatType, OutputFormat
 
 typer_app = typer.Typer()
 
+import logging
 
 logging.basicConfig()
-LOG = logging.getLogger(__name__)
+# global LOG
+# LOG = logging.getLogger(__name__)
 
 
 @typer_app.command()
@@ -29,13 +30,20 @@ def transform(
     row_limit: int = typer.Option(
         None, help="Number of rows to process (if skipped, processes entire source file)"
     ),
-    quiet: bool = False,
-    debug: bool = False,
-):
+    quiet: bool = typer.Option(False, help="Optional quiet mode - set true to suppress output"),
+    debug: bool = typer.Option(
+        False, help="Optional debug mode - set true for additional debug output"
+    ),
+    log: bool = typer.Option(False, help='Optional log mode - set true to save output to ./logs'),
+) -> None:
     """
     Transform a source file
     """
-    _set_log_level(quiet, debug)
+    # Set logging specs
+    logfile = Path(f"logs/{source.split('/')[1]}_{source.split('/')[2][:-5]}.log")
+    if log:
+        Path("logs").mkdir(parents=True, exist_ok=True)
+    _set_log_level(quiet, debug, log, logfile)
 
     output_path = Path(output_dir)
 
@@ -64,6 +72,7 @@ def validate(
     format is as expected (tsv, json), required columns/fields are there
     """
     _set_log_level(debug=True)
+
     validate_file(file, format, delimiter, header_delimiter, skip_blank_lines)
 
 
@@ -75,8 +84,32 @@ def validate(
 #    """
 
 
-def _set_log_level(quiet: bool = False, debug: bool = False):
-    if quiet:
+def _set_log_level(
+    quiet: bool = False, debug: bool = False, log: bool = False, logfile: str = 'logs/transform.log'
+):
+
+    if log:
+        # Reset root logger in case it was configured elsewhere
+        logger = logging.getLogger()
+        logging.root.handlers = []
+
+        # Set a handler for console output
+        stream_handler = logging.StreamHandler()
+        stream_formatter = logging.Formatter(':%(name)-20s: %(levelname)-8s: %(message)s')
+        stream_handler.setFormatter(stream_formatter)
+        stream_handler.setLevel(logging.WARNING)
+        logger.addHandler(stream_handler)
+
+        # Set a handler for file output
+        file_handler = logging.FileHandler(logfile, mode='w')
+        file_formatter = logging.Formatter("%(name)-26s: %(levelname)-8s: %(message)s")
+        file_handler.setFormatter(file_formatter)
+        file_handler.setLevel(logging.DEBUG)
+        logger.addHandler(file_handler)
+
+        # Set root logger level
+        logger.setLevel(logging.DEBUG)
+    elif quiet:
         logging.getLogger().setLevel(logging.WARNING)
     elif debug:
         logging.getLogger().setLevel(logging.DEBUG)
