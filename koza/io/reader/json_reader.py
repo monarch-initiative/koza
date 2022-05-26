@@ -1,11 +1,35 @@
 import json
 import logging
 from typing import IO, Any, Dict, Iterator, List, Union
+from xmlrpc.client import Boolean
 
 import yaml
 
 LOG = logging.getLogger(__name__)
 
+
+def check_data(entry, path) -> bool:
+    """
+    Given a dot delimited JSON tag path,
+    returns the value of the field in the entry.
+    :param entry:
+    :param path:
+    :return: str value of the given path into the entry
+    """
+    ppart = path.split(".")
+
+    tag = ppart.pop(0)
+
+    while True:
+        if tag in entry:
+            entry = entry[tag]
+            exists = True
+        else:
+            exists = False
+        if len(ppart) == 0:
+            return exists
+        else:
+            tag = ppart.pop(0) 
 
 class JSONReader:
     """
@@ -33,6 +57,8 @@ class JSONReader:
         self.required_properties = required_properties
         self.json_path = json_path
         self.name = name
+
+
 
         if self.json_path:
             if is_yaml:
@@ -73,18 +99,24 @@ class JSONReader:
 
         self._line_num += 1
 
+        # Check that required properties exist in row
         if self.required_properties:
-            if not set(next_obj.keys()) >= set(self.required_properties):
-                # TODO - have koza runner handle this exception
-                # based on some configuration? similar to
-                # on_map_error
+            
+            LOG.warning(
+                f"\n\nRow: {next_obj}\n"
+                f"{type(next_obj)}"
+            )
+
+            properties = []
+            for prop in self.required_properties:
+                new_prop = check_data(next_obj, prop)
+                properties.append(new_prop)
+
+            if False in properties:
                 raise ValueError(
                     f"Required properties defined for {self.name} are missing from {self.io_str.name}\n"
                     f"Missing properties: {set(self.required_properties) - set(next_obj.keys())}\n"
                     f"Row: {next_obj}"
                 )
-
-            # If we want to subset
-            # next_obj = {key: next_obj[key] for key in next_obj.keys() if key in self.required_properties}
 
         return next_obj
