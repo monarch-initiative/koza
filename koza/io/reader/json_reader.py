@@ -1,35 +1,11 @@
-import json
+import json, yaml
 import logging
 from typing import IO, Any, Dict, Iterator, List, Union
-from xmlrpc.client import Boolean
+#from xmlrpc.client import Boolean
 
-import yaml
+from koza.io.utils import check_data
 
 LOG = logging.getLogger(__name__)
-
-
-def check_data(entry, path) -> bool:
-    """
-    Given a dot delimited JSON tag path,
-    returns the value of the field in the entry.
-    :param entry:
-    :param path:
-    :return: str value of the given path into the entry
-    """
-    ppart = path.split(".")
-
-    tag = ppart.pop(0)
-
-    while True:
-        if tag in entry:
-            entry = entry[tag]
-            exists = True
-        else:
-            exists = False
-        if len(ppart) == 0:
-            return exists
-        else:
-            tag = ppart.pop(0) 
 
 class JSONReader:
     """
@@ -101,12 +77,6 @@ class JSONReader:
 
         # Check that required properties exist in row
         if self.required_properties:
-            
-            LOG.warning(
-                f"\n\nRow: {next_obj}\n"
-                f"{type(next_obj)}"
-            )
-
             properties = []
             for prop in self.required_properties:
                 new_prop = check_data(next_obj, prop)

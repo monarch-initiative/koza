@@ -1,6 +1,7 @@
 import json
 import logging
 from typing import IO, Any, Dict, Iterator, List
+from koza.io.utils import check_data
 
 LOG = logging.getLogger(__name__)
 
@@ -45,16 +46,18 @@ class JSONLReader:
 
         json_obj = json.loads(next_line)
 
+        # Check that required properties exist in row
         if self.required_properties:
-            if not set(json_obj.keys()) >= set(self.required_properties):
-                # TODO - have koza runner handle this exception
-                # based on some configuration? similar to
-                # on_map_error
+            properties = []
+            for prop in self.required_properties:
+                new_prop = check_data(json_obj, prop)
+                properties.append(new_prop)
+
+            if False in properties:
                 raise ValueError(
-                    f"Configured properties missing in source file "
-                    f"{set(self.required_properties) - set(json_obj.keys())}"
+                    f"Required properties defined for {self.name} are missing from {self.io_str.name}\n"
+                    f"Missing properties: {set(self.required_properties) - set(json_obj.keys())}\n"
+                    f"Row: {json_obj}"
                 )
-            # If we want to turn this into a subsetter
-            # json_obj = {key: json_obj[key] for key in json_obj.keys() if key in self.required_properties}
 
         return json_obj
