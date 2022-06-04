@@ -11,6 +11,7 @@ from typing import IO, Any, Dict, Union
 
 import requests
 
+##### Helper Functions for Reader classes #####
 
 def open_resource(resource: Union[str, PathLike]) -> IO[str]:
     """
@@ -59,6 +60,28 @@ def open_resource(resource: Union[str, PathLike]) -> IO[str]:
     else:
         raise ValueError(f"Cannot open local or remote file: {resource}")
 
+def check_data(entry, path) -> bool:
+    """
+    Given a dot delimited JSON tag path,
+    returns the value of the field in the entry.
+    :param entry:
+    :param path:
+    :return: str value of the given path into the entry
+    """
+    ppart = path.split(".")
+
+    tag = ppart.pop(0)
+
+    while True:
+        if tag in entry:
+            entry = entry[tag]
+            exists = True
+        else:
+            exists = False
+        if len(ppart) == 0:
+            return exists
+        else:
+            tag = ppart.pop(0) 
 
 ##### Helper functions for Writer classes #####
 
