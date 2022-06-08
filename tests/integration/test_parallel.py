@@ -11,7 +11,7 @@ from koza.model.config.source_config import OutputFormat
 def transform(source_file):
     transform_source(
         source=source_file,
-        output_dir="test-output",
+        output_dir="test-output/string/test-parallel",
         output_format=OutputFormat.tsv,
         local_table=None,
         global_table='examples/translation_table.yaml',
@@ -25,7 +25,7 @@ def transform_string():
 
 @dask.delayed
 def transform_string_string_declarative():
-    return transform("examples/string-declarative/protein-links-detailed.yaml")
+    return transform("examples/string-declarative/declarative-protein-links-detailed.yaml")
 
 a = transform_string()
 b = transform_string_string_declarative()

@@ -11,7 +11,7 @@ from koza.model.config.source_config import OutputFormat
 
 
 @pytest.mark.parametrize(
-    "ingest, output_name, output_format",
+    "source_name, ingest, output_format",
     [
         ("string", "protein-links-detailed", OutputFormat.tsv),
         ("string", "protein-links-detailed", OutputFormat.jsonl),
@@ -23,17 +23,20 @@ from koza.model.config.source_config import OutputFormat
         ("string-w-custom-map", "custom-map-protein-links-detailed", OutputFormat.jsonl),
     ],
 )
-def test_examples(ingest, output_name, output_format):
+def test_examples(source_name, ingest, output_format):
 
-    source = f"examples/{ingest}/protein-links-detailed.yaml"
+    source_config = f"examples/{source_name}/{ingest}.yaml"
+    
     output_suffix = str(output_format).split('.')[1]
-    output_dir = f"./test-output/{ingest}-{output_suffix}"
+    output_dir = f"./test-output/string/test-examples"
 
     output_files = [
-        output_file for file in output_names for output_file in [f"{output_dir}/{file}_nodes.{output_suffix}",f"{output_dir}/{file}_edges.{output_suffix}"]
-        ]
+        f"{output_dir}/{ingest}_nodes.{output_suffix}",
+        f"{output_dir}/{ingest}_edges.{output_suffix}"
+    ]
 
-    transform_source(source, output_dir, output_format, "examples/translation_table.yaml", None)
+
+    transform_source(source_config, output_dir, output_format, "examples/translation_table.yaml", None)
 
     for file in output_files:
         assert Path(file).exists()

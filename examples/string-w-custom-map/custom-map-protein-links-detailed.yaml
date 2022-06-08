@@ -27,7 +27,7 @@ filters:
     value: 700
 
 depends_on:
-  - './examples/maps/custom-entrez-2-string.yaml'
+  - 'examples/maps/custom-entrez-2-string.yaml'
 
 transform_mode: 'flat'
 

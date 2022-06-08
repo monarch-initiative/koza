@@ -12,43 +12,41 @@ import pytest
 from koza.cli_runner import transform_source
 from koza.model.config.source_config import OutputFormat
 
-model_schema = Path(__file__).parent.parent / 'resources' / 'biolink-model.yaml'
-
+#model_schema = Path(__file__).parent.parent / 'resources' / 'biolink-model.yaml'
+model_schema = "tests/resources/biolink-model.yaml"
 
 @pytest.mark.parametrize(
-    "ingest, output_names, output_format, schema",
+    "source_name, ingest, output_format, schema",
     [
-        ("string", ["protein-links-detailed"], OutputFormat.tsv, model_schema),
-        ("string", ["protein-links-detailed"], OutputFormat.jsonl, model_schema),
-        ("string-declarative", ["protein-links-detailed"], OutputFormat.tsv, model_schema),
-        ("string-declarative", ["protein-links-detailed"], OutputFormat.jsonl, model_schema),
-        ("string-w-map", ["protein-links-detailed"], OutputFormat.tsv, model_schema),
-        ("string-w-map", ["protein-links-detailed"], OutputFormat.jsonl, model_schema),
-        ("string-w-custom-map", ["protein-links-detailed"], OutputFormat.tsv, model_schema),
-        ("string-w-custom-map", ["protein-links-detailed"], OutputFormat.jsonl, model_schema),
+        ("string", "protein-links-detailed", OutputFormat.tsv, model_schema),
+        ("string", "protein-links-detailed", OutputFormat.jsonl, model_schema),
+        ("string-declarative", "declarative-protein-links-detailed", OutputFormat.tsv, model_schema),
+        ("string-declarative", "declarative-protein-links-detailed", OutputFormat.jsonl, model_schema),
+        ("string-w-map", "map-protein-links-detailed", OutputFormat.tsv, model_schema),
+        ("string-w-map", "map-protein-links-detailed", OutputFormat.jsonl, model_schema),
+        ("string-w-custom-map", "custom-map-protein-links-detailed", OutputFormat.tsv, model_schema),
+        ("string-w-custom-map", "custom-map-protein-links-detailed", OutputFormat.jsonl, model_schema),
     ],
 )
-def test_validator(ingest, output_names, output_format, schema):
+def test_validator(source_name, ingest, output_format, schema):
 
-    source = f"examples/{ingest}/protein-links-detailed.yaml"
+    source_config = f"examples/{source_name}/{ingest}.yaml"
+    
     output_suffix = str(output_format).split('.')[1]
-    output_dir = f"./test-output/{ingest}-{output_suffix}"
+    output_dir = f"./test-output/string/test-validator"
 
     output_files = [
-        output_file
-        for file in output_names
-        for output_file in [
-            f"{output_dir}/{file}_nodes.{output_suffix}",
-            f"{output_dir}/{file}_edges.{output_suffix}",
-        ]
+        f"{output_dir}/{ingest}_nodes.{output_suffix}",
+        f"{output_dir}/{ingest}_edges.{output_suffix}"
     ]
 
     transform_source(
-        source,
+        source_config,
         output_dir,
         output_format,
         global_table="tests/resources/translation_table.yaml",
-        schema="tests/resources/biolink-model.yaml",
+        schema=schema
+        #schema="tests/resources/biolink-model.yaml",
     )
 
     for file in output_files:

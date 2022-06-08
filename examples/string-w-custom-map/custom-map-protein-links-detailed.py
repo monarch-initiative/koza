@@ -2,10 +2,13 @@ import uuid
 
 from biolink_model_pydantic.model import Gene, PairwiseGeneToGeneInteraction, Predicate
 
-from koza.cli_runner import koza_app
+from koza.cli_runner import get_koza_app
 
+source_name = 'custom-map-protein-links-detailed'
+koza_app = get_koza_app(source_name)
 row = koza_app.get_row()
-entrez_2_string = koza_app.get_map('entrez_2_string')
+#entrez_2_string = koza_app.get_map(source_name)
+map = koza_app.get_map(source_name)
 
 gene_a = Gene(id='NCBIGene:' + entrez_2_string[row['protein1']]['entrez'])
 gene_b = Gene(id='NCBIGene:' + entrez_2_string[row['protein2']]['entrez'])
