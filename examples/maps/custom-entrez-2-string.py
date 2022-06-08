@@ -1,6 +1,8 @@
-from koza.cli_runner import koza_app
+from koza.cli_runner import get_koza_app
 
-source_name = "custom-entrez-2-string"
+source_name = 'custom-entrez-2-string'
+
+koza_app = get_koza_app(source_name)
 
 row = koza_app.get_row(source_name)
 

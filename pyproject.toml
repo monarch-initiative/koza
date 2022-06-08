@@ -45,6 +45,7 @@ dev = [
     "flake8 >=3.8.3,<4.0.0",
     "black ==22.3.0",
     "isort >=5.0.6,<6.0.0",
+    "dask >=2022.5.2", 
 ]
 
 [tool.flit.scripts]

@@ -20,13 +20,19 @@ from koza.model.translation_table import TranslationTable
 
 logger = logging.getLogger(__name__)
 
-koza_app = None
+#koza_app = None
 
+global koza_apps
+koza_apps = {}
 
-def set_koza(koza: KozaApp):
-    global koza_app
-    koza_app = koza
-
+def get_koza_app(source_name) -> Optional[KozaApp]:
+    """
+    Getter for singleton koza app object
+    """
+    if koza_apps[source_name] is not None:
+        return koza_apps[source_name]
+    else:
+        raise KeyError(f"{source_name} was not found in KozaApp dictionary")
 
 def set_koza_app(
     source: Source,
@@ -37,18 +43,40 @@ def set_koza_app(
 ) -> KozaApp:
     """
     Setter for singleton koza app object
-    """
-    global koza_app
-
-    koza_app = KozaApp(source, translation_table, output_dir, output_format, schema)
-    return koza_app
+    """  
+    koza_apps[source.config.name] = KozaApp(source, translation_table, output_dir, output_format, schema)
+    return koza_apps[source.config.name]
 
 
-def get_koza_app() -> Optional[KozaApp]:
-    """
-    Getter for singleton koza app object
-    """
-    return koza_app
+def transform_source(
+    source: str,
+    output_dir: str,
+    output_format: OutputFormat = OutputFormat('tsv'),
+    global_table: str = None,
+    local_table: str = None,
+    schema: str = None,
+    row_limit: int = None,
+):
+
+    with open(source, 'r') as source_fh:
+        source_config = PrimaryFileConfig(**yaml.load(source_fh, Loader=UniqueIncludeLoader))
+        if not source_config.name:
+            source_config.name = Path(source).stem
+
+        if not source_config.transform_code:
+            # look for it alongside the source conf as a .py file
+            source_config.transform_code = str(Path(source).parent / Path(source).stem) + '.py'
+
+        koza_source = Source(source_config, row_limit)
+
+        translation_table = get_translation_table(
+            global_table if global_table else source_config.global_table,
+            local_table if local_table else source_config.local_table,
+        )
+
+        source_koza = set_koza_app(koza_source, translation_table, output_dir, output_format, schema)
+        source_koza.process_maps()
+        source_koza.process_sources()
 
 
 def validate_file(
@@ -123,33 +151,7 @@ def get_translation_table(
 
     return TranslationTable(global_tt, local_tt)
 
-
-def transform_source(
-    source: str,
-    output_dir: str,
-    output_format: OutputFormat = OutputFormat('tsv'),
-    global_table: str = None,
-    local_table: str = None,
-    schema: str = None,
-    row_limit: int = None,
-):
-
-    with open(source, 'r') as source_fh:
-        source_config = PrimaryFileConfig(**yaml.load(source_fh, Loader=UniqueIncludeLoader))
-        if not source_config.name:
-            source_config.name = Path(source).stem
-
-        if not source_config.transform_code:
-            # look for it alongside the source conf as a .py file
-            source_config.transform_code = str(Path(source).parent / Path(source).stem) + '.py'
-
-        koza_source = Source(source_config, row_limit)
-
-        translation_table = get_translation_table(
-            global_table if global_table else source_config.global_table,
-            local_table if local_table else source_config.local_table,
-        )
-
-        koza_app = set_koza_app(koza_source, translation_table, output_dir, output_format, schema)
-        koza_app.process_maps()
-        koza_app.process_sources()
+def test_koza(koza: KozaApp):
+    """Manually sets KozaApp (for testing)"""
+    global koza_app
+    koza_app = koza

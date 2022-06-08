@@ -3,7 +3,9 @@ import uuid
 
 from biolink_model_pydantic.model import PairwiseGeneToGeneInteraction, Predicate, Protein
 
-from koza.cli_runner import koza_app
+from koza.cli_runner import get_koza_app
+
+koza_app = get_koza_app('declarative-protein-links-detailed')
 
 row = koza_app.get_row()
 
