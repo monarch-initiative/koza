@@ -7,7 +7,7 @@ from koza.cli_runner import get_koza_app
 source_name = 'custom-map-protein-links-detailed'
 koza_app = get_koza_app(source_name)
 row = koza_app.get_row()
-#entrez_2_string = koza_app.get_map(source_name)
+entrez_2_string = koza_app.get_map('custom-entrez-2-string')
 map = koza_app.get_map(source_name)
 
 gene_a = Gene(id='NCBIGene:' + entrez_2_string[row['protein1']]['entrez'])

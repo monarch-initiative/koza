@@ -1,5 +1,8 @@
 name: 'custom-entrez-2-string'
 
+needed_by: 
+  - 'custom-map-protein-links-detailed'
+
 metadata:
   description: 'Mapping file provided by StringDB that contains entrez to protein ID mappings'
 

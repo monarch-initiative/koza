@@ -1,15 +1,25 @@
+from pathlib import Path
+import yaml
+
+from koza.model.config.source_config import FormatType, OutputFormat, PrimaryFileConfig
 from koza.cli_runner import get_koza_app
 
-source_name = 'custom-entrez-2-string'
+config_file = 'custom-entrez-2-string.yaml' #Path(__file__).parent.parent / 'resources' / 'biolink-model.yaml'
 
-koza_app = get_koza_app(source_name)
+with open(config_file, 'r') as file:
+        source_config = yaml.load(file)
+       
+for ingest in source_config['needed_by']:
+    print(ingest)
 
-row = koza_app.get_row(source_name)
+    koza_app = get_koza_app(ingest)
 
-map = koza_app.get_map(source_name)
+    row = koza_app.get_row(ingest)
 
-entry = dict()
+    map = koza_app.get_map(ingest)
 
-entry["entrez"] = row["entrez"]
+    entry = dict()
 
-map[row["STRING"]] = entry
+    entry["entrez"] = row["entrez"]
+
+    map[row["STRING"]] = entry

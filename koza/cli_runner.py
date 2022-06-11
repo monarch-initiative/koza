@@ -29,9 +29,9 @@ def get_koza_app(source_name) -> Optional[KozaApp]:
     """
     Getter for singleton koza app object
     """
-    if koza_apps[source_name] is not None:
+    try:
         return koza_apps[source_name]
-    else:
+    except:
         raise KeyError(f"{source_name} was not found in KozaApp dictionary")
 
 def set_koza_app(
@@ -46,7 +46,6 @@ def set_koza_app(
     """  
     koza_apps[source.config.name] = KozaApp(source, translation_table, output_dir, output_format, schema)
     return koza_apps[source.config.name]
-
 
 def transform_source(
     source: str,
@@ -75,9 +74,8 @@ def transform_source(
         )
 
         source_koza = set_koza_app(koza_source, translation_table, output_dir, output_format, schema)
-        source_koza.process_maps()
+        source_koza.process_maps(koza_apps)
         source_koza.process_sources()
-
 
 def validate_file(
     file: str,
@@ -111,7 +109,6 @@ def validate_file(
 
         for _ in reader:
             pass
-
 
 def get_translation_table(
     global_table: Union[str, Dict] = None, local_table: Union[str, Dict] = None
