@@ -1,4 +1,4 @@
-name: 'entrez_2_string'
+name: 'entrez-2-string'
 
 metadata:
   description: 'Mapping file provided by StringDB that contains entrez to protein ID mappings'

@@ -66,8 +66,8 @@ class KozaApp:
         )
 
     def get_map(self, map_name: str):
-        print(f"Parent koza_app: {self.source.config.name}\nMap cache for {map_name}: {self._map_cache}")
-        return self._map_cache[map_name]
+        map = self._map_cache[map_name]
+        return map
 
     def get_row(self, ingest_name: str = None) -> Dict:
         if ingest_name and ingest_name == self.source.config.name:
