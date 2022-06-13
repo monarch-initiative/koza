@@ -20,8 +20,6 @@ from koza.model.translation_table import TranslationTable
 
 logger = logging.getLogger(__name__)
 
-#koza_app = None
-
 global koza_apps
 koza_apps = {}
 
@@ -45,6 +43,7 @@ def set_koza_app(
     Setter for singleton koza app object
     """  
     koza_apps[source.config.name] = KozaApp(source, translation_table, output_dir, output_format, schema)
+    print(f"koza_apps entry created for: {source.config.name}\nkoza_app: {koza_apps[source.config.name]}")
     return koza_apps[source.config.name]
 
 def transform_source(
@@ -74,7 +73,7 @@ def transform_source(
         )
 
         source_koza = set_koza_app(koza_source, translation_table, output_dir, output_format, schema)
-        source_koza.process_maps(koza_apps)
+        source_koza.process_maps()
         source_koza.process_sources()
 
 def validate_file(
