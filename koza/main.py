@@ -4,7 +4,7 @@ CLI interface for Koza
 """
 
 from pathlib import Path
-
+import os
 import typer
 
 from koza.cli_runner import transform_source, validate_file
@@ -39,7 +39,11 @@ def transform(
     """
     Transform a source file
     """
-    # Set logging specs
+    # note: this requires koza users to follow the same dir structure, two levels of directories to find the .yaml file
+    # else something like this might work with a generic directory structure:
+    # os.path.basename(source) # name of the file + extension
+    # os.path.dirname(source) # name of the directory
+    # os.path.splitext(os.path.basename(source))[0] # name of the yaml file without the yaml
     logfile = Path(f"logs/{source.split('/')[1]}_{source.split('/')[2][:-5]}.log")
     if log:
         Path("logs").mkdir(parents=True, exist_ok=True)

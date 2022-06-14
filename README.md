@@ -59,3 +59,4 @@ koza transform --source examples/string/protein-links-detailed.yaml --global-tab
 
 koza transform --source examples/string-declarative/protein-links-detailed.yaml --global-table examples/translation_table.yaml
 ```
+note: koza expects a directory structure as described in the above example (examples/ingest_name/ingest.yaml)
