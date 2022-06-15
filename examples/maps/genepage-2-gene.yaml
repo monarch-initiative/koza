@@ -17,13 +17,6 @@ columns:
   - 'laevis_s_id'
   - 'laevis_s_label'
 
-#add_curie_prefix:
-#  'Xenbase:'
-#   - 'gene_page_id'
-#   - 'tropicalis_id'
-#   - 'laevis_l_id'
-#   - 'laevis_s_id'
-
 key: 'gene_page_id'
 
 values:
