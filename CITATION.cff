@@ -1,0 +1,21 @@
+cff-version: '1.1.0'
+message: 'Please cite the following works when using this software.'
+abstract: 'Data transformation framework for LinkML data models'
+authors:
+  - family-names: 'Schaper'
+    given-names: 'Kevin'
+  - family-names: 'Ships'
+    given-names: 'Glass'
+  - family-names: 'Shefchek'
+    given-names: 'Kent'
+  - family-names: 'Moxon'
+    given-names: 'Sierra'
+  - family-names: 'Mungall'
+    given-names: 'Chris'
+date-released: 2022-06-15
+identifiers:
+  - type: 'url'
+    value: 'https://github.com/monarch-initiative/koza'
+title: 'monarch-initiative/koza'
+url: 'https://github.com/monarch-initiative/koza'
+version: '0.1.14'
