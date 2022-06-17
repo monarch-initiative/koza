@@ -25,6 +25,8 @@ requires = [
     "typer >=0.3",
     "ordered-set >= 4.1.0",
     "linkml-validator >= 0.1.0"
+    "mkdocs >= 1.3.0",
+    "mkdocs-material >= 8.3.4"
 ]
 description-file = "README.md"
 requires-python = ">=3.8"
@@ -36,10 +38,7 @@ Documentation = "https://github.com/monarch-initiative/koza"
 test = [
     "pytest >=6.0.0",
 ]
-doc = [
-    "mkdocs >= 1.3.0",
-    "mkdocs-material >= 8.2.9"
-]
+
 dev = [
     "biolink-model-pydantic >=0.1.11",
     "autoflake >=1.3.1,<2.0.0",
