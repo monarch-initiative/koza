@@ -24,4 +24,4 @@ pip install koza
 
 **Now let's take a look at how to use Koza! First step: [Setup and usage](Usage/configuring_ingests.md)**
 
-<img src='img/pupa.png' width='50%' style='display: block; margin-left: auto; margin-right: auto;'>
+<img src='../img/pupa.png' width='50%' style='display: block; margin-left: auto; margin-right: auto;'>
