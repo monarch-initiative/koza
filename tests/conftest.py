@@ -4,7 +4,7 @@ from typing import Iterable
 import pytest
 
 from koza.app import KozaApp
-from koza.cli_runner import set_koza
+from koza.cli_runner import test_koza
 from koza.model.config.source_config import PrimaryFileConfig
 from koza.model.source import Source
 
@@ -56,7 +56,7 @@ def mock_koza():
             filters=filters,
             translation_table=translation_table,
         )
-        set_koza(koza_app)
+        test_koza(koza_app)
         koza_app.process_sources()
         return koza_app._entities
 

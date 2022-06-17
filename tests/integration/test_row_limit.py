@@ -13,11 +13,11 @@ from koza.model.config.source_config import OutputFormat
 
 
 @pytest.mark.parametrize(
-    "ingest, output_names, output_format, row_limit, header_len, expected_node_len, expected_edge_len",
+    "source_name, ingest, output_format, row_limit, header_len, expected_node_len, expected_edge_len",
     [
         (
             "string-declarative",  # ingest
-            ["protein-links-detailed"],  # output_names
+            "declarative-protein-links-detailed",  # output_names
             OutputFormat.tsv,  # output_format
             3,  # row_limit
             1,  # header_len
@@ -27,28 +27,37 @@ from koza.model.config.source_config import OutputFormat
     ],
 )
 def test_examples(
-    ingest, output_names, output_format, row_limit, header_len, expected_node_len, expected_edge_len
+    source_name, ingest, output_format, row_limit, header_len, expected_node_len, expected_edge_len
 ):
 
-    source = f"examples/{ingest}/protein-links-detailed.yaml"
-    output_suffix = ".tsv"
-    output_dir = f"./test-output/{ingest}-row-limit"
+    source_config = f"examples/{source_name}/{ingest}.yaml"
+    
+    output_suffix = str(output_format).split('.')[1]
+    output_dir = f"./test-output/string/test-row-limit"
 
     transform_source(
-        source=source,
+        source=source_config,
         output_dir=output_dir,
         output_format=output_format,
         global_table="examples/translation_table.yaml",
-        local_table=None,
         row_limit=row_limit,
     )
 
     # hacky check that correct number of rows was processed
-    node_file = f"{output_dir}/protein-links-detailed_nodes{output_suffix}"
-    edge_file = f"{output_dir}/protein-links-detailed_edges{output_suffix}"
+    #node_file = f"{output_dir}/string/{ingest}-row-limit_nodes{output_suffix}"
+    #edge_file = f"{output_dir}/string/{ingest}-row-limit_edges{output_suffix}"
 
-    node_lines = sum(1 for line in open(node_file))
-    edge_lines = sum(1 for line in open(edge_file))
+    output_files = [
+        f"{output_dir}/{ingest}_nodes.{output_suffix}",
+        f"{output_dir}/{ingest}_edges.{output_suffix}"
+    ]
 
-    assert node_lines == expected_node_len
-    assert edge_lines == expected_edge_len
+    number_of_lines = [
+        sum(1 for line in open(output_files[0])),
+        sum(1 for line in open(output_files[1]))
+    ]
+
+    assert number_of_lines == [expected_node_len, expected_edge_len]
+
+    #assert node_lines == expected_node_len
+    #assert edge_lines == expected_edge_len

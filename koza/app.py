@@ -22,8 +22,6 @@ from koza.model.map_dict import MapDict
 from koza.model.source import Source
 from koza.model.translation_table import TranslationTable
 
-# For validation
-
 logger = logging.getLogger(__name__)
 
 
@@ -59,12 +57,8 @@ class KozaApp:
         if source.config.depends_on is not None:
             for map_file in source.config.depends_on:
                 with open(map_file, 'r') as map_file_fh:
-                    map_file_config = MapFileConfig(
-                        **yaml.load(map_file_fh, Loader=UniqueIncludeLoader)
-                    )
-                    map_file_config.transform_code = (
-                        str(Path(map_file).parent / Path(map_file).stem) + '.py'
-                    )
+                    map_file_config = MapFileConfig(**yaml.load(map_file_fh, Loader=UniqueIncludeLoader))
+                    map_file_config.transform_code = (str(Path(map_file).parent / Path(map_file).stem) + '.py')
                 self._map_registry[map_file_config.name] = Source(map_file_config)
 
         self.writer = self._get_writer(
@@ -72,7 +66,8 @@ class KozaApp:
         )
 
     def get_map(self, map_name: str):
-        return self._map_cache[map_name]
+        map = self._map_cache[map_name]
+        return map
 
     def get_row(self, ingest_name: str = None) -> Dict:
         if ingest_name and ingest_name == self.source.config.name:
@@ -140,7 +135,7 @@ class KozaApp:
         """
         for map_file in self._map_registry.values():
             if map_file.config.name not in self._map_cache:
-                self._load_map(map_file.config)
+                self._load_map(map_file)
 
     @staticmethod
     def next_row():
@@ -190,14 +185,18 @@ class KozaApp:
         elif self.output_format == OutputFormat.jsonl:
             return JSONLWriter(self.output_dir, name, node_properties, edge_properties)
 
-    def _load_map(self, map_file_config: MapFileConfig):
-        map_file = Source(map_file_config)
+    def _load_map(self, map_file: Source):
+
+       # map_file = Source(map_file_config)
+
+        if not isinstance(map_file.config, MapFileConfig):
+            raise ValueError(f"Error loading map: {map_file.config.name} is not a MapFileConfig")
 
         map = MapDict()
 
-        self._map_cache[map_file_config.name] = map
+        self._map_cache[map_file.config.name] = map
 
-        transform_code_pth = Path(map_file_config.transform_code)
+        transform_code_pth = Path(map_file.config.transform_code)
 
         if transform_code_pth.exists():
             parent_path = transform_code_pth.parent
@@ -216,12 +215,10 @@ class KozaApp:
                 except StopIteration:
                     break
         else:
-            key_column = map_file_config.key
-            value_columns = map_file_config.values
+            key_column = map_file.config.key
+            value_columns = map_file.config.values
             for row in map_file:
-                map[row[key_column]] = {
-                    key: value for key, value in row.items() if key in value_columns
-                }
+                map[row[key_column]] = {key: value for key, value in row.items() if key in value_columns}
 
     @staticmethod
     def _map_sniffer(depends_on: str):

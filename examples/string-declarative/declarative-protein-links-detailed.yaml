@@ -1,4 +1,4 @@
-name: 'protein-links-detailed'
+name: 'declarative-protein-links-detailed'
 
 delimiter: ' '
 
@@ -6,7 +6,13 @@ files:
   - './examples/data/string.tsv'
   - './examples/data/string2.tsv'
 
-metadata: !include './examples/string-w-map/metadata.yaml'
+metadata:
+  ingest_title: 'String DB'
+  ingest_url: 'https://string-db.org'
+  description: 'STRING: functional protein association networks'
+  rights: 'https://string-db.org/cgi/access.pl?footer_active_subpage=licensing'
+
+global_table: './examples/translation_table.yaml'
 
 columns:
   - 'protein1'
@@ -25,9 +31,6 @@ filters:
     column: 'combined_score'
     filter_code: 'lt'
     value: 700
-
-depends_on:
-  - './examples/maps/entrez-2-string.yaml'
 
 transform_mode: 'flat'
 

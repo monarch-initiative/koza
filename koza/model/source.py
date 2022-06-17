@@ -24,7 +24,7 @@ class Source:
     """
 
     def __init__(
-        self, config: Union[PrimaryFileConfig, MapFileConfig, str], row_limit: Optional[int] = None
+        self, config: Union[PrimaryFileConfig, MapFileConfig], row_limit: Optional[int] = None
     ):
 
         self.config = config
@@ -33,16 +33,6 @@ class Source:
         self._reader = None
         self._readers: List = []
         self.last_row: Optional[Dict] = None
-
-        if not isinstance(config, SourceConfig):
-            # Check to see if it's a file path
-            with open(config, 'r') as source_file_fh:
-                self.config = PrimaryFileConfig(
-                    **yaml.load(source_file_fh, Loader=UniqueIncludeLoader)
-                )
-        else:
-            # TODO better error handling
-            self.config = config
 
         for file in config.files:
             resource_io = open_resource(file)

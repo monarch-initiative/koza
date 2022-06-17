@@ -1,4 +1,4 @@
-name: 'protein-links-detailed'
+name: 'map-protein-links-detailed'
 
 delimiter: ' '
 
@@ -6,7 +6,7 @@ files:
   - './examples/data/string.tsv'
   - './examples/data/string2.tsv'
 
-metadata: !include './examples/string-w-custom-map/metadata.yaml'
+metadata: !include './examples/string-w-map/metadata.yaml'
 
 columns:
   - 'protein1'
@@ -27,7 +27,7 @@ filters:
     value: 700
 
 depends_on:
-  - './examples/maps/custom-entrez-2-string.yaml'
+  - './examples/maps/entrez-2-string.yaml'
 
 transform_mode: 'flat'
 

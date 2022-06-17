@@ -1,7 +1,45 @@
-site_name: Koza
-nav:
-- Home: '../'
-- Ingest Configuration: 'ingest_configuration.md'
-site_url: https://koza.monarchinitiative.org/
-repo_url: https://github.com/monarch-initiative/koza
+site_name: 'Koza Documentation'
+site_url: 'https://koza.monarchinitiative.org/'
 
+repo_name: 'monarch-initiative/koza'
+repo_url: 'https://github.com/monarch-initiative/koza'
+
+theme:
+    name: 'material'
+    docs_dir: docs/
+    logo: 'img/pupa.png'
+    favicon:
+        'images/favicon.ico'
+    features:
+        - navigation.expand
+        - navigation.instant
+        - navigation.tracking
+        - navigation.tabs
+        - navigation.tabs.sticky
+    palette:
+        scheme: 'slate'
+        primary: 'blue'
+        accent: 'purple'
+    font:
+        text: 'Roboto'
+        #code: 'Fira Mono'
+
+extra:
+  social:
+    - icon: 'fontawesome/solid/house'
+      link: 'https://monarchinitiative.org'
+    - icon: 'fontawesome/brands/github-alt'
+      link: 'https://github.com/monarch-initiative'
+
+markdown_extensions:
+  - def_list # list support
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - pymdownx.keys
+  - attr_list
+  - pymdownx.betterem:
+      smart_enable: all
+      
+#copyright: 'Copyright &copy; 2020 - 2022 Glass (contact@glass-ships.com)'
