@@ -1,6 +1,6 @@
 from dataclasses import asdict
 from typing import Iterable, Tuple
-
+from pydantic import BaseModel
 
 class KGXConverter:
     """
@@ -40,7 +40,11 @@ class KGXConverter:
         return nodes, edges
 
     def convert_node(self, node) -> dict:
+        if isinstance(node, BaseModel):
+            return dict(node)
         return asdict(node)
 
     def convert_association(self, association) -> dict:
+        if isinstance(association, BaseModel):
+            return dict(association)
         return asdict(association)
