@@ -4,42 +4,35 @@ MAKEFLAGS += --warn-undefined-variables
 MAKEFLAGS += --no-builtin-rules
 MAKEFLAGS += --no-builtin-variables
 
+ifneq (,$(wildcard ./.env))
+    include .env
+    export
+endif
+
 .DEFAULT_GOAL := all
 SHELL := bash
 
 .PHONY: all
-all: install-flit install-koza install-dev test
+all: install test clean
 
-.PHONY: install-flit
-install-flit:
-	pip install flit
-
-.PHONY: install-koza
-install-koza: install-flit
-	flit install --deps production --symlink
-
-.PHONY: install-dev
-install-dev: install-flit
-	flit install --deps develop --symlink
-
-.PHONY: test
-test: install-flit install-dev
-	python -m pytest
+.PHONY: install
+install: 
+	poetry install
 
 .PHONY: build
 build:
-	flit build
+	poetry build
 
-.PHONY: publish
-publish:
-	flit publish
+.PHONY: test
+test: install
+	poetry run python -m pytest
 
 .PHONY: clean
 clean:
 	rm -rf `find . -name __pycache__`
 	rm -f `find . -type f -name '*.py[co]' `
 	rm -rf .pytest_cache
-	rm -rf test-output
+	rm -rf output test-output
 	rm -rf dist
 
 .PHONY: lint

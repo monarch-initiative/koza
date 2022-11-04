@@ -46,7 +46,6 @@ def test_validator(source_name, ingest, output_format, schema):
         output_format,
         global_table="tests/resources/translation_table.yaml",
         schema=schema
-        #schema="tests/resources/biolink-model.yaml",
     )
 
     for file in output_files:

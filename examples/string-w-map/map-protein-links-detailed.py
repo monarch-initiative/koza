@@ -1,6 +1,6 @@
 import uuid
 
-from biolink_model_pydantic.model import Gene, PairwiseGeneToGeneInteraction
+from biolink.pydanticmodel import Gene, PairwiseGeneToGeneInteraction
 
 from koza.cli_runner import get_koza_app
 

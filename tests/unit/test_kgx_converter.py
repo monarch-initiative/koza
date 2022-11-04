@@ -1,12 +1,12 @@
 import pytest
-from biolink_model_pydantic.model import Curie, Gene, GeneToGeneAssociation, Predicate, Publication
+from biolink.pydanticmodel import Gene, GeneToGeneAssociation, Publication
 
 from koza.converter.kgx_converter import KGXConverter
 
 
 def test_gene_conversion():
     fgf8a = Gene(
-        id=Curie("ZFIN:ZDB-GENE-990415-72"),
+        id="ZFIN:ZDB-GENE-990415-72",
         symbol="fgf8a",
         name="fibroblast growth factor 8a",
         in_taxon=["NCBITaxon:7955"],
@@ -24,26 +24,22 @@ def test_gene_conversion():
 
 
 def test_association_conversion():
-    fgf8a = Gene(
-        id=Curie("ZFIN:ZDB-GENE-990415-72"), symbol="fgf8a", name="fibroblast growth factor 8a"
-    )
-    pax2a = Gene(id=Curie("ZFIN:ZDB-GENE-990415-8"), symbol="pax2a", name="paired box 2a")
-    pub = Publication(id=Curie("PMID:17522161"), type="MESH:foobar")
+    fgf8a = Gene(id="ZFIN:ZDB-GENE-990415-72", symbol="fgf8a", name="fibroblast growth factor 8a")
+    pax2a = Gene(id="ZFIN:ZDB-GENE-990415-8", symbol="pax2a", name="paired box 2a")
+    pub = "PMID:17522161" # Publication(id="PMID:17522161", type="MESH:foobar")
     association = GeneToGeneAssociation(
         id='uuid:123',
         subject=fgf8a.id,
-        predicate=Predicate.interacts_with,
+        predicate="biolink:interacts_with",
         object=pax2a.id,
         publications=[pub],
-        relation="RO:0003003",
     )
 
-    (nodes, edges) = KGXConverter().convert([fgf8a, pax2a, pub, association])
+    (nodes, edges) = KGXConverter().convert([fgf8a, pax2a, association])
 
     output = edges[0]
-    assert output['subject'] == Curie("ZFIN:ZDB-GENE-990415-72")
-    assert output['relation'] == Curie("RO:0003003")
-    assert output['object'] == Curie("ZFIN:ZDB-GENE-990415-8")
+    assert output['subject'] == "ZFIN:ZDB-GENE-990415-72"
+    assert output['object'] == "ZFIN:ZDB-GENE-990415-8"
     # TODO figure out how/where to handle this conversion
     # assert Curie("PMID:17522161") in output['publications']
 
@@ -59,7 +55,7 @@ def test_keys_uniformity(id, symbol, synonym, xref):
     """
     Connfirm that the result of the conversion has all of the same fields, even if some aren't used
     """
-    gene = Gene(id=Curie(id), symbol=symbol, synonym=synonym, xref=xref)
+    gene = Gene(id=id, symbol=symbol, synonym=synonym, xref=xref)
 
     (nodes, edges) = KGXConverter().convert([gene])
     output = nodes[0]

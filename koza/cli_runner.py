@@ -2,7 +2,6 @@
 Module for managing koza runs through the CLI
 """
 
-import logging
 from pathlib import Path
 from typing import Dict, Optional, Union
 
@@ -17,11 +16,14 @@ from koza.io.yaml_loader import UniqueIncludeLoader
 from koza.model.config.source_config import FormatType, OutputFormat, PrimaryFileConfig
 from koza.model.source import Source
 from koza.model.translation_table import TranslationTable
+from koza.utils.log_utils import set_log_config
 
+import logging
 logger = logging.getLogger(__name__)
 
 global koza_apps
 koza_apps = {}
+
 
 def get_koza_app(source_name) -> Optional[KozaApp]:
     """
@@ -31,6 +33,7 @@ def get_koza_app(source_name) -> Optional[KozaApp]:
         return koza_apps[source_name]
     except:
         raise KeyError(f"{source_name} was not found in KozaApp dictionary")
+
 
 def set_koza_app(
     source: Source,
@@ -43,8 +46,9 @@ def set_koza_app(
     Setter for singleton koza app object
     """  
     koza_apps[source.config.name] = KozaApp(source, translation_table, output_dir, output_format, schema)
-    print(f"koza_apps entry created for: {source.config.name}\nkoza_app: {koza_apps[source.config.name]}")
+    logger.debug(f"koza_apps entry created for {source.config.name}: {koza_apps[source.config.name]}")
     return koza_apps[source.config.name]
+
 
 def transform_source(
     source: str,
@@ -54,8 +58,10 @@ def transform_source(
     local_table: str = None,
     schema: str = None,
     row_limit: int = None,
+    verbose: bool = None,
 ):
-
+    set_log_config(logging.INFO if (verbose is None) else logging.DEBUG if (verbose == True) else logging.WARNING)
+        
     with open(source, 'r') as source_fh:
         source_config = PrimaryFileConfig(**yaml.load(source_fh, Loader=UniqueIncludeLoader))
         if not source_config.name:
@@ -75,6 +81,7 @@ def transform_source(
         source_koza = set_koza_app(koza_source, translation_table, output_dir, output_format, schema)
         source_koza.process_maps()
         source_koza.process_sources()
+
 
 def validate_file(
     file: str,
@@ -109,6 +116,7 @@ def validate_file(
         for _ in reader:
             pass
 
+
 def get_translation_table(
     global_table: Union[str, Dict] = None, local_table: Union[str, Dict] = None
 ) -> TranslationTable:
@@ -126,7 +134,7 @@ def get_translation_table(
         if local_table:
             raise ValueError("Local table without a global table not allowed")
         else:
-            logger.info("No global table used for transform")
+            logger.debug("No global table used for transform")
     else:
 
         if isinstance(global_table, str):
@@ -143,9 +151,10 @@ def get_translation_table(
                 local_tt = local_table
 
         else:
-            logger.info("No local table used for transform")
+            logger.debug("No local table used for transform")
 
     return TranslationTable(global_tt, local_tt)
+
 
 def test_koza(koza: KozaApp):
     """Manually sets KozaApp (for testing)"""

@@ -1,11 +1,13 @@
 import json, yaml
-import logging
 from typing import IO, Any, Dict, Iterator, List, Union
 #from xmlrpc.client import Boolean
 
 from koza.io.utils import check_data
+from koza.utils.log_utils import get_logger
 
-LOG = logging.getLogger(__name__)
+LOG = get_logger(__name__)
+# import logging
+# LOG = logging.getLogger(__name__)
 
 class JSONReader:
     """
@@ -68,7 +70,7 @@ class JSONReader:
     def __next__(self) -> Dict[str, Any]:
 
         if self._line_num == self._line_limit:
-            LOG.info(f"Finished processing {self.name}")
+            LOG.info(f"Finished processing {self._line_num} rows for {self.name} from file {self.io_str.name}")
             raise StopIteration
 
         next_obj = self.json_obj[self._line_num]

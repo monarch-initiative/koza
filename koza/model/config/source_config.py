@@ -2,7 +2,7 @@
 source config data class
 map config data class
 """
-import logging
+
 import os
 import tarfile
 import zipfile
@@ -17,8 +17,11 @@ from pydantic.dataclasses import dataclass
 
 from koza.model.config.pydantic_config import PydanticConfig
 
+import logging
 LOG = logging.getLogger(__name__)
 
+# from koza.utils.log_utils import get_logger
+# LOG = get_logger(__name__)
 
 class MapErrorEnum(str, Enum):
     """
@@ -225,7 +228,7 @@ class SourceConfig:
                 )
             except Exception:
                 # TODO check for more explicit exceptions
-                LOG.warning("Could not load dataset description from metadata file")
+                LOG.debug("Could not load dataset description from metadata file")
 
         if self.delimiter in ['tab', '\\t']:
             object.__setattr__(self, 'delimiter', '\t')
