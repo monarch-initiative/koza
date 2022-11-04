@@ -1,6 +1,6 @@
 import os
 
-from biolink_model_pydantic.model import Disease, Gene
+from biolink.pydanticmodel import Disease, Gene
 
 from koza.io.writer.tsv_writer import TSVWriter
 

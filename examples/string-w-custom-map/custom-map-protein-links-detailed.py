@@ -1,6 +1,6 @@
 import uuid
 
-from biolink_model_pydantic.model import Gene, PairwiseGeneToGeneInteraction#, Predicate
+from biolink.pydanticmodel import Gene, PairwiseGeneToGeneInteraction
 
 from koza.cli_runner import get_koza_app
 
@@ -16,8 +16,7 @@ pairwise_gene_to_gene_interaction = PairwiseGeneToGeneInteraction(
     id="uuid:" + str(uuid.uuid1()),
     subject=gene_a.id,
     object=gene_b.id,
-    predicate="biolink:interacts_with"#Predicate.interacts_with,
-    #relation=koza_app.translation_table.global_table['interacts with'],
+    predicate="biolink:interacts_with"
 )
 
 koza_app.write(gene_a, gene_b, pairwise_gene_to_gene_interaction)

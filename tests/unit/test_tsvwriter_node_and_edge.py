@@ -1,6 +1,6 @@
 import os
 
-from biolink_model_pydantic.model import Disease, Gene, GeneToDiseaseAssociation, Predicate
+from biolink.pydanticmodel import Disease, Gene, GeneToDiseaseAssociation
 
 from koza.io.writer.tsv_writer import TSVWriter
 
@@ -15,8 +15,8 @@ def test_tsv_writer():
         id="uuid:5b06e86f-d768-4cd9-ac27-abe31e95ab1e",
         subject=g.id,
         object=d.id,
-        relation="RO:0003304",
-        predicate=Predicate.contributes_to,
+        # relation="RO:0003304",
+        predicate="biolink:contributes_to",
     )
     ent = [g, d, a]
 

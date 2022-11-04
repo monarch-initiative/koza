@@ -1,62 +1,51 @@
+[tool.poetry]
+name = "koza"
+version = "0.2.2"
+description = "Data transformation framework for LinkML data models"
+authors = [
+    "The Monarch Initiative <info@monarchinitiative.org>",
+    "Kevin Schaper <kevinschaper@gmail.com>",
+    "Glass Elsarboukh <g.elsarboukh@gmail.com>",
+    "Kent Shefchek <kent@tislab.org>",
+    ]
+readme = "README.md"
+license = "BSD License"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+linkml = ">=1.1.18,<1.3.3"    # Result of a bug in 1.3.3; remove when fixed
+linkml-validator = ">=0.4.3"
+pydantic = "^1.0.0"
+pyyaml = "^5.3.1"
+requests = "^2.24.0"
+ordered-set = ">=4.1.0"
+# typer = "^0.6.1" # Uncomment when monarch packages getg updated
+typer = "^0.4"
+click = "8.0.4"    # force specific version of click for now, because typer 0.4.1 is busted
+
+[tool.poetry.dev-dependencies]
+pytest = ">=6.0.0"
+biolink-model = ">=3.0.1"
+autoflake = "^1.3.1"
+black = "22.3.0"
+isort = "^5.0.6"
+dask = ">=2022.5.2"
+mkdocs = ">=1.3.0"
+mkdocs-material = ">=8.3.4"
+
+[tool.poetry.scripts]
+koza = "koza.main:typer_app"
+
 [build-system]
-requires = ["flit_core >=2,<4"]
-build-backend = "flit_core.buildapi"
-
-[tool.flit.metadata]
-module = "koza"
-author = "The Monarch Initiative"
-author-email = "info@monarchinitiative.org"
-home-page = "https://github.com/monarch-initiative/koza"
-classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
-    "License :: OSI Approved :: BSD License",
-    "Programming Language :: Python",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Operating System :: POSIX :: Linux",
-]
-requires = [
-    "pydantic >=1.0.0,<2.0.0",
-    "pyyaml >=5.3.1,<6.0.0",
-    "requests >=2.24.0,<3.0.0",
-    "typer >=0.3",
-    "ordered-set >= 4.1.0",
-    "linkml-validator >= 0.1.0",
-    "mkdocs >= 1.3.0",
-    "mkdocs-material >= 8.3.4"
-]
-description-file = "README.md"
-requires-python = ">=3.8"
-
-[tool.flit.metadata.urls]
-Documentation = "https://github.com/monarch-initiative/koza"
-
-[tool.flit.metadata.requires-extra]
-test = [
-    "pytest >=6.0.0",
-]
-
-dev = [
-    "biolink-model-pydantic >=0.1.11",
-    "autoflake >=1.3.1,<2.0.0",
-    "flake8 >=3.8.3,<4.0.0",
-    "black ==22.3.0",
-    "isort >=5.0.6,<6.0.0",
-    "dask >=2022.5.2", 
-]
-
-[tool.flit.scripts]
-koza = "koza:main.typer_app"
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
 
 [tool.black]
-line_length = 100
+line_length = 120
 skip-string-normalization = true
 
 [tool.isort]
 profile = "black"
-line_length = 100
+line_length = 120
 multi_line_output = 3
 include_trailing_comma = true

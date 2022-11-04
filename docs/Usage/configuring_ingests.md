@@ -204,7 +204,7 @@ This Python script is where you'll define the specific steps of your data transf
 
     ```python
     import uuid
-    from biolink_model_pydantic.model import Gene, PairwiseGeneToGeneInteraction
+    from biolink.pydanticmodel import Gene, PairwiseGeneToGeneInteraction
 
     # Get the KozaApp for your ingest
     from koza.cli_runner import get_koza_app

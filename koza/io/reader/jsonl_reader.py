@@ -37,7 +37,7 @@ class JSONLReader:
     def __next__(self) -> Dict[str, Any]:
         next_line = self.io_str.readline()
         if not next_line:
-            LOG.info(f"Finished processing {self.line_num} lines")
+            LOG.info(f"Finished processing {self.line_num} lines for {self.name} from {self.io_str.name}")
             raise StopIteration
         self.line_num += 1
         if self.line_limit:

@@ -1,5 +1,4 @@
 import importlib
-import logging
 import sys
 from pathlib import Path
 from typing import Dict, Union
@@ -11,7 +10,7 @@ from pydantic.error_wrappers import ValidationError
 from linkml_validator.validator import Validator
 from koza.converter.kgx_converter import KGXConverter
 
-from koza.exceptions import MapItemException, NextRowException
+from koza.utils.exceptions import MapItemException, NextRowException
 from koza.io.writer.jsonl_writer import JSONLWriter
 from koza.io.writer.tsv_writer import TSVWriter
 from koza.io.writer.writer import KozaWriter
@@ -22,6 +21,7 @@ from koza.model.map_dict import MapDict
 from koza.model.source import Source
 from koza.model.translation_table import TranslationTable
 
+import logging
 logger = logging.getLogger(__name__)
 
 
@@ -97,6 +97,7 @@ class KozaApp:
         is_first = True
         transform_module = None
 
+        logger.info(f"Transforming source: {self.source.config.name}")
         if self.source.config.transform_mode == 'flat':
             while True:
                 try:
@@ -106,7 +107,7 @@ class KozaApp:
                     else:
                         importlib.reload(transform_module)
                 except MapItemException as mie:
-                    logger.warning(f"{str(mie)} not found in map")
+                    logger.debug(f"{str(mie)} not found in map")
                 except NextRowException:
                     continue
                 except ValidationError as ve:

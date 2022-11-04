@@ -1,4 +1,4 @@
-from biolink_model_pydantic.model import Gene
+from biolink.pydanticmodel import Gene
 
 from koza.cli_runner import koza_app
 

@@ -1,10 +1,12 @@
-import logging
 from csv import reader
 from typing import IO, Any, Dict, Iterator, List, Union
 
 from koza.model.config.source_config import FieldType, HeaderMode
+from koza.utils.log_utils import get_logger
 
-LOG = logging.getLogger(__name__)
+LOG = get_logger(__name__)
+# import logging
+# LOG = logging.getLogger(__name__)
 
 
 FIELDTYPE_CLASS = {
@@ -115,7 +117,7 @@ class CSVReader:
                 row = next(self.reader)
                 self.line_count += 1
         except StopIteration:
-            LOG.info(f"Finished processing {self.line_num} rows for {self.name}")
+            LOG.info(f"Finished processing {self.line_num} rows for {self.name} from file {self.io_str.name}")
             raise StopIteration
         self.line_num = self.reader.line_num
 
@@ -187,7 +189,7 @@ class CSVReader:
 
         elif self.header == 'infer':
             self._header = self._parse_header_line(skip_blank_or_commented_lines=True)
-            LOG.info(f"headers for {self.name} parsed as {self._header}")
+            LOG.debug(f"headers for {self.name} parsed as {self._header}")
             if self.field_type_map:
                 self._compare_headers_to_supplied_columns()
             else:
