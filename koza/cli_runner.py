@@ -64,23 +64,24 @@ def transform_source(
         
     with open(source, 'r') as source_fh:
         source_config = PrimaryFileConfig(**yaml.load(source_fh, Loader=UniqueIncludeLoader))
-        if not source_config.name:
-            source_config.name = Path(source).stem
+        
+    if not source_config.name:
+        source_config.name = Path(source).stem
 
-        if not source_config.transform_code:
-            # look for it alongside the source conf as a .py file
-            source_config.transform_code = str(Path(source).parent / Path(source).stem) + '.py'
+    if not source_config.transform_code:
+        # look for it alongside the source conf as a .py file
+        source_config.transform_code = str(Path(source).parent / Path(source).stem) + '.py'
 
-        koza_source = Source(source_config, row_limit)
+    koza_source = Source(source_config, row_limit)
 
-        translation_table = get_translation_table(
-            global_table if global_table else source_config.global_table,
-            local_table if local_table else source_config.local_table,
-        )
+    translation_table = get_translation_table(
+        global_table if global_table else source_config.global_table,
+        local_table if local_table else source_config.local_table,
+    )
 
-        source_koza = set_koza_app(koza_source, translation_table, output_dir, output_format, schema)
-        source_koza.process_maps()
-        source_koza.process_sources()
+    source_koza = set_koza_app(koza_source, translation_table, output_dir, output_format, schema)
+    source_koza.process_maps()
+    source_koza.process_sources()
 
 
 def validate_file(
