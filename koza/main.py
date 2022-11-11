@@ -37,9 +37,8 @@ def transform(
     # os.path.splitext(os.path.basename(source))[0] # name of the yaml file without the yaml
     
     set_log_config(logging.INFO if (verbose is None) else logging.DEBUG if (verbose == True) else logging.WARNING)
-    logfile = Path(f"logs/{source.split('/')[1]}_{source.split('/')[2][:-5]}.log")
     logger = get_logger(__name__, verbose) if not logging.getLogger().hasHandlers() else logging.getLogger()
-    if log: fh = add_log_fh(logger, logfile)
+    if log: fh = add_log_fh(logger, f"logs/{Path(source).name}.log")
     
     output_path = Path(output_dir)
 

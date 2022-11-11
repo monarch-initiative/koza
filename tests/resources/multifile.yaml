@@ -1,0 +1,35 @@
+name: 'protein-links-detailed'
+
+delimiter: ' '
+
+files:
+  - './examples/data/string.tsv'
+  - './examples/data/string2.tsv'
+
+metadata: !include './examples/string/metadata.yaml'
+
+columns: !include './examples/standards/string.yaml'
+
+filters:
+  - inclusion: 'include'
+    column: 'combined_score'
+    filter_code: 'lt'
+    value: 700
+
+transform_code: './examples/string/protein-links-detailed.py'
+
+transform_mode: 'loop'
+
+node_properties:
+  - 'id'
+  - 'category'
+  - 'provided_by'
+
+edge_properties:
+  - 'id'
+  - 'subject'
+  - 'predicate'
+  - 'object'
+  - 'category'
+  - 'relation'
+  - 'provided_by'

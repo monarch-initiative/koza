@@ -4,9 +4,9 @@ from typing import IO, Any, Dict, Iterator, List, Union
 from koza.model.config.source_config import FieldType, HeaderMode
 from koza.utils.log_utils import get_logger
 
-LOG = get_logger(__name__)
-# import logging
-# LOG = logging.getLogger(__name__)
+# LOG = get_logger(__name__)
+import logging
+LOG = logging.getLogger(__name__)
 
 
 FIELDTYPE_CLASS = {
@@ -112,6 +112,7 @@ class CSVReader:
 
         try:
             if self.line_count == self.row_limit:
+                LOG.debug("Row limit reached")
                 raise StopIteration
             else:
                 row = next(self.reader)

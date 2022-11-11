@@ -36,7 +36,7 @@ def get_logger(name: str, verbose: bool = None) -> logging.Logger:
 
     logger = logging.getLogger(name)
     logger.setLevel(log_level)
-    # logger.propagate = False
+    logger.propagate = False
 
     if not logger.hasHandlers():
         stream_handler = logging.StreamHandler(sys.stdout)
