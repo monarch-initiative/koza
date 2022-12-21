@@ -223,12 +223,14 @@ class SourceConfig:
             # TODO enforce that this is imported via an include?
             # See https://github.com/monarch-initiative/koza/issues/46
             try:
-                object.__setattr__(
-                    self, 'metadata', DatasetDescription(**yaml.safe_load(self.metadata))
-                )
-            except Exception:
+                with open(self.metadata, 'r') as meta:
+                    object.__setattr__(
+                        self, 'metadata', DatasetDescription(**yaml.safe_load(meta))
+                    )
+            except Exception as e:
                 # TODO check for more explicit exceptions
-                LOG.debug("Could not load dataset description from metadata file")
+                raise ValueError(f"Unable to load metadata from {self.metadata}: {e}")
+                # LOG.debug("Could not load dataset description from metadata file")
 
         if self.delimiter in ['tab', '\\t']:
             object.__setattr__(self, 'delimiter', '\t')
