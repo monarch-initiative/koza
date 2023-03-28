@@ -27,6 +27,10 @@ build:
 test: install
 	poetry run python -m pytest
 
+.PHONY: docs
+docs: install
+	poetry run typer src/koza/main.py utils docs --name koza --output docs/Usage/CLI.md
+
 .PHONY: clean
 clean:
 	rm -rf `find . -name __pycache__`

@@ -4,6 +4,13 @@ site_url: 'https://koza.monarchinitiative.org/'
 repo_name: 'monarch-initiative/koza'
 repo_url: 'https://github.com/monarch-initiative/koza'
 
+
+nav:
+  - Welcome: 'index.md'
+  - Ingests: 'Usage/ingests.md'
+  - CLI: 'Usage/CLI.md'
+
+
 theme:
     name: 'material'
     docs_dir: docs/
@@ -17,29 +24,70 @@ theme:
         - navigation.tabs
         - navigation.tabs.sticky
     palette:
-        scheme: 'slate'
-        primary: 'blue'
-        accent: 'purple'
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-2
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to light mode
     font:
-        text: 'Roboto'
-        #code: 'Fira Mono'
+        text: 'Source Sans Pro'
+        code: 'Source Sans Pro Mono'
+
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [ ./backend ]
+          import:
+          - https://docs.python.org/3/objects.inv
+          - https://mkdocstrings.github.io/objects.inv
+          - https://mkdocstrings.github.io/griffe/objects.inv
+          options:
+            docstring_style: google
+            docstring_options:
+              ignore_init_summary: yes
+            merge_init_into_class: yes
+            # separate_signature: yes
+            show_signature: no
+            show_source: no
+            show_root_full_path: no
+            show_root_toc_entry: False
+            filters:
+              - "!^_[^_]"
+              - "^_[^_]"
+
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.emoji
+  - pymdownx.keys
+  - pymdownx.magiclink
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - attr_list
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.snippets:
+      check_paths: true
+  - pymdownx.tabbed:
+      alternate_style: true
+
 
 extra:
   social:
     - icon: 'fontawesome/solid/house'
       link: 'https://monarchinitiative.org'
     - icon: 'fontawesome/brands/github-alt'
-      link: 'https://github.com/monarch-initiative'
-
-markdown_extensions:
-  - def_list # list support
-  - admonition
-  - pymdownx.details
-  - pymdownx.superfences
-  - pymdownx.tabbed
-  - pymdownx.keys
-  - attr_list
-  - pymdownx.betterem:
-      smart_enable: all
+      link: 'https://github.com/monarch-initiative/'
       
 #copyright: 'Copyright &copy; 2020 - 2022 Glass (contact@glass-ships.com)'

@@ -1,14 +1,16 @@
-## Ingests
+# Ingests
 
-An **ingest** is the process of using Koza to process and transform existing data into a target csv/json/jsonl format.  
+<sub>(For CLI usage, see the [CLI commands](./CLI.md) page.)</sub>  
 
-Ingests are defined by:  
+Koza is designed to process and transform existing data into a target csv/json/jsonl format.  
 
-- **Source config yaml**: specifies metadata, formats, required columns, etc. for the ingest
-- **Map config yaml**: (Optional) configures creation of mapping dictionary 
-- **Transform code**: a Python script, with specific transform instructions
+This process is internally known as an **ingest**. Ingests are defined by:  
 
---
+- **Source config yaml**: specifies metadata, formats, required columns, etc. for the ingest  
+- **Map config yaml**: (Optional) configures creation of mapping dictionary  
+- **Transform code**: a Python script, with specific transform instructions  
+
+-----
 
 Now, let's say you have some data, and you want to save certain bits of that data, with maybe some changes or translations along the way.  
 
