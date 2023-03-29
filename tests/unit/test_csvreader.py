@@ -61,12 +61,6 @@ def test_field_in_file_but_not_in_config_logs_warning(caplog):
         del field_map['combined_score']
         reader = CSVReader(string_file, field_map, delimiter=' ')
         next(reader)
-        print(
-            f'caplog.records[0].msg: {caplog.records[0].msg}',
-            f'caplog.records[0].levelname: {caplog.records[0].levelname}',
-            f'caplog.records[1].msg: {caplog.records[1].msg}',
-            f'caplog.records[1].levelname: {caplog.records[1].levelname}',
-        ) 
         assert caplog.records[1].levelname == 'WARNING' 
         assert caplog.records[1].msg.startswith('Additional column(s) in source file') 
 
@@ -77,12 +71,6 @@ def test_middle_field_in_file_but_not_in_config_logs_warning(caplog):
         del field_map['cooccurence']
         reader = CSVReader(string_file, field_map, delimiter=' ')
         next(reader)
-        print(
-            f'caplog.records[0].msg: {caplog.records[0].msg}\n',
-            f'caplog.records[0].levelname: {caplog.records[0].levelname}\n',
-            f'caplog.records[1].msg: {caplog.records[1].msg}\n',
-            f'caplog.records[1].levelname: {caplog.records[1].levelname}',
-        )
         assert caplog.records[1].levelname == 'WARNING' 
         # assert caplog.records[1].msg.startswith('Additional columns located within configured fields')
         assert caplog.records[1].msg.startswith('Additional column(s) in source file') 
