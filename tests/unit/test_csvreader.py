@@ -61,13 +61,15 @@ def test_field_in_file_but_not_in_config_logs_warning(caplog):
         del field_map['combined_score']
         reader = CSVReader(string_file, field_map, delimiter=' ')
         next(reader)
-        # assert caplog.records[0].levelname == 'WARNING'
-        assert caplog.records[0].levelname == 'DEBUG'
         print(
             f'caplog.records[0].msg: {caplog.records[0].msg}',
             f'caplog.records[0].levelname: {caplog.records[0].levelname}',
+            f'caplog.records[1].msg: {caplog.records[1].msg}',
+            f'caplog.records[1].levelname: {caplog.records[1].levelname}',
         )
-        # assert caplog.records[0].msg.startswith('Additional column(s) in source file') 
+        # assert caplog.records[0].levelname == 'DEBUG'
+        assert caplog.records[1].levelname == 'WARNING' # This fails, but passes if i change to DEBUG
+        assert caplog.records[1].msg.startswith('Additional column(s) in source file') 
 
 
 def test_middle_field_in_file_but_not_in_config_logs_warning(caplog):
@@ -76,10 +78,17 @@ def test_middle_field_in_file_but_not_in_config_logs_warning(caplog):
         del field_map['cooccurence']
         reader = CSVReader(string_file, field_map, delimiter=' ')
         next(reader)
-        assert caplog.records[1].levelname == 'WARNING'
-        # assert caplog.records[1].msg.startswith(
-        #     'Additional columns located within configured fields'
-        # )
+        print(
+            f'caplog.records[0].msg: {caplog.records[0].msg}',
+            f'caplog.records[0].levelname: {caplog.records[0].levelname}',
+            f'caplog.records[1].msg: {caplog.records[1].msg}',
+            f'caplog.records[1].levelname: {caplog.records[1].levelname}',
+        )
+        assert caplog.records[1].levelname == 'WARNING' 
+        # This also fails because msg is interpreted as a collection of csv headers
+        assert caplog.records[1].msg.startswith(
+            'Additional columns located within configured fields'
+        )
 
 
 def test_no_field_map(caplog):

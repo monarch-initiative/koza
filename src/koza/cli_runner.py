@@ -59,7 +59,8 @@ def transform_source(
     log: bool = False,
 ):
     # set_log_config(logging.INFO if (verbose is None) else logging.DEBUG if (verbose == True) else logging.WARNING)
-    logger = get_logger(verbose, filename = f"logs/{Path(source).name}.log" if log else None)
+    # logger = get_logger(verbose, filename = f"logs/{Path(source).name}.log" if log else None)
+    logger = get_logger(name = Path(source).name if log else None, verbose = verbose)
     
     with open(source, 'r') as source_fh:
         source_config = PrimaryFileConfig(**yaml.load(source_fh, Loader=UniqueIncludeLoader))
