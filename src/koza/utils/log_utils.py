@@ -16,7 +16,7 @@ def get_logger(verbose: bool = False, filename=None):
         logger.add(
             sink=filename,
             level="DEBUG",
-            format="LOGURU_FORMAT",
+            format=LOGURU_FORMAT,
             colorize=True,
         )
     return logger
