@@ -2,11 +2,20 @@ import types
 from typing import Iterable
 
 import pytest
+from _pytest.logging import LogCaptureFixture
+from loguru import logger
 
 from koza.app import KozaApp
 from koza.cli_runner import test_koza
 from koza.model.config.source_config import PrimaryFileConfig
 from koza.model.source import Source
+
+
+@pytest.fixture
+def caplog(caplog):
+    handler_id = logger.add(caplog.handler, format="{message}")
+    yield caplog
+    logger.remove(handler_id)
 
 
 @pytest.fixture(scope="package")

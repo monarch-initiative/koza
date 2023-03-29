@@ -4,7 +4,6 @@ Module for managing koza runs through the CLI
 
 from pathlib import Path
 from typing import Dict, Optional, Union
-
 import yaml
 
 from koza.app import KozaApp
@@ -16,10 +15,7 @@ from koza.io.yaml_loader import UniqueIncludeLoader
 from koza.model.config.source_config import FormatType, OutputFormat, PrimaryFileConfig
 from koza.model.source import Source
 from koza.model.translation_table import TranslationTable
-from koza.utils.log_utils import set_log_config
-
-import logging
-logger = logging.getLogger(__name__)
+from koza.utils.log_utils import get_logger
 
 global koza_apps
 koza_apps = {}
@@ -41,11 +37,12 @@ def set_koza_app(
     output_dir: str = './output',
     output_format: OutputFormat = OutputFormat('tsv'),
     schema: str = None,
+    logger = None,
 ) -> KozaApp:
     """
     Setter for singleton koza app object
-    """  
-    koza_apps[source.config.name] = KozaApp(source, translation_table, output_dir, output_format, schema)
+    """
+    koza_apps[source.config.name] = KozaApp(source, translation_table, output_dir, output_format, schema, logger)
     logger.debug(f"koza_apps entry created for {source.config.name}: {koza_apps[source.config.name]}")
     return koza_apps[source.config.name]
 
@@ -59,9 +56,11 @@ def transform_source(
     schema: str = None,
     row_limit: int = None,
     verbose: bool = None,
+    log: bool = False,
 ):
-    set_log_config(logging.INFO if (verbose is None) else logging.DEBUG if (verbose == True) else logging.WARNING)
-        
+    # set_log_config(logging.INFO if (verbose is None) else logging.DEBUG if (verbose == True) else logging.WARNING)
+    logger = get_logger(verbose, filename = f"logs/{Path(source).name}.log" if log else None)
+    
     with open(source, 'r') as source_fh:
         source_config = PrimaryFileConfig(**yaml.load(source_fh, Loader=UniqueIncludeLoader))
         
@@ -77,9 +76,10 @@ def transform_source(
     translation_table = get_translation_table(
         global_table if global_table else source_config.global_table,
         local_table if local_table else source_config.local_table,
+        logger
     )
 
-    source_koza = set_koza_app(koza_source, translation_table, output_dir, output_format, schema)
+    source_koza = set_koza_app(koza_source, translation_table, output_dir, output_format, schema, logger)
     source_koza.process_maps()
     source_koza.process_sources()
 
@@ -119,7 +119,9 @@ def validate_file(
 
 
 def get_translation_table(
-    global_table: Union[str, Dict] = None, local_table: Union[str, Dict] = None
+    global_table: Union[str, Dict] = None, 
+    local_table: Union[str, Dict] = None,
+    logger = None,
 ) -> TranslationTable:
     """
     Create a translation table object from two file paths

@@ -2,12 +2,12 @@ from csv import reader
 from typing import IO, Any, Dict, Iterator, List, Union
 
 from koza.model.config.source_config import FieldType, HeaderMode
-from koza.utils.log_utils import get_logger
 
-# LOG = get_logger(__name__)
-import logging
-LOG = logging.getLogger(__name__)
-
+# from koza.utils.log_utils import get_logger
+# logger = get_logger(__name__)
+# import logging
+# logger = logging.getLogger(__name__)
+from loguru import logger
 
 FIELDTYPE_CLASS = {
     FieldType.str: str,
@@ -112,13 +112,13 @@ class CSVReader:
 
         try:
             if self.line_count == self.row_limit:
-                LOG.debug("Row limit reached")
+                logger.debug("Row limit reached")
                 raise StopIteration
             else:
                 row = next(self.reader)
                 self.line_count += 1
         except StopIteration:
-            LOG.info(f"Finished processing {self.line_num} rows for {self.name} from file {self.io_str.name}")
+            logger.info(f"Finished processing {self.line_num} rows for {self.name} from file {self.io_str.name}")
             raise StopIteration
         self.line_num = self.reader.line_num
 
@@ -153,7 +153,7 @@ class CSVReader:
             )
 
         elif fields_len < row_len:
-            LOG.warning(
+            logger.warning(
                 f"CSV file {self.name} has {row_len - fields_len} extra columns at {self.reader.line_num}"
             )
             # Not sure if this would serve a purpose
@@ -172,7 +172,7 @@ class CSVReader:
             try:
                 typed_field_map[field] = FIELDTYPE_CLASS[self.field_type_map[field]](field_value)
             except KeyError as key_error:
-                LOG.warning(key_error)
+                logger.warning(key_error)
 
         return typed_field_map
 
@@ -190,7 +190,7 @@ class CSVReader:
 
         elif self.header == 'infer':
             self._header = self._parse_header_line(skip_blank_or_commented_lines=True)
-            LOG.debug(f"headers for {self.name} parsed as {self._header}")
+            logger.debug(f"headers for {self.name} parsed as {self._header}")
             if self.field_type_map:
                 self._compare_headers_to_supplied_columns()
             else:
@@ -236,14 +236,14 @@ class CSVReader:
         if set(configured_fields) > set(self._header):
             raise ValueError(
                 f"Configured columns missing in source file {self.name}\n"
-                f"{set(configured_fields) - set(self._header)}"
+                f"\t{set(configured_fields) - set(self._header)}"
             )
 
         if set(self._header) > set(configured_fields):
-            LOG.warning(
+            logger.warning(
                 f"Additional column(s) in source file {self.name}\n"
-                f"{set(self._header) - set(configured_fields)}\n"
-                f"Checking if new column(s) inserted at end of the row"
+                f"\t{set(self._header) - set(configured_fields)}\n"
+                f"\tChecking if new column(s) inserted at end of the row"
             )
             # add to type map
             for new_fields in set(self._header) - set(configured_fields):
@@ -252,8 +252,9 @@ class CSVReader:
         # Check if the additional columns are appended
         # not sure if this would useful or just noise
         if self._header[: len(configured_fields)] != configured_fields:
-            LOG.warning(
+            logger.warning(
                 f"Additional columns located within configured fields\n"
-                f"given: {configured_fields}\n"
-                f"found: {self._header}"
+                f"\tgiven: {configured_fields}\n"
+                f"\tfound: {self._header}\n"
+                f"\tadditional columns: {set(self._header) - set(configured_fields)}"
             )

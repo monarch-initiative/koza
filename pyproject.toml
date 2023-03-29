@@ -23,6 +23,7 @@ requests = "^2.24.0"
 ordered-set = ">=4.1.0"
 typer = "^0.7.0"
 typer-cli = "^0.0.13"
+loguru = "*"
 
 [tool.poetry.dev-dependencies]
 pytest = ">=6.0.0"

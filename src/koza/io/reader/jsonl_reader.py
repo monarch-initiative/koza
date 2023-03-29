@@ -1,9 +1,13 @@
 import json
-import logging
 from typing import IO, Any, Dict, Iterator, List
+
 from koza.io.utils import check_data
 
-LOG = logging.getLogger(__name__)
+# from koza.utils.log_utils import get_logger
+# logger = get_logger(__name__)
+# import logging
+# logger = logging.getLogger(__name__)
+from loguru import logger
 
 
 class JSONLReader:
@@ -37,7 +41,7 @@ class JSONLReader:
     def __next__(self) -> Dict[str, Any]:
         next_line = self.io_str.readline()
         if not next_line:
-            LOG.info(f"Finished processing {self.line_num} lines for {self.name} from {self.io_str.name}")
+            logger.info(f"Finished processing {self.line_num} lines for {self.name} from {self.io_str.name}")
             raise StopIteration
         self.line_num += 1
         if self.line_limit:
