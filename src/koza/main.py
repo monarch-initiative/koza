@@ -12,6 +12,12 @@ from koza.model.config.source_config import FormatType, OutputFormat
 import typer
 typer_app = typer.Typer()
 
+@typer_app.callback(invoke_without_command=True)
+def callback(version: Optional[bool] = typer.Option(None, "--version", is_eager=True)):
+    if version:
+        from koza import __version__
+        typer.echo(f"Koza version: {__version__}")
+        raise typer.Exit() 
 
 @typer_app.command()
 def transform(
@@ -68,5 +74,5 @@ def validate(
 #    Create a new koza project
 #    """
 
-if __name__ == "__main__":
-    typer_app()
+# if __name__ == "__main__":
+#     typer_app()
