@@ -6,12 +6,12 @@
 
 Koza is a data transformation framework which allows you to write semi-declarative "**ingests**"
 
-  - Transform csv, json, yaml, jsonl, or xml source data, converting them to a target csv, json, or jsonl format based on your dataclass model.  
-  - Koza also can output data in the <a href="https://github.com/biolink/kgx/blob/master/specification/kgx-format.md#kgx-format-as-tsv" target="_blank">KGX format</a>
-  - Write data transforms in semi-declarative Python
-  - Configure source files, expected columns/json properties and path filters, field filters, and metadata in yaml
-  - Create or import mapping files to be used in ingests (eg. id mapping, type mappings)
-  - Create and use translation tables to map between source and target vocabularies
+- Transform csv, json, yaml, jsonl, or xml source data, converting them to a target csv, json, or jsonl format based on your dataclass model.  
+- Koza also can output data in the <a href="https://github.com/biolink/kgx/blob/master/specification/kgx-format.md#kgx-format-as-tsv" target="_blank">KGX format</a>
+- Write data transforms in semi-declarative Python
+- Configure source files, expected columns/json properties and path filters, field filters, and metadata in yaml
+- Create or import mapping files to be used in ingests (eg. id mapping, type mappings)
+- Create and use translation tables to map between source and target vocabularies
 
 ## Installation
 Koza is available on PyPi and can be installed via pip:
@@ -27,37 +27,43 @@ See the [Ingests](./Usage/ingests.md) page for information on how to configure i
 
 ### Basic Examples
 
-#### Validate
+!!! list "Basic Examples"
+    #### Validate
 
-Give Koza a local or remote csv file, and get some basic information (headers, number of rows)
+    Give Koza a local or remote csv file, and get some basic information (headers, number of rows)
 
-```bash
-koza validate \
-  --file https://raw.githubusercontent.com/monarch-initiative/koza/main/examples/data/string.tsv \
-  --delimiter ' '
-```
+    ```bash
+    koza validate \
+      --file https://raw.githubusercontent.com/monarch-initiative/koza/main/examples/data/string.tsv \
+      --delimiter ' '
+    ```
 
-Sending a json or jsonl formatted file will confirm if the file is valid json or jsonl
+    Sending a json or jsonl formatted file will confirm if the file is valid json or jsonl
 
-```bash
-koza validate \
-  --file ./examples/data/ZFIN_PHENOTYPE_0.jsonl.gz \
-  --format jsonl
-```
+    ```bash
+    koza validate \
+      --file ./examples/data/ZFIN_PHENOTYPE_0.jsonl.gz \
+      --format jsonl
+    ```
 
-```bash
-koza validate \
-  --file ./examples/data/ddpheno.json.gz \
-  --format json \
-  --compression gzip
-```
+    ```bash
+    koza validate \
+      --file ./examples/data/ddpheno.json.gz \
+      --format json \
+      --compression gzip
+    ```
 
-#### Transform
+    #### Transform
 
-Run the example ingest, "string/protein-links-detailed"
-```bash
-koza transform --source examples/string/protein-links-detailed.yaml --global-table examples/translation_table.yaml
+    Run the example ingest, "string/protein-links-detailed"
+    ```bash
+    koza transform \
+      --source examples/string/protein-links-detailed.yaml \
+      --global-table examples/translation_table.yaml
 
-koza transform --source examples/string-declarative/protein-links-detailed.yaml --global-table examples/translation_table.yaml
-```
-**Note**: Koza expects a directory structure as described in the above example (examples/ingest_name/ingest.yaml)
+    koza transform \
+      --source examples/string-declarative/protein-links-detailed.yaml \
+      --global-table examples/translation_table.yaml
+    ```
+    **Note**: Koza expects a directory structure as described in the above example (examples/ingest_name/ingest.yaml),  
+    such that the source config file is in the same directory as the transform code.
