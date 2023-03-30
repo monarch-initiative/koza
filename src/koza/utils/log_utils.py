@@ -4,7 +4,7 @@ import loguru
 LOGURU_FORMAT = "<green>{time:YYYY-MM-DD_HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name: <16}</cyan> | <level>{message}</level>"
 LOGURU_FORMAT_SIMPLE = "{time:YYYY-MM-DD_HH:mm:ss} | {level: <8} | {name: <16} | {message}"
 
-def get_logger(name: str = None, verbose: bool = False):
+def get_logger(name: str = None, verbose: bool = None):
     logger = loguru.logger
     logger.remove()
     logger.add(
