@@ -2,7 +2,11 @@ import logging
 from dataclasses import dataclass
 from typing import Dict, Optional
 
-LOG = logging.getLogger(__name__)
+# from koza.utils.log_utils import get_logger
+# logger = get_logger(__name__)
+# import logging
+# logger = logging.getLogger(__name__)
+from loguru import logger
 
 
 def is_dictionary_bimap(dictionary: Dict[str, str]) -> bool:
@@ -23,7 +27,7 @@ def is_dictionary_bimap(dictionary: Dict[str, str]) -> bool:
             failed_list.append(val)
 
     if not is_bimap:
-        LOG.warning(f"Duplicate values in yaml: {failed_list}")
+        logger.warning(f"Duplicate values in yaml: {failed_list}")
 
     return is_bimap
 
@@ -75,14 +79,14 @@ class TranslationTable:
             if label in self.global_table:
                 term_id = self.global_table[label]
             else:
-                LOG.info("Translated to '%s' but no global term_id for: '%s'", label, word)  #
+                logger.info("Translated to '%s' but no global term_id for: '%s'", label, word)  #
                 term_id = label
         elif word in self.global_table:
             term_id = self.global_table[word]
         else:
             if mandatory:
                 raise KeyError("Mapping required for: ", word)
-            LOG.warning("We have no translation for: '%s'", word)
+            logger.warning("We have no translation for: '%s'", word)
 
             if default is not None:
                 term_id = default

@@ -16,7 +16,7 @@ def test_tsv_writer():
 
     node_properties = ['id', 'category', 'symbol', 'in_taxon', 'provided_by', 'source']
 
-    outdir = "test-output"
+    outdir = "output/tests"
     outfile = "tsvwriter-node-only"
 
     t = TSVWriter(outdir, outfile, node_properties)

@@ -21,8 +21,8 @@ from koza.model.map_dict import MapDict
 from koza.model.source import Source
 from koza.model.translation_table import TranslationTable
 
-import logging
-logger = logging.getLogger(__name__)
+# import logging
+# logger = logging.getLogger(__name__)
 
 
 class KozaApp:
@@ -38,6 +38,7 @@ class KozaApp:
         output_dir: str = './output',
         output_format: OutputFormat = OutputFormat('jsonl'),
         schema: str = None,
+        logger = None,
     ):
         self.source = source
         self.translation_table = translation_table
@@ -49,6 +50,7 @@ class KozaApp:
         self.writer: KozaWriter = self._get_writer(
             source.config.name, source.config.node_properties, source.config.edge_properties
         )
+        self.logger = logger
         
         if schema:
             self.validator = Validator(schema=schema)
@@ -97,7 +99,7 @@ class KozaApp:
         is_first = True
         transform_module = None
 
-        logger.info(f"Transforming source: {self.source.config.name}")
+        self.logger.info(f"Transforming source: {self.source.config.name}")
         if self.source.config.transform_mode == 'flat':
             while True:
                 try:
@@ -107,11 +109,11 @@ class KozaApp:
                     else:
                         importlib.reload(transform_module)
                 except MapItemException as mie:
-                    logger.debug(f"{str(mie)} not found in map")
+                    self.logger.debug(f"{str(mie)} not found in map")
                 except NextRowException:
                     continue
                 except ValidationError as ve:
-                    logger.error(f"Validation error while processing: {self.source.last_row}")
+                    self.logger.error(f"Validation error while processing: {self.source.last_row}")
                     raise ve
                 except StopIteration:
                     break

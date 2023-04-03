@@ -33,7 +33,7 @@ def test_examples(
     source_config = f"examples/{source_name}/{ingest}.yaml"
     
     output_suffix = str(output_format).split('.')[1]
-    output_dir = f"./test-output/string/test-row-limit"
+    output_dir = f"./output/tests/string-test-row-limit"
 
     transform_source(
         source=source_config,

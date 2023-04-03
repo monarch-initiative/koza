@@ -11,7 +11,7 @@ from koza.model.config.source_config import OutputFormat
 def transform(source_file):
     transform_source(
         source=source_file,
-        output_dir="test-output/string/test-parallel",
+        output_dir="output/tests/string-test-parallel",
         output_format=OutputFormat.tsv,
         local_table=None,
         global_table='examples/translation_table.yaml',

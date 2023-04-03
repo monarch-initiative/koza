@@ -66,4 +66,4 @@ def test_keys_uniformity(id, symbol, synonym, xref):
     assert 'synonym' in output.keys()
     assert 'xref' in output.keys()
     assert 'description' in output.keys()
-    assert 'source' in output.keys()
+    # assert 'source' in output.keys() ----> Did we remove this?

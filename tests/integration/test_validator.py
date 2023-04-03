@@ -33,7 +33,7 @@ def test_validator(source_name, ingest, output_format, schema):
     source_config = f"examples/{source_name}/{ingest}.yaml"
     
     output_suffix = str(output_format).split('.')[1]
-    output_dir = f"./test-output/string/test-validator"
+    output_dir = f"./output/tests/string-test-validator"
 
     output_files = [
         f"{output_dir}/{ingest}_nodes.{output_suffix}",

@@ -1,7 +1,12 @@
-# Koza - a data transformation framework [![Pyversions](https://img.shields.io/pypi/pyversions/koza.svg)](https://pypi.python.org/pypi/koza) ![](https://github.com/monarch-initiative/koza/actions/workflows/build.yml/badge.svg) [![PyPi](https://img.shields.io/pypi/v/koza.svg)](https://pypi.python.org/pypi/koza)
+# Koza - a data transformation framework  
+
+[![Pyversions](https://img.shields.io/pypi/pyversions/koza.svg)](https://pypi.python.org/pypi/koza)
+[![PyPi](https://img.shields.io/pypi/v/koza.svg)](https://pypi.python.org/pypi/koza)
+![Github Action](https://github.com/monarch-initiative/koza/actions/workflows/build.yml/badge.svg)
+
 ![pupa](docs/img/pupa.png)  
 
-**Documentation**: https://koza.monarchinitiative.org/  
+[**Documentation**](https://koza.monarchinitiative.org/  )
 
 _Disclaimer_: Koza is in beta; we are looking for beta testers
 
@@ -14,9 +19,9 @@ _Disclaimer_: Koza is in beta; we are looking for beta testers
   - Create and use translation tables to map between source and target vocabularies
 
 ### Installation
-Koza is available on PyPi and can be installed via pip:
+Koza is available on PyPi and can be installed via pip/pipx:
 ```
-pip install koza
+[pip|pipx] install koza
 ```
 
 ### Usage
