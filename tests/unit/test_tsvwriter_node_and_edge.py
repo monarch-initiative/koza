@@ -34,7 +34,7 @@ def test_tsv_writer():
         'source',
     ]
 
-    outdir = "test-output"
+    outdir = "output/tests"
     outfile = "tsvwriter-node-and-edge"
 
     t = TSVWriter(outdir, outfile, node_properties, edge_properties)

@@ -28,7 +28,7 @@ def test_examples(source_name, ingest, output_format):
     source_config = f"examples/{source_name}/{ingest}.yaml"
     
     output_suffix = str(output_format).split('.')[1]
-    output_dir = f"./test-output/string/test-examples"
+    output_dir = f"./output/tests/string-test-examples"
 
     output_files = [
         f"{output_dir}/{ingest}_nodes.{output_suffix}",
