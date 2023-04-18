@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "koza"
-version = "0.3.0"
+version = "0.3.1"
 description = "Data transformation framework for LinkML data models"
 authors = [
     "The Monarch Initiative <info@monarchinitiative.org>",
@@ -18,7 +18,7 @@ packages = [
 python = "^3.8"
 linkml-validator = ">=0.4.4"
 pydantic = "^1.0.0"
-pyyaml = "^5.3.1"
+pyyaml = ">=5.0.0"
 requests = "^2.24.0"
 ordered-set = ">=4.1.0"
 typer = "^0.7.0"
