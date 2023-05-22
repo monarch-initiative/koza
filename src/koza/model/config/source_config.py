@@ -9,51 +9,18 @@ import zipfile
 from dataclasses import field
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Union
-
+from typing import Dict, List, Optional, Union
 import yaml
+
+from loguru import logger
 from pydantic import StrictFloat, StrictInt, StrictStr
 from pydantic.dataclasses import dataclass
 
 from koza.model.config.pydantic_config import PydanticConfig
 
-# from koza.utils.log_utils import get_logger
-# logger = get_logger(__name__)
-# import logging
-# logger = logging.getLogger(__name__)
-from loguru import logger
-
-class MapErrorEnum(str, Enum):
-    """
-    Enum for how to handle key errors in map files
-    """
-
-    warning = 'warning'
-    error = 'error'
-
-
-class FormatType(str, Enum):
-    """
-    Enum for supported file types
-    """
-
-    csv = 'csv'
-    jsonl = 'jsonl'
-    json = 'json'
-    yaml = 'yaml'
-    xml = 'xml'  # TODO
-
-
-class StandardFormat(str, Enum):
-    gpi = 'gpi'
-    bgi = 'bgi'
-    oban = 'oban'
-
 
 class FilterCode(str, Enum):
-    """
-    Enum for filter codes
-    eg gt (greater than)
+    """Enum for filter codes (ex. gt = greater than)
 
     This should be aligned with https://docs.python.org/3/library/operator.html
     """
@@ -68,23 +35,42 @@ class FilterCode(str, Enum):
 
 
 class FilterInclusion(str, Enum):
-    """
-    Enum for filter inclusion/exclusion
-    """
+    """Enum for filter inclusion/exclusion"""
 
     include = 'include'
     exclude = 'exclude'
 
 
 class FieldType(str, Enum):
-    """
-    Enum for filter codes
-    eg gt (greater than)
-    """
+    """Enum for field types"""
 
     str = 'str'
     int = 'int'
     float = 'float'
+
+
+class FormatType(str, Enum):
+    """Enum for supported file types"""
+
+    csv = 'csv'
+    jsonl = 'jsonl'
+    json = 'json'
+    yaml = 'yaml'
+    xml = 'xml'  # TODO
+
+
+class HeaderMode(str, Enum):
+    """Enum for supported header modes in addition to an index based lookup"""
+
+    infer = 'infer'
+    none = 'none'
+
+
+class MapErrorEnum(str, Enum):
+    """Enum for how to handle key errors in map files"""
+
+    warning = 'warning'
+    error = 'error'
 
 
 class OutputFormat(str, Enum):
@@ -95,6 +81,19 @@ class OutputFormat(str, Enum):
     tsv = 'tsv'
     jsonl = 'jsonl'
     kgx = 'kgx'
+
+@dataclass(frozen=True)
+class SSSOMConfig():
+    """SSSOM config options"""
+
+    files: List[Union[str, Path]] = field(default_factory=list)
+    prefixes: List[str] = field(default_factory=list)
+
+
+class StandardFormat(str, Enum):
+    gpi = 'gpi'
+    bgi = 'bgi'
+    oban = 'oban'
 
 
 class TransformMode(str, Enum):
@@ -107,15 +106,6 @@ class TransformMode(str, Enum):
 
     flat = 'flat'
     loop = 'loop'
-
-
-class HeaderMode(str, Enum):
-    """
-    Enum for supported header modes in addition to an index based lookup
-    """
-
-    infer = 'infer'
-    none = 'none'
 
 
 @dataclass(frozen=True)
@@ -150,34 +140,41 @@ class DatasetDescription:
 @dataclass(config=PydanticConfig)
 class SourceConfig:
     """
-    Base class for primary sources and mapping sources
+    Source config data class
 
-    TODO document fields
-
-    header: Optional, int|HeaderMode - the index (0 based) in which the
-            header appears in the file.  If header is set to infer
-            the headers will be set to the first line that is not blank
-            or commented with a hash.  If header is set to 'none'
-            then the columns field will be used, or raise a ValueError
-            if columns are not supplied
-
-    delimiter:
-    separator string similar to what works in str.split()
-    https://docs.python.org/3/library/stdtypes.html#str.split
-
-    required_properties: A list of required top level properties in a json object
+    Parameters
+    ----------
+    name: str (required) - name of the source
+    files: List[str] (required) - list of files to process
+    file_archive: str (optional) - path to a file archive containing files to process
+    format: FormatType (optional) - format of the data file(s)
+    metadata: DatasetDescription (optional) - metadata for the source
+    columns: List[str] (optional) - list of columns to include
+    required_properties: List[str] (optional) - list of properties which must be in json data files
+    delimiter: str (optional) - delimiter for csv files
+    header_delimiter: str (optional) - delimiter for header in csv files
+    header: int (optional) - header row index
+    comment_char: str (optional) - comment character for csv files
+    skip_blank_lines: bool (optional) - skip blank lines in csv files
+    filters: List[ColumnFilter] (optional) - list of filters to apply
+    json_path: List[str] (optional) - json path to extract data from
+    transform_code: str (optional) - path to a python file to transform the data
+    transform_mode: TransformMode (optional) - how to process the transform file
+    global_table: str (optional) - path to a global table file
+    local_table: str (optional) - path to a local table file
     """
 
     name: str
     files: List[Union[str, Path]]
     file_archive: Union[str, Path] = None
+    sssom_config: SSSOMConfig = None
     format: FormatType = FormatType.csv
-    metadata: Union[DatasetDescription, str] = None
     columns: List[Union[str, Dict[str, FieldType]]] = None
     required_properties: List[str] = None
+    metadata: Union[DatasetDescription, str] = None
     delimiter: str = None
-    header_delimiter: str = None
     header: Union[int, HeaderMode] = HeaderMode.infer
+    header_delimiter: str = None
     comment_char: str = '#'
     skip_blank_lines: bool = True
     filters: List[ColumnFilter] = field(default_factory=list)
@@ -202,8 +199,9 @@ class SourceConfig:
 
     def __post_init_post_parse__(self):
         """
-        TO DO figure out why we're using object.__setattr__(self, ...
-              here and document it
+        TO DO figure out why we're using object.__setattr__(self, ...)
+            here and document it.
+            Is this a workaround for a pydantic bug?
         """
         if self.file_archive:
             files = self.extract_archive()
@@ -217,6 +215,7 @@ class SourceConfig:
             else:
                 files_as_paths.append(file)
         object.__setattr__(self, 'files', files_as_paths)
+        # self.files = files_as_paths <---- is this equivalent to the above?
 
         if self.metadata and isinstance(self.metadata, str):
             # If this looks like a file path attempt to load it from the yaml
@@ -224,13 +223,10 @@ class SourceConfig:
             # See https://github.com/monarch-initiative/koza/issues/46
             try:
                 with open(self.metadata, 'r') as meta:
-                    object.__setattr__(
-                        self, 'metadata', DatasetDescription(**yaml.safe_load(meta))
-                    )
+                    object.__setattr__(self, 'metadata', DatasetDescription(**yaml.safe_load(meta)))
             except Exception as e:
                 # TODO check for more explicit exceptions
                 raise ValueError(f"Unable to load metadata from {self.metadata}: {e}")
-                # logger.debug("Could not load dataset description from metadata file")
 
         if self.delimiter in ['tab', '\\t']:
             object.__setattr__(self, 'delimiter', '\t')
@@ -278,7 +274,7 @@ class SourceConfig:
 
         if self.format == FormatType.csv and self.required_properties:
             raise ValueError(
-                "csv specified but required properties have been configured\n"
+                "CSV specified but required properties have been configured\n"
                 "either set format to jsonl or change properties to columns in the config"
             )
 

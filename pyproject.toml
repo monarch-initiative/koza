@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "koza"
-version = "0.3.1"
+version = "0.4.0"
 description = "Data transformation framework for LinkML data models"
 authors = [
     "The Monarch Initiative <info@monarchinitiative.org>",
@@ -24,6 +24,8 @@ ordered-set = ">=4.1.0"
 typer = "^0.7.0"
 typer-cli = "^0.0.13"
 loguru = "*"
+#sssom = "*"
+sssom = { git = "https://github.com/glass-ships/sssom-py.git", branch = "develop" } 
 
 [tool.poetry.dev-dependencies]
 pytest = ">=6.0.0"

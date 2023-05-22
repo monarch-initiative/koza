@@ -2,14 +2,13 @@ import importlib
 import sys
 from pathlib import Path
 from typing import Dict, Union
-
 import yaml
 
-# For validation
-from pydantic.error_wrappers import ValidationError
 from linkml_validator.validator import Validator
-from koza.converter.kgx_converter import KGXConverter
+from pydantic.error_wrappers import ValidationError
+import sssom 
 
+from koza.converter.kgx_converter import KGXConverter
 from koza.utils.exceptions import MapItemException, NextRowException
 from koza.io.writer.jsonl_writer import JSONLWriter
 from koza.io.writer.tsv_writer import TSVWriter
@@ -20,9 +19,6 @@ from koza.model.curie_cleaner import CurieCleaner
 from koza.model.map_dict import MapDict
 from koza.model.source import Source
 from koza.model.translation_table import TranslationTable
-
-# import logging
-# logger = logging.getLogger(__name__)
 
 
 class KozaApp:
@@ -47,11 +43,9 @@ class KozaApp:
         self._map_registry: Dict[str, Source] = {}
         self._map_cache: Dict[str, Dict] = {}
         self.curie_cleaner: CurieCleaner = CurieCleaner()
-        self.writer: KozaWriter = self._get_writer(
-            source.config.name, source.config.node_properties, source.config.edge_properties
-        )
+        self.writer: KozaWriter = self._get_writer()
         self.logger = logger
-        
+
         if schema:
             self.validator = Validator(schema=schema)
             self.converter = KGXConverter()
@@ -62,10 +56,6 @@ class KozaApp:
                     map_file_config = MapFileConfig(**yaml.load(map_file_fh, Loader=UniqueIncludeLoader))
                     map_file_config.transform_code = (str(Path(map_file).parent / Path(map_file).stem) + '.py')
                 self._map_registry[map_file_config.name] = Source(map_file_config)
-
-        self.writer = self._get_writer(
-            source.config.name, source.config.node_properties, source.config.edge_properties
-        )
 
     def get_map(self, map_name: str):
         map = self._map_cache[map_name]
@@ -171,26 +161,29 @@ class KozaApp:
             elif self.output_format == OutputFormat.jsonl:
                 if nodes:
                     for node in nodes:
-                        # node = json.dumps(n, ensure_ascii=False)
                         self.validator.validate(obj=node, target_class="NamedThing", strict=True)
 
                 if edges:
                     for edge in edges:
-                        # edge = json.dumps(e, ensure_ascii=False)
                         self.validator.validate(obj=edge, target_class="Association", strict=True)
 
         self.writer.write(entities)
 
-    def _get_writer(self, name, node_properties, edge_properties) -> Union[TSVWriter, JSONLWriter]:
+    def _get_writer(self) -> Union[TSVWriter, JSONLWriter]:
+        writer_params = [
+            self.output_dir,
+            self.source.config.name,
+            self.source.config.node_properties,
+            self.source.config.edge_properties,
+            self.source.config.sssom_config,
+        ]
         if self.output_format == OutputFormat.tsv:
-            return TSVWriter(self.output_dir, name, node_properties, edge_properties)
+            return TSVWriter(*writer_params)
 
         elif self.output_format == OutputFormat.jsonl:
-            return JSONLWriter(self.output_dir, name, node_properties, edge_properties)
+            return JSONLWriter(*writer_params)
 
     def _load_map(self, map_file: Source):
-
-       # map_file = Source(map_file_config)
 
         if not isinstance(map_file.config, MapFileConfig):
             raise ValueError(f"Error loading map: {map_file.config.name} is not a MapFileConfig")

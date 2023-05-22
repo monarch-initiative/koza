@@ -3,7 +3,7 @@ Module for managing koza runs through the CLI
 """
 
 from pathlib import Path
-from typing import Dict, Optional, Union
+from typing import Dict, List, Optional, Union
 import yaml
 
 from koza.app import KozaApp
@@ -58,8 +58,6 @@ def transform_source(
     verbose: bool = None,
     log: bool = False,
 ):
-    # set_log_config(logging.INFO if (verbose is None) else logging.DEBUG if (verbose == True) else logging.WARNING)
-    # logger = get_logger(verbose, filename = f"logs/{Path(source).name}.log" if log else None)
     logger = get_logger(name = Path(source).name if log else None, verbose = verbose)
     
     with open(source, 'r') as source_fh:
@@ -73,16 +71,16 @@ def transform_source(
         source_config.transform_code = str(Path(source).parent / Path(source).stem) + '.py'
 
     koza_source = Source(source_config, row_limit)
-
+    logger.debug(f"Source created: {koza_source.config.name}")
     translation_table = get_translation_table(
         global_table if global_table else source_config.global_table,
         local_table if local_table else source_config.local_table,
         logger
     )
 
-    source_koza = set_koza_app(koza_source, translation_table, output_dir, output_format, schema, logger)
-    source_koza.process_maps()
-    source_koza.process_sources()
+    koza_app = set_koza_app(koza_source, translation_table, output_dir, output_format, schema, logger)
+    koza_app.process_maps()
+    koza_app.process_sources()
 
 
 def validate_file(

@@ -23,7 +23,9 @@ class Source:
     """
 
     def __init__(
-        self, config: Union[PrimaryFileConfig, MapFileConfig], row_limit: Optional[int] = None
+        self, 
+        config: Union[PrimaryFileConfig, MapFileConfig], 
+        row_limit: Optional[int] = None
     ):
 
         self.config = config
