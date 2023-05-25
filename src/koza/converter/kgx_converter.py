@@ -14,7 +14,7 @@ class KGXConverter:
 
     """
 
-    def convert(self, entities: Iterable) -> Tuple[dict, dict]:
+    def convert(self, entities: Iterable) -> Tuple[list, list]:
 
         nodes = []
         edges = []
@@ -26,12 +26,13 @@ class KGXConverter:
                 edges.append(self.convert_association(entity))
 
             # if entity has id and name, but not subject/object/predicate, treat as node
-            elif all(hasattr(entity, attr) for attr in ["id", "name"]) and not all(
-                hasattr(entity, attr) for attr in ["subject", "object", "predicate"]
-            ):
+            elif (
+                    all(hasattr(entity, attr) for attr in ["id", "name"])
+                    and not all(hasattr(entity, attr) for attr in ["subject", "object", "predicate"])
+                ):
                 nodes.append(self.convert_node(entity))
 
-            # otherwise, not a
+            # otherwise, not a valid entity
             else:
                 raise ValueError(
                     f"Cannot convert {entity}: Can only convert NamedThing or Association entities to KGX compatible dictionaries"

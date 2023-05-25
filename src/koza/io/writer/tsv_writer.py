@@ -4,9 +4,10 @@
 from pathlib import Path
 from typing import Dict, Iterable, List, Literal, Set
 
+import numpy as np
 from ordered_set import OrderedSet
 from sssom.parsers import parse_sssom_table
-from sssom.util import filter_prefixes
+from sssom.util import filter_prefixes, merge_msdf
 
 from koza.converter.kgx_converter import KGXConverter
 from koza.io.utils import build_export_row
@@ -30,11 +31,17 @@ class TSVWriter(KozaWriter):
 
         if sssom_config:
             self.sssom_prefixes = sssom_config.prefixes
-            self.sssom_tables = []
+            mapping_sets = []
             for file in sssom_config.files:
-                table = parse_sssom_table(file)
-                table = filter_prefixes(table, self.sssom_prefixes)
-                self.sssom_tables.append(table)         
+                msdf = parse_sssom_table(file)
+                mapping_sets.append(msdf)
+            merged = merge_msdf(*mapping_sets)
+            filtered_df = filter_prefixes(
+                df=merged.df,
+                filter_prefixes=self.sssom_prefixes,
+                require_all_prefixes=False
+            )
+            self.sssom_df = filtered_df
 
         Path(self.dirname).mkdir(parents=True, exist_ok=True)
 
@@ -57,11 +64,12 @@ class TSVWriter(KozaWriter):
 
         if nodes:
             for node in nodes:
-                self.write_row(node, "node")
+                self.write_row(node, record_type="node")
 
         if edges:
             for edge in edges:
-                self.write_row(self._apply_mapping(edge), "edge")
+                edge = self._apply_sssom(edge) if hasattr(self, "sssom_df") else edge
+                self.write_row(edge, record_type="edge")
 
     def write_row(self, record: Dict, record_type: Literal["node", "edge"]) -> None:
         """Write a row to the underlying store.
@@ -91,33 +99,27 @@ class TSVWriter(KozaWriter):
         if hasattr(self, 'edgeFH'):
             self.edgeFH.close()
 
-    def _apply_mappings(self, edge):
-        """
-        Apply SSSOM mappings to edges.
+    def _apply_sssom(self, entity: dict) -> dict:
+        """Apply SSSOM mappings to a node or edge record."""
+        print(entity)
+        if entity["subject"] in self.sssom_df["subject_id"].values:
+            entity["original_subject"] = entity["subject"]
+            entity["subject"] = self.sssom_df.loc[self.sssom_df["subject_id"] == entity["subject"]]["object_id"].values[0]
 
-        Args:
-            edges (pandas.DataFrame): DataFrame of edges.
-            mapping (pandas.DataFrame): DataFrame of SSSOM mappings.
+        if entity["object"] in self.sssom_df["subject_id"].values:
+            entity["original_object"] = entity["object"]
+            entity["object"] = self.sssom_df.loc[self.sssom_df["subject_id"] == entity["object"]]["object_id"].values[0]
 
-        Returns:
-            None
-        """
-        # edges.rename(columns={'subject':'original_subject'}, inplace=True)
-        # subject_mapping = mapping.rename(columns={'subject_id':'subject'})
-        # subject_mapping = subject_mapping[["subject","object_id"]]
-        # edges = edges.merge(subject_mapping, how='left', left_on='original_subject', right_on='object_id').drop(['object_id'],axis=1)
-        # edges['subject'] = np.where(edges.subject.isnull(), edges.original_subject, edges.subject)
-        # edges['original_subject'] = np.where(edges.subject == edges.original_subject, None, edges.original_subject)
+        if entity["subject"] in self.sssom_df["object_id"].values:
+            entity["original_subject"] = entity["subject"]
+            entity["subject"] = self.sssom_df.loc[self.sssom_df["object_id"] == entity["subject"]]["subject_id"].values[0]
 
-        # edges.rename(columns={'object':'original_object'}, inplace=True)
-        # object_mapping = mapping.rename(columns={'subject_id':'object'})
-        # object_mapping = object_mapping[["object", "object_id"]]
-        # edges = edges.merge(object_mapping, how='left', left_on='original_object', right_on='object_id').drop(['object_id'],axis=1)
-        # edges['object'] = np.where(edges.object.isnull(), edges.original_object, edges.object)
-        # edges['original_object'] = np.where(edges.object == edges.original_object, None, edges.original_object)
+        if entity["object"] in self.sssom_df["object_id"].values:
+            entity["original_object"] = entity["object"]
+            entity["object"] = self.sssom_df.loc[self.sssom_df["object_id"] == entity["object"]]["subject_id"].values[0]
 
-        # return edges
-        pass
+        return entity
+
 
     @staticmethod
     def _order_columns(cols: Set, record_type: Literal['node', 'edge']) -> OrderedSet:

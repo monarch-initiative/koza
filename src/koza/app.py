@@ -143,26 +143,20 @@ class KozaApp:
         raise NextRowException
 
     def write(self, *entities):
-
         # If a schema/validator is defined, validate before writing
         if hasattr(self, 'validator'):
-
             (nodes, edges) = self.converter.convert(entities)
-
             if self.output_format == OutputFormat.tsv:
                 if nodes:
                     for node in nodes:
                         self.validator.validate(obj=node, target_class="NamedThing", strict=True)
-
                 if edges:
                     for edge in edges:
                         self.validator.validate(obj=edge, target_class="Association", strict=True)
-
             elif self.output_format == OutputFormat.jsonl:
                 if nodes:
                     for node in nodes:
                         self.validator.validate(obj=node, target_class="NamedThing", strict=True)
-
                 if edges:
                     for edge in edges:
                         self.validator.validate(obj=edge, target_class="Association", strict=True)
