@@ -6,7 +6,6 @@ import yaml
 
 from linkml_validator.validator import Validator
 from pydantic.error_wrappers import ValidationError
-import sssom 
 
 from koza.converter.kgx_converter import KGXConverter
 from koza.utils.exceptions import MapItemException, NextRowException

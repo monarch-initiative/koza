@@ -11,7 +11,10 @@ from typing import IO, Any, Dict, Union
 
 import requests
 
-##### Helper Functions for Reader classes #####
+
+######################
+### Reader Helpers ###
+######################
 
 def open_resource(resource: Union[str, PathLike]) -> IO[str]:
     """
@@ -83,7 +86,10 @@ def check_data(entry, path) -> bool:
         else:
             tag = ppart.pop(0) 
 
-##### Helper functions for Writer classes #####
+
+######################
+### Writer Helpers ###
+######################
 
 # Biolink 2.0 "Knowledge Source" association slots,
 # including the deprecated 'provided_by' slot
@@ -246,3 +252,4 @@ def is_null(item: Any) -> bool:
     """
     null_values = {None, "", " "}
     return item in null_values
+

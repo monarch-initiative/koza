@@ -1,3 +1,8 @@
+examples/ctd/
+test_df.csv
+test_lut.txt
+test.py
+
 # Default output / Generated / Unpacked data files
 output/
 tests/resources/source-files/string.tsv*

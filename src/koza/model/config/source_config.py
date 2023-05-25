@@ -9,12 +9,14 @@ import zipfile
 from dataclasses import field
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Union
 import yaml
 
 from loguru import logger
 from pydantic import StrictFloat, StrictInt, StrictStr
 from pydantic.dataclasses import dataclass
+from sssom.parsers import parse_sssom_table
+from sssom.util import filter_prefixes, merge_msdf
 
 from koza.model.config.pydantic_config import PydanticConfig
 
@@ -82,13 +84,6 @@ class OutputFormat(str, Enum):
     jsonl = 'jsonl'
     kgx = 'kgx'
 
-@dataclass(frozen=True)
-class SSSOMConfig():
-    """SSSOM config options"""
-
-    files: List[Union[str, Path]] = field(default_factory=list)
-    prefixes: List[str] = field(default_factory=list)
-
 
 class StandardFormat(str, Enum):
     gpi = 'gpi'
@@ -135,6 +130,79 @@ class DatasetDescription:
     provided_by: str = None
     license: str = None
     rights: str = None
+
+
+@dataclass()
+class SSSOMConfig():
+    """SSSOM config options"""
+
+    files: List[Union[str, Path]] = field(default_factory=list)
+    filter_prefixes: List[str] = field(default_factory=list)
+    target_prefixes: List[str] = field(default_factory=list)
+
+    def __post_init_post_parse__(self):
+        self.df = self.merge_and_filter_sssom()
+        self.lut = self.build_sssom_lut()
+
+    def merge_and_filter_sssom(self):
+        mapping_sets = []
+        for file in self.files:
+            msdf = parse_sssom_table(file)
+            mapping_sets.append(msdf)
+        new_msdf = merge_msdf(*mapping_sets)
+        if self.filter_prefixes:
+            new_msdf = filter_prefixes(
+                df=new_msdf.df,
+                filter_prefixes=self.filter_prefixes,
+                require_all_prefixes=False
+            )
+            
+        return new_msdf
+
+    def build_sssom_lut(self) -> Dict:
+        """Build a lookup table from SSSOM mapping dataframe."""
+        sssom_lut = {}
+        for _, row in self.df.iterrows():
+            subject_id = row["subject_id"]
+            object_id = row["object_id"]
+            sssom_lut = self._set_mapping(subject_id, object_id, self.filter_prefixes, self.target_prefixes, sssom_lut)
+            sssom_lut = self._set_mapping(object_id, subject_id, self.filter_prefixes, self.target_prefixes, sssom_lut)
+        return sssom_lut
+
+    def apply_sssom_lut(self, entity: dict) -> dict:
+        """Apply SSSOM mappings to an edge record."""
+        if self._has_mapping(entity["subject"]):
+            entity["original_subject"] = entity["subject"]
+            entity["subject"] = self._get_mapping(entity["subject"], self.target_prefixes)
+
+        if self._has_mapping(entity["object"]):
+            entity["original_object"] = entity["object"]
+            entity["object"] = self._get_mapping(entity["object"], self.target_prefixes)
+
+        return entity
+
+    def _has_mapping(self, id):
+        """Check if an ID has a mapping."""
+        return id in self.lut
+
+    def _get_mapping(self, id, target_prefixes):
+        """Get the mapping for an ID."""
+        for target_prefix in target_prefixes:
+            if target_prefix in self.lut[id]:
+                return self.lut[id][target_prefix]
+        raise KeyError(f"Could not find mapping for {id} in {target_prefixes}: {self.lut[id]}")
+    
+    def _set_mapping(self, original_id, mapped_id, filter_prefixes, target_prefixes, sssom_lut):
+        original_prefix = original_id.split(":")[0]
+        mapped_prefix = mapped_id.split(":")[0]
+        if original_prefix in filter_prefixes and mapped_prefix in target_prefixes:
+            if original_id not in sssom_lut:
+                sssom_lut[original_id] = {}
+            if mapped_prefix in sssom_lut[original_id]:
+                logger.warning(f"Duplicate mapping for {original_id} to {mapped_prefix}")
+            else:
+                sssom_lut[original_id][mapped_prefix] = mapped_id
+        return sssom_lut
 
 
 @dataclass(config=PydanticConfig)
@@ -327,3 +395,4 @@ class MapFileConfig(SourceConfig):
     values: List[str] = None
     curie_prefix: str = None
     add_curie_prefix_to_columns: List[str] = None
+
