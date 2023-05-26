@@ -37,6 +37,8 @@ class TSVWriter(KozaWriter):
             self.nodeFH.write(self.delimiter.join(self.node_columns) + "\n")
 
         if edge_properties: # Make edge file
+            if sssom_config:
+                edge_properties = self.add_sssom_columns(edge_properties)
             self.edge_columns = TSVWriter._order_columns(edge_properties, "edge")
             self.edges_file_name = Path(self.dirname if self.dirname else "", f"{self.basename}_edges.tsv")
             self.edgeFH = open(self.edges_file_name, "w")
@@ -124,3 +126,12 @@ class TSVWriter(KozaWriter):
         ordered_columns.update(sorted(remaining_columns))
         ordered_columns.update(sorted(internal_columns))
         return ordered_columns    
+
+    @staticmethod
+    def add_sssom_columns(edge_properties: list):
+        """Add SSSOM columns to a set of columns."""
+        if "original_subject" not in edge_properties:
+            edge_properties.append("original_subject")
+        if "original_object" not in edge_properties:
+            edge_properties.append("original_object")
+        return edge_properties
