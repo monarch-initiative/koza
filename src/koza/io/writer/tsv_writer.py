@@ -2,7 +2,7 @@
 # NOTE - May want to rename to KGXWriter at some point, if we develop writers for other models non biolink/kgx specific
 
 from pathlib import Path
-from typing import Dict, Iterable, List, Literal, Set
+import typing as t
 
 from ordered_set import OrderedSet
 
@@ -10,15 +10,14 @@ from koza.converter.kgx_converter import KGXConverter
 from koza.io.utils import build_export_row
 from koza.io.writer.writer import KozaWriter
 from koza.model.config.source_config import SSSOMConfig
-# from koza.utils.sssom_utils import apply_sssom_lut, build_sssom_lut, merge_and_filter_sssom
 
 class TSVWriter(KozaWriter):
     def __init__(
         self, 
-        output_dir: str | Path, 
+        output_dir: t.Union[str, Path], 
         source_name: str,
-        node_properties: List[str] = None,
-        edge_properties: List[str] = None,
+        node_properties: t.List[str] = None,
+        edge_properties: t.List[str] = None,
         sssom_config: SSSOMConfig = None,
     ):
         self.basename = source_name
@@ -51,7 +50,7 @@ class TSVWriter(KozaWriter):
             pprint.pprint(self.sssom_config.lut)
 
 
-    def write(self, entities: Iterable) -> None:
+    def write(self, entities: t.Iterable) -> None:
         """Write an entities object to separate node and edge .tsv files"""
 
         nodes, edges = self.converter.convert(entities)
@@ -66,7 +65,7 @@ class TSVWriter(KozaWriter):
                     edge = self.sssom_config.apply_sssom_lut(edge)
                 self.write_row(edge, record_type="edge")
 
-    def write_row(self, record: Dict, record_type: Literal["node", "edge"]) -> None:
+    def write_row(self, record: t.Dict, record_type: t.Literal["node", "edge"]) -> None:
         """Write a row to the underlying store.
         
         Args:
@@ -95,7 +94,7 @@ class TSVWriter(KozaWriter):
             self.edgeFH.close()
 
     @staticmethod
-    def _order_columns(cols: Set, record_type: Literal['node', 'edge']) -> OrderedSet:
+    def _order_columns(cols: t.Set, record_type: t.Literal['node', 'edge']) -> OrderedSet:
         """Arrange node or edge columns in a defined order.
         
         Args:

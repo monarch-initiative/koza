@@ -9,7 +9,7 @@ import zipfile
 from dataclasses import field
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Literal
 import yaml
 
 from loguru import logger
@@ -134,57 +134,87 @@ class DatasetDescription:
 
 @dataclass()
 class SSSOMConfig():
-    """SSSOM config options"""
+    """SSSOM config options
+    
+    Attributes:
+        files: List of SSSOM files to use
+        target_prefixes: List of prefixes to map to
+        filter_prefixes: Optional list of prefixes to filter by
+    """
 
     files: List[Union[str, Path]] = field(default_factory=list)
     filter_prefixes: List[str] = field(default_factory=list)
     target_prefixes: List[str] = field(default_factory=list)
+    predicates = {
+        "exact": ["skos:exactMatch"],
+        "narrow": ["skos:narrowMatch"],
+        "broad": ["skos:broadMatch"]
+    }
 
     def __post_init_post_parse__(self):
-        self.df = self.merge_and_filter_sssom()
-        self.lut = self.build_sssom_lut()
+        logger.debug("Building SSSOM Dataframe...")
+        self.df = self._merge_and_filter_sssom()
+        logger.debug("Building SSSOM Lookup Table...")
+        self.lut = self._build_sssom_lut()
 
-    def merge_and_filter_sssom(self):
+    def apply_sssom_lut(self, entity: dict) -> dict:
+        """Apply SSSOM mappings to an edge record."""
+
+        if self._has_mapping(entity["subject"], self.target_prefixes):
+            entity["original_subject"] = entity["subject"]
+            entity["subject"] = self._get_mapping(entity["subject"], self.target_prefixes)
+
+        if self._has_mapping(entity["object"], self.target_prefixes):
+            entity["original_object"] = entity["object"]
+            entity["object"] = self._get_mapping(entity["object"], self.target_prefixes)
+
+        return entity
+    
+    def _merge_and_filter_sssom(self):
         mapping_sets = []
         for file in self.files:
             msdf = parse_sssom_table(file)
             mapping_sets.append(msdf)
         new_msdf = merge_msdf(*mapping_sets)
-        if self.filter_prefixes:
-            new_msdf = filter_prefixes(
-                df=new_msdf.df,
-                filter_prefixes=self.filter_prefixes,
-                require_all_prefixes=False
-            )
+        filters = self.target_prefixes + list(set(self.filter_prefixes) - set(self.target_prefixes))
+        new_msdf = filter_prefixes(
+            df=new_msdf.df,
+            filter_prefixes=filters,
+            require_all_prefixes=False
+        )
             
         return new_msdf
 
-    def build_sssom_lut(self) -> Dict:
+    def _build_sssom_lut(self) -> Dict:
         """Build a lookup table from SSSOM mapping dataframe."""
         sssom_lut = {}
         for _, row in self.df.iterrows():
             subject_id = row["subject_id"]
             object_id = row["object_id"]
-            sssom_lut = self._set_mapping(subject_id, object_id, self.filter_prefixes, self.target_prefixes, sssom_lut)
-            sssom_lut = self._set_mapping(object_id, subject_id, self.filter_prefixes, self.target_prefixes, sssom_lut)
+            predicate = row["predicate_id"]
+            sssom_lut = self._set_mapping(subject_id, object_id, predicate, match='broad', lut=sssom_lut)
+            sssom_lut = self._set_mapping(object_id, subject_id, predicate, match='narrow', lut=sssom_lut)
         return sssom_lut
 
-    def apply_sssom_lut(self, entity: dict) -> dict:
-        """Apply SSSOM mappings to an edge record."""
-        if self._has_mapping(entity["subject"]):
-            entity["original_subject"] = entity["subject"]
-            entity["subject"] = self._get_mapping(entity["subject"], self.target_prefixes)
+    def _has_match(self, predicate, match: Literal['narrow', 'broad']):
+        if match == 'narrow':
+            return predicate in self.predicates['narrow'] or predicate in self.predicates['exact']
+        if match == 'broad':
+            return predicate in self.predicates['broad'] or predicate in self.predicates['exact']
 
-        if self._has_mapping(entity["object"]):
-            entity["original_object"] = entity["object"]
-            entity["object"] = self._get_mapping(entity["object"], self.target_prefixes)
-
-        return entity
-
-    def _has_mapping(self, id):
+    def _has_mapping(self, id, target_prefixes = None):
         """Check if an ID has a mapping."""
-        return id in self.lut
-
+        if target_prefixes is None:
+            return id in self.lut
+        else:
+            if id not in self.lut:
+                return False
+            for target_prefix in target_prefixes:
+                if target_prefix in self.lut[id]:
+                    return True
+            # logger.warning(f"Could not find mapping in SSSOM lookup table for {id} with any of {target_prefixes}")
+            return False
+    
     def _get_mapping(self, id, target_prefixes):
         """Get the mapping for an ID."""
         for target_prefix in target_prefixes:
@@ -192,17 +222,26 @@ class SSSOMConfig():
                 return self.lut[id][target_prefix]
         raise KeyError(f"Could not find mapping for {id} in {target_prefixes}: {self.lut[id]}")
     
-    def _set_mapping(self, original_id, mapped_id, filter_prefixes, target_prefixes, sssom_lut):
+    def _set_mapping(self, original_id, mapped_id, predicate, match: Literal['narrow', 'broad'], lut: Dict[str, dict]):
+        """Set a mapping for an ID."""
         original_prefix = original_id.split(":")[0]
         mapped_prefix = mapped_id.split(":")[0]
-        if original_prefix in filter_prefixes and mapped_prefix in target_prefixes:
-            if original_id not in sssom_lut:
-                sssom_lut[original_id] = {}
-            if mapped_prefix in sssom_lut[original_id]:
+        filter_prefixes = self.filter_prefixes
+        target_prefixes = self.target_prefixes
+        if (
+            (original_prefix in filter_prefixes or len(self.filter_prefixes) == 0)
+            and 
+            mapped_prefix in target_prefixes
+            ):
+            if original_id not in lut:
+                lut[original_id] = {}
+            if mapped_prefix in lut[original_id] :
                 logger.warning(f"Duplicate mapping for {original_id} to {mapped_prefix}")
+            elif self._has_match(predicate, match):
+                lut[original_id][mapped_prefix] = mapped_id
             else:
-                sssom_lut[original_id][mapped_prefix] = mapped_id
-        return sssom_lut
+                pass # do something else
+        return lut
 
 
 @dataclass(config=PydanticConfig)
@@ -216,6 +255,7 @@ class SourceConfig:
     files: List[str] (required) - list of files to process
     file_archive: str (optional) - path to a file archive containing files to process
     format: FormatType (optional) - format of the data file(s)
+    sssom_config: SSSOMConfig (optional) - SSSOM config options
     metadata: DatasetDescription (optional) - metadata for the source
     columns: List[str] (optional) - list of columns to include
     required_properties: List[str] (optional) - list of properties which must be in json data files
@@ -225,7 +265,7 @@ class SourceConfig:
     comment_char: str (optional) - comment character for csv files
     skip_blank_lines: bool (optional) - skip blank lines in csv files
     filters: List[ColumnFilter] (optional) - list of filters to apply
-    json_path: List[str] (optional) - json path to extract data from
+    json_path: List[str] (optional) - path within JSON object containing data to process
     transform_code: str (optional) - path to a python file to transform the data
     transform_mode: TransformMode (optional) - how to process the transform file
     global_table: str (optional) - path to a global table file
@@ -235,8 +275,8 @@ class SourceConfig:
     name: str
     files: List[Union[str, Path]]
     file_archive: Union[str, Path] = None
-    sssom_config: SSSOMConfig = None
     format: FormatType = FormatType.csv
+    sssom_config: SSSOMConfig = None
     columns: List[Union[str, Dict[str, FieldType]]] = None
     required_properties: List[str] = None
     metadata: Union[DatasetDescription, str] = None

@@ -1,4 +1,4 @@
-# Note that you should be in your virtual environment of choice before running make
+# Note that Poetry is required, see https://python-poetry.org/docs/#installation
 
 MAKEFLAGS += --warn-undefined-variables
 MAKEFLAGS += --no-builtin-rules
@@ -11,6 +11,7 @@ endif
 
 .DEFAULT_GOAL := all
 SHELL := bash
+RUN := poetry run
 
 .PHONY: all
 all: install test clean
@@ -25,11 +26,12 @@ build:
 
 .PHONY: test
 test: install
-	poetry run python -m pytest
+	$(RUN) python -m pytest
 
 .PHONY: docs
 docs: install
-	poetry run typer src/koza/main.py utils docs --name koza --output docs/Usage/CLI.md
+	$(RUN) typer src/koza/main.py utils docs --name koza --output docs/Usage/CLI.md
+	$(RUN) mkdocs build
 
 .PHONY: clean
 clean:
@@ -41,17 +43,17 @@ clean:
 
 .PHONY: lint
 lint:
-	flake8 --exit-zero --max-line-length 120 koza/ tests/ examples/
-	black --check --diff koza tests
-	isort --check-only --diff koza tests
+	$(RUN) flake8 --exit-zero --max-line-length 120 koza/ tests/ examples/
+	$(RUN) black --check --diff koza tests
+	$(RUN) isort --check-only --diff koza tests
 
 .PHONY: format
 format:
-	autoflake \
+	$(RUN) autoflake \
 		--recursive \
 		--remove-all-unused-imports \
 		--remove-unused-variables \
 		--ignore-init-module-imports \
 		--in-place koza tests examples
-	isort koza tests examples
-	black koza tests examples
+	$(RUN) isort koza tests examples
+	$(RUN) black koza tests examples

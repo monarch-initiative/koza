@@ -1,0 +1,37 @@
+# Builds and runs pytest on ubuntu-latest
+# Tests python versions >=3.6
+name: build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+  workflow_dispatch:
+
+jobs:
+  # https://github.com/actions/setup-python
+  test-python3-ubuntu-latest:
+    name: test py${{ matrix.python-version }} on linux
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.8', '3.9', '3.10', '3.11']
+    env:
+      PYTHON: ${{ matrix.python-version }}
+      OS: ubuntu
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: set up python
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: make test
+        run: |
+          pip install poetry
+          make test

@@ -21,10 +21,7 @@ from koza.model.translation_table import TranslationTable
 
 
 class KozaApp:
-    """
-    Core koza class that stores the configuration
-    and performs source transforms
-    """
+    """Core koza class. Stores configuration and performs transforms"""
 
     def __init__(
         self,
@@ -78,7 +75,6 @@ class KozaApp:
         a .py file along side it (see constructor)
 
         Intended for decoupling ingest logic into a configuration like file
-
         """
         import sys
 
@@ -121,10 +117,8 @@ class KozaApp:
         sys.path.remove(str(parent_path))
 
     def process_maps(self):
-        """
-        Initializes self._map_cache
-        :return:
-        """
+        """Initializes self._map_cache"""
+
         for map_file in self._map_registry.values():
             if map_file.config.name not in self._map_cache:
                 self._load_map(map_file)
@@ -132,12 +126,10 @@ class KozaApp:
     @staticmethod
     def next_row():
         """
-        Breaks out of the facade file and iterates to the next row
-        in the file
+        Breaks out of the facade file and iterates to the next row in the file
 
         Effectively a continue statement
-        https://docs.python.org/3/reference/simple_stmts.html#continue
-        :return:
+        See: https://docs.python.org/3/reference/simple_stmts.html#continue
         """
         raise NextRowException
 
@@ -220,5 +212,5 @@ class KozaApp:
         See https://github.com/monarch-initiative/koza/issues/39
 
         :param depends_on:
-        :return:
         """
+        pass
