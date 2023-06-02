@@ -1,6 +1,4 @@
-# Koza 
-
-**A data transformation framework**  
+# Koza - a data transformation framework
 
 ## Overview
 

@@ -83,9 +83,10 @@ Creating this ingest will require three things:
     #### SSSOM Mapping
 
     Koza supports mapping with SSSOM files (Semantic Similarity of Source and Target Ontology Mappings).  
-    Simply add the path to the SSSOM file to your source config, any prefixes you want to filter by, and the desired target prefixes.
-    Koza will automatically create a mapping lookup table which will automatically attempt to map any values in the source file  
-    to an ID with the target prefix.
+    Simply add the path to the SSSOM file to your source config, the desired target prefixes,  
+    and any prefixes you want to use to filter the SSSOM file.  
+    Koza will automatically create a mapping lookup table which will automatically  
+    attempt to map any values in the source file to an ID with the target prefix.
 
     ```yaml
     sssom_config:
@@ -99,9 +100,12 @@ Creating this ingest will require three things:
 
     #### Manual Mapping / Additional Data
 
+    The map config yaml allows you to include data from other sources in your ingests,  
+    which may have different columns or formats.  
+    
     If you don't have an SSSOM file, or you want to manually map some values, you can use a map config yaml.  
-    The map config yaml allows you to include data from other sources in your ingests, which may have different columns or formats.
     You can then add this map to your source config yaml in the `depends_on` property.  
+    
     Koza will then create a nested dictionary with the specified key and values.  
     For example, the following map config yaml maps values from the `STRING` column to the `entrez` and `NCBI taxid` columns.
 
