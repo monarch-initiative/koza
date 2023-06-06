@@ -1,6 +1,3 @@
-examples/ctd/
-test_*
-
 # Default output / Generated / Unpacked data files
 output/
 tests/resources/source-files/string.tsv*
