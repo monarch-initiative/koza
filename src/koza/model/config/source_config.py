@@ -138,8 +138,10 @@ class SSSOMConfig():
     
     Attributes:
         files: List of SSSOM files to use
-        target_prefixes: List of prefixes to map to
         filter_prefixes: Optional list of prefixes to filter by
+        subject_target_prefixes: Optional list of prefixes to use for subject mapping
+        object_target_prefixes: Optional list of prefixes to use for object mapping
+
     """
 
     files: List[Union[str, Path]] = field(default_factory=list)
