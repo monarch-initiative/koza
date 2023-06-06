@@ -2,7 +2,6 @@ import types
 from typing import Iterable
 
 import pytest
-from _pytest.logging import LogCaptureFixture
 from loguru import logger
 
 from koza.app import KozaApp

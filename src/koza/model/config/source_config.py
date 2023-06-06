@@ -144,7 +144,9 @@ class SSSOMConfig():
 
     files: List[Union[str, Path]] = field(default_factory=list)
     filter_prefixes: List[str] = field(default_factory=list)
-    target_prefixes: List[str] = field(default_factory=list)
+    subject_target_prefixes: List[str] = field(default_factory=list)
+    object_target_prefixes: List[str] = field(default_factory=list)
+
     predicates = {
         "exact": ["skos:exactMatch"],
         "narrow": ["skos:narrowMatch"],
@@ -157,16 +159,16 @@ class SSSOMConfig():
         logger.debug("Building SSSOM Lookup Table...")
         self.lut = self._build_sssom_lut()
 
-    def apply_sssom_lut(self, entity: dict) -> dict:
+    def apply_mapping(self, entity: dict) -> dict:
         """Apply SSSOM mappings to an edge record."""
 
-        if self._has_mapping(entity["subject"], self.target_prefixes):
+        if self._has_mapping(entity["subject"], self.subject_target_prefixes):
             entity["original_subject"] = entity["subject"]
-            entity["subject"] = self._get_mapping(entity["subject"], self.target_prefixes)
+            entity["subject"] = self._get_mapping(entity["subject"], self.subject_target_prefixes)
 
-        if self._has_mapping(entity["object"], self.target_prefixes):
+        if self._has_mapping(entity["object"], self.object_target_prefixes):
             entity["original_object"] = entity["object"]
-            entity["object"] = self._get_mapping(entity["object"], self.target_prefixes)
+            entity["object"] = self._get_mapping(entity["object"], self.object_target_prefixes)
 
         return entity
     
@@ -176,13 +178,18 @@ class SSSOMConfig():
             msdf = parse_sssom_table(file)
             mapping_sets.append(msdf)
         new_msdf = merge_msdf(*mapping_sets)
-        filters = self.target_prefixes + list(set(self.filter_prefixes) - set(self.target_prefixes))
+        filters = (self.subject_target_prefixes + self.object_target_prefixes) + list(
+            set(self.filter_prefixes)
+            - set(self.subject_target_prefixes)
+            - set(self.object_target_prefixes)
+        )
+        logger.debug(f"Filtering SSSOM by {filters}")
         new_msdf = filter_prefixes(
             df=new_msdf.df,
             filter_prefixes=filters,
             require_all_prefixes=False
         )
-            
+
         return new_msdf
 
     def _build_sssom_lut(self) -> Dict:
@@ -227,7 +234,7 @@ class SSSOMConfig():
         original_prefix = original_id.split(":")[0]
         mapped_prefix = mapped_id.split(":")[0]
         filter_prefixes = self.filter_prefixes
-        target_prefixes = self.target_prefixes
+        target_prefixes = self.subject_target_prefixes + self.object_target_prefixes
         if (
             (original_prefix in filter_prefixes or len(self.filter_prefixes) == 0)
             and 

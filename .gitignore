@@ -1,7 +1,5 @@
 examples/ctd/
-test_df.csv
-test_lut.txt
-test.py
+test_*
 
 # Default output / Generated / Unpacked data files
 output/
