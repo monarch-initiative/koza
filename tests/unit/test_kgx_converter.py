@@ -1,5 +1,5 @@
 import pytest
-from biolink.pydanticmodel import Gene, GeneToGeneAssociation, Publication
+from biolink.pydanticmodel import Gene, GeneToGeneAssociation  # , Publication
 
 from koza.converter.kgx_converter import KGXConverter
 
@@ -16,30 +16,30 @@ def test_gene_conversion():
     (nodes, edges) = kgx_converter.convert([fgf8a])
     output = nodes[0]
 
-    assert output['id'] == "ZFIN:ZDB-GENE-990415-72"
-    assert output['symbol'] == "fgf8a"
-    assert 'gene' in str(output['category']).lower()
-    assert output['name'] == "fibroblast growth factor 8a"
-    assert output['in_taxon'] == ["NCBITaxon:7955"]
+    assert output["id"] == "ZFIN:ZDB-GENE-990415-72"
+    assert output["symbol"] == "fgf8a"
+    assert "gene" in str(output["category"]).lower()
+    assert output["name"] == "fibroblast growth factor 8a"
+    assert output["in_taxon"] == ["NCBITaxon:7955"]
 
 
 def test_association_conversion():
     fgf8a = Gene(id="ZFIN:ZDB-GENE-990415-72", symbol="fgf8a", name="fibroblast growth factor 8a")
     pax2a = Gene(id="ZFIN:ZDB-GENE-990415-8", symbol="pax2a", name="paired box 2a")
-    pub = "PMID:17522161" # Publication(id="PMID:17522161", type="MESH:foobar")
+    pub = "PMID:17522161"  # Publication(id="PMID:17522161", type="MESH:foobar")
     association = GeneToGeneAssociation(
-        id='uuid:123',
+        id="uuid:123",
         subject=fgf8a.id,
         predicate="biolink:interacts_with",
         object=pax2a.id,
         publications=[pub],
     )
 
-    (nodes, edges) = KGXConverter().convert([fgf8a, pax2a, association])
+    (_, edges) = KGXConverter().convert([fgf8a, pax2a, association])
 
     output = edges[0]
-    assert output['subject'] == "ZFIN:ZDB-GENE-990415-72"
-    assert output['object'] == "ZFIN:ZDB-GENE-990415-8"
+    assert output["subject"] == "ZFIN:ZDB-GENE-990415-72"
+    assert output["object"] == "ZFIN:ZDB-GENE-990415-8"
     # TODO figure out how/where to handle this conversion
     # assert Curie("PMID:17522161") in output['publications']
 
@@ -60,10 +60,10 @@ def test_keys_uniformity(id, symbol, synonym, xref):
     (nodes, edges) = KGXConverter().convert([gene])
     output = nodes[0]
 
-    assert 'category' in output.keys()
-    assert 'id' in output.keys()
-    assert 'symbol' in output.keys()
-    assert 'synonym' in output.keys()
-    assert 'xref' in output.keys()
-    assert 'description' in output.keys()
+    assert "category" in output.keys()
+    assert "id" in output.keys()
+    assert "symbol" in output.keys()
+    assert "synonym" in output.keys()
+    assert "xref" in output.keys()
+    assert "description" in output.keys()
     # assert 'source' in output.keys() ----> Did we remove this?
