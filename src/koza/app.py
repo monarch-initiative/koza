@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Dict, Union
 import yaml
 
-from linkml_validator.validator import Validator
+# from linkml_validator.validator import Validator
 from pydantic.error_wrappers import ValidationError
 
 from koza.converter.kgx_converter import KGXConverter
@@ -43,7 +43,7 @@ class KozaApp:
         self.logger = logger
 
         if schema:
-            self.validator = Validator(schema=schema)
+            # self.validator = Validator(schema=schema)
             self.converter = KGXConverter()
 
         if source.config.depends_on is not None:
@@ -84,7 +84,8 @@ class KozaApp:
         is_first = True
         transform_module = None
 
-        self.logger.info(f"Transforming source: {self.source.config.name}")
+        if self.logger:
+            self.logger.info(f"Transforming source: {self.source.config.name}")
         if self.source.config.transform_mode == 'flat':
             while True:
                 try:
@@ -94,11 +95,13 @@ class KozaApp:
                     else:
                         importlib.reload(transform_module)
                 except MapItemException as mie:
-                    self.logger.debug(f"{str(mie)} not found in map")
+                    if self.logger:
+                        self.logger.debug(f"{str(mie)} not found in map")
                 except NextRowException:
                     continue
                 except ValidationError as ve:
-                    self.logger.error(f"Validation error while processing: {self.source.last_row}")
+                    if self.logger:
+                        self.logger.error(f"Validation error while processing: {self.source.last_row}")
                     raise ve
                 except StopIteration:
                     break

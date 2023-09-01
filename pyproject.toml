@@ -16,8 +16,8 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.8"
-linkml-validator = ">=0.4.4"
-pydantic = "^1.0.0"
+# linkml-validator = ">=0.4.4"
+pydantic = "^2.0"
 pyyaml = ">=5.0.0"
 requests = "^2.24.0"
 ordered-set = ">=4.1.0"
