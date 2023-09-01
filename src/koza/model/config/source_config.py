@@ -155,7 +155,7 @@ class SSSOMConfig():
         "broad": ["skos:broadMatch"]
     }
 
-    def __post_init_post_parse__(self):
+    def __post_init__(self):
         logger.debug("Building SSSOM Dataframe...")
         self.df = self._merge_and_filter_sssom()
         logger.debug("Building SSSOM Lookup Table...")
@@ -314,7 +314,7 @@ class SourceConfig:
         files = [os.path.join(archive_path, file) for file in self.files]
         return files
 
-    def __post_init_post_parse__(self):
+    def __post_init__(self):
         """
         TO DO figure out why we're using object.__setattr__(self, ...)
             here and document it.
