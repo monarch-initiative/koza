@@ -189,7 +189,8 @@ class SSSOMConfig():
         new_msdf = filter_prefixes(
             df=new_msdf.df,
             filter_prefixes=filters,
-            require_all_prefixes=False
+            require_all_prefixes=False,
+            features=new_msdf.df.columns
         )
 
         return new_msdf
