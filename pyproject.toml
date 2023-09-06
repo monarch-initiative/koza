@@ -24,7 +24,7 @@ ordered-set = ">=4.1.0"
 typer = "^0.7.0"
 typer-cli = "^0.0.13"
 loguru = "*"
-sssom = ">=0.3.40"
+sssom = "0.3.31"
 
 [tool.poetry.dev-dependencies]
 pytest = ">=6.0.0"
