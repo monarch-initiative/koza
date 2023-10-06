@@ -172,7 +172,7 @@ class CSVReader:
             try:
                 typed_field_map[field] = FIELDTYPE_CLASS[self.field_type_map[field]](field_value)
             except KeyError as key_error:
-                logger.warning(key_error)
+                logger.warning(f"Field {field} not found in field_type_map ({key_error})")
 
         return typed_field_map
 

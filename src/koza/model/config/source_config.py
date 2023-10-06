@@ -189,7 +189,8 @@ class SSSOMConfig():
         new_msdf = filter_prefixes(
             df=new_msdf.df,
             filter_prefixes=filters,
-            require_all_prefixes=False
+            require_all_prefixes=False,
+            features=new_msdf.df.columns
         )
 
         return new_msdf
@@ -235,10 +236,9 @@ class SSSOMConfig():
         """Set a mapping for an ID."""
         original_prefix = original_id.split(":")[0]
         mapped_prefix = mapped_id.split(":")[0]
-        filter_prefixes = self.filter_prefixes
         target_prefixes = self.subject_target_prefixes + self.object_target_prefixes
         if (
-            (original_prefix in filter_prefixes or len(self.filter_prefixes) == 0)
+            (original_prefix in self.filter_prefixes or len(self.filter_prefixes) == 0)
             and 
             mapped_prefix in target_prefixes
             ):
