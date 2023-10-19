@@ -1,7 +1,3 @@
-from pathlib import Path
-import yaml
-
-from koza.model.config.source_config import FormatType, OutputFormat, PrimaryFileConfig
 from koza.cli_runner import get_koza_app
 
 source_name = 'custom-map-protein-links-detailed'

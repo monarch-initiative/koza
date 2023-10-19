@@ -19,7 +19,7 @@ def test_archive_targz():
         source_config = PrimaryFileConfig(**yaml.load(src, Loader=UniqueIncludeLoader))
 
     # This method only happens after validation - force it now
-    source_config.__post_init_post_parse__()
+    source_config.__post_init__()
 
     assert os.path.exists(unzipped_data)
 
