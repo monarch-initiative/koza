@@ -25,11 +25,11 @@ build:
 	poetry build
 
 .PHONY: test
-test: install
-	$(RUN) python -m pytest
+test:
+	$(RUN) pytest tests
 
 .PHONY: docs
-docs: install
+docs:
 	$(RUN) typer src/koza/main.py utils docs --name koza --output docs/Usage/CLI.md
 	$(RUN) mkdocs build
 
