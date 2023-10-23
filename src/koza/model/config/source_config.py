@@ -27,52 +27,52 @@ class FilterCode(str, Enum):
     This should be aligned with https://docs.python.org/3/library/operator.html
     """
 
-    gt = 'gt'
-    ge = 'ge'
-    lt = 'lt'
-    lte = 'le'
-    eq = 'eq'
-    ne = 'ne'
-    inlist = 'in'
+    gt = "gt"
+    ge = "ge"
+    lt = "lt"
+    lte = "le"
+    eq = "eq"
+    ne = "ne"
+    inlist = "in"
 
 
 class FilterInclusion(str, Enum):
     """Enum for filter inclusion/exclusion"""
 
-    include = 'include'
-    exclude = 'exclude'
+    include = "include"
+    exclude = "exclude"
 
 
 class FieldType(str, Enum):
     """Enum for field types"""
 
-    str = 'str'
-    int = 'int'
-    float = 'float'
+    str = "str"
+    int = "int"
+    float = "float"
 
 
 class FormatType(str, Enum):
     """Enum for supported file types"""
 
-    csv = 'csv'
-    jsonl = 'jsonl'
-    json = 'json'
-    yaml = 'yaml'
-    xml = 'xml'  # TODO
+    csv = "csv"
+    jsonl = "jsonl"
+    json = "json"
+    yaml = "yaml"
+    xml = "xml"  # TODO
 
 
 class HeaderMode(str, Enum):
     """Enum for supported header modes in addition to an index based lookup"""
 
-    infer = 'infer'
-    none = 'none'
+    infer = "infer"
+    none = "none"
 
 
 class MapErrorEnum(str, Enum):
     """Enum for how to handle key errors in map files"""
 
-    warning = 'warning'
-    error = 'error'
+    warning = "warning"
+    error = "error"
 
 
 class OutputFormat(str, Enum):
@@ -80,15 +80,15 @@ class OutputFormat(str, Enum):
     Output formats
     """
 
-    tsv = 'tsv'
-    jsonl = 'jsonl'
-    kgx = 'kgx'
+    tsv = "tsv"
+    jsonl = "jsonl"
+    kgx = "kgx"
 
 
 class StandardFormat(str, Enum):
-    gpi = 'gpi'
-    bgi = 'bgi'
-    oban = 'oban'
+    gpi = "gpi"
+    bgi = "bgi"
+    oban = "oban"
 
 
 class TransformMode(str, Enum):
@@ -99,8 +99,8 @@ class TransformMode(str, Enum):
     a for loop is being used to iterate over a file
     """
 
-    flat = 'flat'
-    loop = 'loop'
+    flat = "flat"
+    loop = "loop"
 
 
 @dataclass(frozen=True)
@@ -133,9 +133,9 @@ class DatasetDescription:
 
 
 @dataclass()
-class SSSOMConfig():
+class SSSOMConfig:
     """SSSOM config options
-    
+
     Attributes:
         files: List of SSSOM files to use
         filter_prefixes: Optional list of prefixes to filter by
@@ -149,11 +149,7 @@ class SSSOMConfig():
     subject_target_prefixes: List[str] = field(default_factory=list)
     object_target_prefixes: List[str] = field(default_factory=list)
 
-    predicates = {
-        "exact": ["skos:exactMatch"],
-        "narrow": ["skos:narrowMatch"],
-        "broad": ["skos:broadMatch"]
-    }
+    predicates = {"exact": ["skos:exactMatch"], "narrow": ["skos:narrowMatch"], "broad": ["skos:broadMatch"]}
 
     def __post_init_post_parse__(self):
         logger.debug("Building SSSOM Dataframe...")
@@ -173,7 +169,7 @@ class SSSOMConfig():
             entity["object"] = self._get_mapping(entity["object"], self.object_target_prefixes)
 
         return entity
-    
+
     def _merge_and_filter_sssom(self):
         mapping_sets = []
         for file in self.files:
@@ -181,16 +177,11 @@ class SSSOMConfig():
             mapping_sets.append(msdf)
         new_msdf = merge_msdf(*mapping_sets)
         filters = (self.subject_target_prefixes + self.object_target_prefixes) + list(
-            set(self.filter_prefixes)
-            - set(self.subject_target_prefixes)
-            - set(self.object_target_prefixes)
+            set(self.filter_prefixes) - set(self.subject_target_prefixes) - set(self.object_target_prefixes)
         )
         logger.debug(f"Filtering SSSOM by {filters}")
         new_msdf = filter_prefixes(
-            df=new_msdf.df,
-            filter_prefixes=filters,
-            require_all_prefixes=False,
-            features=new_msdf.df.columns
+            df=new_msdf.df, filter_prefixes=filters, require_all_prefixes=False, features=new_msdf.df.columns
         )
 
         return new_msdf
@@ -202,17 +193,25 @@ class SSSOMConfig():
             subject_id = row["subject_id"]
             object_id = row["object_id"]
             predicate = row["predicate_id"]
-            sssom_lut = self._set_mapping(subject_id, object_id, predicate, match='broad', lut=sssom_lut)
-            sssom_lut = self._set_mapping(object_id, subject_id, predicate, match='narrow', lut=sssom_lut)
+            sssom_lut = self._set_mapping(subject_id, object_id, predicate, match="exact", lut=sssom_lut)
+            # sssom_lut = self._set_mapping(subject_id, object_id, predicate, match='broad', lut=sssom_lut)
+            # sssom_lut = self._set_mapping(object_id, subject_id, predicate, match='narrow', lut=sssom_lut)
         return sssom_lut
 
-    def _has_match(self, predicate, match: Literal['narrow', 'broad']):
-        if match == 'narrow':
-            return predicate in self.predicates['narrow'] or predicate in self.predicates['exact']
-        if match == 'broad':
-            return predicate in self.predicates['broad'] or predicate in self.predicates['exact']
+    def _has_match(self, predicate, match: Literal["exact", "narrow", "broad"]):
+        """Check if a predicate has a match."""
+        if match == "exact":
+            return predicate in self.predicates["exact"]
+        if match == "narrow":
+            # return predicate in self.predicates["narrow"] or predicate in self.predicates["exact"]
+            logger.warning("Narrow match not yet implemented")
+            return False
+        if match == "broad":
+            # return predicate in self.predicates["broad"] or predicate in self.predicates["exact"]
+            logger.warning("Broad match not yet implemented")
+            return False
 
-    def _has_mapping(self, id, target_prefixes = None):
+    def _has_mapping(self, id, target_prefixes=None):
         """Check if an ID has a mapping."""
         if target_prefixes is None:
             return id in self.lut
@@ -222,34 +221,33 @@ class SSSOMConfig():
             for target_prefix in target_prefixes:
                 if target_prefix in self.lut[id]:
                     return True
-            # logger.warning(f"Could not find mapping in SSSOM lookup table for {id} with any of {target_prefixes}")
-            return False
-    
+            return False # No mapping found
+
     def _get_mapping(self, id, target_prefixes):
         """Get the mapping for an ID."""
         for target_prefix in target_prefixes:
             if target_prefix in self.lut[id]:
                 return self.lut[id][target_prefix]
         raise KeyError(f"Could not find mapping for {id} in {target_prefixes}: {self.lut[id]}")
-    
-    def _set_mapping(self, original_id, mapped_id, predicate, match: Literal['narrow', 'broad'], lut: Dict[str, dict]):
+
+    def _set_mapping(
+        self, original_id, mapped_id, predicate, match: Literal["exact", "narrow", "broad"], lut: Dict[str, dict]
+    ):
         """Set a mapping for an ID."""
         original_prefix = original_id.split(":")[0]
         mapped_prefix = mapped_id.split(":")[0]
         target_prefixes = self.subject_target_prefixes + self.object_target_prefixes
         if (
-            (original_prefix in self.filter_prefixes or len(self.filter_prefixes) == 0)
-            and 
-            mapped_prefix in target_prefixes
-            ):
+            original_prefix in self.filter_prefixes or len(self.filter_prefixes) == 0
+        ) and mapped_prefix in target_prefixes:
             if original_id not in lut:
                 lut[original_id] = {}
-            if mapped_prefix in lut[original_id] :
+            if mapped_prefix in lut[original_id]:
                 logger.warning(f"Duplicate mapping for {original_id} to {mapped_prefix}")
             elif self._has_match(predicate, match):
                 lut[original_id][mapped_prefix] = mapped_id
             else:
-                pass # do something else
+                pass  # do something else
         return lut
 
 
@@ -292,7 +290,7 @@ class SourceConfig:
     delimiter: str = None
     header: Union[int, HeaderMode] = HeaderMode.infer
     header_delimiter: str = None
-    comment_char: str = '#'
+    comment_char: str = "#"
     skip_blank_lines: bool = True
     filters: List[ColumnFilter] = field(default_factory=list)
     json_path: List[Union[StrictStr, StrictInt]] = None
@@ -303,11 +301,11 @@ class SourceConfig:
 
     def extract_archive(self):
         archive_path = Path(self.file_archive).parent  # .absolute()
-        if self.file_archive.endswith('.tar.gz') or self.file_archive.endswith('.tar'):
+        if self.file_archive.endswith(".tar.gz") or self.file_archive.endswith(".tar"):
             with tarfile.open(self.file_archive) as archive:
                 archive.extractall(archive_path)
-        elif self.file_archive.endswith('.zip'):
-            with zipfile.ZipFile(self.file_archive, 'r') as archive:
+        elif self.file_archive.endswith(".zip"):
+            with zipfile.ZipFile(self.file_archive, "r") as archive:
                 archive.extractall(archive_path)
         else:
             raise ValueError("Error extracting archive. Supported archive types: .tar.gz, .zip")
@@ -331,7 +329,7 @@ class SourceConfig:
                 files_as_paths.append(Path(file))
             else:
                 files_as_paths.append(file)
-        object.__setattr__(self, 'files', files_as_paths)
+        object.__setattr__(self, "files", files_as_paths)
         # self.files = files_as_paths <---- is this equivalent to the above?
 
         if self.metadata and isinstance(self.metadata, str):
@@ -339,23 +337,20 @@ class SourceConfig:
             # TODO enforce that this is imported via an include?
             # See https://github.com/monarch-initiative/koza/issues/46
             try:
-                with open(self.metadata, 'r') as meta:
-                    object.__setattr__(self, 'metadata', DatasetDescription(**yaml.safe_load(meta)))
+                with open(self.metadata, "r") as meta:
+                    object.__setattr__(self, "metadata", DatasetDescription(**yaml.safe_load(meta)))
             except Exception as e:
                 # TODO check for more explicit exceptions
                 raise ValueError(f"Unable to load metadata from {self.metadata}: {e}")
 
-        if self.delimiter in ['tab', '\\t']:
-            object.__setattr__(self, 'delimiter', '\t')
+        if self.delimiter in ["tab", "\\t"]:
+            object.__setattr__(self, "delimiter", "\t")
 
         filtered_columns = [column_filter.column for column_filter in self.filters]
 
         all_columns = []
         if self.columns:
-            all_columns = [
-                next(iter(column)) if isinstance(column, Dict) else column
-                for column in self.columns
-            ]
+            all_columns = [next(iter(column)) if isinstance(column, Dict) else column for column in self.columns]
 
         if self.header == HeaderMode.none and not self.columns:
             raise ValueError(
@@ -370,24 +365,20 @@ class SourceConfig:
                 raise (ValueError(f"Filter column {column} not in column list"))
 
         for column_filter in self.filters:
-            if column_filter.filter_code in ['lt', 'gt', 'lte', 'gte']:
+            if column_filter.filter_code in ["lt", "gt", "lte", "gte"]:
                 # TODO determine if this should raise an exception
                 # or instead try to type coerce the string to a float
                 # type coercion is probably the best thing to do here
                 if not isinstance(column_filter.value, (int, float)):
-                    raise ValueError(
-                        f"Filter value must be int or float for operator {column_filter.filter_code}"
-                    )
-            elif column_filter.filter_code == 'eq':
+                    raise ValueError(f"Filter value must be int or float for operator {column_filter.filter_code}")
+            elif column_filter.filter_code == "eq":
                 if not isinstance(column_filter.value, (str, int, float)):
                     raise ValueError(
                         f"Filter value must be string, int or float for operator {column_filter.filter_code}"
                     )
-            elif column_filter.filter_code == 'in':
+            elif column_filter.filter_code == "in":
                 if not isinstance(column_filter.value, List):
-                    raise ValueError(
-                        f"Filter value must be List for operator {column_filter.filter_code}"
-                    )
+                    raise ValueError(f"Filter value must be List for operator {column_filter.filter_code}")
 
         if self.format == FormatType.csv and self.required_properties:
             raise ValueError(
@@ -418,7 +409,7 @@ class SourceConfig:
                         raise ValueError("Field type map contains more than one key")
                     for key, val in field.items():
                         _field_type_map[key] = val
-            object.__setattr__(self, '_field_type_map', _field_type_map)
+            object.__setattr__(self, "_field_type_map", _field_type_map)
 
     @property
     def field_type_map(self):
@@ -444,4 +435,3 @@ class MapFileConfig(SourceConfig):
     values: List[str] = None
     curie_prefix: str = None
     add_curie_prefix_to_columns: List[str] = None
-

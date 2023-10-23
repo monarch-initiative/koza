@@ -11,10 +11,11 @@ from koza.io.utils import build_export_row
 from koza.io.writer.writer import KozaWriter
 from koza.model.config.source_config import SSSOMConfig
 
+
 class TSVWriter(KozaWriter):
     def __init__(
-        self, 
-        output_dir: t.Union[str, Path], 
+        self,
+        output_dir: t.Union[str, Path],
         source_name: str,
         node_properties: t.List[str] = None,
         edge_properties: t.List[str] = None,
@@ -29,26 +30,19 @@ class TSVWriter(KozaWriter):
 
         Path(self.dirname).mkdir(parents=True, exist_ok=True)
 
-        if node_properties: # Make node file
+        if node_properties:  # Make node file
             self.node_columns = TSVWriter._order_columns(node_properties, "node")
             self.nodes_file_name = Path(self.dirname if self.dirname else "", f"{self.basename}_nodes.tsv")
             self.nodeFH = open(self.nodes_file_name, "w")
             self.nodeFH.write(self.delimiter.join(self.node_columns) + "\n")
 
-        if edge_properties: # Make edge file
+        if edge_properties:  # Make edge file
             if sssom_config:
                 edge_properties = self.add_sssom_columns(edge_properties)
             self.edge_columns = TSVWriter._order_columns(edge_properties, "edge")
             self.edges_file_name = Path(self.dirname if self.dirname else "", f"{self.basename}_edges.tsv")
             self.edgeFH = open(self.edges_file_name, "w")
             self.edgeFH.write(self.delimiter.join(self.edge_columns) + "\n")
-
-        if self.sssom_config:
-            with open('test_df.csv', 'w') as f:
-                self.sssom_config.df.to_csv(f, sep='\t', index=False)
-            import pprint
-            pprint.pprint(self.sssom_config.lut)
-
 
     def write(self, entities: t.Iterable) -> None:
         """Write an entities object to separate node and edge .tsv files"""
@@ -62,12 +56,12 @@ class TSVWriter(KozaWriter):
         if edges:
             for edge in edges:
                 if self.sssom_config:
-                    edge = self.sssom_config.apply_sssom_lut(edge)
+                    edge = self.sssom_config.apply_mapping(edge)
                 self.write_row(edge, record_type="edge")
 
     def write_row(self, record: t.Dict, record_type: t.Literal["node", "edge"]) -> None:
         """Write a row to the underlying store.
-        
+
         Args:
             record: Dict - A node or edge record
             record_type: Literal["node", "edge"] - The record_type of record
@@ -87,30 +81,26 @@ class TSVWriter(KozaWriter):
 
     def finalize(self):
         """Close file handles."""
-        
-        if hasattr(self, 'nodeFH'):
+
+        if hasattr(self, "nodeFH"):
             self.nodeFH.close()
-        if hasattr(self, 'edgeFH'):
+        if hasattr(self, "edgeFH"):
             self.edgeFH.close()
 
     @staticmethod
-    def _order_columns(cols: t.Set, record_type: t.Literal['node', 'edge']) -> OrderedSet:
+    def _order_columns(cols: t.Set, record_type: t.Literal["node", "edge"]) -> OrderedSet:
         """Arrange node or edge columns in a defined order.
-        
+
         Args:
             cols: Set - A set with elements in any order
-        
+
         Returns:
             OrderedSet - A set with elements in a defined order
         """
-        if record_type == 'node':
-            core_columns = OrderedSet(
-                ["id", "category", "name", "description", "xref", "provided_by", "synonym"]
-            )
-        elif record_type == 'edge':
-            core_columns = OrderedSet(
-                ["id", "subject", "predicate", "object", "category", "provided_by"]
-            )
+        if record_type == "node":
+            core_columns = OrderedSet(["id", "category", "name", "description", "xref", "provided_by", "synonym"])
+        elif record_type == "edge":
+            core_columns = OrderedSet(["id", "subject", "predicate", "object", "category", "provided_by"])
         ordered_columns = OrderedSet()
         for c in core_columns:
             if c in cols:
@@ -124,7 +114,7 @@ class TSVWriter(KozaWriter):
                 remaining_columns.remove(c)
         ordered_columns.update(sorted(remaining_columns))
         ordered_columns.update(sorted(internal_columns))
-        return ordered_columns    
+        return ordered_columns
 
     @staticmethod
     def add_sssom_columns(edge_properties: list):
