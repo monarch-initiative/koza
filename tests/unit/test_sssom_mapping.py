@@ -1,11 +1,8 @@
 import pytest
 
-from koza.model.config.source_config import SSSOMConfig 
+from koza.model.config.sssom_config import SSSOMConfig 
 
-sssom_files = [
-    'tests/resources/sssom/testmapping.sssom.tsv',
-    'tests/resources/sssom/testmapping2.sssom.tsv'
-]
+sssom_files = ['tests/resources/sssom/testmapping.sssom.tsv', 'tests/resources/sssom/testmapping2.sssom.tsv']
 
 
 def test_basic_mapping():
@@ -15,7 +12,7 @@ def test_basic_mapping():
         subject_target_prefixes = ['B'],
         object_target_prefixes = ['X']
     )
-
+    print(sssom_config.use_match)
     edge = {
         'subject': 'A:123',
         'object': 'SOMETHINGELSE:456',

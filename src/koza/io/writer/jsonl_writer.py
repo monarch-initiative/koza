@@ -4,7 +4,7 @@ from typing import Iterable, List, Optional
 
 from koza.converter.kgx_converter import KGXConverter
 from koza.io.writer.writer import KozaWriter
-from koza.model.config.source_config import SSSOMConfig
+from koza.model.config.sssom_config import SSSOMConfig
 
 
 class JSONLWriter(KozaWriter):

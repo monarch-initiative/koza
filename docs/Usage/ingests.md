@@ -21,7 +21,7 @@ with maybe some changes or translations along the way.
 Creating this ingest will require three things: 
 
 !!! list ""
-    ### 1. Source Config File
+    ## 1. Source Config File
 
     This YAML file sets properties for the ingest of a single file type from a within a Source.
 
@@ -55,7 +55,7 @@ Creating this ingest will require three things:
     | `skip_blank_lines` | Skip blank lines in csv files |
     
   
-    #### Composing Configuration from Multiple Yaml Files
+    ### Composing Configuration from Multiple Yaml Files
 
     The Koza yaml loader supports importing/including other yaml files with an `!include` tag.
 
@@ -73,14 +73,14 @@ Creating this ingest will require three things:
     ```
 
 !!! list ""
-    ### 2. Mapping and Additional Data
+    ## 2. Mapping and Additional Data
 
     Mapping with Koza can be done in two ways:  
 
     - Automated mapping with SSSOM files  
     - Manual mapping with a map config yaml
 
-    #### SSSOM Mapping
+    ### SSSOM Mapping
 
     Koza supports mapping with SSSOM files (Semantic Similarity of Source and Target Ontology Mappings).  
     Simply add the path to the SSSOM file to your source config, the desired target prefixes,  
@@ -96,9 +96,13 @@ Creating this ingest will require three things:
             - 'OTHERPREFIX'
         target_prefixes: 
             - 'OTHERPREFIX'
+        use_match:
+            - 'exact'
     ```
 
-    #### Manual Mapping / Additional Data
+    **Note:** Currently, only the `exact` match type is supported (`narrow` and `broad` match types will be added in the future).
+
+    ### Manual Mapping / Additional Data
 
     The map config yaml allows you to include data from other sources in your ingests,  
     which may have different columns or formats.  
@@ -131,7 +135,7 @@ Creating this ingest will require three things:
     
 
 !!! list ""     
-    ### 3. Transform Code
+    ## 3. Transform Code
 
     This Python script is where you'll define the specific steps of your data transformation. 
     Koza will load this script and execute it for each row of data in your source file,  
