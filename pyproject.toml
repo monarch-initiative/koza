@@ -16,8 +16,8 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.8"
-# linkml-validator = ">=0.4.4"
-pydantic = "^2.4"
+linkml-validator = ">=0.4.4"
+pydantic = "^1.10"
 pyyaml = ">=5.0.0"
 requests = "^2.24.0"
 ordered-set = ">=4.1.0"
@@ -47,8 +47,8 @@ build-backend = "poetry.core.masonry.api"
 line_length = 120
 skip-string-normalization = true
 
-[tool.isort]
-profile = "black"
-line_length = 120
-multi_line_output = 3
-include_trailing_comma = true
+[tool.ruff]
+line-length = 120
+ignore = [
+    "F541", # f-strings with no placeholders
+]
