@@ -1,0 +1,49 @@
+# Builds and runs pytest on ubuntu-latest
+# Tests python versions >=3.8
+name: Test Koza
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  # https://github.com/actions/setup-python
+  test-python3-ubuntu-latest:
+    name: test py${{ matrix.python-version }} on linux
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.8', '3.9', '3.10', '3.11']
+    env:
+      PYTHON: ${{ matrix.python-version }}
+      OS: ubuntu
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      #----------------------------------------------
+      #          install & configure poetry
+      #----------------------------------------------
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+
+      #----------------------------------------------
+      #    install your root project, if required
+      #----------------------------------------------
+      - name: Install library
+        run: poetry install --with dev --no-interaction
+
+      #----------------------------------------------
+      #              run pytest
+      #----------------------------------------------
+      - name: Run tests
+        run: poetry run pytest tests
