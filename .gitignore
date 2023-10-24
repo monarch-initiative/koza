@@ -1,5 +1,7 @@
-koza-env/
+# Default output / Generated / Unpacked data files
+output/
 tests/resources/source-files/string.tsv*
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -133,7 +135,3 @@ dmypy.json
 
 # IDE
 .idea
-
-# output directories
-output/
-test-output/

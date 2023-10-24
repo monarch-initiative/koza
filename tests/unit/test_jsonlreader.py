@@ -7,6 +7,7 @@ from koza.io.reader.jsonl_reader import JSONLReader
 
 test_zfin_data = Path(__file__).parents[1] / 'resources' / 'source-files' / 'ZFIN_PHENOTYPE_0.jsonl.gz'
 
+
 def test_normal_case():
     with gzip.open(test_zfin_data, 'rt') as zfin:
         jsonl_reader = JSONLReader(zfin)
@@ -18,7 +19,7 @@ def test_normal_case():
 
 def test_required_property():
     with gzip.open(test_zfin_data, 'rt') as zfin:
-        jsonl_reader = JSONLReader(zfin, required_properties = ['objectId', 'evidence.publicationId'])
+        jsonl_reader = JSONLReader(zfin, required_properties=['objectId', 'evidence.publicationId'])
         for row in jsonl_reader:
             # assert len(row) == 1  # removed subsetter
             print(row)

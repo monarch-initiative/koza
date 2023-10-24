@@ -9,6 +9,7 @@ nav:
   - Welcome: 'index.md'
   - Ingests: 'Usage/ingests.md'
   - CLI: 'Usage/CLI.md'
+  - API: 'Usage/API.md'
 
 
 theme:
@@ -18,6 +19,7 @@ theme:
     favicon:
         'images/favicon.ico'
     features:
+        - content.code.copy
         - navigation.expand
         - navigation.instant
         - navigation.tracking
@@ -46,24 +48,24 @@ plugins:
   - mkdocstrings:
       handlers:
         python:
-          paths: [ ./backend ]
           import:
           - https://docs.python.org/3/objects.inv
           - https://mkdocstrings.github.io/objects.inv
           - https://mkdocstrings.github.io/griffe/objects.inv
           options:
             docstring_style: google
+            docstring_section_style: table
             docstring_options:
               ignore_init_summary: yes
             merge_init_into_class: yes
-            # separate_signature: yes
             show_signature: no
-            show_source: no
+            # separate_signature: yes
+            # show_source: no
             show_root_full_path: no
             show_root_toc_entry: False
             filters:
               - "!^_[^_]"
-              - "^_[^_]"
+              # - "^_[^_]"
 
 
 markdown_extensions:

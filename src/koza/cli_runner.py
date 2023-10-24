@@ -22,29 +22,15 @@ koza_apps = {}
 
 
 def get_koza_app(source_name) -> Optional[KozaApp]:
-    """
-    Getter for singleton koza app object
+    """Return a KozaApp object for a given source
+
+    Args:
+        source_name (str): Name of source
     """
     try:
         return koza_apps[source_name]
     except:
         raise KeyError(f"{source_name} was not found in KozaApp dictionary")
-
-
-def set_koza_app(
-    source: Source,
-    translation_table: TranslationTable = None,
-    output_dir: str = './output',
-    output_format: OutputFormat = OutputFormat('tsv'),
-    schema: str = None,
-    logger = None,
-) -> KozaApp:
-    """
-    Setter for singleton koza app object
-    """
-    koza_apps[source.config.name] = KozaApp(source, translation_table, output_dir, output_format, schema, logger)
-    logger.debug(f"koza_apps entry created for {source.config.name}: {koza_apps[source.config.name]}")
-    return koza_apps[source.config.name]
 
 
 def transform_source(
@@ -58,13 +44,24 @@ def transform_source(
     verbose: bool = None,
     log: bool = False,
 ):
-    # set_log_config(logging.INFO if (verbose is None) else logging.DEBUG if (verbose == True) else logging.WARNING)
-    # logger = get_logger(verbose, filename = f"logs/{Path(source).name}.log" if log else None)
-    logger = get_logger(name = Path(source).name if log else None, verbose = verbose)
-    
+    """Create a KozaApp object, process maps, and run the transform
+
+    Args:
+        source (str): Path to source metadata file
+        output_dir (str): Path to output directory
+        output_format (OutputFormat, optional): Output format. Defaults to OutputFormat('tsv').
+        global_table (str, optional): Path to global translation table. Defaults to None.
+        local_table (str, optional): Path to local translation table. Defaults to None.
+        schema (str, optional): Path to schema file. Defaults to None.
+        row_limit (int, optional): Number of rows to process. Defaults to None.
+        verbose (bool, optional): Verbose logging. Defaults to None.
+        log (bool, optional): Log to file. Defaults to False.
+    """
+    logger = get_logger(name=Path(source).name if log else None, verbose=verbose)
+
     with open(source, 'r') as source_fh:
         source_config = PrimaryFileConfig(**yaml.load(source_fh, Loader=UniqueIncludeLoader))
-        
+
     if not source_config.name:
         source_config.name = Path(source).stem
 
@@ -73,16 +70,16 @@ def transform_source(
         source_config.transform_code = str(Path(source).parent / Path(source).stem) + '.py'
 
     koza_source = Source(source_config, row_limit)
-
+    logger.debug(f"Source created: {koza_source.config.name}")
     translation_table = get_translation_table(
         global_table if global_table else source_config.global_table,
         local_table if local_table else source_config.local_table,
-        logger
+        logger,
     )
 
-    source_koza = set_koza_app(koza_source, translation_table, output_dir, output_format, schema, logger)
-    source_koza.process_maps()
-    source_koza.process_sources()
+    koza_app = _set_koza_app(koza_source, translation_table, output_dir, output_format, schema, logger)
+    koza_app.process_maps()
+    koza_app.process_sources()
 
 
 def validate_file(
@@ -100,7 +97,6 @@ def validate_file(
     """
 
     with open_resource(file) as resource_io:
-
         if format == FormatType.csv:
             reader = CSVReader(
                 resource_io,
@@ -120,15 +116,18 @@ def validate_file(
 
 
 def get_translation_table(
-    global_table: Union[str, Dict] = None, 
+    global_table: Union[str, Dict] = None,
     local_table: Union[str, Dict] = None,
-    logger = None,
+    logger=None,
 ) -> TranslationTable:
-    """
-    Create a translation table object from two file paths
-    :param global_table: str, path to global table yaml
-    :param local_table: str, path to local table yaml
-    :return: TranslationTable
+    """Create a translation table object from two file paths
+
+    Args:
+        global_table (str, optional): Path to global translation table. Defaults to None.
+        local_table (str, optional): Path to local translation table. Defaults to None.
+
+    Returns:
+        TranslationTable: TranslationTable object
     """
 
     global_tt = {}
@@ -140,7 +139,6 @@ def get_translation_table(
         else:
             logger.debug("No global table used for transform")
     else:
-
         if isinstance(global_table, str):
             with open(global_table, 'r') as global_tt_fh:
                 global_tt = yaml.safe_load(global_tt_fh)
@@ -158,6 +156,21 @@ def get_translation_table(
             logger.debug("No local table used for transform")
 
     return TranslationTable(global_tt, local_tt)
+
+
+def _set_koza_app(
+    source: Source,
+    translation_table: TranslationTable = None,
+    output_dir: str = './output',
+    output_format: OutputFormat = OutputFormat('tsv'),
+    schema: str = None,
+    logger=None,
+) -> KozaApp:
+    """Create a KozaApp object for a given source"""
+
+    koza_apps[source.config.name] = KozaApp(source, translation_table, output_dir, output_format, schema, logger)
+    logger.debug(f"koza_apps entry created for {source.config.name}: {koza_apps[source.config.name]}")
+    return koza_apps[source.config.name]
 
 
 def test_koza(koza: KozaApp):

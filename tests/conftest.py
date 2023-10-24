@@ -2,7 +2,6 @@ import types
 from typing import Iterable
 
 import pytest
-from _pytest.logging import LogCaptureFixture
 from loguru import logger
 
 from koza.app import KozaApp
@@ -20,7 +19,6 @@ def caplog(caplog):
 
 @pytest.fixture(scope="package")
 def mock_koza():
-
     # This should be extracted out but for quick prototyping
     def _mock_write(self, *entities):
         self._entities = list(entities)

@@ -1,5 +1,5 @@
 import pytest
-from biolink.pydanticmodel import Gene, GeneToGeneAssociation, Publication
+from biolink.pydanticmodel import Gene, GeneToGeneAssociation
 
 from koza.converter.kgx_converter import KGXConverter
 
@@ -26,7 +26,7 @@ def test_gene_conversion():
 def test_association_conversion():
     fgf8a = Gene(id="ZFIN:ZDB-GENE-990415-72", symbol="fgf8a", name="fibroblast growth factor 8a")
     pax2a = Gene(id="ZFIN:ZDB-GENE-990415-8", symbol="pax2a", name="paired box 2a")
-    pub = "PMID:17522161" # Publication(id="PMID:17522161", type="MESH:foobar")
+    pub = "PMID:17522161"  # Publication(id="PMID:17522161", type="MESH:foobar")
     association = GeneToGeneAssociation(
         id='uuid:123',
         subject=fgf8a.id,

@@ -8,9 +8,9 @@
 
 [**Documentation**](https://koza.monarchinitiative.org/  )
 
-_Disclaimer_: Koza is in beta; we are looking for beta testers
+_Disclaimer_: Koza is in beta - we are looking for testers!
 
-### Overview
+## Overview
   - Transform csv, json, yaml, jsonl, and xml and converting them to a target csv, json, or jsonl format based on your dataclass model.  
   - Koza also can output data in the [KGX format](https://github.com/biolink/kgx/blob/master/specification/kgx-format.md#kgx-format-as-tsv)
   - Write data transforms in semi-declarative Python
@@ -18,13 +18,14 @@ _Disclaimer_: Koza is in beta; we are looking for beta testers
   - Create or import mapping files to be used in ingests (eg id mapping, type mappings)
   - Create and use translation tables to map between source and target vocabularies
 
-### Installation
+## Installation
 Koza is available on PyPi and can be installed via pip/pipx:
 ```
 [pip|pipx] install koza
 ```
 
-### Usage
+## Usage
+
 
 **NOTE: As of version 0.2.0, there is a new method for getting your ingest's `KozaApp` instance. Please see the [updated documentation](https://koza.monarchinitiative.org/Usage/configuring_ingests/#transform-code) for details.**
 
@@ -61,8 +62,24 @@ koza validate \
 
 Run the example ingest, "string/protein-links-detailed"
 ```bash
-koza transform --source examples/string/protein-links-detailed.yaml --global-table examples/translation_table.yaml
+koza transform \
+  --source examples/string/protein-links-detailed.yaml \
+  --global-table examples/translation_table.yaml
 
-koza transform --source examples/string-declarative/protein-links-detailed.yaml --global-table examples/translation_table.yaml
+koza transform \
+  --source examples/string-declarative/protein-links-detailed.yaml \
+  --global-table examples/translation_table.yaml
 ```
-note: koza expects a directory structure as described in the above example (examples/ingest_name/ingest.yaml)
+
+**Note**: 
+  Koza expects a directory structure as described in the above example  
+  with the source config file and transform code in the same directory: 
+  ```
+  .
+  ├── ...
+  │   ├── your_source
+  │   │   ├── your_ingest.yaml
+  │   │   └── your_ingest.py
+  │   └── some_translation_table.yaml
+  └── ...
+  ```

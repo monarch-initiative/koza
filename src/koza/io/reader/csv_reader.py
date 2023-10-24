@@ -106,7 +106,6 @@ class CSVReader:
         return self
 
     def __next__(self) -> Dict[str, Any]:
-
         if not self._header:
             self._set_header()
 
@@ -148,14 +147,10 @@ class CSVReader:
         field_map = dict(zip(self._header, stripped_row))
 
         if fields_len > row_len:
-            raise ValueError(
-                f"CSV file {self.name} has {fields_len - row_len} fewer columns at {self.reader.line_num}"
-            )
+            raise ValueError(f"CSV file {self.name} has {fields_len - row_len} fewer columns at {self.reader.line_num}")
 
         elif fields_len < row_len:
-            logger.warning(
-                f"CSV file {self.name} has {row_len - fields_len} extra columns at {self.reader.line_num}"
-            )
+            logger.warning(f"CSV file {self.name} has {row_len - fields_len} extra columns at {self.reader.line_num}")
             # Not sure if this would serve a purpose
             #
             # if not 'extra_cols' in self.field_type_map:
@@ -172,7 +167,7 @@ class CSVReader:
             try:
                 typed_field_map[field] = FIELDTYPE_CLASS[self.field_type_map[field]](field_value)
             except KeyError as key_error:
-                logger.warning(key_error)
+                logger.warning(f"Field {field} not found in field_type_map ({key_error})")
 
         return typed_field_map
 
@@ -201,27 +196,19 @@ class CSVReader:
                 self._header = list(self.field_type_map.keys())
             else:
                 raise ValueError(
-                    f"there is no header and columns have not been supplied\n"
-                    f"configure the 'columns' property in the source yaml"
+                    "there is no header and columns have not been supplied\n"
+                    "configure the 'columns' property in the source yaml"
                 )
 
     def _parse_header_line(self, skip_blank_or_commented_lines: bool = False) -> List[str]:
         """
         Parse the header line and return a list of headers
         """
-        fieldnames = next(
-            reader(self.io_str, **{'delimiter': self.header_delimiter, 'dialect': self.dialect})
-        )
+        fieldnames = next(reader(self.io_str, **{'delimiter': self.header_delimiter, 'dialect': self.dialect}))
         if skip_blank_or_commented_lines:
             # there has to be a cleaner way to do this
-            while not fieldnames or (
-                self.comment_char is not None and fieldnames[0].startswith(self.comment_char)
-            ):
-                fieldnames = next(
-                    reader(
-                        self.io_str, **{'delimiter': self.header_delimiter, 'dialect': self.dialect}
-                    )
-                )
+            while not fieldnames or (self.comment_char is not None and fieldnames[0].startswith(self.comment_char)):
+                fieldnames = next(reader(self.io_str, **{'delimiter': self.header_delimiter, 'dialect': self.dialect}))
 
         fieldnames[0] = fieldnames[0].lstrip(self.comment_char)
         return [f.strip() for f in fieldnames]

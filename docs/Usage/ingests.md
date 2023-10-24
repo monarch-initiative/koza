@@ -1,131 +1,61 @@
 # Ingests
 
-<sub>(For CLI usage, see the [CLI commands](./CLI.md) page.)</sub>  
+<sub>
+(For CLI usage, see the [CLI commands](./CLI.md) page.)
+</sub>  
 
 !!! tip "Ingest Overview"
     Koza is designed to process and transform existing data into a target csv/json/jsonl format.  
 
     This process is internally known as an **ingest**. Ingests are defined by:  
 
-    - **Source config yaml**: specifies metadata, formats, required columns, etc. for the ingest  
+    - **Source config yaml**: Ingest configuration, including:
+        -  metadata, formats, required columns, any SSSOM files, etc. 
     - **Map config yaml**: (Optional) configures creation of mapping dictionary  
     - **Transform code**: a Python script, with specific transform instructions 
 
 -----
 
-Now, let's say you have some data, and you want to save certain bits of that data,   
+Let's say you have some data, and you want to save certain bits of that data,   
 with maybe some changes or translations along the way.  
-
-Let's look at what we'll need to make that ingest: 
+Creating this ingest will require three things: 
 
 !!! list ""
-    ### 1. Source Config File
+    ## 1. Source Config File
 
     This YAML file sets properties for the ingest of a single file type from a within a Source.
 
-    Available properties are listed in Koza's <a href="https://github.com/monarch-initiative/koza/blob/main/koza/model/config/source_config.py#L148" target="_blank">SourceConfig()</a> and <a href="https://github.com/monarch-initiative/koza/blob/main/koza/model/config/source_config.py#L324" target="_blank">PrimarySourceConfig()</a> classes.
-
-    ???+ tip "Relative paths are relative to the directory where you execute Koza."
-
-    ??? tldr "Example Source Config YAML"
-
-        ```yaml
-        name: 'name-of-ingest'
-
-        format: 'json' # Options are json or csv, default is csv
-
-        # Sets file compression, options are gzip and none, default is none
-        compression: 'gzip'
-
-        # list of files to be ingested
-        files:
-        - './data/really-cool-data-1.json.gz'
-        - './data/really-cool-data-2.json.gz'
-
-        # The dataset description
-        metadata:
-        description: 'SomethingBase: A Website With Some Data'
-        rights: 'https://somethingbase.org/rights.html'
-
-        # The local and global tables can be specified either in the command line or the config
-        global_table: './path_to/translation_table.yaml'
-        local_table: './somethingbase/something-translation.yaml'
-
-        # in addition to specifying yaml files, it's also possible to define the tables inline
-        # local_table: 
-        #   "around here somewhere": "RO:9999999"
-
-
-        # in a JSON ingest, this will be the path to the array to be iterated over as the input collection
-        json_path:
-        - 'data'
-
-        # Ordered list of columns for CSV files, data type can be specified as float, int or str
-        columns:
-        - 'protein1'
-        - 'protein2'
-        - 'combined_score' : 'int'
-
-        # Specify a delimiter for CSV files, default is a comma
-        delimiter: '\t'
-
-        # Optional delimiter for header row
-        header_delimiter: '|' 
-
-        # Optional, int | 'infer' | 'none', Default = 'infer'
-        # The index (0 based) in which the header appears in the file.
-        #
-        # If header is set to 'infer' the headers will be set to the first
-        # line that is not blank or commented with a hash.
-        #
-        # If header is set to 'none' then the columns field will be used,
-        # or raise a ValueError if columns are not supplied
-        header: 0
-
-        # Boolean to skip blank lines, default is true
-        skip_blank_lines: True
-
-        # include a map file
-        depends_on:
-        - './examples/maps/alliance-gene.yaml'
-
-        # The filter DSL allows including or excluding rows based on filter blocks
-        filters: 
-        - inclusion: 'include' # 'include' to include rows matching, 'exclude' to exclude rows that match
-            column: 'combined_score'
-            # filter_code  (with 'in' expecting a list of values)
-            filter_code: 'lt' # options: 'gt', 'ge', 'lt', 'le', 'eq', 'ne', 'in'  
-            value: 700
-        - inclusion: 'exclude'
-            column: 'protein1'
-            filter_code: 'in' # 'in' expects the value to be a list and checks that the column value is matched within the list
-            value: 
-            - 'ABC1'
-            - 'XYZ4'
-
-        # node and edge categories are required to avoid empty KGX files, the order here isn't important  
-        node_properties:
-        - 'id'
-        - 'category'
-        - 'provided_by'
-
-        edge_properties:
-        - 'id'
-        - 'subject'
-        - 'predicate'
-        - ...
-
-        #In 'flat' mode, the transform operates on a single row and looping doesn't need to be specified
-        #In 'loop' mode, the transform code is executed only once and so the loop code that iterates over rows must be contained within the transform code
-        # The default is 'flat'
-        transform_mode: 'loop'
-
-        # Python code to run for ingest. Default is the same file name as the source_file yaml, but with a .py extension
-        # You probably don't need to set this property
-        transform_code: 'name-of-ingest.py'
-        ```
-
-    **Composing Configuration from Multiple Yaml Files**
+    ???+ tip "Paths are relative to the directory from which you execute Koza."
+    
+    | __Required properties__ | | 
+    | --- | --- |
+    | `name` | Name of the source |
+    | `files` | List of files to process |
+    |||
+    | __Optional properties__ | |
+    | `file_archive` | Path to a file archive containing the files to process |
+    | `format` | Format of the data file(s) (CSV or JSON) |
+    | `sssom_config` | Configures usage of SSSOM mapping files |
+    | `depends_on` | List of map config files to use |
+    | `metadata` | Metadata for the source |
+    | `transform_code` | Path to a python file to transform the data |
+    | `transform_mode` | How to process the transform file |
+    | `global_table` | Path to a global translation table file |
+    | `local_table` | Path to a local translation table file |
+    | `filters` | List of filters to apply |
+    | `json_path` | Path within JSON object containing data to process |
+    | `required_properties` | List of properties that must be present in output (JSON only) |
+    |||
+    | __Optional CSV Specific Properties__ | |
+    | `columns` | List of columns to include in output (CSV only) |
+    | `delimiter` | Delimiter for csv files |
+    | `header_delimiter` | Delimiter for header in csv files |
+    | `header` | Header row index for csv files |
+    | `comment_char` | Comment character for csv files |
+    | `skip_blank_lines` | Skip blank lines in csv files |
+    
+  
+    ### Composing Configuration from Multiple Yaml Files
 
     The Koza yaml loader supports importing/including other yaml files with an `!include` tag.
 
@@ -139,82 +69,112 @@ Let's look at what we'll need to make that ingest:
 
     Then in any ingests you wish to use these columns, you can simply `!include` them:
     ```yaml
-    metadata: !include './path/to/metadata.yaml'
     columns: !include './path/to/standard-columns.yaml'
     ```
 
-    ### 2. Map File(s)
+!!! list ""
+    ## 2. Mapping and Additional Data
 
-    This YAML file sets properties for creating a mapping dictionary that an ingest may depend on.
+    Mapping with Koza can be done in two ways:  
 
-    Available properties are listed in Koza's <a href="https://github.com/monarch-initiative/koza/blob/main/koza/model/config/source_config.py#L148" target="_blank">SourceConfig()</a> and <a href="https://github.com/monarch-initiative/koza/blob/main/koza/model/config/source_config.py#L311" target="_blank">MapFileConfig()</a> classes.
+    - Automated mapping with SSSOM files  
+    - Manual mapping with a map config yaml
 
-    ??? tldr "Example Map Config YAML"
+    ### SSSOM Mapping
 
-        ```yaml
-        name: 'genepage-2-gene'
-        metadata:
-            description: 'Mapping file provided by Xenbase that maps from GENEPAGE to GENE'
+    Koza supports mapping with SSSOM files (Semantic Similarity of Source and Target Ontology Mappings).  
+    Simply add the path to the SSSOM file to your source config, the desired target prefixes,  
+    and any prefixes you want to use to filter the SSSOM file.  
+    Koza will automatically create a mapping lookup table which will automatically  
+    attempt to map any values in the source file to an ID with the target prefix.
 
-        delimiter: '\t'
+    ```yaml
+    sssom_config:
+        sssom_file: './path/to/your_mapping_file.sssom.tsv'
+        filter_prefixes: 
+            - 'SOMEPREFIX'
+            - 'OTHERPREFIX'
+        target_prefixes: 
+            - 'OTHERPREFIX'
+        use_match:
+            - 'exact'
+    ```
 
-        files:
-            - './examples/data/XenbaseGenepageToGeneIdMapping.txt'
+    **Note:** Currently, only the `exact` match type is supported (`narrow` and `broad` match types will be added in the future).
 
-        columns:
-            - 'gene_page_id'
-            - 'gene_page_label'
-            - 'tropicalis_id'
-            - 'tropicalis_label'
-            - 'laevis_l_id'
-            - 'laevis_l_label'
-            - 'laevis_s_id'
-            - 'laevis_s_label'
+    ### Manual Mapping / Additional Data
 
-        # The column to save as a key in the map dictionary
-        key: 'gene_page_id'
+    The map config yaml allows you to include data from other sources in your ingests,  
+    which may have different columns or formats.  
+    
+    If you don't have an SSSOM file, or you want to manually map some values, you can use a map config yaml.  
+    You can then add this map to your source config yaml in the `depends_on` property.  
+    
+    Koza will then create a nested dictionary with the specified key and values.  
+    For example, the following map config yaml maps values from the `STRING` column to the `entrez` and `NCBI taxid` columns.
 
-        # The column(s) to save as nested keys under 'key'
-        values:
-            - 'tropicalis_id'
-            - 'laevis_l_id'
-            - 'laevis_s_id'
-        ```
+    ```yaml
+    # koza/examples/maps/entrez-2-string.yaml
+    name: ...
+    files: ...
 
-        This example map yields a map dictionary: 
+    columns:
+    - 'NCBI taxid'
+    - 'entrez'
+    - 'STRING'
 
-        ```json
-        {
-            gene_page_id: {
-                tropicalis_id: somevalue1, 
-                laevis_l_id: somevalue2,
-                laevis_s_id: somevalue3
-            }
-        }
-        ```
-        
-    ### 3. Transform Code
+    key: 'STRING'
+
+    values:
+    - 'entrez'
+    - 'NCBI taxid'
+    ```
+
+     
+    The mapping dict will be available in your transform script from the `koza_app` object (see the Transform Code section below).
+    
+
+!!! list ""     
+    ## 3. Transform Code
 
     This Python script is where you'll define the specific steps of your data transformation. 
-    Koza will load this script and execute it for each row of data in your source file.
+    Koza will load this script and execute it for each row of data in your source file,  
+    applying any filters and mapping as defined in your source config yaml,  
+    and outputting the transformed data to the target csv/json/jsonl file.
 
     When Koza is called, either by command-line or as a library using `transform_source()`,  
-    it creates a `KozaApp` for the ingest it was called to transform.  
-    This KozaApp will be your entry point to Koza.
+    it creates a `KozaApp` object for the specified ingest.  
+    This KozaApp will be your entry point to Koza:
 
+    ```python
+    from koza.cli_runner import get_koza_app
+    koza_app = get_koza_app('your-source-name')
+    ```
+  
+    The KozaApp object has the following methods:
+
+    | Method | Description |
+    | --- | --- |
+    | `get_row()` | Returns the next row of data from the source file |
+    | `get_map(map_name)` | Returns the mapping dict for the specified map |
+    | `get_global_table()` | Returns the global translation table |
+    | `get_local_table()` | Returns the local translation table |
 
     ??? tldr "Example Python Transform Script"
 
         ```python
+        # other imports, eg. uuid, pydantic, etc.
         import uuid
         from biolink.pydanticmodel import Gene, PairwiseGeneToGeneInteraction
-
-        # Get the KozaApp for your ingest
+        
+        # Koza imports
         from koza.cli_runner import get_koza_app
+
+        # This is the name of the ingest you want to run
         source_name = 'map-protein-links-detailed'
         koza_app = get_koza_app(source_name)
             
-        # If your ingest depends on a map
+        # If your ingest depends_on a mapping file, you can access it like this:
         map_name = 'entrez-2-string'
         koza_map = koza_app.get_map(map_name)
 
@@ -222,7 +182,7 @@ Let's look at what we'll need to make that ingest:
         # Koza will reload this script and return the next row until it reaches EOF or row-limit
         row = koza_app.get_row()
         
-        # Now you can lay out your actual transformations, and define your output
+        # Now you can lay out your actual transformations, and define your output:
 
         gene_a = Gene(id='NCBIGene:' + koza_map[row['protein1']]['entrez'])
         gene_b = Gene(id='NCBIGene:' + koza_map[row['protein2']]['entrez'])
@@ -234,5 +194,6 @@ Let's look at what we'll need to make that ingest:
             predicate="biolink:interacts_with"
         )
 
+        # Finally, write the transformed row to the target file
         koza_app.write(gene_a, gene_b, pairwise_gene_to_gene_interaction)
         ```

@@ -10,81 +10,67 @@ from dataclasses import field
 from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Union
-
 import yaml
+
 from pydantic import StrictFloat, StrictInt, StrictStr
 from pydantic.dataclasses import dataclass
 
 from koza.model.config.pydantic_config import PydanticConfig
-
-# from koza.utils.log_utils import get_logger
-# logger = get_logger(__name__)
-# import logging
-# logger = logging.getLogger(__name__)
-from loguru import logger
-
-class MapErrorEnum(str, Enum):
-    """
-    Enum for how to handle key errors in map files
-    """
-
-    warning = 'warning'
-    error = 'error'
-
-
-class FormatType(str, Enum):
-    """
-    Enum for supported file types
-    """
-
-    csv = 'csv'
-    jsonl = 'jsonl'
-    json = 'json'
-    yaml = 'yaml'
-    xml = 'xml'  # TODO
-
-
-class StandardFormat(str, Enum):
-    gpi = 'gpi'
-    bgi = 'bgi'
-    oban = 'oban'
+from koza.model.config.sssom_config import SSSOMConfig
 
 
 class FilterCode(str, Enum):
-    """
-    Enum for filter codes
-    eg gt (greater than)
+    """Enum for filter codes (ex. gt = greater than)
 
     This should be aligned with https://docs.python.org/3/library/operator.html
     """
 
-    gt = 'gt'
-    ge = 'ge'
-    lt = 'lt'
-    lte = 'le'
-    eq = 'eq'
-    ne = 'ne'
-    inlist = 'in'
+    gt = "gt"
+    ge = "ge"
+    lt = "lt"
+    lte = "le"
+    eq = "eq"
+    ne = "ne"
+    inlist = "in"
 
 
 class FilterInclusion(str, Enum):
-    """
-    Enum for filter inclusion/exclusion
-    """
+    """Enum for filter inclusion/exclusion"""
 
-    include = 'include'
-    exclude = 'exclude'
+    include = "include"
+    exclude = "exclude"
 
 
 class FieldType(str, Enum):
-    """
-    Enum for filter codes
-    eg gt (greater than)
-    """
+    """Enum for field types"""
 
-    str = 'str'
-    int = 'int'
-    float = 'float'
+    str = "str"
+    int = "int"
+    float = "float"
+
+
+class FormatType(str, Enum):
+    """Enum for supported file types"""
+
+    csv = "csv"
+    jsonl = "jsonl"
+    json = "json"
+    yaml = "yaml"
+    xml = "xml"  # TODO
+
+
+class HeaderMode(str, Enum):
+    """Enum for supported header modes in addition to an index based lookup"""
+
+    infer = "infer"
+    none = "none"
+
+
+class MapErrorEnum(str, Enum):
+    """Enum for how to handle key errors in map files"""
+
+    warning = "warning"
+    error = "error"
 
 
 class OutputFormat(str, Enum):
@@ -92,9 +78,15 @@ class OutputFormat(str, Enum):
     Output formats
     """
 
-    tsv = 'tsv'
-    jsonl = 'jsonl'
-    kgx = 'kgx'
+    tsv = "tsv"
+    jsonl = "jsonl"
+    kgx = "kgx"
+
+
+class StandardFormat(str, Enum):
+    gpi = "gpi"
+    bgi = "bgi"
+    oban = "oban"
 
 
 class TransformMode(str, Enum):
@@ -105,17 +97,8 @@ class TransformMode(str, Enum):
     a for loop is being used to iterate over a file
     """
 
-    flat = 'flat'
-    loop = 'loop'
-
-
-class HeaderMode(str, Enum):
-    """
-    Enum for supported header modes in addition to an index based lookup
-    """
-
-    infer = 'infer'
-    none = 'none'
+    flat = "flat"
+    loop = "loop"
 
 
 @dataclass(frozen=True)
@@ -150,35 +133,43 @@ class DatasetDescription:
 @dataclass(config=PydanticConfig)
 class SourceConfig:
     """
-    Base class for primary sources and mapping sources
+    Source config data class
 
-    TODO document fields
-
-    header: Optional, int|HeaderMode - the index (0 based) in which the
-            header appears in the file.  If header is set to infer
-            the headers will be set to the first line that is not blank
-            or commented with a hash.  If header is set to 'none'
-            then the columns field will be used, or raise a ValueError
-            if columns are not supplied
-
-    delimiter:
-    separator string similar to what works in str.split()
-    https://docs.python.org/3/library/stdtypes.html#str.split
-
-    required_properties: A list of required top level properties in a json object
+    Parameters
+    ----------
+    name: str (required) - name of the source
+    files: List[str] (required) - list of files to process
+    file_archive: str (optional) - path to a file archive containing files to process
+    format: FormatType (optional) - format of the data file(s)
+    sssom_config: SSSOMConfig (optional) - SSSOM config options
+    metadata: DatasetDescription (optional) - metadata for the source
+    columns: List[str] (optional) - list of columns to include
+    required_properties: List[str] (optional) - list of properties which must be in json data files
+    delimiter: str (optional) - delimiter for csv files
+    header_delimiter: str (optional) - delimiter for header in csv files
+    header: int (optional) - header row index
+    comment_char: str (optional) - comment character for csv files
+    skip_blank_lines: bool (optional) - skip blank lines in csv files
+    filters: List[ColumnFilter] (optional) - list of filters to apply
+    json_path: List[str] (optional) - path within JSON object containing data to process
+    transform_code: str (optional) - path to a python file to transform the data
+    transform_mode: TransformMode (optional) - how to process the transform file
+    global_table: str (optional) - path to a global table file
+    local_table: str (optional) - path to a local table file
     """
 
     name: str
     files: List[Union[str, Path]]
     file_archive: Union[str, Path] = None
     format: FormatType = FormatType.csv
-    metadata: Union[DatasetDescription, str] = None
+    sssom_config: SSSOMConfig = None
     columns: List[Union[str, Dict[str, FieldType]]] = None
     required_properties: List[str] = None
+    metadata: Union[DatasetDescription, str] = None
     delimiter: str = None
-    header_delimiter: str = None
     header: Union[int, HeaderMode] = HeaderMode.infer
-    comment_char: str = '#'
+    header_delimiter: str = None
+    comment_char: str = "#"
     skip_blank_lines: bool = True
     filters: List[ColumnFilter] = field(default_factory=list)
     json_path: List[Union[StrictStr, StrictInt]] = None
@@ -189,11 +180,11 @@ class SourceConfig:
 
     def extract_archive(self):
         archive_path = Path(self.file_archive).parent  # .absolute()
-        if self.file_archive.endswith('.tar.gz') or self.file_archive.endswith('.tar'):
+        if self.file_archive.endswith(".tar.gz") or self.file_archive.endswith(".tar"):
             with tarfile.open(self.file_archive) as archive:
                 archive.extractall(archive_path)
-        elif self.file_archive.endswith('.zip'):
-            with zipfile.ZipFile(self.file_archive, 'r') as archive:
+        elif self.file_archive.endswith(".zip"):
+            with zipfile.ZipFile(self.file_archive, "r") as archive:
                 archive.extractall(archive_path)
         else:
             raise ValueError("Error extracting archive. Supported archive types: .tar.gz, .zip")
@@ -202,8 +193,9 @@ class SourceConfig:
 
     def __post_init_post_parse__(self):
         """
-        TO DO figure out why we're using object.__setattr__(self, ...
-              here and document it
+        TO DO figure out why we're using object.__setattr__(self, ...)
+            here and document it.
+            Is this a workaround for a pydantic bug?
         """
         if self.file_archive:
             files = self.extract_archive()
@@ -216,38 +208,33 @@ class SourceConfig:
                 files_as_paths.append(Path(file))
             else:
                 files_as_paths.append(file)
-        object.__setattr__(self, 'files', files_as_paths)
+        object.__setattr__(self, "files", files_as_paths)
+        # self.files = files_as_paths <---- is this equivalent to the above?
 
         if self.metadata and isinstance(self.metadata, str):
             # If this looks like a file path attempt to load it from the yaml
             # TODO enforce that this is imported via an include?
             # See https://github.com/monarch-initiative/koza/issues/46
             try:
-                with open(self.metadata, 'r') as meta:
-                    object.__setattr__(
-                        self, 'metadata', DatasetDescription(**yaml.safe_load(meta))
-                    )
+                with open(self.metadata, "r") as meta:
+                    object.__setattr__(self, "metadata", DatasetDescription(**yaml.safe_load(meta)))
             except Exception as e:
                 # TODO check for more explicit exceptions
                 raise ValueError(f"Unable to load metadata from {self.metadata}: {e}")
-                # logger.debug("Could not load dataset description from metadata file")
 
-        if self.delimiter in ['tab', '\\t']:
-            object.__setattr__(self, 'delimiter', '\t')
+        if self.delimiter in ["tab", "\\t"]:
+            object.__setattr__(self, "delimiter", "\t")
 
         filtered_columns = [column_filter.column for column_filter in self.filters]
 
         all_columns = []
         if self.columns:
-            all_columns = [
-                next(iter(column)) if isinstance(column, Dict) else column
-                for column in self.columns
-            ]
+            all_columns = [next(iter(column)) if isinstance(column, Dict) else column for column in self.columns]
 
         if self.header == HeaderMode.none and not self.columns:
             raise ValueError(
-                f"there is no header and columns have not been supplied\n"
-                f"configure the 'columns' field or set header to the 0-based"
+                "there is no header and columns have not been supplied\n"
+                "configure the 'columns' field or set header to the 0-based"
                 "index in which it appears in the file, or set this value to"
                 "'infer'"
             )
@@ -257,28 +244,24 @@ class SourceConfig:
                 raise (ValueError(f"Filter column {column} not in column list"))
 
         for column_filter in self.filters:
-            if column_filter.filter_code in ['lt', 'gt', 'lte', 'gte']:
+            if column_filter.filter_code in ["lt", "gt", "lte", "gte"]:
                 # TODO determine if this should raise an exception
                 # or instead try to type coerce the string to a float
                 # type coercion is probably the best thing to do here
                 if not isinstance(column_filter.value, (int, float)):
-                    raise ValueError(
-                        f"Filter value must be int or float for operator {column_filter.filter_code}"
-                    )
-            elif column_filter.filter_code == 'eq':
+                    raise ValueError(f"Filter value must be int or float for operator {column_filter.filter_code}")
+            elif column_filter.filter_code == "eq":
                 if not isinstance(column_filter.value, (str, int, float)):
                     raise ValueError(
                         f"Filter value must be string, int or float for operator {column_filter.filter_code}"
                     )
-            elif column_filter.filter_code == 'in':
+            elif column_filter.filter_code == "in":
                 if not isinstance(column_filter.value, List):
-                    raise ValueError(
-                        f"Filter value must be List for operator {column_filter.filter_code}"
-                    )
+                    raise ValueError(f"Filter value must be List for operator {column_filter.filter_code}")
 
         if self.format == FormatType.csv and self.required_properties:
             raise ValueError(
-                "csv specified but required properties have been configured\n"
+                "CSV specified but required properties have been configured\n"
                 "either set format to jsonl or change properties to columns in the config"
             )
 
@@ -305,7 +288,7 @@ class SourceConfig:
                         raise ValueError("Field type map contains more than one key")
                     for key, val in field.items():
                         _field_type_map[key] = val
-            object.__setattr__(self, '_field_type_map', _field_type_map)
+            object.__setattr__(self, "_field_type_map", _field_type_map)
 
     @property
     def field_type_map(self):

@@ -24,17 +24,12 @@ from koza.model.config.source_config import OutputFormat
     ],
 )
 def test_examples(source_name, ingest, output_format):
-
     source_config = f"examples/{source_name}/{ingest}.yaml"
-    
+
     output_suffix = str(output_format).split('.')[1]
-    output_dir = f"./output/tests/string-test-examples"
+    output_dir = "./output/tests/string-test-examples"
 
-    output_files = [
-        f"{output_dir}/{ingest}_nodes.{output_suffix}",
-        f"{output_dir}/{ingest}_edges.{output_suffix}"
-    ]
-
+    output_files = [f"{output_dir}/{ingest}_nodes.{output_suffix}", f"{output_dir}/{ingest}_edges.{output_suffix}"]
 
     transform_source(source_config, output_dir, output_format, "examples/translation_table.yaml", None)
 

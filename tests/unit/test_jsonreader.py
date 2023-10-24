@@ -7,7 +7,10 @@ from koza.io.reader.json_reader import JSONReader
 
 test_zfin_data = Path(__file__).parents[1] / 'resources' / 'source-files' / 'test_BGI_ZFIN.json.gz'
 
-json_path = ['data', 0,]
+json_path = [
+    'data',
+    0,
+]
 
 
 def test_normal_case():
@@ -24,6 +27,7 @@ def test_required_properties():
             print(row)
             assert row['name']
             assert row['basicGeneticEntity']['primaryId']
+
 
 def test_missing_req_property_raises_exception():
     with gzip.open(test_zfin_data, 'rt') as zfin:

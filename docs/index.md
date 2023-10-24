@@ -1,6 +1,4 @@
-# Koza 
-
-**A data transformation framework**  
+# Koza - a data transformation framework
 
 ## Overview
 
@@ -23,18 +21,20 @@ pip install koza
 
 See the [Ingests](./Usage/ingests.md) page for information on how to configure ingests for koza to use.
 
-[CLI commands](./Usage/CLI.md) are available for validating and transforming data.
+Koza can be used as a Python library, or via the command line.  
+[CLI commands](./Usage/CLI.md) are available for validating and transforming data.  
+See the [API](./Usage/API.md) page for information on using Koza as a library.
 
+Koza also includes some examples to help you get started (see `koza/examples`).
 ### Basic Examples
 
-!!! list "Basic Examples"
-    #### Validate
+!!! list "Validate"
 
     Give Koza a local or remote csv file, and get some basic information (headers, number of rows)
 
     ```bash
     koza validate \
-      --file https://raw.githubusercontent.com/monarch-initiative/koza/main/examples/data/string.tsv \
+      --file ./examples/data/string.tsv \
       --delimiter ' '
     ```
 
@@ -53,17 +53,24 @@ See the [Ingests](./Usage/ingests.md) page for information on how to configure i
       --compression gzip
     ```
 
-    #### Transform
+!!! list "Transform"
 
-    Run the example ingest, "string/protein-links-detailed"
+    Try one of Koza's example ingests:  
     ```bash
-    koza transform \
-      --source examples/string/protein-links-detailed.yaml \
-      --global-table examples/translation_table.yaml
-
     koza transform \
       --source examples/string-declarative/protein-links-detailed.yaml \
       --global-table examples/translation_table.yaml
     ```
-    **Note**: Koza expects a directory structure as described in the above example (examples/ingest_name/ingest.yaml),  
-    such that the source config file is in the same directory as the transform code.
+
+    **Note**: 
+      Koza expects a directory structure as described in the above example  
+      with the source config file and transform code in the same directory: 
+      ```
+      .
+      ├── ...
+      │   ├── some_source
+      │   │   ├── your_ingest.yaml
+      │   │   └── your_ingest.py
+      │   └── some_translation_table.yaml
+      └── ...
+      ```

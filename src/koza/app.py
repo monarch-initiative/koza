@@ -2,14 +2,12 @@ import importlib
 import sys
 from pathlib import Path
 from typing import Dict, Union
-
 import yaml
 
-# For validation
-from pydantic.error_wrappers import ValidationError
 from linkml_validator.validator import Validator
-from koza.converter.kgx_converter import KGXConverter
+from pydantic.error_wrappers import ValidationError
 
+from koza.converter.kgx_converter import KGXConverter
 from koza.utils.exceptions import MapItemException, NextRowException
 from koza.io.writer.jsonl_writer import JSONLWriter
 from koza.io.writer.tsv_writer import TSVWriter
@@ -21,15 +19,9 @@ from koza.model.map_dict import MapDict
 from koza.model.source import Source
 from koza.model.translation_table import TranslationTable
 
-# import logging
-# logger = logging.getLogger(__name__)
-
 
 class KozaApp:
-    """
-    Core koza class that stores the configuration
-    and performs source transforms
-    """
+    """Core koza class. Stores configuration and performs transforms"""
 
     def __init__(
         self,
@@ -38,7 +30,7 @@ class KozaApp:
         output_dir: str = './output',
         output_format: OutputFormat = OutputFormat('jsonl'),
         schema: str = None,
-        logger = None,
+        logger=None,
     ):
         self.source = source
         self.translation_table = translation_table
@@ -47,11 +39,9 @@ class KozaApp:
         self._map_registry: Dict[str, Source] = {}
         self._map_cache: Dict[str, Dict] = {}
         self.curie_cleaner: CurieCleaner = CurieCleaner()
-        self.writer: KozaWriter = self._get_writer(
-            source.config.name, source.config.node_properties, source.config.edge_properties
-        )
+        self.writer: KozaWriter = self._get_writer()
         self.logger = logger
-        
+
         if schema:
             self.validator = Validator(schema=schema)
             self.converter = KGXConverter()
@@ -60,12 +50,8 @@ class KozaApp:
             for map_file in source.config.depends_on:
                 with open(map_file, 'r') as map_file_fh:
                     map_file_config = MapFileConfig(**yaml.load(map_file_fh, Loader=UniqueIncludeLoader))
-                    map_file_config.transform_code = (str(Path(map_file).parent / Path(map_file).stem) + '.py')
+                    map_file_config.transform_code = str(Path(map_file).parent / Path(map_file).stem) + '.py'
                 self._map_registry[map_file_config.name] = Source(map_file_config)
-
-        self.writer = self._get_writer(
-            source.config.name, source.config.node_properties, source.config.edge_properties
-        )
 
     def get_map(self, map_name: str):
         map = self._map_cache[map_name]
@@ -89,7 +75,6 @@ class KozaApp:
         a .py file along side it (see constructor)
 
         Intended for decoupling ingest logic into a configuration like file
-
         """
         import sys
 
@@ -132,10 +117,8 @@ class KozaApp:
         sys.path.remove(str(parent_path))
 
     def process_maps(self):
-        """
-        Initializes self._map_cache
-        :return:
-        """
+        """Initializes self._map_cache"""
+
         for map_file in self._map_registry.values():
             if map_file.config.name not in self._map_cache:
                 self._load_map(map_file)
@@ -143,55 +126,49 @@ class KozaApp:
     @staticmethod
     def next_row():
         """
-        Breaks out of the facade file and iterates to the next row
-        in the file
+        Breaks out of the facade file and iterates to the next row in the file
 
         Effectively a continue statement
-        https://docs.python.org/3/reference/simple_stmts.html#continue
-        :return:
+        See: https://docs.python.org/3/reference/simple_stmts.html#continue
         """
         raise NextRowException
 
     def write(self, *entities):
-
         # If a schema/validator is defined, validate before writing
         if hasattr(self, 'validator'):
-
             (nodes, edges) = self.converter.convert(entities)
-
             if self.output_format == OutputFormat.tsv:
                 if nodes:
                     for node in nodes:
                         self.validator.validate(obj=node, target_class="NamedThing", strict=True)
-
                 if edges:
                     for edge in edges:
                         self.validator.validate(obj=edge, target_class="Association", strict=True)
-
             elif self.output_format == OutputFormat.jsonl:
                 if nodes:
                     for node in nodes:
-                        # node = json.dumps(n, ensure_ascii=False)
                         self.validator.validate(obj=node, target_class="NamedThing", strict=True)
-
                 if edges:
                     for edge in edges:
-                        # edge = json.dumps(e, ensure_ascii=False)
                         self.validator.validate(obj=edge, target_class="Association", strict=True)
 
         self.writer.write(entities)
 
-    def _get_writer(self, name, node_properties, edge_properties) -> Union[TSVWriter, JSONLWriter]:
+    def _get_writer(self) -> Union[TSVWriter, JSONLWriter]:
+        writer_params = [
+            self.output_dir,
+            self.source.config.name,
+            self.source.config.node_properties,
+            self.source.config.edge_properties,
+            self.source.config.sssom_config,
+        ]
         if self.output_format == OutputFormat.tsv:
-            return TSVWriter(self.output_dir, name, node_properties, edge_properties)
+            return TSVWriter(*writer_params)
 
         elif self.output_format == OutputFormat.jsonl:
-            return JSONLWriter(self.output_dir, name, node_properties, edge_properties)
+            return JSONLWriter(*writer_params)
 
     def _load_map(self, map_file: Source):
-
-       # map_file = Source(map_file_config)
-
         if not isinstance(map_file.config, MapFileConfig):
             raise ValueError(f"Error loading map: {map_file.config.name} is not a MapFileConfig")
 
@@ -234,5 +211,5 @@ class KozaApp:
         See https://github.com/monarch-initiative/koza/issues/39
 
         :param depends_on:
-        :return:
         """
+        pass

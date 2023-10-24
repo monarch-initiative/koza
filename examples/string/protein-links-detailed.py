@@ -8,7 +8,6 @@ from koza.cli_runner import get_koza_app
 koza_app = get_koza_app('protein-links-detailed')
 
 for row in koza_app.source:
-
     protein_a = Protein(id='ENSEMBL:' + re.sub(r'\d+\.', '', row['protein1']))
     protein_b = Protein(id='ENSEMBL:' + re.sub(r'\d+\.', '', row['protein2']))
 
