@@ -144,5 +144,5 @@ class SSSOMConfig:
             elif self._has_match(predicate, match):
                 lut[original_id][mapped_prefix] = mapped_id
             else:
-                logger.warning(f"")
+                logger.warning(f"{match} match not found for {original_id} to {mapped_prefix} with predicate {predicate}")
         return lut
