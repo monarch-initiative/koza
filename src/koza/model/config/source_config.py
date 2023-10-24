@@ -193,7 +193,10 @@ class SSSOMConfig:
             subject_id = row["subject_id"]
             object_id = row["object_id"]
             predicate = row["predicate_id"]
+            # Add exact match mappings in both directions
             sssom_lut = self._set_mapping(subject_id, object_id, predicate, match="exact", lut=sssom_lut)
+            sssom_lut = self._set_mapping(object_id, subject_id, predicate, match="exact", lut=sssom_lut)
+            # TODO add narrow and broad match mappings
             # sssom_lut = self._set_mapping(subject_id, object_id, predicate, match='broad', lut=sssom_lut)
             # sssom_lut = self._set_mapping(object_id, subject_id, predicate, match='narrow', lut=sssom_lut)
         return sssom_lut
@@ -221,6 +224,7 @@ class SSSOMConfig:
             for target_prefix in target_prefixes:
                 if target_prefix in self.lut[id]:
                     return True
+            logger.warning(f"No mapping found for {id} in {target_prefixes}: {self.lut[id]}")
             return False # No mapping found
 
     def _get_mapping(self, id, target_prefixes):
