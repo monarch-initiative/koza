@@ -33,8 +33,7 @@ class UniqueIncludeLoader(SafeLoader):
             key = self.construct_object(key_node, deep=deep)
             if key in mapping:
                 raise ConstructorError(
-                    f"while constructing a mapping for {value_node.value} "
-                    f"found duplicate key {key}"
+                    f"while constructing a mapping for {value_node.value} " f"found duplicate key {key}"
                 )
             mapping.append(key)
         return super().construct_mapping(node, deep)

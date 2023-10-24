@@ -8,14 +8,18 @@ from koza.cli_runner import transform_source, validate_file
 from koza.model.config.source_config import FormatType, OutputFormat
 
 import typer
+
 typer_app = typer.Typer()
+
 
 @typer_app.callback(invoke_without_command=True)
 def callback(version: Optional[bool] = typer.Option(None, "--version", is_eager=True)):
     if version:
         from koza import __version__
+
         typer.echo(f"Koza version: {__version__}")
-        raise typer.Exit() 
+        raise typer.Exit()
+
 
 @typer_app.command()
 def transform(
@@ -28,9 +32,9 @@ def transform(
     row_limit: int = typer.Option(None, help="Number of rows to process (if skipped, processes entire source file)"),
     verbose: Optional[bool] = typer.Option(None, "--debug/--quiet"),
     log: bool = typer.Option(False, help='Optional log mode - set true to save output to ./logs'),
-    ) -> None:
+) -> None:
     """Transform a source file"""
-    
+
     output_path = Path(output_dir)
 
     if output_path.exists() and not output_path.is_dir():
@@ -48,9 +52,10 @@ def validate(
     delimiter: str = ',',
     header_delimiter: str = None,
     skip_blank_lines: bool = True,
-    ) -> None:
+) -> None:
     """Validate a source file"""
     validate_file(file, format, delimiter, header_delimiter, skip_blank_lines)
+
 
 # @typer_app.command()
 # def create():

@@ -1,4 +1,3 @@
-import logging
 from dataclasses import dataclass
 from typing import Dict, Optional
 
@@ -45,9 +44,7 @@ class TranslationTable:
         if not is_dictionary_bimap(self.global_table):
             raise ValueError("Global table is not a bimap")
 
-    def resolve_term(
-        self, word: str, mandatory: Optional[bool] = True, default: Optional[str] = None
-    ):
+    def resolve_term(self, word: str, mandatory: Optional[bool] = True, default: Optional[str] = None):
         """
         Resolve a term from a source to its preferred curie
 

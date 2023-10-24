@@ -25,11 +25,11 @@ build:
 	poetry build
 
 .PHONY: test
-test: install
-	$(RUN) python -m pytest
+test:
+	$(RUN) pytest tests
 
 .PHONY: docs
-docs: install
+docs:
 	$(RUN) typer src/koza/main.py utils docs --name koza --output docs/Usage/CLI.md
 	$(RUN) mkdocs build
 
@@ -43,17 +43,10 @@ clean:
 
 .PHONY: lint
 lint:
-	$(RUN) flake8 --exit-zero --max-line-length 120 koza/ tests/ examples/
-	$(RUN) black --check --diff koza tests
-	$(RUN) isort --check-only --diff koza tests
+	$(RUN) ruff check --diff --exit-zero src/ tests/ examples/
+	$(RUN) black --check --diff -l 120 src/ tests/ examples/
 
 .PHONY: format
 format:
-	$(RUN) autoflake \
-		--recursive \
-		--remove-all-unused-imports \
-		--remove-unused-variables \
-		--ignore-init-module-imports \
-		--in-place koza tests examples
-	$(RUN) isort koza tests examples
-	$(RUN) black koza tests examples
+	$(RUN) ruff check --fix --exit-zero src/ tests/ examples/
+	$(RUN) black -l 120 src/ tests/ examples/

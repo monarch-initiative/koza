@@ -30,7 +30,7 @@ class KozaApp:
         output_dir: str = './output',
         output_format: OutputFormat = OutputFormat('jsonl'),
         schema: str = None,
-        logger = None,
+        logger=None,
     ):
         self.source = source
         self.translation_table = translation_table
@@ -50,7 +50,7 @@ class KozaApp:
             for map_file in source.config.depends_on:
                 with open(map_file, 'r') as map_file_fh:
                     map_file_config = MapFileConfig(**yaml.load(map_file_fh, Loader=UniqueIncludeLoader))
-                    map_file_config.transform_code = (str(Path(map_file).parent / Path(map_file).stem) + '.py')
+                    map_file_config.transform_code = str(Path(map_file).parent / Path(map_file).stem) + '.py'
                 self._map_registry[map_file_config.name] = Source(map_file_config)
 
     def get_map(self, map_name: str):
@@ -169,7 +169,6 @@ class KozaApp:
             return JSONLWriter(*writer_params)
 
     def _load_map(self, map_file: Source):
-
         if not isinstance(map_file.config, MapFileConfig):
             raise ValueError(f"Error loading map: {map_file.config.name} is not a MapFileConfig")
 

@@ -5,7 +5,8 @@ from koza.io.reader.json_reader import JSONReader
 from koza.io.reader.jsonl_reader import JSONLReader
 from koza.io.utils import open_resource
 from koza.utils.row_filter import RowFilter
-from koza.model.config.source_config import MapFileConfig, PrimaryFileConfig #, SourceConfig
+from koza.model.config.source_config import MapFileConfig, PrimaryFileConfig  # , SourceConfig
+
 # from koza.io.yaml_loader import UniqueIncludeLoader
 # import yaml
 
@@ -22,12 +23,7 @@ class Source:
     and yields a dictionary
     """
 
-    def __init__(
-        self, 
-        config: Union[PrimaryFileConfig, MapFileConfig], 
-        row_limit: Optional[int] = None
-    ):
-
+    def __init__(self, config: Union[PrimaryFileConfig, MapFileConfig], row_limit: Optional[int] = None):
         self.config = config
         self.row_limit = row_limit
         self._filter = RowFilter(config.filters)

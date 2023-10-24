@@ -233,8 +233,8 @@ class SourceConfig:
 
         if self.header == HeaderMode.none and not self.columns:
             raise ValueError(
-                f"there is no header and columns have not been supplied\n"
-                f"configure the 'columns' field or set header to the 0-based"
+                "there is no header and columns have not been supplied\n"
+                "configure the 'columns' field or set header to the 0-based"
                 "index in which it appears in the file, or set this value to"
                 "'infer'"
             )

@@ -13,10 +13,7 @@ gene_a = Gene(id='NCBIGene:' + entrez_2_string[row['protein1']]['entrez'])
 gene_b = Gene(id='NCBIGene:' + entrez_2_string[row['protein2']]['entrez'])
 
 pairwise_gene_to_gene_interaction = PairwiseGeneToGeneInteraction(
-    id="uuid:" + str(uuid.uuid1()),
-    subject=gene_a.id,
-    object=gene_b.id,
-    predicate="biolink:interacts_with"
+    id="uuid:" + str(uuid.uuid1()), subject=gene_a.id, object=gene_b.id, predicate="biolink:interacts_with"
 )
 
 koza_app.write(gene_a, gene_b, pairwise_gene_to_gene_interaction)

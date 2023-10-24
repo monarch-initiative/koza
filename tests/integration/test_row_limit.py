@@ -26,14 +26,11 @@ from koza.model.config.source_config import OutputFormat
         )
     ],
 )
-def test_examples(
-    source_name, ingest, output_format, row_limit, header_len, expected_node_len, expected_edge_len
-):
-
+def test_examples(source_name, ingest, output_format, row_limit, header_len, expected_node_len, expected_edge_len):
     source_config = f"examples/{source_name}/{ingest}.yaml"
-    
+
     output_suffix = str(output_format).split('.')[1]
-    output_dir = f"./output/tests/string-test-row-limit"
+    output_dir = "./output/tests/string-test-row-limit"
 
     transform_source(
         source=source_config,
@@ -44,20 +41,14 @@ def test_examples(
     )
 
     # hacky check that correct number of rows was processed
-    #node_file = f"{output_dir}/string/{ingest}-row-limit_nodes{output_suffix}"
-    #edge_file = f"{output_dir}/string/{ingest}-row-limit_edges{output_suffix}"
+    # node_file = f"{output_dir}/string/{ingest}-row-limit_nodes{output_suffix}"
+    # edge_file = f"{output_dir}/string/{ingest}-row-limit_edges{output_suffix}"
 
-    output_files = [
-        f"{output_dir}/{ingest}_nodes.{output_suffix}",
-        f"{output_dir}/{ingest}_edges.{output_suffix}"
-    ]
+    output_files = [f"{output_dir}/{ingest}_nodes.{output_suffix}", f"{output_dir}/{ingest}_edges.{output_suffix}"]
 
-    number_of_lines = [
-        sum(1 for line in open(output_files[0])),
-        sum(1 for line in open(output_files[1]))
-    ]
+    number_of_lines = [sum(1 for line in open(output_files[0])), sum(1 for line in open(output_files[1]))]
 
     assert number_of_lines == [expected_node_len, expected_edge_len]
 
-    #assert node_lines == expected_node_len
-    #assert edge_lines == expected_edge_len
+    # assert node_lines == expected_node_len
+    # assert edge_lines == expected_edge_len
