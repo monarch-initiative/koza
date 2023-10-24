@@ -5,9 +5,7 @@ import pytest
 
 from koza.io.reader.jsonl_reader import JSONLReader
 
-test_zfin = (
-    Path(__file__).parent.parent / 'resources' / 'source-files' / 'ZFIN_PHENOTYPE_0.jsonl.gz'
-)
+test_zfin = Path(__file__).parent.parent / 'resources' / 'source-files' / 'ZFIN_PHENOTYPE_0.jsonl.gz'
 
 
 def test_normal_case():

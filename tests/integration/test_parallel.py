@@ -1,7 +1,7 @@
 """
 Test parallel transforms
 """
-#import pytest
+# import pytest
 import dask
 
 from koza.cli_runner import transform_source
@@ -19,19 +19,23 @@ def transform(source_file):
     )
     return source_file
 
+
 @dask.delayed
 def transform_string():
     return transform("examples/string/protein-links-detailed.yaml")
+
 
 @dask.delayed
 def transform_string_string_declarative():
     return transform("examples/string-declarative/declarative-protein-links-detailed.yaml")
 
+
 a = transform_string()
 b = transform_string_string_declarative()
 
+
 def test_parallel_transforms():
-    results = [a,b]
+    results = [a, b]
 
     result = dask.delayed(print)(results)
     result.compute()

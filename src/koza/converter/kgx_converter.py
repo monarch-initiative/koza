@@ -2,6 +2,7 @@ from dataclasses import asdict
 from typing import Iterable, Tuple
 from pydantic import BaseModel
 
+
 class KGXConverter:
     """
     Converts the biolink model to the KGX format, which splits
@@ -15,28 +16,24 @@ class KGXConverter:
     """
 
     def convert(self, entities: Iterable) -> Tuple[list, list]:
-
         nodes = []
         edges = []
 
         for entity in entities:
-
             # if entity has subject + object + predicate, treat as edge
             if all(hasattr(entity, attr) for attr in ["subject", "object", "predicate"]):
                 edges.append(self.convert_association(entity))
 
             # if entity has id and name, but not subject/object/predicate, treat as node
-            elif (
-                    all(hasattr(entity, attr) for attr in ["id", "name"])
-                    and not all(hasattr(entity, attr) for attr in ["subject", "object", "predicate"])
-                ):
+            elif all(hasattr(entity, attr) for attr in ["id", "name"]) and not all(
+                hasattr(entity, attr) for attr in ["subject", "object", "predicate"]
+            ):
                 nodes.append(self.convert_node(entity))
 
             # otherwise, not a valid entity
             else:
                 raise ValueError(
                     f"Cannot convert {entity}: Can only convert NamedThing or Association entities to KGX compatible dictionaries"
-
                 )
 
         return nodes, edges

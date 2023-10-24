@@ -16,7 +16,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.8"
-# linkml-validator = ">=0.4.4"
+# linkml = ">=1.6.2"
 pydantic = "^2.4"
 pyyaml = ">=5.0.0"
 requests = "^2.24.0"
@@ -31,6 +31,7 @@ black = "^23.10.0"
 ruff = "*"
 pytest = ">=6.0.0"
 biolink-model = ">=3.0.1"
+# biolink-model = ">=3.5.5"
 dask = ">=2022.5.2"
 mkdocs = ">=1.4.2"
 mkdocs-material = ">=9.1.16"
@@ -47,8 +48,8 @@ build-backend = "poetry.core.masonry.api"
 line_length = 120
 skip-string-normalization = true
 
-[tool.isort]
-profile = "black"
-line_length = 120
-multi_line_output = 3
-include_trailing_comma = true
+[tool.ruff]
+line-length = 120
+ignore = [
+    "F541", # f-strings with no placeholders
+]

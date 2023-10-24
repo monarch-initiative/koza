@@ -1,10 +1,10 @@
-import pytest
 import yaml
 from pathlib import Path
 
 from koza.model.source import Source
 from koza.model.config.source_config import PrimaryFileConfig
 from koza.io.yaml_loader import UniqueIncludeLoader
+
 
 def test_multiple_files():
     source_file = Path(__file__).parent.parent / 'resources' / 'multifile.yaml'

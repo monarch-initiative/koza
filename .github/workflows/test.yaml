@@ -1,5 +1,5 @@
 # Builds and runs pytest on ubuntu-latest
-# Tests python versions >=3.6
+# Tests python versions >=3.8
 name: Test Koza
 
 on:

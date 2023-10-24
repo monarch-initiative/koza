@@ -19,7 +19,6 @@ def caplog(caplog):
 
 @pytest.fixture(scope="package")
 def mock_koza():
-
     # This should be extracted out but for quick prototyping
     def _mock_write(self, *entities):
         self._entities = list(entities)

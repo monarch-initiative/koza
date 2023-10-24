@@ -3,7 +3,7 @@ Module for managing koza runs through the CLI
 """
 
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Dict, Optional, Union
 import yaml
 
 from koza.app import KozaApp
@@ -45,7 +45,7 @@ def transform_source(
     log: bool = False,
 ):
     """Create a KozaApp object, process maps, and run the transform
-    
+
     Args:
         source (str): Path to source metadata file
         output_dir (str): Path to output directory
@@ -57,11 +57,11 @@ def transform_source(
         verbose (bool, optional): Verbose logging. Defaults to None.
         log (bool, optional): Log to file. Defaults to False.
     """
-    logger = get_logger(name = Path(source).name if log else None, verbose = verbose)
-    
+    logger = get_logger(name=Path(source).name if log else None, verbose=verbose)
+
     with open(source, 'r') as source_fh:
         source_config = PrimaryFileConfig(**yaml.load(source_fh, Loader=UniqueIncludeLoader))
-        
+
     if not source_config.name:
         source_config.name = Path(source).stem
 
@@ -74,7 +74,7 @@ def transform_source(
     translation_table = get_translation_table(
         global_table if global_table else source_config.global_table,
         local_table if local_table else source_config.local_table,
-        logger
+        logger,
     )
 
     koza_app = _set_koza_app(koza_source, translation_table, output_dir, output_format, schema, logger)
@@ -97,7 +97,6 @@ def validate_file(
     """
 
     with open_resource(file) as resource_io:
-
         if format == FormatType.csv:
             reader = CSVReader(
                 resource_io,
@@ -117,9 +116,9 @@ def validate_file(
 
 
 def get_translation_table(
-    global_table: Union[str, Dict] = None, 
+    global_table: Union[str, Dict] = None,
     local_table: Union[str, Dict] = None,
-    logger = None,
+    logger=None,
 ) -> TranslationTable:
     """Create a translation table object from two file paths
 
@@ -140,7 +139,6 @@ def get_translation_table(
         else:
             logger.debug("No global table used for transform")
     else:
-
         if isinstance(global_table, str):
             with open(global_table, 'r') as global_tt_fh:
                 global_tt = yaml.safe_load(global_tt_fh)
@@ -166,7 +164,7 @@ def _set_koza_app(
     output_dir: str = './output',
     output_format: OutputFormat = OutputFormat('tsv'),
     schema: str = None,
-    logger = None,
+    logger=None,
 ) -> KozaApp:
     """Create a KozaApp object for a given source"""
 

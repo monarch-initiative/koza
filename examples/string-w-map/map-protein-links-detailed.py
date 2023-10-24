@@ -12,16 +12,14 @@ row = koza_app.get_row()
 koza_map = koza_app.get_map(map_name)
 
 from loguru import logger
+
 logger.info(koza_map)
 
 gene_a = Gene(id='NCBIGene:' + koza_map[row['protein1']]['entrez'])
 gene_b = Gene(id='NCBIGene:' + koza_map[row['protein2']]['entrez'])
 
 pairwise_gene_to_gene_interaction = PairwiseGeneToGeneInteraction(
-    id="uuid:" + str(uuid.uuid1()),
-    subject=gene_a.id,
-    object=gene_b.id,
-    predicate="biolink:interacts_with"
+    id="uuid:" + str(uuid.uuid1()), subject=gene_a.id, object=gene_b.id, predicate="biolink:interacts_with"
 )
 
 koza_app.write(gene_a, gene_b, pairwise_gene_to_gene_interaction)

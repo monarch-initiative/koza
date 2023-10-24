@@ -16,6 +16,7 @@ import requests
 ### Reader Helpers ###
 ######################
 
+
 def open_resource(resource: Union[str, PathLike]) -> IO[str]:
     """
     A generic function for opening a local or remote file
@@ -63,6 +64,7 @@ def open_resource(resource: Union[str, PathLike]) -> IO[str]:
     else:
         raise ValueError(f"Cannot open local or remote file: {resource}")
 
+
 def check_data(entry, path) -> bool:
     """
     Given a dot delimited JSON tag path,
@@ -84,7 +86,7 @@ def check_data(entry, path) -> bool:
         if len(ppart) == 0:
             return exists
         else:
-            tag = ppart.pop(0) 
+            tag = ppart.pop(0)
 
 
 ######################
@@ -161,14 +163,10 @@ def _sanitize_export_property(key: str, value: Any, list_delimiter: str = None) 
         if column_types[key] == list:
             if isinstance(value, (list, set, tuple)):
                 value = [
-                    v.replace("\n", " ").replace('\\"', "").replace("\t", " ")
-                    if isinstance(v, str)
-                    else v
+                    v.replace("\n", " ").replace('\\"', "").replace("\t", " ") if isinstance(v, str) else v
                     for v in value
                 ]
-                new_value = (
-                    list_delimiter.join([str(x) for x in value]) if list_delimiter else value
-                )
+                new_value = list_delimiter.join([str(x) for x in value]) if list_delimiter else value
             else:
                 new_value = str(value).replace("\n", " ").replace('\\"', "").replace("\t", " ")
         elif column_types[key] == bool:
@@ -181,19 +179,14 @@ def _sanitize_export_property(key: str, value: Any, list_delimiter: str = None) 
     else:
         if type(value) == list:
             value = [
-                v.replace("\n", " ").replace('\\"', "").replace("\t", " ")
-                if isinstance(v, str)
-                else v
-                for v in value
+                v.replace("\n", " ").replace('\\"', "").replace("\t", " ") if isinstance(v, str) else v for v in value
             ]
             new_value = list_delimiter.join([str(x) for x in value]) if list_delimiter else value
             column_types[key] = list
         elif type(value) == bool:
             try:
                 new_value = bool(value)
-                column_types[
-                    key
-                ] = bool  # this doesn't seem right, shouldn't column_types come from the biolink model?
+                column_types[key] = bool  # this doesn't seem right, shouldn't column_types come from the biolink model?
             except:
                 new_value = False
         else:
@@ -252,4 +245,3 @@ def is_null(item: Any) -> bool:
     """
     null_values = {None, "", " "}
     return item in null_values
-

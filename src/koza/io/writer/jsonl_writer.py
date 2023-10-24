@@ -4,7 +4,7 @@ from typing import Iterable, List, Optional
 
 from koza.converter.kgx_converter import KGXConverter
 from koza.io.writer.writer import KozaWriter
-from koza.model.config.source_config import SSSOMConfig
+from koza.model.config.sssom_config import SSSOMConfig
 
 
 class JSONLWriter(KozaWriter):
@@ -14,9 +14,8 @@ class JSONLWriter(KozaWriter):
         source_name: str,
         node_properties: List[str],
         edge_properties: Optional[List[str]] = [],
-        sssom_config: SSSOMConfig = None
+        sssom_config: SSSOMConfig = None,
     ):
-
         self.output_dir = output_dir
         self.source_name = source_name
         self.sssom_config = sssom_config
@@ -30,7 +29,6 @@ class JSONLWriter(KozaWriter):
             self.edgeFH = open(f"{output_dir}/{source_name}_edges.jsonl", "w")
 
     def write(self, entities: Iterable):
-
         (nodes, edges) = self.converter.convert(entities)
 
         if nodes:
