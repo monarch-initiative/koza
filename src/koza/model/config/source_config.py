@@ -9,7 +9,7 @@ import zipfile
 from dataclasses import field
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Union, Literal, Optional
+from typing import Dict, List, Union, Optional
 import yaml
 
 from loguru import logger
@@ -131,7 +131,7 @@ class DatasetDescription:
     rights: Optional[str] = None
 
 
-@dataclass(config=PydanticConfig)
+@dataclass(config=PYDANTIC_CONFIG)
 class SourceConfig:
     """
     Source config data class
