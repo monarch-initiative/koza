@@ -26,7 +26,7 @@ class SSSOMConfig:
         filter_prefixes: Optional list of prefixes to filter by
         subject_target_prefixes: Optional list of prefixes to use for subject mapping
         object_target_prefixes: Optional list of prefixes to use for object mapping
-
+        use_match: Optional list of match types to use
     """
 
     files: List[Union[str, Path]] = field(default_factory=list)
@@ -37,7 +37,7 @@ class SSSOMConfig:
 
     predicates = {"exact": ["skos:exactMatch"], "narrow": ["skos:narrowMatch"], "broad": ["skos:broadMatch"]}
 
-    def __post_init_post_parse__(self):
+    def __post_init__(self):
         if not self.use_match:
             self.use_match = [Match.exact]
         logger.debug("Building SSSOM Dataframe...")

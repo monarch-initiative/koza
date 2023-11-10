@@ -1,7 +1,8 @@
 import re
 import uuid
 
-from biolink.pydanticmodel import PairwiseGeneToGeneInteraction, Protein
+# from biolink.pydanticmodel_v2 import PairwiseGeneToGeneInteraction, Protein
+from koza.model.biolink.pydanticmodel_v2 import PairwiseGeneToGeneInteraction, Protein
 
 from koza.cli_runner import get_koza_app
 

@@ -1,7 +1,7 @@
 # Default output / Generated / Unpacked data files
 output/
 tests/resources/source-files/string.tsv*
-
+.ruff_cache
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

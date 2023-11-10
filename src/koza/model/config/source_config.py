@@ -9,13 +9,14 @@ import zipfile
 from dataclasses import field
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Optional
 import yaml
 
+from loguru import logger
 from pydantic import StrictFloat, StrictInt, StrictStr
 from pydantic.dataclasses import dataclass
 
-from koza.model.config.pydantic_config import PydanticConfig
+from koza.model.config.pydantic_config import PYDANTIC_CONFIG
 from koza.model.config.sssom_config import SSSOMConfig
 
 
@@ -119,18 +120,18 @@ class DatasetDescription:
     than documentation
     """
 
-    id: str = None  # TODO constrain to a curie?
-    name: str = None  # If empty use source name
-    ingest_title: str = None  # Map to biolink name
-    ingest_url: str = None  # Maps to biolink iri
-    description: str = None
-    source: str = None
-    provided_by: str = None
-    license: str = None
-    rights: str = None
+    id: Optional[str] = None  # TODO constrain to a curie?
+    name: Optional[str] = None  # If empty use source name
+    ingest_title: Optional[str] = None  # Map to biolink name
+    ingest_url: Optional[str] = None  # Maps to biolink iri
+    description: Optional[str] = None
+    source: Optional[str] = None
+    provided_by: Optional[str] = None
+    license: Optional[str] = None
+    rights: Optional[str] = None
 
 
-@dataclass(config=PydanticConfig)
+@dataclass(config=PYDANTIC_CONFIG)
 class SourceConfig:
     """
     Source config data class
@@ -160,23 +161,24 @@ class SourceConfig:
 
     name: str
     files: List[Union[str, Path]]
-    file_archive: Union[str, Path] = None
+    file_archive: Optional[Union[str, Path]] = None
     format: FormatType = FormatType.csv
-    sssom_config: SSSOMConfig = None
-    columns: List[Union[str, Dict[str, FieldType]]] = None
-    required_properties: List[str] = None
-    metadata: Union[DatasetDescription, str] = None
-    delimiter: str = None
+    sssom_config: Optional[SSSOMConfig] = None
+    columns: Optional[List[Union[str, Dict[str, FieldType]]]] = None
+    field_type_map: Optional[dict] = None
+    required_properties: Optional[List[str]] = None
+    metadata: Optional[Union[DatasetDescription, str]] = None
+    delimiter: Optional[str] = None
     header: Union[int, HeaderMode] = HeaderMode.infer
-    header_delimiter: str = None
+    header_delimiter: Optional[str] = None
     comment_char: str = "#"
     skip_blank_lines: bool = True
     filters: List[ColumnFilter] = field(default_factory=list)
-    json_path: List[Union[StrictStr, StrictInt]] = None
-    transform_code: str = None
+    json_path: Optional[List[Union[StrictStr, StrictInt]]] = None
+    transform_code: Optional[str] = None
     transform_mode: TransformMode = TransformMode.flat
-    global_table: Union[str, Dict] = None
-    local_table: Union[str, Dict] = None
+    global_table: Optional[Union[str, Dict]] = None
+    local_table: Optional[Union[str, Dict]] = None
 
     def extract_archive(self):
         archive_path = Path(self.file_archive).parent  # .absolute()
@@ -191,7 +193,7 @@ class SourceConfig:
         files = [os.path.join(archive_path, file) for file in self.files]
         return files
 
-    def __post_init_post_parse__(self):
+    def __post_init__(self):
         """
         TO DO figure out why we're using object.__setattr__(self, ...)
             here and document it.
@@ -278,39 +280,37 @@ class SourceConfig:
             )
 
         if self.columns:
-            _field_type_map = {}
+            field_type_map = {}
             for field in self.columns:
                 if isinstance(field, str):
-                    _field_type_map[field] = FieldType.str
+                    field_type_map[field] = FieldType.str
                 else:
                     if len(field) != 1:
                         # TODO expand this exception msg
                         raise ValueError("Field type map contains more than one key")
                     for key, val in field.items():
-                        _field_type_map[key] = val
-            object.__setattr__(self, "_field_type_map", _field_type_map)
-
-    @property
-    def field_type_map(self):
-        return self._field_type_map
+                        field_type_map[key] = val
+            print(f"FIELD TYPE MAP: {field_type_map}")    
+            self.field_type_map = field_type_map
 
 
-@dataclass(config=PydanticConfig)
+@dataclass(config=PYDANTIC_CONFIG)
 class PrimaryFileConfig(SourceConfig):
     """
     node_properties and edge_properties are used for configuring
     the KGX writer
     """
 
-    node_properties: List[str] = None
-    edge_properties: List[str] = None
+    node_properties: Optional[List[str]] = None
+    edge_properties: Optional[List[str]] = None
     depends_on: List[str] = field(default_factory=list)
     on_map_failure: MapErrorEnum = MapErrorEnum.warning
 
 
-@dataclass(config=PydanticConfig)
+@dataclass(config=PYDANTIC_CONFIG)
 class MapFileConfig(SourceConfig):
-    key: str = None
-    values: List[str] = None
-    curie_prefix: str = None
-    add_curie_prefix_to_columns: List[str] = None
+    key: Optional[str] = None
+    values: Optional[List[str]] = None
+    curie_prefix: Optional[str] = None
+    add_curie_prefix_to_columns: Optional[List[str]] = None
+    depends_on: Optional[List[str]] = None

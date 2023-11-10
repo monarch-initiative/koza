@@ -1,10 +1,12 @@
-class PydanticConfig:
-    """
-    Pydantic config
-    https://pydantic-docs.helpmanual.io/usage/model_config/
-    """
+"""
+Pydantic config:
+https://docs.pydantic.dev/latest/api/config/
+"""
 
-    validate_assignment = True
-    validate_all = True
-    underscore_attrs_are_private = True
-    extra = 'forbid'
+from pydantic import ConfigDict
+
+PYDANTIC_CONFIG = ConfigDict(
+    validate_assignment = True,
+    validate_default = True,
+    extra = 'forbid',
+)
