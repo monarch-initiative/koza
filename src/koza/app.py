@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Dict, Union
 import yaml
 
-# from linkml_validator.validator import Validator
+from linkml.validator import validate
 from pydantic.error_wrappers import ValidationError
 
 from koza.converter.kgx_converter import KGXConverter
@@ -30,6 +30,8 @@ class KozaApp:
         output_dir: str = './output',
         output_format: OutputFormat = OutputFormat('jsonl'),
         schema: str = None,
+        node_type: str = None,
+        edge_type: str = None,
         logger=None,
     ):
         self.source = source
@@ -43,8 +45,13 @@ class KozaApp:
         self.logger = logger
 
         if schema:
-            # self.validator = Validator(schema=schema)
+            # self.validate = True
+            self.schema = schema
+            self.node_type = node_type
+            self.edge_type = edge_type
             self.converter = KGXConverter()
+        else:
+            self.validate = False
 
         if source.config.depends_on is not None:
             for map_file in source.config.depends_on:
@@ -138,22 +145,23 @@ class KozaApp:
 
     def write(self, *entities):
         # If a schema/validator is defined, validate before writing
-        if hasattr(self, 'validator'):
+        # if self.validate:
+        if hasattr(self, 'schema'):
             (nodes, edges) = self.converter.convert(entities)
             if self.output_format == OutputFormat.tsv:
                 if nodes:
                     for node in nodes:
-                        self.validator.validate(obj=node, target_class="NamedThing", strict=True)
+                        validate(instance=node, target_class=self.node_type, schema=self.schema, strict=True)
                 if edges:
                     for edge in edges:
-                        self.validator.validate(obj=edge, target_class="Association", strict=True)
+                        validate(instance=edge, target_class=self.edge_type, schema=self.schema, strict=True)
             elif self.output_format == OutputFormat.jsonl:
                 if nodes:
                     for node in nodes:
-                        self.validator.validate(obj=node, target_class="NamedThing", strict=True)
+                        validate(instance=node, target_class=self.node_type, schema=self.schema, strict=True)
                 if edges:
                     for edge in edges:
-                        self.validator.validate(obj=edge, target_class="Association", strict=True)
+                        validate(instance=edge, target_class=self.edge_type, schema=self.schema, strict=True)
 
         self.writer.write(entities)
 
