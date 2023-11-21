@@ -165,7 +165,7 @@ Creating this ingest will require three things:
         ```python
         # other imports, eg. uuid, pydantic, etc.
         import uuid
-        from biolink.pydanticmodel import Gene, PairwiseGeneToGeneInteraction
+        from biolink.pydanticmodel_v2 import Gene, PairwiseGeneToGeneInteraction
         
         # Koza imports
         from koza.cli_runner import get_koza_app
