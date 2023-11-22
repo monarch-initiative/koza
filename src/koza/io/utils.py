@@ -8,6 +8,7 @@ from io import TextIOWrapper
 from os import PathLike
 from pathlib import Path
 from typing import IO, Any, Dict, Union
+from zipfile import ZipFile, is_zipfile
 
 import requests
 
@@ -34,35 +35,43 @@ def open_resource(resource: Union[str, PathLike]) -> IO[str]:
     :return: str, next line in resource
 
     """
-    if Path(resource).exists():
-        # Try gzip first
-        try:
-            file = gzip.open(resource, 'rt')
-            file.read(1)
-            file.seek(0)
-        except OSError:
-            file = open(resource, 'r')
-        return file
-
-    elif isinstance(resource, str) and resource.startswith('http'):
+    # Check if resource is a remote file
+    if isinstance(resource, str) and resource.startswith('http'):
         tmp_file = tempfile.TemporaryFile('w+b')
         request = requests.get(resource)
         if request.status_code != 200:
             raise ValueError(f"Remote file returned {request.status_code}: {request.text}")
         tmp_file.write(request.content)
-        request.close()  # not sure this is needed
+        # request.close()  # not sure this is needed
         tmp_file.seek(0)
         if resource.endswith('gz'):
             # This should be more robust, either check headers
             # or use https://github.com/ahupp/python-magic
             remote_file = gzip.open(tmp_file, 'rt')
             return remote_file
-
         else:
             return TextIOWrapper(tmp_file)
 
+    # If resource is not remote or local, raise error
+    elif not Path(resource).exists():
+        raise ValueError(
+            f"Cannot open local or remote file: {resource}. Check the URL/path, and that the file exists, and try again."
+        )
+
+    # If resource is local, check for compression
+    if is_zipfile(resource):
+        with ZipFile(resource, 'r') as zip_file:
+            file = TextIOWrapper(zip_file.open(zip_file.namelist()[0], 'r'))#, encoding='utf-8')
+            # file = zip_file.read(zip_file.namelist()[0], 'r').decode('utf-8')
+    elif str(resource).endswith('gz'):
+        file = gzip.open(resource, 'rt')
+        file.read(1)
+        file.seek(0)
+
+    # If resource is local and not compressed, open as text
     else:
-        raise ValueError(f"Cannot open local or remote file: {resource}")
+        file = open(resource, 'r')
+    return file
 
 
 def check_data(entry, path) -> bool:

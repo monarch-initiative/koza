@@ -46,9 +46,9 @@ class KozaApp:
 
         if schema:
             # self.validate = True
-            self.schema = schema
-            self.node_type = node_type
-            self.edge_type = edge_type
+            # self.schema = schema
+            # self.node_type = node_type
+            # self.edge_type = edge_type
             self.converter = KGXConverter()
         else:
             self.validate = False
