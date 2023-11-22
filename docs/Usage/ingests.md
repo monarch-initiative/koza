@@ -25,7 +25,7 @@ Creating this ingest will require three things:
 
     This YAML file sets properties for the ingest of a single file type from a within a Source.
 
-    ???+ tip "Paths are relative to the directory from which you execute Koza."
+    !!! tip "Paths are relative to the directory from which you execute Koza."
     
     | __Required properties__ | | 
     | --- | --- |
@@ -33,7 +33,7 @@ Creating this ingest will require three things:
     | `files` | List of files to process |
     |||
     | __Optional properties__ | |
-    | `file_archive` | Path to a file archive containing the files to process |
+    | `file_archive` | Path to a file archive containing the file(s) to process <br/> Supported archive formats: zip, gzip |
     | `format` | Format of the data file(s) (CSV or JSON) |
     | `sssom_config` | Configures usage of SSSOM mapping files |
     | `depends_on` | List of map config files to use |

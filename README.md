@@ -54,8 +54,7 @@ koza validate \
 ```bash
 koza validate \
   --file ./examples/data/ddpheno.json.gz \
-  --format json \
-  --compression gzip
+  --format json
 ```
 
 #### Transform
