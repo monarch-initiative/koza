@@ -40,6 +40,8 @@ def transform_source(
     global_table: str = None,
     local_table: str = None,
     schema: str = None,
+    node_type: str = None,
+    edge_type: str = None,
     row_limit: int = None,
     verbose: bool = None,
     log: bool = False,
@@ -77,7 +79,7 @@ def transform_source(
         logger,
     )
 
-    koza_app = _set_koza_app(koza_source, translation_table, output_dir, output_format, schema, logger)
+    koza_app = _set_koza_app(koza_source, translation_table, output_dir, output_format, schema, node_type, edge_type, logger)
     koza_app.process_maps()
     koza_app.process_sources()
 
@@ -164,11 +166,13 @@ def _set_koza_app(
     output_dir: str = './output',
     output_format: OutputFormat = OutputFormat('tsv'),
     schema: str = None,
+    node_type: str = None,
+    edge_type: str = None,
     logger=None,
 ) -> KozaApp:
     """Create a KozaApp object for a given source"""
 
-    koza_apps[source.config.name] = KozaApp(source, translation_table, output_dir, output_format, schema, logger)
+    koza_apps[source.config.name] = KozaApp(source, translation_table, output_dir, output_format, schema, node_type, edge_type, logger)
     logger.debug(f"koza_apps entry created for {source.config.name}: {koza_apps[source.config.name]}")
     return koza_apps[source.config.name]
 

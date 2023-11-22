@@ -49,8 +49,7 @@ Koza also includes some examples to help you get started (see `koza/examples`).
     ```bash
     koza validate \
       --file ./examples/data/ddpheno.json.gz \
-      --format json \
-      --compression gzip
+      --format json
     ```
 
 !!! list "Transform"

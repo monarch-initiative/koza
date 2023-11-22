@@ -1,6 +1,5 @@
 import pytest
-# from biolink.pydanticmodel_v2 import Gene, GeneToGeneAssociation  # , Publication
-from koza.model.biolink.pydanticmodel_v2 import Gene, GeneToGeneAssociation  # , Publication
+from biolink.pydanticmodel_v2 import Gene, GeneToGeneAssociation  # , Publication
 
 from koza.converter.kgx_converter import KGXConverter
 

@@ -1,36 +1,69 @@
-# from pathlib import Path
-from urllib.request import urlopen
+from pathlib import Path
 import yaml
 
 import pytest
 from linkml.validator import validate
 
-pytest.skip("validation tests are not working", allow_module_level=True)
+# pytest.skip("validation tests are not working", allow_module_level=True)
 
 
-valid_gene = {
+###################################################################################################
+# Monarch model test
+
+valid_input = {
     "id": "BOGUS:12345",
     "name": "Bogus Gene 12345",
-    "category": ["biolink:NamedThing", "biolink:Gene"],
+    "category": "biolink:Gene",
 }
-invalid_gene = {"name": "Bogus Gene 98765", "type": "biolink:NamedThing"}
+invalid_input = {"name": "Bogus Gene 98765", "type": "biolink:NamedThing"}
 
-# model_url = "https://raw.githubusercontent.com/biolink/biolink-model/latest/biolink-model.yaml"
-model_url = "https://raw.githubusercontent.com/monarch-initiative/monarch-app/main/backend/src/monarch_py/datamodels/similarity.yaml"
+model_path  = Path(__file__).parent.parent / 'resources' / 'test-model.yaml'
+with open(model_path) as f:    
+    model = yaml.load(f, Loader=yaml.FullLoader)    
 
-with urlopen(model_url) as f:
-    biolink_model = yaml.load(f, Loader=yaml.FullLoader)
-
-@pytest.mark.parametrize("gene", [valid_gene])
-def test_valid_input(gene):
-    v = validate(instance=gene, target_class="gene", schema=model_url)
-    result = v.results[0]
-    print(result)
-    assert result.valid == True
+@pytest.mark.parametrize("entity", [valid_input])
+def test_valid_input(entity):
+    v = validate(instance=entity, target_class="Entity", schema=model)
+    assert len(v.results) == 0
 
 
-@pytest.mark.parametrize("gene", [invalid_gene])
-def test_invalid_input(gene):
-    v = validate(instance=gene, target_class="gene", schema=model_url)
-    result = v.results[0]
-    # assert result.valid == False
+@pytest.mark.parametrize("entity", [invalid_input])
+def test_invalid_input(entity):
+    v = validate(instance=entity, target_class="Entity", schema=model)
+    assert v.results[0].severity == "ERROR"
+
+###################################################################################################
+# Generic model test
+
+
+# model_path  = Path(__file__).parent.parent / 'resources' / 'test-model.yaml'
+# with open(model_path) as f:    
+#     model = yaml.load(f, Loader=yaml.FullLoader)    
+
+# valid_input = {
+#     "id": "BOGUS:12345",
+#     "name": "Bogus Thing 12345",
+#     "type": "X"
+# }
+
+# invalid_input = {
+#     "id": "BOGUS:987654",
+#     "name": "Bogus Thing 987654",
+#     "type": "A"
+# }
+
+# @pytest.mark.parametrize("entity", [valid_input])
+# def test_valid_input(entity):
+#     v = validate(instance=entity, target_class="named thing", schema=model)
+#     print(f"v: {v}")
+#     assert len(v.results) == 0
+
+
+# @pytest.mark.parametrize("entity", [invalid_input])
+# def test_invalid_input(entity):
+#     v = validate(instance=entity, target_class="named thing", schema=model)
+#     print(f"v: {v}")
+#     result = v.results[0]
+#     print(f"result: {result}")
+#     assert 1 == 2
+#     assert result.severity == "ERROR"
