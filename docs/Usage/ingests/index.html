@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../images/favicon.ico">
-      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.4.8">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.4.10">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.4b4a2bd9.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.fad675c6.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.356b1318.min.css">
@@ -399,7 +399,9 @@
       
         <li class="md-nav__item">
   <a href="#1-source-config-file" class="md-nav__link">
-    1. Source Config File
+    <span class="md-ellipsis">
+      1. Source Config File
+    </span>
   </a>
   
     <nav class="md-nav" aria-label="1. Source Config File">
@@ -407,7 +409,9 @@
         
           <li class="md-nav__item">
   <a href="#composing-configuration-from-multiple-yaml-files" class="md-nav__link">
-    Composing Configuration from Multiple Yaml Files
+    <span class="md-ellipsis">
+      Composing Configuration from Multiple Yaml Files
+    </span>
   </a>
   
 </li>
@@ -419,7 +423,9 @@
       
         <li class="md-nav__item">
   <a href="#2-mapping-and-additional-data" class="md-nav__link">
-    2. Mapping and Additional Data
+    <span class="md-ellipsis">
+      2. Mapping and Additional Data
+    </span>
   </a>
   
     <nav class="md-nav" aria-label="2. Mapping and Additional Data">
@@ -427,14 +433,18 @@
         
           <li class="md-nav__item">
   <a href="#sssom-mapping" class="md-nav__link">
-    SSSOM Mapping
+    <span class="md-ellipsis">
+      SSSOM Mapping
+    </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
   <a href="#manual-mapping-additional-data" class="md-nav__link">
-    Manual Mapping / Additional Data
+    <span class="md-ellipsis">
+      Manual Mapping / Additional Data
+    </span>
   </a>
   
 </li>
@@ -446,7 +456,9 @@
       
         <li class="md-nav__item">
   <a href="#3-transform-code" class="md-nav__link">
-    3. Transform Code
+    <span class="md-ellipsis">
+      3. Transform Code
+    </span>
   </a>
   
 </li>
@@ -525,7 +537,9 @@
       
         <li class="md-nav__item">
   <a href="#1-source-config-file" class="md-nav__link">
-    1. Source Config File
+    <span class="md-ellipsis">
+      1. Source Config File
+    </span>
   </a>
   
     <nav class="md-nav" aria-label="1. Source Config File">
@@ -533,7 +547,9 @@
         
           <li class="md-nav__item">
   <a href="#composing-configuration-from-multiple-yaml-files" class="md-nav__link">
-    Composing Configuration from Multiple Yaml Files
+    <span class="md-ellipsis">
+      Composing Configuration from Multiple Yaml Files
+    </span>
   </a>
   
 </li>
@@ -545,7 +561,9 @@
       
         <li class="md-nav__item">
   <a href="#2-mapping-and-additional-data" class="md-nav__link">
-    2. Mapping and Additional Data
+    <span class="md-ellipsis">
+      2. Mapping and Additional Data
+    </span>
   </a>
   
     <nav class="md-nav" aria-label="2. Mapping and Additional Data">
@@ -553,14 +571,18 @@
         
           <li class="md-nav__item">
   <a href="#sssom-mapping" class="md-nav__link">
-    SSSOM Mapping
+    <span class="md-ellipsis">
+      SSSOM Mapping
+    </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
   <a href="#manual-mapping-additional-data" class="md-nav__link">
-    Manual Mapping / Additional Data
+    <span class="md-ellipsis">
+      Manual Mapping / Additional Data
+    </span>
   </a>
   
 </li>
@@ -572,7 +594,9 @@
       
         <li class="md-nav__item">
   <a href="#3-transform-code" class="md-nav__link">
-    3. Transform Code
+    <span class="md-ellipsis">
+      3. Transform Code
+    </span>
   </a>
   
 </li>
@@ -619,9 +643,9 @@ Creating this ingest will require three things: </p>
 <div class="admonition list">
 <h2 id="1-source-config-file">1. Source Config File</h2>
 <p>This YAML file sets properties for the ingest of a single file type from a within a Source.</p>
-<details class="tip" open="open">
-<summary>Paths are relative to the directory from which you execute Koza.</summary>
-</details>
+<div class="admonition tip">
+<p class="admonition-title">Paths are relative to the directory from which you execute Koza.</p>
+</div>
 <table>
 <thead>
 <tr>
@@ -648,7 +672,7 @@ Creating this ingest will require three things: </p>
 </tr>
 <tr>
 <td><code>file_archive</code></td>
-<td>Path to a file archive containing the files to process</td>
+<td>Path to a file archive containing the file(s) to process <br/> Supported archive formats: zip, gzip</td>
 </tr>
 <tr>
 <td><code>format</code></td>
@@ -831,7 +855,7 @@ This KozaApp will be your entry point to Koza:</p>
 <summary>Example Python Transform Script</summary>
 <div class="highlight"><pre><span></span><code><span class="c1"># other imports, eg. uuid, pydantic, etc.</span>
 <span class="kn">import</span> <span class="nn">uuid</span>
-<span class="kn">from</span> <span class="nn">biolink.pydanticmodel</span> <span class="kn">import</span> <span class="n">Gene</span><span class="p">,</span> <span class="n">PairwiseGeneToGeneInteraction</span>
+<span class="kn">from</span> <span class="nn">biolink.pydanticmodel_v2</span> <span class="kn">import</span> <span class="n">Gene</span><span class="p">,</span> <span class="n">PairwiseGeneToGeneInteraction</span>
 
 <span class="c1"># Koza imports</span>
 <span class="kn">from</span> <span class="nn">koza.cli_runner</span> <span class="kn">import</span> <span class="n">get_koza_app</span>
@@ -932,7 +956,7 @@ This KozaApp will be your entry point to Koza:</p>
     <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.copy", "navigation.expand", "navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky"], "search": "../../assets/javascripts/workers/search.f886a092.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.81fa17fe.min.js"></script>
+      <script src="../../assets/javascripts/bundle.6c14ae12.min.js"></script>
       
     
   </body>
