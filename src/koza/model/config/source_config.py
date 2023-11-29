@@ -292,7 +292,7 @@ class SourceConfig:
                         raise ValueError("Field type map contains more than one key")
                     for key, val in field.items():
                         field_type_map[key] = val
-            print(f"FIELD TYPE MAP: {field_type_map}")    
+            # print(f"FIELD TYPE MAP: {field_type_map}")    
             self.field_type_map = field_type_map
 
 
