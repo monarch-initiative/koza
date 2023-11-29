@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "koza"
-version = "0.5.1"
+version = "0.5.2"
 description = "Data transformation framework for LinkML data models"
 authors = [
     "The Monarch Initiative <info@monarchinitiative.org>",

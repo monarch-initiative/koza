@@ -40,8 +40,9 @@ class Source:
                         name=config.name,
                         field_type_map=config.field_type_map,
                         delimiter=config.delimiter,
-                        header_delimiter=config.header_delimiter,
                         header=config.header,
+                        header_delimiter=config.header_delimiter,
+                        header_prefix=config.header_prefix,
                         comment_char=self.config.comment_char,
                         row_limit=self.row_limit,
                     )

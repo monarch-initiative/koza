@@ -49,8 +49,9 @@ Creating this ingest will require three things:
     | __Optional CSV Specific Properties__ | |
     | `columns` | List of columns to include in output (CSV only) |
     | `delimiter` | Delimiter for csv files |
-    | `header_delimiter` | Delimiter for header in csv files |
     | `header` | Header row index for csv files |
+    | `header_delimiter` | Delimiter for header in csv files |
+    | `header_prefix` | Prefix for header in csv files |
     | `comment_char` | Comment character for csv files |
     | `skip_blank_lines` | Skip blank lines in csv files |
     
