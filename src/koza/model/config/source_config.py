@@ -147,8 +147,9 @@ class SourceConfig:
     columns: List[str] (optional) - list of columns to include
     required_properties: List[str] (optional) - list of properties which must be in json data files
     delimiter: str (optional) - delimiter for csv files
-    header_delimiter: str (optional) - delimiter for header in csv files
     header: int (optional) - header row index
+    header_delimiter: str (optional) - delimiter for header in csv files
+    header_prefix: str (optional) - prefix for header in csv files
     comment_char: str (optional) - comment character for csv files
     skip_blank_lines: bool (optional) - skip blank lines in csv files
     filters: List[ColumnFilter] (optional) - list of filters to apply
@@ -171,6 +172,7 @@ class SourceConfig:
     delimiter: Optional[str] = None
     header: Union[int, HeaderMode] = HeaderMode.infer
     header_delimiter: Optional[str] = None
+    header_prefix: Optional[str] = None
     comment_char: str = "#"
     skip_blank_lines: bool = True
     filters: List[ColumnFilter] = field(default_factory=list)
@@ -290,7 +292,7 @@ class SourceConfig:
                         raise ValueError("Field type map contains more than one key")
                     for key, val in field.items():
                         field_type_map[key] = val
-            print(f"FIELD TYPE MAP: {field_type_map}")    
+            # print(f"FIELD TYPE MAP: {field_type_map}")    
             self.field_type_map = field_type_map
 
 

@@ -49,6 +49,7 @@ class CSVReader:
         delimiter: str = ",",
         header: Union[int, HeaderMode] = HeaderMode.infer,
         header_delimiter: str = None,
+        header_prefix: str = None,
         dialect: str = "excel",
         skip_blank_lines: bool = True,
         name: str = "csv file",
@@ -69,6 +70,7 @@ class CSVReader:
                            if field_type_map is None this will raise a ValueError
 
         :param header_delimiter: delimiter for the header row, default = self.delimiter
+        :param header_prefix: prefix for the header row, default = None
         :param dialect: csv dialect, default=excel
         :param skip_blank_lines: true to skip blank lines, false to insert NaN for blank lines,
         :param name: filename or alias
@@ -82,6 +84,7 @@ class CSVReader:
         self.dialect = dialect
         self.header = header
         self.header_delimiter = header_delimiter if header_delimiter else delimiter
+        self.header_prefix = header_prefix
         self.skip_blank_lines = skip_blank_lines
         self.name = name
         self.comment_char = comment_char
@@ -205,11 +208,12 @@ class CSVReader:
         Parse the header line and return a list of headers
         """
         fieldnames = next(reader(self.io_str, **{'delimiter': self.header_delimiter, 'dialect': self.dialect}))
+        if self.header_prefix and fieldnames[0].startswith(self.header_prefix):
+            fieldnames[0] = fieldnames[0].lstrip(self.header_prefix)
         if skip_blank_or_commented_lines:
             # there has to be a cleaner way to do this
             while not fieldnames or (self.comment_char is not None and fieldnames[0].startswith(self.comment_char)):
                 fieldnames = next(reader(self.io_str, **{'delimiter': self.header_delimiter, 'dialect': self.dialect}))
-
         fieldnames[0] = fieldnames[0].lstrip(self.comment_char)
         return [f.strip() for f in fieldnames]
 
