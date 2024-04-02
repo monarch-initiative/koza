@@ -5,7 +5,7 @@ from typing import Dict, Union
 import yaml
 
 from linkml.validator import validate
-from pydantic.error_wrappers import ValidationError
+from pydantic import ValidationError
 
 from koza.converter.kgx_converter import KGXConverter
 from koza.utils.exceptions import MapItemException, NextRowException
