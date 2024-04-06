@@ -29,7 +29,7 @@ def get_koza_app(source_name) -> Optional[KozaApp]:
     """
     try:
         return koza_apps[source_name]
-    except:
+    except KeyError:
         raise KeyError(f"{source_name} was not found in KozaApp dictionary")
 
 
@@ -63,13 +63,18 @@ def transform_source(
 
     with open(source, 'r') as source_fh:
         source_config = PrimaryFileConfig(**yaml.load(source_fh, Loader=UniqueIncludeLoader))
-
+    
+    # TODO: Try moving this to source_config class
     if not source_config.name:
         source_config.name = Path(source).stem
 
     if not source_config.transform_code:
-        # look for it alongside the source conf as a .py file
-        source_config.transform_code = str(Path(source).parent / Path(source).stem) + '.py'
+        filename = f"{Path(source).parent / Path(source).stem}.py"
+        if not Path(filename).exists():
+            filename = Path(source).parent / "transform.py"
+        if not Path(filename).exists():
+            raise FileNotFoundError(f"Could not find transform file for {source}")      
+        source_config.transform_code = filename
 
     koza_source = Source(source_config, row_limit)
     logger.debug(f"Source created: {koza_source.config.name}")

@@ -214,13 +214,6 @@ class KozaApp:
     @staticmethod
     def _map_sniffer(depends_on: str):
         """
-        TODO a utility function to determine if a depends_on string
-        is a path to a map config file, a yaml file that should be
-        interpreted as a dictionary, or a json file that should be
-        interpreted as a dictionary
-
-        See https://github.com/monarch-initiative/koza/issues/39
-
         :param depends_on:
         """
         pass

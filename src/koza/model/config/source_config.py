@@ -57,7 +57,7 @@ class FormatType(str, Enum):
     jsonl = "jsonl"
     json = "json"
     yaml = "yaml"
-    xml = "xml"  # TODO
+    # xml = "xml" # Not yet supported
 
 
 class HeaderMode(str, Enum):
@@ -120,14 +120,14 @@ class DatasetDescription:
     than documentation
     """
 
-    id: Optional[str] = None  # TODO constrain to a curie?
+    id: Optional[str] = None
     name: Optional[str] = None  # If empty use source name
-    ingest_title: Optional[str] = None  # Map to biolink name
-    ingest_url: Optional[str] = None  # Maps to biolink iri
+    ingest_title: Optional[str] = None  # Title of source of data, map to biolink name
+    ingest_url: Optional[str] = None  # URL to source of data, Maps to biolink iri
     description: Optional[str] = None
     source: Optional[str] = None
     provided_by: Optional[str] = None
-    license: Optional[str] = None
+    # license: Optional[str] = None # Possibly redundant, same as rights
     rights: Optional[str] = None
 
 
@@ -143,16 +143,17 @@ class SourceConfig:
     file_archive: str (optional) - path to a file archive containing files to process
     format: FormatType (optional) - format of the data file(s)
     sssom_config: SSSOMConfig (optional) - SSSOM config options
-    metadata: DatasetDescription (optional) - metadata for the source
     columns: List[str] (optional) - list of columns to include
+    field_type_map: dict (optional) - dict of field names and their type (using the FieldType enum)
+    filters: List[ColumnFilter] (optional) - list of filters to apply
     required_properties: List[str] (optional) - list of properties which must be in json data files
+    metadata: DatasetDescription (optional) - metadata for the source
     delimiter: str (optional) - delimiter for csv files
     header: int (optional) - header row index
     header_delimiter: str (optional) - delimiter for header in csv files
     header_prefix: str (optional) - prefix for header in csv files
     comment_char: str (optional) - comment character for csv files
     skip_blank_lines: bool (optional) - skip blank lines in csv files
-    filters: List[ColumnFilter] (optional) - list of filters to apply
     json_path: List[str] (optional) - path within JSON object containing data to process
     transform_code: str (optional) - path to a python file to transform the data
     transform_mode: TransformMode (optional) - how to process the transform file
@@ -167,6 +168,7 @@ class SourceConfig:
     sssom_config: Optional[SSSOMConfig] = None
     columns: Optional[List[Union[str, Dict[str, FieldType]]]] = None
     field_type_map: Optional[dict] = None
+    filters: List[ColumnFilter] = field(default_factory=list)
     required_properties: Optional[List[str]] = None
     metadata: Optional[Union[DatasetDescription, str]] = None
     delimiter: Optional[str] = None
@@ -175,7 +177,6 @@ class SourceConfig:
     header_prefix: Optional[str] = None
     comment_char: str = "#"
     skip_blank_lines: bool = True
-    filters: List[ColumnFilter] = field(default_factory=list)
     json_path: Optional[List[Union[StrictStr, StrictInt]]] = None
     transform_code: Optional[str] = None
     transform_mode: TransformMode = TransformMode.flat
@@ -196,11 +197,7 @@ class SourceConfig:
         return files
 
     def __post_init__(self):
-        """
-        TO DO figure out why we're using object.__setattr__(self, ...)
-            here and document it.
-            Is this a workaround for a pydantic bug?
-        """
+        # Get files as paths, or extract them from an archive
         if self.file_archive:
             files = self.extract_archive()
         else:
@@ -213,22 +210,20 @@ class SourceConfig:
             else:
                 files_as_paths.append(file)
         object.__setattr__(self, "files", files_as_paths)
-        # self.files = files_as_paths <---- is this equivalent to the above?
 
+        # If metadata looks like a file path attempt to load it from the yaml
         if self.metadata and isinstance(self.metadata, str):
-            # If this looks like a file path attempt to load it from the yaml
-            # TODO enforce that this is imported via an include?
-            # See https://github.com/monarch-initiative/koza/issues/46
             try:
                 with open(self.metadata, "r") as meta:
                     object.__setattr__(self, "metadata", DatasetDescription(**yaml.safe_load(meta)))
             except Exception as e:
-                # TODO check for more explicit exceptions
                 raise ValueError(f"Unable to load metadata from {self.metadata}: {e}")
 
+        # Format tab as delimiter
         if self.delimiter in ["tab", "\\t"]:
             object.__setattr__(self, "delimiter", "\t")
 
+        # Filter columns
         filtered_columns = [column_filter.column for column_filter in self.filters]
 
         all_columns = []
@@ -249,9 +244,6 @@ class SourceConfig:
 
         for column_filter in self.filters:
             if column_filter.filter_code in ["lt", "gt", "lte", "gte"]:
-                # TODO determine if this should raise an exception
-                # or instead try to type coerce the string to a float
-                # type coercion is probably the best thing to do here
                 if not isinstance(column_filter.value, (int, float)):
                     raise ValueError(f"Filter value must be int or float for operator {column_filter.filter_code}")
             elif column_filter.filter_code == "eq":
@@ -263,24 +255,24 @@ class SourceConfig:
                 if not isinstance(column_filter.value, List):
                     raise ValueError(f"Filter value must be List for operator {column_filter.filter_code}")
 
+        # Check for conflicting configurations
         if self.format == FormatType.csv and self.required_properties:
             raise ValueError(
                 "CSV specified but required properties have been configured\n"
-                "either set format to jsonl or change properties to columns in the config"
+                "Either set format to jsonl or change properties to columns in the config"
             )
-
         if self.columns and self.format != FormatType.csv:
             raise ValueError(
-                "columns have been configured but format is not csv\n"
-                "either set format to csv or change columns to properties in the config"
+                "Columns have been configured but format is not csv\n"
+                "Either set format to csv or change columns to properties in the config"
             )
-
         if self.json_path and self.format != FormatType.json:
             raise ValueError(
                 "iterate_over has been configured but format is not json\n"
-                "either set format to json or remove iterate_over in the configuration"
+                "Either set format to json or remove iterate_over in the configuration"
             )
 
+        # Create a field_type_map if columns are supplied
         if self.columns:
             field_type_map = {}
             for field in self.columns:
@@ -288,12 +280,10 @@ class SourceConfig:
                     field_type_map[field] = FieldType.str
                 else:
                     if len(field) != 1:
-                        # TODO expand this exception msg
                         raise ValueError("Field type map contains more than one key")
                     for key, val in field.items():
                         field_type_map[key] = val
-            # print(f"FIELD TYPE MAP: {field_type_map}")    
-            self.field_type_map = field_type_map
+            object.__setattr__(self, "field_type_map", field_type_map)
 
 
 @dataclass(config=PYDANTIC_CONFIG)
