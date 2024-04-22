@@ -148,7 +148,7 @@ class SourceConfig:
     required_properties: List[str] (optional) - list of properties which must be in json data files
     metadata: DatasetDescription (optional) - metadata for the source
     delimiter: str (optional) - delimiter for csv files
-    header: int (optional) - header row index
+    header: int (optional) - header row index (required if format is csv and header is not none)
     header_delimiter: str (optional) - delimiter for header in csv files
     header_prefix: str (optional) - prefix for header in csv files
     comment_char: str (optional) - comment character for csv files
@@ -192,12 +192,10 @@ class SourceConfig:
                 archive.extractall(archive_path)
         else:
             raise ValueError("Error extracting archive. Supported archive types: .tar.gz, .zip")
-        files = [os.path.join(archive_path, file) for file in self.files]
-        # Possibly replace with this code if we want to extract all files? (not sure)
-        # if self.files:
-        #     files = [os.path.join(archive_path, file) for file in self.files]
-        # else:
-        #     files = [os.path.join(archive_path, file) for file in os.listdir(archive_path)]
+        if self.files:
+            files = [os.path.join(archive_path, file) for file in self.files]
+        else:
+            files = [os.path.join(archive_path, file) for file in os.listdir(archive_path)]
         return files
 
     def __post_init__(self):
