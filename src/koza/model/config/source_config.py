@@ -116,19 +116,18 @@ class DatasetDescription:
     These options should be treated as being in alpha, as we need
     to align with various efforts (hcls, translator infores)
 
-    These currently do not serve a purpose in koza other
-    than documentation
+    These currently do not serve a purpose in koza other than documentation
     """
 
-    id: Optional[str] = None
-    name: Optional[str] = None  # If empty use source name
+    # id: Optional[str] = None          # Can uncomment when we have a standard
+    name: Optional[str] = None          # If empty use source name
     ingest_title: Optional[str] = None  # Title of source of data, map to biolink name
-    ingest_url: Optional[str] = None  # URL to source of data, Maps to biolink iri
-    description: Optional[str] = None
-    source: Optional[str] = None
-    provided_by: Optional[str] = None
-    # license: Optional[str] = None # Possibly redundant, same as rights
-    rights: Optional[str] = None
+    ingest_url: Optional[str] = None    # URL to source of data, maps to biolink iri
+    description: Optional[str] = None   # Description of the data/ingest
+    # source: Optional[str] = None      # Possibly replaced with provided_by
+    provided_by: Optional[str] = None   # <data source>_<type_of_ingest>, ex. hpoa_gene_to_disease
+    # license: Optional[str] = None     # Possibly redundant, same as rights
+    rights: Optional[str] = None        # License information for the data source
 
 
 @dataclass(config=PYDANTIC_CONFIG)
@@ -194,6 +193,11 @@ class SourceConfig:
         else:
             raise ValueError("Error extracting archive. Supported archive types: .tar.gz, .zip")
         files = [os.path.join(archive_path, file) for file in self.files]
+        # Possibly replace with this code if we want to extract all files? (not sure)
+        # if self.files:
+        #     files = [os.path.join(archive_path, file) for file in self.files]
+        # else:
+        #     files = [os.path.join(archive_path, file) for file in os.listdir(archive_path)]
         return files
 
     def __post_init__(self):

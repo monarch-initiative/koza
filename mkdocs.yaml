@@ -13,7 +13,7 @@ nav:
     - Mapping: 'Ingests/mapping.md'
     - Transform Code: 'Ingests/transform.md'
   - CLI: 'Usage/CLI.md'
-  - API: 'Usage/API.md'
+  - Module: 'Usage/Module.md'
 
 
 theme:

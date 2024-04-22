@@ -2,7 +2,7 @@
 # NOTE - May want to rename to KGXWriter at some point, if we develop writers for other models non biolink/kgx specific
 
 from pathlib import Path
-import typing as t
+from typing import Dict, Iterable, List, Literal, Set, Union
 
 from ordered_set import OrderedSet
 
@@ -15,10 +15,10 @@ from koza.model.config.sssom_config import SSSOMConfig
 class TSVWriter(KozaWriter):
     def __init__(
         self,
-        output_dir: t.Union[str, Path],
+        output_dir: Union[str, Path],
         source_name: str,
-        node_properties: t.List[str] = None,
-        edge_properties: t.List[str] = None,
+        node_properties: List[str] = None,
+        edge_properties: List[str] = None,
         sssom_config: SSSOMConfig = None,
     ):
         self.basename = source_name
@@ -44,7 +44,7 @@ class TSVWriter(KozaWriter):
             self.edgeFH = open(self.edges_file_name, "w")
             self.edgeFH.write(self.delimiter.join(self.edge_columns) + "\n")
 
-    def write(self, entities: t.Iterable) -> None:
+    def write(self, entities: Iterable) -> None:
         """Write an entities object to separate node and edge .tsv files"""
 
         nodes, edges = self.converter.convert(entities)
@@ -59,7 +59,7 @@ class TSVWriter(KozaWriter):
                     edge = self.sssom_config.apply_mapping(edge)
                 self.write_row(edge, record_type="edge")
 
-    def write_row(self, record: t.Dict, record_type: t.Literal["node", "edge"]) -> None:
+    def write_row(self, record: Dict, record_type: Literal["node", "edge"]) -> None:
         """Write a row to the underlying store.
 
         Args:
@@ -88,7 +88,7 @@ class TSVWriter(KozaWriter):
             self.edgeFH.close()
 
     @staticmethod
-    def _order_columns(cols: t.Set, record_type: t.Literal["node", "edge"]) -> OrderedSet:
+    def _order_columns(cols: Set, record_type: Literal["node", "edge"]) -> OrderedSet:
         """Arrange node or edge columns in a defined order.
 
         Args:

@@ -6,7 +6,7 @@ This YAML file sets properties for the ingest of a single file type from a withi
 
 | **Required properties**              |                                                                                                     |
 | ------------------------------------ | --------------------------------------------------------------------------------------------------- |
-| `name`                               | Name of the source                                                                                  |
+| `name`                               | Name of the data ingest, as `<data source>_<type_of_ingest>`, <br/>ex. `hpoa_gene_to_disease`       |
 | `files`                              | List of files to process                                                                            |
 |                                      |                                                                                                     |
 | **Optional properties**              |                                                                                                     |
@@ -24,7 +24,7 @@ This YAML file sets properties for the ingest of a single file type from a withi
 | `json_path`                          | Path within JSON object containing data to process                                                  |
 | `required_properties`                | List of properties that must be present in output (JSON only)                                       |
 |                                      |                                                                                                     |
-| **Optional CSV Specific Properties** |                                                                                                     |
+| **Optional CSV-Specific Properties** |                                                                                                     |
 | `columns`                            | List of columns to include in output (CSV only)                                                     |
 | `delimiter`                          | Delimiter for csv files                                                                             |
 | `header`                             | Header row index for csv files                                                                      |
@@ -35,22 +35,22 @@ This YAML file sets properties for the ingest of a single file type from a withi
 
 ## Metadata Properties
 
-Metadata is optional, and can be defined as a list of properties and values, or as a path to a `metadata.yaml` file, 
+Metadata is optional, and can be defined as a list of properties and values, or as a path to a `metadata.yaml` file,
 for example - `metadata: "./path/to/metadata.yaml"`.  
 Remember that the path is relative to the directory from which you execute Koza.
 
-| **Metadata Properties** |                                              |
-| ----------------------- | -------------------------------------------- |
-| id                      | TBD                                          |
-| name                    | If empty, uses source name                   |
-| ingest_title            | Title of source of data, map to biolink name |
-| ingest_url              | URL to source of data, Maps to biolink iri   |
-| description             | Description of ingest                        |
-| source                  | Source of data being transformed             |
-| provided_by             | TBD                                          |
-| rights                  | TBD                                          |
+| **Metadata Properties** |                                                                                          |
+| ----------------------- | ---------------------------------------------------------------------------------------- |
+| name                    | Name of data source, ex. "FlyBase"                                                       |
+| description             | Description of data/ingest                                                               |
+| ingest_title            | \*Title of source of data, map to biolink name                                           |
+| ingest_url              | \*URL to source of data, Maps to biolink iri                                             |
+| provided_by             | `<data source>_<type_of_ingest>`, ex. `hpoa_gene_to_disease` (see config propery "name") |
+| rights                  | Link to license information for the data source                                          |
 
-### Composing Configuration from Multiple Yaml Files
+**\*Note**: For more information on `ingest_title` and `ingest_url`, see the [infores catalog](https://biolink.github.io/information-resource-registry/infores_catalog.yaml)
+
+## Composing Configuration from Multiple Yaml Files
 
 Koza's custom YAML Loader supports importing/including other yaml files with an `!include` tag.
 

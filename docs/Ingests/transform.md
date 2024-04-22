@@ -1,4 +1,4 @@
-This Python script is where you'll define the specific steps of your data transformation. 
+This Python script is where you'll define the specific steps of your data transformation.
 Koza will load this script and execute it for each row of data in your source file,  
 applying any filters and mapping as defined in your source config yaml,  
 and outputting the transformed data to the target csv/json/jsonl file.
@@ -12,29 +12,34 @@ from koza.cli_runner import get_koza_app
 koza_app = get_koza_app('your-source-name')
 ```
 
-The KozaApp object has the following methods:
+The KozaApp object has the following methods which can be used in your transform code:
 
-| Method | Description |
-| --- | --- |
-| `get_row()` | Returns the next row of data from the source file |
-| `get_map(map_name)` | Returns the mapping dict for the specified map |
-| `get_global_table()` | Returns the global translation table |
-| `get_local_table()` | Returns the local translation table |
+| Method              | Description                                       |
+| ------------------- | ------------------------------------------------- |
+| `get_row()`         | Returns the next row of data from the source file |
+| `next_row()`        | Skip to the next row in the data file             |
+| `get_map(map_name)` | Returns the mapping dict for the specified map    |
+| `process_sources()` | TBD                                               |
+| `process_maps()`    | Initializes the KozaApp's map cache               |
+| `write(*args)`      | Writes the transformed data to the target file    |
+
+Once you have processed a row of data, and created a biolink entity node or edge object (or both),  
+you can pass these to `koza_app.write()` to output the transformed data to the target file.
 
 ??? tldr "Example Python Transform Script"
 
     ```python
     # other imports, eg. uuid, pydantic, etc.
     import uuid
-    from biolink.pydanticmodel_v2 import Gene, PairwiseGeneToGeneInteraction
-    
+    from biolink_model.datamodel.pydanticmodel_v2 import Gene, PairwiseGeneToGeneInteraction
+
     # Koza imports
     from koza.cli_runner import get_koza_app
 
     # This is the name of the ingest you want to run
     source_name = 'map-protein-links-detailed'
     koza_app = get_koza_app(source_name)
-        
+
     # If your ingest depends_on a mapping file, you can access it like this:
     map_name = 'entrez-2-string'
     koza_map = koza_app.get_map(map_name)
@@ -57,3 +62,6 @@ The KozaApp object has the following methods:
         # Finally, write the transformed row to the target file
         koza_app.write(gene_a, gene_b, pairwise_gene_to_gene_interaction)
     ```
+
+    If you pass nodes, as well as edges, to `koza_app.write()`, Koza will automatically create a node file and an edge file.
+    If you pass only nodes, Koza will create only a node file, and if you pass only edges, Koza will create only an edge file.
