@@ -25,7 +25,7 @@ See the [Ingests](./Ingests/index.md) page for information on how to configure i
 
 Koza can be used as a Python library, or via the command line.  
 [CLI commands](./Usage/CLI.md) are available for validating and transforming data.  
-See the [API](./Usage/API.md) page for information on using Koza as a library.
+See the [Module](./Usage/Module.md) page for information on using Koza as a library.
 
 Koza also includes some examples to help you get started (see `koza/examples`).
 ### Basic Examples

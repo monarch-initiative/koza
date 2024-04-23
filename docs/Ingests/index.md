@@ -1,5 +1,5 @@
 <sub>
-(For CLI usage, see the [CLI commands](./CLI.md) page.)
+(For CLI usage, see the [CLI commands](../Usage/CLI.md) page.)
 </sub>  
 
 Koza is designed to process and transform existing data into a target csv/json/jsonl format.  

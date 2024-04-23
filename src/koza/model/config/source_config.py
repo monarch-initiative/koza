@@ -120,14 +120,14 @@ class DatasetDescription:
     """
 
     # id: Optional[str] = None          # Can uncomment when we have a standard
-    name: Optional[str] = None          # If empty use source name
+    name: Optional[str] = None  # If empty use source name
     ingest_title: Optional[str] = None  # Title of source of data, map to biolink name
-    ingest_url: Optional[str] = None    # URL to source of data, maps to biolink iri
-    description: Optional[str] = None   # Description of the data/ingest
+    ingest_url: Optional[str] = None  # URL to source of data, maps to biolink iri
+    description: Optional[str] = None  # Description of the data/ingest
     # source: Optional[str] = None      # Possibly replaced with provided_by
-    provided_by: Optional[str] = None   # <data source>_<type_of_ingest>, ex. hpoa_gene_to_disease
+    provided_by: Optional[str] = None  # <data source>_<type_of_ingest>, ex. hpoa_gene_to_disease
     # license: Optional[str] = None     # Possibly redundant, same as rights
-    rights: Optional[str] = None        # License information for the data source
+    rights: Optional[str] = None  # License information for the data source
 
 
 @dataclass(config=PYDANTIC_CONFIG)
@@ -291,8 +291,7 @@ class SourceConfig:
 @dataclass(config=PYDANTIC_CONFIG)
 class PrimaryFileConfig(SourceConfig):
     """
-    node_properties and edge_properties are used for configuring
-    the KGX writer
+    node_properties and edge_properties are used for configuring the KGX writer
     """
 
     node_properties: Optional[List[str]] = None
