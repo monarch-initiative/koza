@@ -133,7 +133,7 @@ class MockKoza:
         return koza
 
     def transform(self):
-        koza_app = self._make_mock_koza_app(
+        koza_app = self.make_mock_koza_app(
             self.name,
             self.data,
             self.transform_code,
