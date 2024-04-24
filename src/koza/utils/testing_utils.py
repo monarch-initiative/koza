@@ -106,9 +106,9 @@ class MockKoza:
 
     def mock_write(self, *entities):
         if hasattr(self, "_entities"):
-            self._entities.extend(list(entities))
+            self.entities.extend(list(entities))
         else:
-            self._entities = list(entities)
+            self.entities = list(entities)
 
     def make_mock_koza_app(self):
         mock_source_file_config = PrimaryFileConfig(
@@ -128,7 +128,7 @@ class MockKoza:
 
         # TODO filter mocks
         koza._map_cache = self.map_cache
-        koza.write = types.MethodType(self._mock_write, koza)
+        koza.write = types.MethodType(self.mock_write, koza)
 
         return koza
 
