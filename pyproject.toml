@@ -21,18 +21,18 @@ pydantic = "^2.4"
 pyyaml = ">=5.0.0"
 requests = "^2.24.0"
 ordered-set = ">=4.1.0"
-typer = "^0.12.3"
+typer = ">=0.12.3"
 loguru = "*"
 sssom = ">=0.4"
 
 [tool.poetry.dev-dependencies]
-black = "^23.10.0"
+black = "^24.4"
 ruff = "*"
 pytest = ">=6.0.0"
 biolink-model = ">=4.2"
 dask = ">=2022.5.2"
-mkdocs = ">=1.4.2"
-mkdocs-material = ">=9.1.16"
+mkdocs = ">=1.4"
+mkdocs-material = ">=9.5"
 mkdocstrings = {extras = ["python"], version = ">=0.22.0"}
 
 [tool.poetry.scripts]
