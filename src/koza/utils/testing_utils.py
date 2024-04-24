@@ -2,6 +2,7 @@ import types
 from typing import Iterable
 
 from loguru import logger
+import pytest
 
 from koza.app import KozaApp
 from koza.cli_utils import get_koza_app, get_translation_table, _set_koza_app
@@ -14,7 +15,7 @@ def test_koza(koza: KozaApp):
     global koza_app
     koza_app = koza
 
-
+@pytest.fixture(scope="package")
 def mock_koza():
     """Mock KozaApp for testing"""
 
