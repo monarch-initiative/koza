@@ -4,7 +4,7 @@
 from pathlib import Path
 from typing import Optional
 
-from koza.cli_runner import transform_source, validate_file
+from koza.cli_utils import transform_source, validate_file
 from koza.model.config.source_config import FormatType, OutputFormat
 
 import typer

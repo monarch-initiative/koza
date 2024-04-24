@@ -1,6 +1,6 @@
 from biolink_model.datamodel.pydanticmodel_v2 import Gene
 
-from koza.cli_runner import koza_app
+from koza.cli_utils import koza_app
 
 
 def gpi2gene(row: dict) -> Gene:
