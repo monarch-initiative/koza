@@ -106,9 +106,9 @@ class MockKoza:
 
     def mock_write(self, *entities):
         if hasattr(self, "_entities"):
-            self.entities.extend(list(entities))
+            self._entities.extend(list(entities))
         else:
-            self.entities = list(entities)
+            self._entities = list(entities)
 
     def make_mock_koza_app(self):
         mock_source_file_config = PrimaryFileConfig(
