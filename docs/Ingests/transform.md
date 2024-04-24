@@ -8,7 +8,7 @@ it creates a `KozaApp` object for the specified ingest.
 This KozaApp will be your entry point to Koza:
 
 ```python
-from koza.cli_runner import get_koza_app
+from koza.cli_utils import get_koza_app
 koza_app = get_koza_app('your-source-name')
 ```
 
@@ -34,7 +34,7 @@ you can pass these to `koza_app.write()` to output the transformed data to the t
     from biolink_model.datamodel.pydanticmodel_v2 import Gene, PairwiseGeneToGeneInteraction
 
     # Koza imports
-    from koza.cli_runner import get_koza_app
+    from koza.cli_utils import get_koza_app
 
     # This is the name of the ingest you want to run
     source_name = 'map-protein-links-detailed'

@@ -1,4 +1,4 @@
-from koza.cli_runner import get_koza_app
+from koza.cli_utils import get_koza_app
 
 source_name = 'custom-map-protein-links-detailed'
 map_name = 'custom-entrez-2-string'

@@ -8,7 +8,7 @@ Assert correct number of rows has been processed
 
 import pytest
 
-from koza.cli_runner import transform_source
+from koza.cli_utils import transform_source
 from koza.model.config.source_config import OutputFormat
 
 

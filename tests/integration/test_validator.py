@@ -11,7 +11,7 @@ import yaml
 
 import pytest
 
-from koza.cli_runner import transform_source
+from koza.cli_utils import transform_source
 from koza.model.config.source_config import OutputFormat
 
 # pytest.skip("LinkML issue with `category` slot has `designates_type: true`", allow_module_level=True)

@@ -2,7 +2,7 @@ import uuid
 
 from biolink_model.datamodel.pydanticmodel_v2 import Gene, PairwiseGeneToGeneInteraction
 
-from koza.cli_runner import get_koza_app
+from koza.cli_utils import get_koza_app
 
 source_name = "map-protein-links-detailed"
 map_name = "entrez-2-string"

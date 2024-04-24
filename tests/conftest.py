@@ -5,7 +5,7 @@ import pytest
 from loguru import logger
 
 from koza.app import KozaApp
-from koza.cli_runner import test_koza
+from koza.utils.testing_utils import test_koza
 from koza.model.config.source_config import PrimaryFileConfig
 from koza.model.source import Source
 
