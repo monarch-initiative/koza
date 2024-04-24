@@ -133,15 +133,7 @@ class MockKoza:
         return koza
 
     def transform(self):
-        koza_app = self.make_mock_koza_app(
-            self.name,
-            self.data,
-            self.transform_code,
-            map_cache=self.map_cache,
-            filters=self.filters,
-            global_table=self.global_table,
-            local_table=self.local_table,
-        )
+        koza_app = self.make_mock_koza_app()
         test_koza(koza_app)
         koza_app.process_sources()
         if not hasattr(koza_app, "_entities"):
