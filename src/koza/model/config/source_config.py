@@ -12,7 +12,6 @@ from pathlib import Path
 from typing import Dict, List, Union, Optional
 import yaml
 
-from loguru import logger
 from pydantic import StrictFloat, StrictInt, StrictStr
 from pydantic.dataclasses import dataclass
 

@@ -12,6 +12,7 @@ nav:
     - Source Config: 'Ingests/source_config.md'
     - Mapping: 'Ingests/mapping.md'
     - Transform Code: 'Ingests/transform.md'
+    - Testing: 'Ingests/testing.md'
   - CLI: 'Usage/CLI.md'
   - Module: 'Usage/Module.md'
 

@@ -1,5 +1,5 @@
 import types
-from typing import Iterable
+from typing import Union, List, Dict, Iterable
 
 import pytest
 from loguru import logger
@@ -58,7 +58,7 @@ def mock_koza():
 
     def _transform(
         name: str,
-        data: Iterable,
+        data: Union[Dict, List[Dict]],
         transform_code: str,
         map_cache=None,
         filters=None,
@@ -67,7 +67,7 @@ def mock_koza():
     ):
         koza_app = _make_mock_koza_app(
             name,
-            data,
+            iter(data) if isinstance(data, list) else iter([data]),
             transform_code,
             map_cache=map_cache,
             filters=filters,

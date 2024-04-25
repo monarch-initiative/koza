@@ -147,7 +147,7 @@ class CSVReader:
 
         elif fields_len < row_len:
             logger.warning(f"CSV file {self.name} has {row_len - fields_len} extra columns at {self.reader.line_num}")
-            # # Not sure if this would serve a purpose:            
+            # # Not sure if this would serve a purpose:
             # if 'extra_cols' not in self.field_type_map:
             #     # Create a type map for extra columns
             #     self.field_type_map['extra_cols'] = FieldType.str
