@@ -26,7 +26,7 @@ from koza.utils.testing_utils import mock_koza
 INGEST_NAME = "your_ingest_name"
 TRANSFORM_SCRIPT = "./src/{{cookiecutter.__project_slug}}/transform.py"
 
-# Define an example row to test
+# Define an example row to test (as a dictionary)
 @pytest.fixture
 def example_row():
     return {
@@ -55,7 +55,7 @@ def example_list_of_rows():
 @pytest.fixture
 def mock_transform(mock_koza, example_row):
     return mock_koza(
-        SOURCE_NAME,
+        INGEST_NAME,
         example_row,
         TRANSFORM_SCRIPT,
     )
@@ -64,13 +64,14 @@ def mock_transform(mock_koza, example_row):
 @pytest.fixture
 def mock_transform_multiple_rows(mock_koza, example_list_of_rows):
     return mock_koza(
-        SOURCE_NAME,
+        INGEST_NAME,
         example_list_of_rows,
         TRANSFORM_SCRIPT,
     )
 
+# Test the output of the transform
 
-def test_example(mock_transform):
+def test_single_row(mock_transform):
     assert len(mock_transform) == 1
     entity = mock_transform[0]
     assert entity
@@ -83,5 +84,4 @@ def test_multiple_rows(mock_transform_multiple_rows):
     entity_2 = mock_transform_multiple_rows[1]
     assert entity_1.subject == "entity_1"
     assert entity_2.subject == "entity_2"
-
 ```
