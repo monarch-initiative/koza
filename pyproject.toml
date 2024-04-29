@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "koza"
-version = "0.5.5"
+version = "0.0.0"
 description = "Data transformation framework for LinkML data models"
 authors = [
     "The Monarch Initiative <info@monarchinitiative.org>",
@@ -39,8 +39,8 @@ mkdocstrings = {extras = ["python"], version = ">=0.22.0"}
 koza = "koza.main:typer_app"
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core", "poetry-dynamic-version"]
+build-backend = "poetry_dynamic_versioning.backend"
 
 [tool.black]
 line-length = 120
