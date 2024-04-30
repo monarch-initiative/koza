@@ -43,6 +43,11 @@ class KozaApp:
         self.curie_cleaner: CurieCleaner = CurieCleaner()
         self.writer: KozaWriter = self._get_writer()
         self.logger = logger
+        self.outfiles = []
+        if hasattr(self.writer, 'nodes_file_name'):
+            self.outfiles.append(self.writer.nodes_file_name)
+        if hasattr(self.writer, 'edges_file_name'):
+            self.outfiles.append(self.writer.edges_file_name)
 
         if schema:
             # self.validate = True
