@@ -6,6 +6,8 @@ from pathlib import Path
 from typing import Dict, Optional, Union
 import yaml
 
+import duckdb
+
 from koza.app import KozaApp
 from koza.io.reader.csv_reader import CSVReader
 from koza.io.reader.json_reader import JSONReader
@@ -89,6 +91,11 @@ def transform_source(
     )
     koza_app.process_maps()
     koza_app.process_sources()
+    # Confirm min number of rows in output
+
+    
+
+    # Write report to output directory
 
 
 def validate_file(

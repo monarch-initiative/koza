@@ -290,11 +290,26 @@ class SourceConfig:
 @dataclass(config=PYDANTIC_CONFIG)
 class PrimaryFileConfig(SourceConfig):
     """
-    node_properties and edge_properties are used for configuring the KGX writer
+    Primary configuration for transforming a source file
+
+    Parameters
+    ----------
+    node_properties: List[str] (optional) - list of node properties/columns to include
+    edge_properties: List[str] (optional) - list of edge properties/columns to include
+    min_node_count: int (optional) - minimum number of nodes required in output
+    min_edge_count: int (optional) - minimum number of edges required in output
+    node_report_columns: List[str] (optional) - list of node properties to include in the report
+    edge_report_columns: List[str] (optional) - list of edge properties to include in the report
+    depends_on: List[str] (optional) - Optional lookup dictionary for basic mapping
+    on_map_failure: MapErrorEnum (optional) - How to handle key errors in map files
     """
 
     node_properties: Optional[List[str]] = None
     edge_properties: Optional[List[str]] = None
+    min_node_count: Optional[int] = None
+    min_edge_count: Optional[int] = None
+    node_report_columns: Optional[List[str]] = None
+    edge_report_columns: Optional[List[str]] = None
     depends_on: List[str] = field(default_factory=list)
     on_map_failure: MapErrorEnum = MapErrorEnum.warning
 

@@ -16,14 +16,15 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.9"
-linkml = ">=1.6.3"
+duckdb = "*"
+linkml = ">=1.7.8"
+loguru = "*"
+ordered-set = ">=4.1.0"
 pydantic = "^2.4"
 pyyaml = ">=5.0.0"
 requests = "^2.24.0"
-ordered-set = ">=4.1.0"
-typer = ">=0.12.3"
-loguru = "*"
 sssom = ">=0.4"
+typer = ">=0.12.3"
 
 [tool.poetry.dev-dependencies]
 black = "^24.4"
@@ -39,7 +40,7 @@ mkdocstrings = {extras = ["python"], version = ">=0.22.0"}
 koza = "koza.main:typer_app"
 
 [build-system]
-requires = ["poetry-core", "poetry-dynamic-version"]
+requires = ["poetry-core", "poetry-dynamic-versioning"]
 build-backend = "poetry_dynamic_versioning.backend"
 
 [tool.black]
