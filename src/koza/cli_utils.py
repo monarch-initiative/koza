@@ -91,9 +91,14 @@ def transform_source(
     )
     koza_app.process_maps()
     koza_app.process_sources()
-    # Confirm min number of rows in output
 
-    
+    ### QC checks
+
+    outfiles = koza_app.outfiles
+    for outfile in outfiles:
+        print(f"output files: {outfile}")
+
+    # Confirm min number of rows in output
 
     # Write report to output directory
 
