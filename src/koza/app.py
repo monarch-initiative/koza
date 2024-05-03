@@ -45,9 +45,9 @@ class KozaApp:
         self.logger = logger
         self.outfiles = []
         if hasattr(self.writer, 'nodes_file_name'):
-            self.outfiles.append(self.writer.nodes_file_name)
+            self.node_file = self.writer.nodes_file_name
         if hasattr(self.writer, 'edges_file_name'):
-            self.outfiles.append(self.writer.edges_file_name)
+            self.edge_file = self.writer.edges_file_name
 
         if schema:
             # self.validate = True
