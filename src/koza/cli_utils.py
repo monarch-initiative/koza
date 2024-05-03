@@ -100,7 +100,9 @@ def transform_source(
         count = duckdb.sql(f"SELECT count(*) from '{nodes_file}' as count").fetchone()[0]
         # Warn if 70% less than expected, error if less than 70%
         if count < source_config.min_node_count * 0.7:
-            raise ValueError(f"Node count {count} is less than 70% of expected {source_config.min_node_count}")
+            # raise ValueError(f"Node count {count} is less than 70% of expected {source_config.min_node_count}")
+            logger.error(f"Node count {count} is less than 70% of expected {source_config.min_node_count}")
+            raise ValueError
         if source_config.min_node_count * 0.7 <= count < source_config.min_node_count:
             logger.warning(f"Node count {count} is less than expected {source_config.min_node_count}, but more than 70% of expected")
 
