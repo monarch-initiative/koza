@@ -308,8 +308,8 @@ class PrimaryFileConfig(SourceConfig):
     edge_properties: Optional[List[str]] = None
     min_node_count: Optional[int] = None
     min_edge_count: Optional[int] = None
-    node_report_columns: Optional[List[str]] = None
-    edge_report_columns: Optional[List[str]] = None
+    # node_report_columns: Optional[List[str]] = None
+    # edge_report_columns: Optional[List[str]] = None
     depends_on: List[str] = field(default_factory=list)
     on_map_failure: MapErrorEnum = MapErrorEnum.warning
 
