@@ -95,7 +95,7 @@ def transform_source(
     ### QC checks
 
     # Confirm min number of rows in output
-    if hasattr(koza_app, "node_file") and hasattr(source_config, "min_node_count"):
+    if hasattr(koza_app, "node_file") and source_config.min_node_count is not None:
         nodes_file = koza_app.node_file
         count = duckdb.sql(f"SELECT count(*) from '{nodes_file}' as count").fetchone()[0]
         # Warn if 70% less than expected, error if less than 70%
@@ -106,7 +106,7 @@ def transform_source(
                 f"Node count {count} is less than expected {source_config.min_node_count}, but more than 70% of expected"
             )
 
-    if hasattr(koza_app, "edge_file") and hasattr(source_config, "min_edge_count"):
+    if hasattr(koza_app, "edge_file") and source_config.min_edge_count is not None:
         edges_file = koza_app.edge_file
         count = duckdb.sql(f"SELECT count(*) from '{edges_file}' as count").fetchone()[0]
         # Warn if 70% less than expected, error if less than 70%
