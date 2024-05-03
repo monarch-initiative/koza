@@ -100,11 +100,11 @@ def transform_source(
         count = duckdb.sql(f"SELECT count(*) from '{nodes_file}' as count").fetchone()[0]
         # Warn if 70% less than expected, error if less than 70%
         if count < source_config.min_node_count * 0.7:
-            # raise ValueError(f"Node count {count} is less than 70% of expected {source_config.min_node_count}")
-            logger.error(f"Node count {count} is less than 70% of expected {source_config.min_node_count}")
-            raise ValueError
+            raise ValueError(f"Node count {count} is less than 70% of expected {source_config.min_node_count}")
         if source_config.min_node_count * 0.7 <= count < source_config.min_node_count:
-            logger.warning(f"Node count {count} is less than expected {source_config.min_node_count}, but more than 70% of expected")
+            logger.warning(
+                f"Node count {count} is less than expected {source_config.min_node_count}, but more than 70% of expected"
+            )
 
     if hasattr(koza_app, "edge_file") and hasattr(source_config, "min_edge_count"):
         edges_file = koza_app.edge_file
@@ -113,7 +113,9 @@ def transform_source(
         if count < source_config.min_edge_count * 0.7:
             raise ValueError(f"Edge count {count} is less than 70% of expected {source_config.min_edge_count}")
         if source_config.min_edge_count * 0.7 <= count < source_config.min_edge_count:
-            logger.warning(f"Edge count {count} is less than expected {source_config.min_edge_count}, but more than 70% of expected")
+            logger.warning(
+                f"Edge count {count} is less than expected {source_config.min_edge_count}, but more than 70% of expected"
+            )
 
 
 def validate_file(
