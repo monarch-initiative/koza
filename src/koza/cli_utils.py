@@ -3,7 +3,7 @@ Module for managing koza runs through the CLI
 """
 
 from pathlib import Path
-from typing import Dict, Optional, Union
+from typing import Dict, Literal, Optional, Union
 import yaml
 
 import duckdb
@@ -66,7 +66,7 @@ def transform_source(
     with open(source, "r") as source_fh:
         source_config = PrimaryFileConfig(**yaml.load(source_fh, Loader=UniqueIncludeLoader))
 
-    # TODO: Try moving this to source_config class
+    # Set name and transform code if not provided
     if not source_config.name:
         source_config.name = Path(source).stem
 
@@ -94,37 +94,36 @@ def transform_source(
 
     ### QC checks
 
-    # Confirm min number of rows in output
+    def _check_row_count(type: Literal["node", "edge"]):
+        """Check row count for nodes or edges."""
 
-    if hasattr(koza_app, "node_file") and source_config.min_node_count is not None:
-        if row_limit and row_limit < source_config.min_node_count:
-            # do something here?
-            pass
+        if type == "node":
+            outfile = koza_app.node_file
+            min_count = source_config.min_node_count
+        elif type == "edge":
+            outfile = koza_app.edge_file
+            min_count = source_config.min_edge_count
+
+        count = duckdb.sql(f"SELECT count(*) from '{outfile}' as count").fetchone()[0]
+
+        if row_limit and row_limit < min_count:
+            logger.warning(f"Row limit '{row_limit}' is less than expected count of {min_count} {type}s")
+        elif row_limit and row_limit < count:
+            logger.error(f"Actual {type} count {count} exceeds row limit {row_limit}")
         else:
-            nodes_file = koza_app.node_file
-            count = duckdb.sql(f"SELECT count(*) from '{nodes_file}' as count").fetchone()[0]
-            # Warn if 70% less than expected, error if less than 70%
-            if count < source_config.min_node_count * 0.7:
-                raise ValueError(f"Node count {count} is less than 70% of expected {source_config.min_node_count}")
-            if source_config.min_node_count * 0.7 <= count < source_config.min_node_count:
+            if count < min_count * 0.7:
+                raise ValueError(f"Actual {type} count {count} is less than 70% of expected {min_count} {type}s")
+            if min_count * 0.7 <= count < min_count:
                 logger.warning(
-                    f"Node count {count} is less than expected {source_config.min_node_count}, but more than 70% of expected"
+                    f"Actual {type} count {count} is less than expected {min_count}, but more than 70% of expected"
                 )
+
+    # Confirm min number of rows in output
+    if hasattr(koza_app, "node_file") and source_config.min_node_count is not None:
+        _check_row_count("node")
 
     if hasattr(koza_app, "edge_file") and source_config.min_edge_count is not None:
-        if row_limit and row_limit < source_config.min_edge_count:
-            # do something here?
-            pass
-        else:
-            edges_file = koza_app.edge_file
-            count = duckdb.sql(f"SELECT count(*) from '{edges_file}' as count").fetchone()[0]
-            # Warn if 70% less than expected, error if less than 70%
-            if count < source_config.min_edge_count * 0.7:
-                raise ValueError(f"Edge count {count} is less than 70% of expected {source_config.min_edge_count}")
-            if source_config.min_edge_count * 0.7 <= count < source_config.min_edge_count:
-                logger.warning(
-                    f"Edge count {count} is less than expected {source_config.min_edge_count}, but more than 70% of expected"
-                )
+        _check_row_count("edge")
 
 
 def validate_file(
