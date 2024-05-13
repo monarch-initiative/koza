@@ -8,25 +8,25 @@
       
       
       
-        <link rel="canonical" href="https://koza.monarchinitiative.org/Usage/ingests/">
+        <link rel="canonical" href="https://koza.monarchinitiative.org/Ingests/mapping/">
       
       
-        <link rel="prev" href="../..">
+        <link rel="prev" href="../source_config/">
       
       
-        <link rel="next" href="../CLI/">
+        <link rel="next" href="../transform/">
       
       
       <link rel="icon" href="../../images/favicon.ico">
-      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.15">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.21">
     
     
       
-        <title>Ingests - Koza Documentation</title>
+        <title>Mapping - Koza Documentation</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.7e359304.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.66ac8b77.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#ingests" class="md-skip">
+        <a href="#sssom-mapping" class="md-skip">
           Skip to content
         </a>
       
@@ -111,7 +111,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Ingests
+              Mapping
             
           </span>
         </div>
@@ -191,7 +191,7 @@
         <a href="https://github.com/monarch-initiative/koza" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
   </div>
   <div class="md-source__repository">
     monarch-initiative/koza
@@ -230,16 +230,17 @@
     
   
   
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="./" class="md-tabs__link">
-        
-  
     
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
   
   Ingests
 
-      </a>
-    </li>
+        </a>
+      </li>
+    
   
 
       
@@ -248,7 +249,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../CLI/" class="md-tabs__link">
+      <a href="../../Usage/CLI/" class="md-tabs__link">
         
   
     
@@ -265,12 +266,12 @@
   
   
     <li class="md-tabs__item">
-      <a href="../API/" class="md-tabs__link">
+      <a href="../../Usage/Module/" class="md-tabs__link">
         
   
     
   
-  API
+  Module
 
       </a>
     </li>
@@ -317,7 +318,7 @@
       <a href="https://github.com/monarch-initiative/koza" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
   </div>
   <div class="md-source__repository">
     monarch-initiative/koza
@@ -355,19 +356,102 @@
   
   
   
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Ingests
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Ingests
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Configuring an Ingest
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../source_config/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Source Config
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
     <li class="md-nav__item md-nav__item--active">
       
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
-      
-        
       
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
           
   
   <span class="md-ellipsis">
-    Ingests
+    Mapping
   </span>
   
 
@@ -378,7 +462,7 @@
         
   
   <span class="md-ellipsis">
-    Ingests
+    Mapping
   </span>
   
 
@@ -390,8 +474,6 @@
   
   
   
-    
-  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -400,40 +482,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-source-config-file" class="md-nav__link">
-    <span class="md-ellipsis">
-      1. Source Config File
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="1. Source Config File">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#composing-configuration-from-multiple-yaml-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      Composing Configuration from Multiple Yaml Files
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#2-mapping-and-additional-data" class="md-nav__link">
-    <span class="md-ellipsis">
-      2. Mapping and Additional Data
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="2. Mapping and Additional Data">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
   <a href="#sssom-mapping" class="md-nav__link">
     <span class="md-ellipsis">
       SSSOM Mapping
@@ -441,25 +489,11 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#manual-mapping-additional-data" class="md-nav__link">
     <span class="md-ellipsis">
       Manual Mapping / Additional Data
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#3-transform-code" class="md-nav__link">
-    <span class="md-ellipsis">
-      3. Transform Code
     </span>
   </a>
   
@@ -472,6 +506,56 @@
     </li>
   
 
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../transform/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Transform Code
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../testing/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Testing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
     
       
       
@@ -480,7 +564,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../CLI/" class="md-nav__link">
+      <a href="../../Usage/CLI/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -500,11 +584,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../API/" class="md-nav__link">
+      <a href="../../Usage/Module/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    API
+    Module
   </span>
   
 
@@ -530,8 +614,6 @@
   
   
   
-    
-  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -540,40 +622,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-source-config-file" class="md-nav__link">
-    <span class="md-ellipsis">
-      1. Source Config File
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="1. Source Config File">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#composing-configuration-from-multiple-yaml-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      Composing Configuration from Multiple Yaml Files
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#2-mapping-and-additional-data" class="md-nav__link">
-    <span class="md-ellipsis">
-      2. Mapping and Additional Data
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="2. Mapping and Additional Data">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
   <a href="#sssom-mapping" class="md-nav__link">
     <span class="md-ellipsis">
       SSSOM Mapping
@@ -581,25 +629,11 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#manual-mapping-additional-data" class="md-nav__link">
     <span class="md-ellipsis">
       Manual Mapping / Additional Data
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#3-transform-code" class="md-nav__link">
-    <span class="md-ellipsis">
-      3. Transform Code
     </span>
   </a>
   
@@ -623,158 +657,9 @@
   
 
 
-<h1 id="ingests">Ingests</h1>
-<p><sub>
-(For CLI usage, see the <a href="../CLI/">CLI commands</a> page.)
-</sub>  </p>
-<div class="admonition tip">
-<p class="admonition-title">Ingest Overview</p>
-<p>Koza is designed to process and transform existing data into a target csv/json/jsonl format.  </p>
-<p>This process is internally known as an <strong>ingest</strong>. Ingests are defined by:  </p>
-<ul>
-<li><strong>Source config yaml</strong>: Ingest configuration, including:<ul>
-<li>metadata, formats, required columns, any SSSOM files, etc. </li>
-</ul>
-</li>
-<li><strong>Map config yaml</strong>: (Optional) configures creation of mapping dictionary  </li>
-<li><strong>Transform code</strong>: a Python script, with specific transform instructions </li>
-</ul>
-</div>
-<hr />
-<p>Let's say you have some data, and you want to save certain bits of that data, <br />
-with maybe some changes or translations along the way.<br />
-Creating this ingest will require three things: </p>
-<div class="admonition list">
-<h2 id="1-source-config-file">1. Source Config File</h2>
-<p>This YAML file sets properties for the ingest of a single file type from a within a Source.</p>
-<div class="admonition tip">
-<p class="admonition-title">Paths are relative to the directory from which you execute Koza.</p>
-</div>
-<table>
-<thead>
-<tr>
-<th><strong>Required properties</strong></th>
-<th></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>name</code></td>
-<td>Name of the source</td>
-</tr>
-<tr>
-<td><code>files</code></td>
-<td>List of files to process</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td><strong>Optional properties</strong></td>
-<td></td>
-</tr>
-<tr>
-<td><code>file_archive</code></td>
-<td>Path to a file archive containing the file(s) to process <br/> Supported archive formats: zip, gzip</td>
-</tr>
-<tr>
-<td><code>format</code></td>
-<td>Format of the data file(s) (CSV or JSON)</td>
-</tr>
-<tr>
-<td><code>sssom_config</code></td>
-<td>Configures usage of SSSOM mapping files</td>
-</tr>
-<tr>
-<td><code>depends_on</code></td>
-<td>List of map config files to use</td>
-</tr>
-<tr>
-<td><code>metadata</code></td>
-<td>Metadata for the source</td>
-</tr>
-<tr>
-<td><code>transform_code</code></td>
-<td>Path to a python file to transform the data</td>
-</tr>
-<tr>
-<td><code>transform_mode</code></td>
-<td>How to process the transform file</td>
-</tr>
-<tr>
-<td><code>global_table</code></td>
-<td>Path to a global translation table file</td>
-</tr>
-<tr>
-<td><code>local_table</code></td>
-<td>Path to a local translation table file</td>
-</tr>
-<tr>
-<td><code>filters</code></td>
-<td>List of filters to apply</td>
-</tr>
-<tr>
-<td><code>json_path</code></td>
-<td>Path within JSON object containing data to process</td>
-</tr>
-<tr>
-<td><code>required_properties</code></td>
-<td>List of properties that must be present in output (JSON only)</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td><strong>Optional CSV Specific Properties</strong></td>
-<td></td>
-</tr>
-<tr>
-<td><code>columns</code></td>
-<td>List of columns to include in output (CSV only)</td>
-</tr>
-<tr>
-<td><code>delimiter</code></td>
-<td>Delimiter for csv files</td>
-</tr>
-<tr>
-<td><code>header</code></td>
-<td>Header row index for csv files</td>
-</tr>
-<tr>
-<td><code>header_delimiter</code></td>
-<td>Delimiter for header in csv files</td>
-</tr>
-<tr>
-<td><code>header_prefix</code></td>
-<td>Prefix for header in csv files</td>
-</tr>
-<tr>
-<td><code>comment_char</code></td>
-<td>Comment character for csv files</td>
-</tr>
-<tr>
-<td><code>skip_blank_lines</code></td>
-<td>Skip blank lines in csv files</td>
-</tr>
-</tbody>
-</table>
-<h3 id="composing-configuration-from-multiple-yaml-files">Composing Configuration from Multiple Yaml Files</h3>
-<p>The Koza yaml loader supports importing/including other yaml files with an <code>!include</code> tag.</p>
-<p>For example, if you had a file named <code>standard-columns.yaml</code>:
-<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;column_1&#39;</span>
-<span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;column_2&#39;</span>
-<span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;column_3&#39;</span>
-<span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;column_4&#39;</span><span class="w"> </span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">&#39;int&#39;</span>
-</code></pre></div></p>
-<p>Then in any ingests you wish to use these columns, you can simply <code>!include</code> them:
-<div class="highlight"><pre><span></span><code><span class="nt">columns</span><span class="p">:</span><span class="w"> </span><span class="kt">!include</span><span class="w"> </span><span class="s">&#39;./path/to/standard-columns.yaml&#39;</span>
-</code></pre></div></p>
-</div>
-<div class="admonition list">
-<h2 id="2-mapping-and-additional-data">2. Mapping and Additional Data</h2>
-<p>Mapping with Koza can be done in two ways:  </p>
+  <h1>Mapping</h1>
+
+<p>Mapping with Koza is optional, but can be done in two ways:  </p>
 <ul>
 <li>Automated mapping with SSSOM files  </li>
 <li>Manual mapping with a map config yaml</li>
@@ -819,84 +704,8 @@ For example, the following map config yaml maps values from the <code>STRING</co
 <span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;NCBI</span><span class="nv"> </span><span class="s">taxid&#39;</span>
 </code></pre></div>
 <p>The mapping dict will be available in your transform script from the <code>koza_app</code> object (see the Transform Code section below).</p>
-</div>
-<div class="admonition list">
-<h2 id="3-transform-code">3. Transform Code</h2>
-<p>This Python script is where you'll define the specific steps of your data transformation. 
-Koza will load this script and execute it for each row of data in your source file,<br />
-applying any filters and mapping as defined in your source config yaml,<br />
-and outputting the transformed data to the target csv/json/jsonl file.</p>
-<p>When Koza is called, either by command-line or as a library using <code>transform_source()</code>,<br />
-it creates a <code>KozaApp</code> object for the specified ingest.<br />
-This KozaApp will be your entry point to Koza:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">koza.cli_runner</span> <span class="kn">import</span> <span class="n">get_koza_app</span>
-<span class="n">koza_app</span> <span class="o">=</span> <span class="n">get_koza_app</span><span class="p">(</span><span class="s1">&#39;your-source-name&#39;</span><span class="p">)</span>
-</code></pre></div>
-<p>The KozaApp object has the following methods:</p>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>get_row()</code></td>
-<td>Returns the next row of data from the source file</td>
-</tr>
-<tr>
-<td><code>get_map(map_name)</code></td>
-<td>Returns the mapping dict for the specified map</td>
-</tr>
-<tr>
-<td><code>get_global_table()</code></td>
-<td>Returns the global translation table</td>
-</tr>
-<tr>
-<td><code>get_local_table()</code></td>
-<td>Returns the local translation table</td>
-</tr>
-</tbody>
-</table>
-<details class="tldr">
-<summary>Example Python Transform Script</summary>
-<div class="highlight"><pre><span></span><code><span class="c1"># other imports, eg. uuid, pydantic, etc.</span>
-<span class="kn">import</span> <span class="nn">uuid</span>
-<span class="kn">from</span> <span class="nn">biolink.pydanticmodel_v2</span> <span class="kn">import</span> <span class="n">Gene</span><span class="p">,</span> <span class="n">PairwiseGeneToGeneInteraction</span>
-
-<span class="c1"># Koza imports</span>
-<span class="kn">from</span> <span class="nn">koza.cli_runner</span> <span class="kn">import</span> <span class="n">get_koza_app</span>
-
-<span class="c1"># This is the name of the ingest you want to run</span>
-<span class="n">source_name</span> <span class="o">=</span> <span class="s1">&#39;map-protein-links-detailed&#39;</span>
-<span class="n">koza_app</span> <span class="o">=</span> <span class="n">get_koza_app</span><span class="p">(</span><span class="n">source_name</span><span class="p">)</span>
-
-<span class="c1"># If your ingest depends_on a mapping file, you can access it like this:</span>
-<span class="n">map_name</span> <span class="o">=</span> <span class="s1">&#39;entrez-2-string&#39;</span>
-<span class="n">koza_map</span> <span class="o">=</span> <span class="n">koza_app</span><span class="o">.</span><span class="n">get_map</span><span class="p">(</span><span class="n">map_name</span><span class="p">)</span>
-
-<span class="c1"># This grabs the first/next row from the source data</span>
-<span class="c1"># Koza will reload this script and return the next row until it reaches EOF or row-limit</span>
-<span class="n">row</span> <span class="o">=</span> <span class="n">koza_app</span><span class="o">.</span><span class="n">get_row</span><span class="p">()</span>
-
-<span class="c1"># Now you can lay out your actual transformations, and define your output:</span>
-
-<span class="n">gene_a</span> <span class="o">=</span> <span class="n">Gene</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s1">&#39;NCBIGene:&#39;</span> <span class="o">+</span> <span class="n">koza_map</span><span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;protein1&#39;</span><span class="p">]][</span><span class="s1">&#39;entrez&#39;</span><span class="p">])</span>
-<span class="n">gene_b</span> <span class="o">=</span> <span class="n">Gene</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s1">&#39;NCBIGene:&#39;</span> <span class="o">+</span> <span class="n">koza_map</span><span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;protein2&#39;</span><span class="p">]][</span><span class="s1">&#39;entrez&#39;</span><span class="p">])</span>
-
-<span class="n">pairwise_gene_to_gene_interaction</span> <span class="o">=</span> <span class="n">PairwiseGeneToGeneInteraction</span><span class="p">(</span>
-    <span class="nb">id</span><span class="o">=</span><span class="s2">&quot;uuid:&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid1</span><span class="p">()),</span>
-    <span class="n">subject</span><span class="o">=</span><span class="n">gene_a</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
-    <span class="nb">object</span><span class="o">=</span><span class="n">gene_b</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
-    <span class="n">predicate</span><span class="o">=</span><span class="s2">&quot;biolink:interacts_with&quot;</span>
-<span class="p">)</span>
-
-<span class="c1"># Finally, write the transformed row to the target file</span>
-<span class="n">koza_app</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">gene_a</span><span class="p">,</span> <span class="n">gene_b</span><span class="p">,</span> <span class="n">pairwise_gene_to_gene_interaction</span><span class="p">)</span>
-</code></pre></div>
-</details>
-</div>
+<hr />
+<p><strong>Next Steps: <a href="../transform/">Transform Code</a></strong></p>
 
 
 
@@ -943,7 +752,7 @@ This KozaApp will be your entry point to Koza:</p>
       
     
     <a href="https://monarchinitiative.org" target="_blank" rel="noopener" title="monarchinitiative.org" class="md-social__link">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M575.8 255.5c0 18-15 32.1-32 32.1h-32l.7 160.2c0 2.7-.2 5.4-.5 8.1V472c0 22.1-17.9 40-40 40h-16c-1.1 0-2.2 0-3.3-.1-1.4.1-2.8.1-4.2.1H392c-22.1 0-40-17.9-40-40v-88c0-17.7-14.3-32-32-32h-64c-17.7 0-32 14.3-32 32v88c0 22.1-17.9 40-40 40h-55.9c-1.5 0-3-.1-4.5-.2-1.2.1-2.4.2-3.6.2h-16c-22.1 0-40-17.9-40-40V360c0-.9 0-1.9.1-2.8v-69.6H32c-18 0-32-14-32-32.1 0-9 3-17 10-24L266.4 8c7-7 15-8 22-8s15 2 21 7l255.4 224.5c8 7 12 15 11 24z"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M575.8 255.5c0 18-15 32.1-32 32.1h-32l.7 160.2c0 2.7-.2 5.4-.5 8.1V472c0 22.1-17.9 40-40 40h-16c-1.1 0-2.2 0-3.3-.1-1.4.1-2.8.1-4.2.1H392c-22.1 0-40-17.9-40-40v-88c0-17.7-14.3-32-32-32h-64c-17.7 0-32 14.3-32 32v88c0 22.1-17.9 40-40 40h-55.9c-1.5 0-3-.1-4.5-.2-1.2.1-2.4.2-3.6.2h-16c-22.1 0-40-17.9-40-40V360c0-.9 0-1.9.1-2.8v-69.6H32c-18 0-32-14-32-32.1 0-9 3-17 10-24L266.4 8c7-7 15-8 22-8s15 2 21 7l255.4 224.5c8 7 12 15 11 24z"/></svg>
     </a>
   
     
@@ -954,7 +763,7 @@ This KozaApp will be your entry point to Koza:</p>
       
     
     <a href="https://github.com/monarch-initiative/" target="_blank" rel="noopener" title="github.com" class="md-social__link">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M186.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1zM480 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2zm-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3zm-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1z"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M186.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1zM480 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2zm-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3zm-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1z"/></svg>
     </a>
   
 </div>
@@ -972,7 +781,7 @@ This KozaApp will be your entry point to Koza:</p>
     <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.copy", "navigation.expand", "navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky"], "search": "../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.bd41221c.min.js"></script>
+      <script src="../../assets/javascripts/bundle.a7c05c9e.min.js"></script>
       
     
   </body>

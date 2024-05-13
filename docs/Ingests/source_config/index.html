@@ -8,13 +8,13 @@
       
       
       
-        <link rel="canonical" href="https://koza.monarchinitiative.org/Usage/CLI/">
+        <link rel="canonical" href="https://koza.monarchinitiative.org/Ingests/source_config/">
       
       
-        <link rel="prev" href="../../Ingests/testing/">
+        <link rel="prev" href="../">
       
       
-        <link rel="next" href="../Module/">
+        <link rel="next" href="../mapping/">
       
       
       <link rel="icon" href="../../images/favicon.ico">
@@ -22,7 +22,7 @@
     
     
       
-        <title>CLI - Koza Documentation</title>
+        <title>Source Config - Koza Documentation</title>
       
     
     
@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#koza" class="md-skip">
+        <a href="#source-configuration-properties" class="md-skip">
           Skip to content
         </a>
       
@@ -111,7 +111,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              CLI
+              Source Config
             
           </span>
         </div>
@@ -227,11 +227,13 @@
         
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../Ingests/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
           
   
   Ingests
@@ -245,11 +247,9 @@
         
   
   
-    
   
-  
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="./" class="md-tabs__link">
+    <li class="md-tabs__item">
+      <a href="../../Usage/CLI/" class="md-tabs__link">
         
   
     
@@ -266,7 +266,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../Module/" class="md-tabs__link">
+      <a href="../../Usage/Module/" class="md-tabs__link">
         
   
     
@@ -352,25 +352,28 @@
       
   
   
+    
   
   
+  
     
     
     
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
       
         
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
         
           
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
-        
-          
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
             
   
   <span class="md-ellipsis">
@@ -381,7 +384,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             Ingests
@@ -395,7 +398,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../Ingests/" class="md-nav__link">
+      <a href="../" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -413,10 +416,28 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../Ingests/source_config/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Source Config
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -425,6 +446,51 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#source-configuration-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      Source Configuration Properties
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metadata-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      Metadata Properties
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#composing-configuration-from-multiple-yaml-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Composing Configuration from Multiple Yaml Files
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -437,7 +503,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../Ingests/mapping/" class="md-nav__link">
+      <a href="../mapping/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -458,7 +524,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../Ingests/transform/" class="md-nav__link">
+      <a href="../transform/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -479,7 +545,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../Ingests/testing/" class="md-nav__link">
+      <a href="../testing/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -504,30 +570,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  <span class="md-ellipsis">
-    CLI
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../Usage/CLI/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -536,44 +582,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#koza-transform" class="md-nav__link">
-    <span class="md-ellipsis">
-      koza transform
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#koza-validate" class="md-nav__link">
-    <span class="md-ellipsis">
-      koza validate
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -585,7 +593,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../Module/" class="md-nav__link">
+      <a href="../../Usage/Module/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -615,8 +623,6 @@
   
   
   
-    
-  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -625,18 +631,27 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#koza-transform" class="md-nav__link">
+  <a href="#source-configuration-properties" class="md-nav__link">
     <span class="md-ellipsis">
-      koza transform
+      Source Configuration Properties
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#koza-validate" class="md-nav__link">
+  <a href="#metadata-properties" class="md-nav__link">
     <span class="md-ellipsis">
-      koza validate
+      Metadata Properties
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#composing-configuration-from-multiple-yaml-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Composing Configuration from Multiple Yaml Files
     </span>
   </a>
   
@@ -660,54 +675,199 @@
   
 
 
-<h1 id="koza"><code>koza</code></h1>
-<p><strong>Usage</strong>:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>COMMAND<span class="w"> </span><span class="o">[</span>ARGS<span class="o">]</span>...
+  <h1>Source Config</h1>
+
+<p>This YAML file sets properties for the ingest of a single file type from a within a Source.</p>
+<div class="admonition tip">
+<p class="admonition-title">Paths are relative to the directory from which you execute Koza.</p>
+</div>
+<h2 id="source-configuration-properties">Source Configuration Properties</h2>
+<table>
+<thead>
+<tr>
+<th><strong>Required properties</strong></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code></td>
+<td>Name of the data ingest, as <code>&lt;data source&gt;_&lt;type_of_ingest&gt;</code>, <br/>ex. <code>hpoa_gene_to_disease</code></td>
+</tr>
+<tr>
+<td><code>files</code></td>
+<td>List of files to process</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>node_properties</code></td>
+<td>List of node properties to include in output</td>
+</tr>
+<tr>
+<td><code>edge_properties</code></td>
+<td>List of edge properties to include in output</td>
+</tr>
+<tr>
+<td><strong>Note</strong></td>
+<td>Either node or edge properties (or both) must be defined in the primary config yaml for your transform</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>Optional properties</strong></td>
+<td></td>
+</tr>
+<tr>
+<td><code>file_archive</code></td>
+<td>Path to a file archive containing the file(s) to process <br/> Supported archive formats: zip, gzip</td>
+</tr>
+<tr>
+<td><code>format</code></td>
+<td>Format of the data file(s) (CSV or JSON)</td>
+</tr>
+<tr>
+<td><code>sssom_config</code></td>
+<td>Configures usage of SSSOM mapping files</td>
+</tr>
+<tr>
+<td><code>depends_on</code></td>
+<td>List of map config files to use</td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td>Metadata for the source, either a list of properties,<br/>or path to a <code>metadata.yaml</code></td>
+</tr>
+<tr>
+<td><code>transform_code</code></td>
+<td>Path to a python file to transform the data</td>
+</tr>
+<tr>
+<td><code>transform_mode</code></td>
+<td>How to process the transform file</td>
+</tr>
+<tr>
+<td><code>global_table</code></td>
+<td>Path to a global translation table file</td>
+</tr>
+<tr>
+<td><code>local_table</code></td>
+<td>Path to a local translation table file</td>
+</tr>
+<tr>
+<td><code>field_type_map</code></td>
+<td>Dict of field names and their type (using the FieldType enum)</td>
+</tr>
+<tr>
+<td><code>filters</code></td>
+<td>List of filters to apply</td>
+</tr>
+<tr>
+<td><code>json_path</code></td>
+<td>Path within JSON object containing data to process</td>
+</tr>
+<tr>
+<td><code>required_properties</code></td>
+<td>List of properties that must be present in output (JSON only)</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>CSV-Specific Properties</strong></td>
+<td></td>
+</tr>
+<tr>
+<td><code>delimiter</code></td>
+<td>Delimiter for csv files (<strong>Required for CSV format</strong>)</td>
+</tr>
+<tr>
+<td><strong>Optional CSV Properties</strong></td>
+<td></td>
+</tr>
+<tr>
+<td><code>columns</code></td>
+<td>List of columns to include in output (CSV only)</td>
+</tr>
+<tr>
+<td><code>header</code></td>
+<td>Header row index for csv files</td>
+</tr>
+<tr>
+<td><code>header_delimiter</code></td>
+<td>Delimiter for header in csv files</td>
+</tr>
+<tr>
+<td><code>header_prefix</code></td>
+<td>Prefix for header in csv files</td>
+</tr>
+<tr>
+<td><code>comment_char</code></td>
+<td>Comment character for csv files</td>
+</tr>
+<tr>
+<td><code>skip_blank_lines</code></td>
+<td>Skip blank lines in csv files</td>
+</tr>
+</tbody>
+</table>
+<h2 id="metadata-properties">Metadata Properties</h2>
+<p>Metadata is optional, and can be defined as a list of properties and values, or as a path to a <code>metadata.yaml</code> file,
+for example - <code>metadata: "./path/to/metadata.yaml"</code>.<br />
+Remember that the path is relative to the directory from which you execute Koza.</p>
+<table>
+<thead>
+<tr>
+<th><strong>Metadata Properties</strong></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>name</td>
+<td>Name of data source, ex. "FlyBase"</td>
+</tr>
+<tr>
+<td>description</td>
+<td>Description of data/ingest</td>
+</tr>
+<tr>
+<td>ingest_title</td>
+<td>*Title of source of data, map to biolink name</td>
+</tr>
+<tr>
+<td>ingest_url</td>
+<td>*URL to source of data, Maps to biolink iri</td>
+</tr>
+<tr>
+<td>provided_by</td>
+<td><code>&lt;data source&gt;_&lt;type_of_ingest&gt;</code>, ex. <code>hpoa_gene_to_disease</code> (see config propery "name")</td>
+</tr>
+<tr>
+<td>rights</td>
+<td>Link to license information for the data source</td>
+</tr>
+</tbody>
+</table>
+<p><strong>*Note</strong>: For more information on <code>ingest_title</code> and <code>ingest_url</code>, see the <a href="https://biolink.github.io/information-resource-registry/infores_catalog.yaml">infores catalog</a></p>
+<h2 id="composing-configuration-from-multiple-yaml-files">Composing Configuration from Multiple Yaml Files</h2>
+<p>Koza's custom YAML Loader supports importing/including other yaml files with an <code>!include</code> tag.</p>
+<p>For example, if you had a file named <code>standard-columns.yaml</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;column_1&quot;</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;column_2&quot;</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;column_3&quot;</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;column_4&quot;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">&quot;int&quot;</span>
 </code></pre></div>
-<p><strong>Options</strong>:</p>
-<ul>
-<li><code>--version</code></li>
-<li><code>--install-completion</code>: Install completion for the current shell.</li>
-<li><code>--show-completion</code>: Show completion for the current shell, to copy it or customize the installation.</li>
-<li><code>--help</code>: Show this message and exit.</li>
-</ul>
-<p><strong>Commands</strong>:</p>
-<ul>
-<li><code>transform</code>: Transform a source file</li>
-<li><code>validate</code>: Validate a source file</li>
-</ul>
-<h2 id="koza-transform"><code>koza transform</code></h2>
-<p>Transform a source file</p>
-<p><strong>Usage</strong>:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>transform<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+<p>Then in any ingests you wish to use these columns, you can simply <code>!include</code> them:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">columns</span><span class="p">:</span><span class="w"> </span><span class="kt">!include</span><span class="w"> </span><span class="s">&quot;./path/to/standard-columns.yaml&quot;</span>
 </code></pre></div>
-<p><strong>Options</strong>:</p>
-<ul>
-<li><code>--source TEXT</code>: Source metadata file  [required]</li>
-<li><code>--output-dir TEXT</code>: Path to output directory  [default: ./output]</li>
-<li><code>--output-format [tsv|jsonl|kgx]</code>: Output format  [default: tsv]</li>
-<li><code>--global-table TEXT</code>: Path to global translation table</li>
-<li><code>--local-table TEXT</code>: Path to local translation table</li>
-<li><code>--schema TEXT</code>: Path to schema YAML for validation in writer</li>
-<li><code>--row-limit INTEGER</code>: Number of rows to process (if skipped, processes entire source file)</li>
-<li><code>--debug / --quiet</code></li>
-<li><code>--log / --no-log</code>: Optional log mode - set true to save output to ./logs  [default: no-log]</li>
-<li><code>--help</code>: Show this message and exit.</li>
-</ul>
-<h2 id="koza-validate"><code>koza validate</code></h2>
-<p>Validate a source file</p>
-<p><strong>Usage</strong>:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>validate<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
-</code></pre></div>
-<p><strong>Options</strong>:</p>
-<ul>
-<li><code>--file TEXT</code>: Path or url to the source file  [required]</li>
-<li><code>--format [csv|jsonl|json|yaml]</code>: [default: csv]</li>
-<li><code>--delimiter TEXT</code>: [default: ,]</li>
-<li><code>--header-delimiter TEXT</code></li>
-<li><code>--skip-blank-lines / --no-skip-blank-lines</code>: [default: skip-blank-lines]</li>
-<li><code>--help</code>: Show this message and exit.</li>
-</ul>
+<hr />
+<p><strong>Next Steps: <a href="../mapping/">Mapping and Additional Data</a></strong></p>
 
 
 

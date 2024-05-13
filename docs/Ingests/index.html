@@ -8,28 +8,28 @@
       
       
       
-        <link rel="canonical" href="https://koza.monarchinitiative.org/Usage/CLI/">
+        <link rel="canonical" href="https://koza.monarchinitiative.org/Ingests/">
       
       
-        <link rel="prev" href="../../Ingests/testing/">
+        <link rel="prev" href="..">
       
       
-        <link rel="next" href="../Module/">
+        <link rel="next" href="source_config/">
       
       
-      <link rel="icon" href="../../images/favicon.ico">
+      <link rel="icon" href="../images/favicon.ico">
       <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.21">
     
     
       
-        <title>CLI - Koza Documentation</title>
+        <title>Configuring an Ingest - Koza Documentation</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.66ac8b77.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.66ac8b77.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
       
       
 
@@ -48,9 +48,9 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -75,11 +75,6 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
-        
-        <a href="#koza" class="md-skip">
-          Skip to content
-        </a>
-      
     </div>
     <div data-md-component="announce">
       
@@ -92,9 +87,9 @@
 
 <header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="Koza Documentation" class="md-header__button md-logo" aria-label="Koza Documentation" data-md-component="logo">
+    <a href=".." title="Koza Documentation" class="md-header__button md-logo" aria-label="Koza Documentation" data-md-component="logo">
       
-  <img src="../../img/pupa.png" alt="logo">
+  <img src="../img/pupa.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -111,7 +106,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              CLI
+              Configuring an Ingest
             
           </span>
         </div>
@@ -212,7 +207,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../.." class="md-tabs__link">
+      <a href=".." class="md-tabs__link">
         
   
     
@@ -227,11 +222,13 @@
         
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../Ingests/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
           
   
   Ingests
@@ -245,11 +242,9 @@
         
   
   
-    
   
-  
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="./" class="md-tabs__link">
+    <li class="md-tabs__item">
+      <a href="../Usage/CLI/" class="md-tabs__link">
         
   
     
@@ -266,7 +261,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../Module/" class="md-tabs__link">
+      <a href="../Usage/Module/" class="md-tabs__link">
         
   
     
@@ -306,9 +301,9 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="Koza Documentation" class="md-nav__button md-logo" aria-label="Koza Documentation" data-md-component="logo">
+    <a href=".." title="Koza Documentation" class="md-nav__button md-logo" aria-label="Koza Documentation" data-md-component="logo">
       
-  <img src="../../img/pupa.png" alt="logo">
+  <img src="../img/pupa.png" alt="logo">
 
     </a>
     Koza Documentation
@@ -335,7 +330,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href=".." class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -352,25 +347,28 @@
       
   
   
+    
   
   
+  
     
     
     
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
       
         
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
         
           
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
-        
-          
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
             
   
   <span class="md-ellipsis">
@@ -381,7 +379,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             Ingests
@@ -392,10 +390,17 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../Ingests/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -404,6 +409,7 @@
   
 
       </a>
+      
     </li>
   
 
@@ -416,7 +422,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../Ingests/source_config/" class="md-nav__link">
+      <a href="source_config/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -437,7 +443,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../Ingests/mapping/" class="md-nav__link">
+      <a href="mapping/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -458,7 +464,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../Ingests/transform/" class="md-nav__link">
+      <a href="transform/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -479,7 +485,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../Ingests/testing/" class="md-nav__link">
+      <a href="testing/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -504,30 +510,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  <span class="md-ellipsis">
-    CLI
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../Usage/CLI/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -536,44 +522,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#koza-transform" class="md-nav__link">
-    <span class="md-ellipsis">
-      koza transform
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#koza-validate" class="md-nav__link">
-    <span class="md-ellipsis">
-      koza validate
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -585,7 +533,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../Module/" class="md-nav__link">
+      <a href="../Usage/Module/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -615,34 +563,6 @@
   
   
   
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#koza-transform" class="md-nav__link">
-    <span class="md-ellipsis">
-      koza transform
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#koza-validate" class="md-nav__link">
-    <span class="md-ellipsis">
-      koza validate
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
   
 </nav>
                   </div>
@@ -660,54 +580,21 @@
   
 
 
-<h1 id="koza"><code>koza</code></h1>
-<p><strong>Usage</strong>:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>COMMAND<span class="w"> </span><span class="o">[</span>ARGS<span class="o">]</span>...
-</code></pre></div>
-<p><strong>Options</strong>:</p>
-<ul>
-<li><code>--version</code></li>
-<li><code>--install-completion</code>: Install completion for the current shell.</li>
-<li><code>--show-completion</code>: Show completion for the current shell, to copy it or customize the installation.</li>
-<li><code>--help</code>: Show this message and exit.</li>
+  <h1>Configuring an Ingest</h1>
+
+<p><sub>
+(For CLI usage, see the <a href="../Usage/CLI/">CLI commands</a> page.)
+</sub>  </p>
+<p>Koza is designed to process and transform existing data into a target csv/json/jsonl format.  </p>
+<p>This process is internally known as an <strong>ingest</strong>. Ingests are defined by:  </p>
+<ol>
+<li><a href="source_config/">Source config yaml</a>: Ingest configuration, including:<ul>
+<li>metadata, formats, required columns, any SSSOM files, etc. </li>
 </ul>
-<p><strong>Commands</strong>:</p>
-<ul>
-<li><code>transform</code>: Transform a source file</li>
-<li><code>validate</code>: Validate a source file</li>
-</ul>
-<h2 id="koza-transform"><code>koza transform</code></h2>
-<p>Transform a source file</p>
-<p><strong>Usage</strong>:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>transform<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
-</code></pre></div>
-<p><strong>Options</strong>:</p>
-<ul>
-<li><code>--source TEXT</code>: Source metadata file  [required]</li>
-<li><code>--output-dir TEXT</code>: Path to output directory  [default: ./output]</li>
-<li><code>--output-format [tsv|jsonl|kgx]</code>: Output format  [default: tsv]</li>
-<li><code>--global-table TEXT</code>: Path to global translation table</li>
-<li><code>--local-table TEXT</code>: Path to local translation table</li>
-<li><code>--schema TEXT</code>: Path to schema YAML for validation in writer</li>
-<li><code>--row-limit INTEGER</code>: Number of rows to process (if skipped, processes entire source file)</li>
-<li><code>--debug / --quiet</code></li>
-<li><code>--log / --no-log</code>: Optional log mode - set true to save output to ./logs  [default: no-log]</li>
-<li><code>--help</code>: Show this message and exit.</li>
-</ul>
-<h2 id="koza-validate"><code>koza validate</code></h2>
-<p>Validate a source file</p>
-<p><strong>Usage</strong>:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>validate<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
-</code></pre></div>
-<p><strong>Options</strong>:</p>
-<ul>
-<li><code>--file TEXT</code>: Path or url to the source file  [required]</li>
-<li><code>--format [csv|jsonl|json|yaml]</code>: [default: csv]</li>
-<li><code>--delimiter TEXT</code>: [default: ,]</li>
-<li><code>--header-delimiter TEXT</code></li>
-<li><code>--skip-blank-lines / --no-skip-blank-lines</code>: [default: skip-blank-lines]</li>
-<li><code>--help</code>: Show this message and exit.</li>
-</ul>
+</li>
+<li><a href="mapping/">Map config yaml</a>: (Optional) configures creation of mapping dictionary  </li>
+<li><a href="transform/">Transform code</a>: a Python script, with specific transform instructions </li>
+</ol>
 
 
 
@@ -780,10 +667,10 @@
     </div>
     
     
-    <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.copy", "navigation.expand", "navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky"], "search": "../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["content.code.copy", "navigation.expand", "navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky"], "search": "../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.a7c05c9e.min.js"></script>
+      <script src="../assets/javascripts/bundle.a7c05c9e.min.js"></script>
       
     
   </body>
