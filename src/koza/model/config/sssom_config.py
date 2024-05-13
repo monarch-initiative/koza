@@ -76,7 +76,6 @@ class SSSOMConfig:
 
     def _build_sssom_lut(self) -> Dict:
         """Build a lookup table from SSSOM mapping dataframe."""
-        # TODO add narrow and broad match mappings
         sssom_lut = {}
         for _, row in self.df.iterrows():
             subject_id = row["subject_id"]

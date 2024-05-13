@@ -38,8 +38,6 @@ class CSVReader:
       - Potentially will add support a multivalued field DSL, eg
         List[str][';'] would convert a semicolon delimited multivalued
         field to a list of strings
-
-    TODO handle cases when delimiter is >1 character
     """
 
     def __init__(
@@ -137,11 +135,6 @@ class CSVReader:
                 row = next(self.reader)
 
         # Check row length discrepancies for each row
-        # TODO currently varying line lengths will raise an exception
-        # and hard fail, we should probably make these warnings and report
-        # out which lines vary
-        # Could also create a custom exception and allow the client code
-        # to determine what to do here
         fields_len = len(self._header)
         row_len = len(row)
         stripped_row = [val.strip() for val in row]
@@ -154,9 +147,8 @@ class CSVReader:
 
         elif fields_len < row_len:
             logger.warning(f"CSV file {self.name} has {row_len - fields_len} extra columns at {self.reader.line_num}")
-            # Not sure if this would serve a purpose
-            #
-            # if not 'extra_cols' in self.field_type_map:
+            # # Not sure if this would serve a purpose:
+            # if 'extra_cols' not in self.field_type_map:
             #     # Create a type map for extra columns
             #     self.field_type_map['extra_cols'] = FieldType.str
             # field_map['extra_cols'] = row[fields_len:]

@@ -3,7 +3,6 @@ import re
 
 class CurieCleaner:
     def __init__(self):
-        # TODO: these belong in yaml, might already exist somewhere
         self.mappings = {"taxon": "NCBITaxon", "NCBI_Gene": "NCBIGene"}
 
     def clean(self, curie: str) -> str:

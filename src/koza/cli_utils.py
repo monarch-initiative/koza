@@ -3,8 +3,10 @@ Module for managing koza runs through the CLI
 """
 
 from pathlib import Path
-from typing import Dict, Optional, Union
+from typing import Dict, Literal, Optional, Union
 import yaml
+
+import duckdb
 
 from koza.app import KozaApp
 from koza.io.reader.csv_reader import CSVReader
@@ -29,14 +31,14 @@ def get_koza_app(source_name) -> Optional[KozaApp]:
     """
     try:
         return koza_apps[source_name]
-    except:
+    except KeyError:
         raise KeyError(f"{source_name} was not found in KozaApp dictionary")
 
 
 def transform_source(
     source: str,
     output_dir: str,
-    output_format: OutputFormat = OutputFormat('tsv'),
+    output_format: OutputFormat = OutputFormat("tsv"),
     global_table: str = None,
     local_table: str = None,
     schema: str = None,
@@ -61,15 +63,20 @@ def transform_source(
     """
     logger = get_logger(name=Path(source).name if log else None, verbose=verbose)
 
-    with open(source, 'r') as source_fh:
+    with open(source, "r") as source_fh:
         source_config = PrimaryFileConfig(**yaml.load(source_fh, Loader=UniqueIncludeLoader))
 
+    # Set name and transform code if not provided
     if not source_config.name:
         source_config.name = Path(source).stem
 
     if not source_config.transform_code:
-        # look for it alongside the source conf as a .py file
-        source_config.transform_code = str(Path(source).parent / Path(source).stem) + '.py'
+        filename = f"{Path(source).parent / Path(source).stem}.py"
+        if not Path(filename).exists():
+            filename = Path(source).parent / "transform.py"
+        if not Path(filename).exists():
+            raise FileNotFoundError(f"Could not find transform file for {source}")
+        source_config.transform_code = filename
 
     koza_source = Source(source_config, row_limit)
     logger.debug(f"Source created: {koza_source.config.name}")
@@ -85,11 +92,44 @@ def transform_source(
     koza_app.process_maps()
     koza_app.process_sources()
 
+    ### QC checks
+
+    def _check_row_count(type: Literal["node", "edge"]):
+        """Check row count for nodes or edges."""
+
+        if type == "node":
+            outfile = koza_app.node_file
+            min_count = source_config.min_node_count
+        elif type == "edge":
+            outfile = koza_app.edge_file
+            min_count = source_config.min_edge_count
+
+        count = duckdb.sql(f"SELECT count(*) from '{outfile}' as count").fetchone()[0]
+
+        if row_limit and row_limit < min_count:
+            logger.warning(f"Row limit '{row_limit}' is less than expected count of {min_count} {type}s")
+        elif row_limit and row_limit < count:
+            logger.error(f"Actual {type} count {count} exceeds row limit {row_limit}")
+        else:
+            if count < min_count * 0.7:
+                raise ValueError(f"Actual {type} count {count} is less than 70% of expected {min_count} {type}s")
+            if min_count * 0.7 <= count < min_count:
+                logger.warning(
+                    f"Actual {type} count {count} is less than expected {min_count}, but more than 70% of expected"
+                )
+
+    # Confirm min number of rows in output
+    if hasattr(koza_app, "node_file") and source_config.min_node_count is not None:
+        _check_row_count("node")
+
+    if hasattr(koza_app, "edge_file") and source_config.min_edge_count is not None:
+        _check_row_count("edge")
+
 
 def validate_file(
     file: str,
     format: FormatType = FormatType.csv,
-    delimiter: str = ',',
+    delimiter: str = ",",
     header_delimiter: str = None,
     skip_blank_lines: bool = True,
 ):
@@ -144,14 +184,14 @@ def get_translation_table(
             logger.debug("No global table used for transform")
     else:
         if isinstance(global_table, str):
-            with open(global_table, 'r') as global_tt_fh:
+            with open(global_table, "r") as global_tt_fh:
                 global_tt = yaml.safe_load(global_tt_fh)
         elif isinstance(global_table, Dict):
             global_tt = global_table
 
         if local_table:
             if isinstance(local_table, str):
-                with open(local_table, 'r') as local_tt_fh:
+                with open(local_table, "r") as local_tt_fh:
                     local_tt = yaml.safe_load(local_tt_fh)
             elif isinstance(local_table, Dict):
                 local_tt = local_table
@@ -165,8 +205,8 @@ def get_translation_table(
 def _set_koza_app(
     source: Source,
     translation_table: TranslationTable = None,
-    output_dir: str = './output',
-    output_format: OutputFormat = OutputFormat('tsv'),
+    output_dir: str = "./output",
+    output_format: OutputFormat = OutputFormat("tsv"),
     schema: str = None,
     node_type: str = None,
     edge_type: str = None,
@@ -179,9 +219,3 @@ def _set_koza_app(
     )
     logger.debug(f"koza_apps entry created for {source.config.name}: {koza_apps[source.config.name]}")
     return koza_apps[source.config.name]
-
-
-def test_koza(koza: KozaApp):
-    """Manually sets KozaApp (for testing)"""
-    global koza_app
-    koza_app = koza

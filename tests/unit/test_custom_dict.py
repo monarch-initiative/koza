@@ -1,6 +1,7 @@
 """
 Testing custom dictionary
 """
+
 import pytest
 
 from koza.utils.exceptions import MapItemException

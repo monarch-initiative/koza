@@ -2,6 +2,7 @@
 Testing the biolink config dataclasses + pydandic
 
 """
+
 from pathlib import Path
 
 import pytest

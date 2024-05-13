@@ -19,8 +19,8 @@ class Source:
     and adds filter support to the readers in io.reader
 
     config: Source config
-    reader: An iterator that takes in an IO[str] as its first argument
-    and yields a dictionary
+    row_limit: Number of rows to process
+    reader: An iterator that takes in an IO[str] and yields a dictionary
     """
 
     def __init__(self, config: Union[PrimaryFileConfig, MapFileConfig], row_limit: Optional[int] = None):
@@ -33,7 +33,7 @@ class Source:
 
         for file in config.files:
             resource_io = open_resource(file)
-            if self.config.format == 'csv':
+            if self.config.format == "csv":
                 self._readers.append(
                     CSVReader(
                         resource_io,
@@ -47,7 +47,7 @@ class Source:
                         row_limit=self.row_limit,
                     )
                 )
-            elif self.config.format == 'jsonl':
+            elif self.config.format == "jsonl":
                 self._readers.append(
                     JSONLReader(
                         resource_io,
@@ -56,14 +56,14 @@ class Source:
                         row_limit=self.row_limit,
                     )
                 )
-            elif self.config.format == 'json' or self.config.format == 'yaml':
+            elif self.config.format == "json" or self.config.format == "yaml":
                 self._readers.append(
                     JSONReader(
                         resource_io,
                         name=config.name,
                         json_path=config.json_path,
                         required_properties=config.required_properties,
-                        is_yaml=(self.config.format == 'yaml'),
+                        is_yaml=(self.config.format == "yaml"),
                         row_limit=self.row_limit,
                     )
                 )
@@ -90,7 +90,6 @@ class Source:
         if self._filter:
             row = next(self._reader)
             while not self._filter.include_row(row):
-                # TODO log filtered out lines
                 row = next(self._reader)
         else:
             row = next(self._reader)

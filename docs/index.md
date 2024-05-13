@@ -1,4 +1,6 @@
-# Koza - a data transformation framework
+# Koza 
+
+### A data transformation framework in Python
 
 ## Overview
 
@@ -19,11 +21,11 @@ pip install koza
 
 ## Usage
 
-See the [Ingests](./Usage/ingests.md) page for information on how to configure ingests for koza to use.
+See the [Ingests](./Ingests/index.md) page for information on how to configure ingests for koza to use.
 
 Koza can be used as a Python library, or via the command line.  
 [CLI commands](./Usage/CLI.md) are available for validating and transforming data.  
-See the [API](./Usage/API.md) page for information on using Koza as a library.
+See the [Module](./Usage/Module.md) page for information on using Koza as a library.
 
 Koza also includes some examples to help you get started (see `koza/examples`).
 ### Basic Examples
@@ -63,7 +65,8 @@ Koza also includes some examples to help you get started (see `koza/examples`).
 
     **Note**: 
       Koza expects a directory structure as described in the above example  
-      with the source config file and transform code in the same directory: 
+      with the source config file and transform code in the same directory  
+      (these files can also simply be named `transform.yaml` and `transform.py`, as is default): 
       ```
       .
       ├── ...

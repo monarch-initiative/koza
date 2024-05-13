@@ -2,7 +2,7 @@
 
 [![Pyversions](https://img.shields.io/pypi/pyversions/koza.svg)](https://pypi.python.org/pypi/koza)
 [![PyPi](https://img.shields.io/pypi/v/koza.svg)](https://pypi.python.org/pypi/koza)
-![Github Action](https://github.com/monarch-initiative/koza/actions/workflows/build.yml/badge.svg)
+![Github Action](https://github.com/monarch-initiative/koza/actions/workflows/test.yaml/badge.svg)
 
 ![pupa](docs/img/pupa.png)  
 

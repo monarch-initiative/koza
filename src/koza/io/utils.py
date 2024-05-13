@@ -61,7 +61,7 @@ def open_resource(resource: Union[str, PathLike]) -> IO[str]:
     # If resource is local, check for compression
     if is_zipfile(resource):
         with ZipFile(resource, 'r') as zip_file:
-            file = TextIOWrapper(zip_file.open(zip_file.namelist()[0], 'r'))#, encoding='utf-8')
+            file = TextIOWrapper(zip_file.open(zip_file.namelist()[0], 'r'))  # , encoding='utf-8')
             # file = zip_file.read(zip_file.namelist()[0], 'r').decode('utf-8')
     elif str(resource).endswith('gz'):
         file = gzip.open(resource, 'rt')

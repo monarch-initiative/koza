@@ -43,6 +43,11 @@ class KozaApp:
         self.curie_cleaner: CurieCleaner = CurieCleaner()
         self.writer: KozaWriter = self._get_writer()
         self.logger = logger
+        self.outfiles = []
+        if hasattr(self.writer, 'nodes_file_name'):
+            self.node_file = self.writer.nodes_file_name
+        if hasattr(self.writer, 'edges_file_name'):
+            self.edge_file = self.writer.edges_file_name
 
         if schema:
             # self.validate = True
@@ -81,7 +86,7 @@ class KozaApp:
         or inferred by taking the name and path of the config file and looking for
         a .py file along side it (see constructor)
 
-        Intended for decoupling ingest logic into a configuration like file
+        Intended for decoupling ingest logic into a configuration-like file
         """
         import sys
 
@@ -106,10 +111,10 @@ class KozaApp:
                         self.logger.debug(f"{str(mie)} not found in map")
                 except NextRowException:
                     continue
-                except ValidationError as ve:
+                except ValidationError:
                     if self.logger:
                         self.logger.error(f"Validation error while processing: {self.source.last_row}")
-                    raise ve
+                    raise ValidationError
                 except StopIteration:
                     break
         elif self.source.config.transform_mode == 'loop':
@@ -214,13 +219,6 @@ class KozaApp:
     @staticmethod
     def _map_sniffer(depends_on: str):
         """
-        TODO a utility function to determine if a depends_on string
-        is a path to a map config file, a yaml file that should be
-        interpreted as a dictionary, or a json file that should be
-        interpreted as a dictionary
-
-        See https://github.com/monarch-initiative/koza/issues/39
-
         :param depends_on:
         """
         pass

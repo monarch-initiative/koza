@@ -1,6 +1,6 @@
 import os
 
-from biolink.pydanticmodel_v2 import Disease, Gene, GeneToDiseaseAssociation
+from biolink_model.datamodel.pydanticmodel_v2 import Disease, Gene, GeneToDiseaseAssociation
 
 from koza.io.writer.tsv_writer import TSVWriter
 
@@ -15,24 +15,14 @@ def test_tsv_writer():
         id="uuid:5b06e86f-d768-4cd9-ac27-abe31e95ab1e",
         subject=g.id,
         object=d.id,
-        # relation="RO:0003304",
         predicate="biolink:contributes_to",
+        knowledge_level="not_provided",
+        agent_type="not_provided",
     )
     ent = [g, d, a]
 
-    node_properties = ['id', 'category', 'symbol', 'in_taxon', 'provided_by', 'source']
-    edge_properties = [
-        'id',
-        'subject',
-        'predicate',
-        'object',
-        'category',
-        'relation',
-        'qualifiers',
-        'publications',
-        'provided_by',
-        'source',
-    ]
+    node_properties = ["id", "category", "symbol", "in_taxon", "provided_by", "source"]
+    edge_properties = ["id", "subject", "predicate", "object", "category" "qualifiers", "publications", "provided_by"]
 
     outdir = "output/tests"
     outfile = "tsvwriter-node-and-edge"

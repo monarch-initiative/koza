@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "koza"
-version = "0.5.4"
+version = "0.0.0"
 description = "Data transformation framework for LinkML data models"
 authors = [
     "The Monarch Initiative <info@monarchinitiative.org>",
@@ -16,39 +16,39 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.9"
-linkml = ">=1.6.3"
+duckdb = "*"
+linkml = ">=1.7.8"
+loguru = "*"
+ordered-set = ">=4.1.0"
 pydantic = "^2.4"
 pyyaml = ">=5.0.0"
 requests = "^2.24.0"
-ordered-set = ">=4.1.0"
-typer = "^0.7.0"
-typer-cli = "^0.0.13"
-loguru = "*"
 sssom = ">=0.4"
+typer = ">=0.12.3"
 
 [tool.poetry.dev-dependencies]
-black = "^23.10.0"
+black = "^24.4"
 ruff = "*"
 pytest = ">=6.0.0"
-biolink-model = ">=3.6"
+biolink-model = ">=4.2"
 dask = ">=2022.5.2"
-mkdocs = ">=1.4.2"
-mkdocs-material = ">=9.1.16"
+mkdocs = ">=1.4"
+mkdocs-material = ">=9.5"
 mkdocstrings = {extras = ["python"], version = ">=0.22.0"}
 
 [tool.poetry.scripts]
 koza = "koza.main:typer_app"
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core", "poetry-dynamic-versioning"]
+build-backend = "poetry_dynamic_versioning.backend"
 
 [tool.black]
-line_length = 120
+line-length = 120
 skip-string-normalization = true
 
 [tool.ruff]
 line-length = 120
-ignore = [
+lint.ignore = [
     "F541", # f-strings with no placeholders
 ]

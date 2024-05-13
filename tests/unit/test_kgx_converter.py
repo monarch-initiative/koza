@@ -1,5 +1,5 @@
 import pytest
-from biolink.pydanticmodel_v2 import Gene, GeneToGeneAssociation  # , Publication
+from biolink_model.datamodel.pydanticmodel_v2 import Gene, GeneToGeneAssociation  # , Publication
 
 from koza.converter.kgx_converter import KGXConverter
 
@@ -33,6 +33,8 @@ def test_association_conversion():
         predicate="biolink:interacts_with",
         object=pax2a.id,
         publications=[pub],
+        knowledge_level="not_provided",
+        agent_type="not_provided",
     )
 
     (_, edges) = KGXConverter().convert([fgf8a, pax2a, association])

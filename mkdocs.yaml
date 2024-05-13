@@ -7,9 +7,14 @@ repo_url: 'https://github.com/monarch-initiative/koza'
 
 nav:
   - Welcome: 'index.md'
-  - Ingests: 'Usage/ingests.md'
+  - Ingests: 
+    - Configuring an Ingest: 'Ingests/index.md'
+    - Source Config: 'Ingests/source_config.md'
+    - Mapping: 'Ingests/mapping.md'
+    - Transform Code: 'Ingests/transform.md'
+    - Testing: 'Ingests/testing.md'
   - CLI: 'Usage/CLI.md'
-  - API: 'Usage/API.md'
+  - Module: 'Usage/Module.md'
 
 
 theme:
