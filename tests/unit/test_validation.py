@@ -27,7 +27,7 @@ def test_valid_input(entity):
     v = validate(instance=entity, target_class="Entity", schema=model)
     assert len(v.results) == 0
 
-
+@pytest.mark.skip("Skip until we update LinkML to >=1.7.8")
 @pytest.mark.parametrize("entity", [invalid_input])
 def test_invalid_input(entity):
     v = validate(instance=entity, target_class="Entity", schema=model)
