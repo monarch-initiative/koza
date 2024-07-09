@@ -27,6 +27,10 @@ class TSVWriter(KozaWriter):
         self.list_delimiter = "|"
         self.converter = KGXConverter()
         self.sssom_config = sssom_config
+        self.split_nodes_on = ["category", "in_taxon_label"]
+
+        self.split_node_fh_map = {}
+        self.split_edge_fh_map = {}
 
         Path(self.dirname).mkdir(parents=True, exist_ok=True)
 

@@ -180,6 +180,8 @@ class SourceConfig:
     transform_mode: TransformMode = TransformMode.flat
     global_table: Optional[Union[str, Dict]] = None
     local_table: Optional[Union[str, Dict]] = None
+    split_node_output_on: Optional[List[str]] = None
+    split_edge_output_on: Optional[List[str]] = None
 
     def extract_archive(self):
         archive_path = Path(self.file_archive).parent  # .absolute()
