@@ -2,6 +2,7 @@
 # NOTE - May want to rename to KGXWriter at some point, if we develop writers for other models non biolink/kgx specific
 
 from pathlib import Path
+import shutil
 from typing import Dict, Iterable, List, Literal, Set, Union
 
 from ordered_set import OrderedSet
@@ -13,6 +14,8 @@ from koza.model.config.sssom_config import SSSOMConfig
 
 
 class TSVWriter(KozaWriter):
+    _splits_cleanup_done = False
+
     def __init__(
         self,
         output_dir: Union[str, Path],
@@ -69,6 +72,9 @@ class TSVWriter(KozaWriter):
 
         def get_new_fh_path(base_dir, filename, category):
             new_dir = base_dir / "splits"
+            if not self._splits_cleanup_done:
+                shutil.rmtree(new_dir, ignore_errors=True)
+                self._splits_cleanup_done = True
             new_dir.mkdir(parents=True, exist_ok=True)
             return new_dir / filename.replace(record_type + "s", f"{category}_{record_type}s")
 
