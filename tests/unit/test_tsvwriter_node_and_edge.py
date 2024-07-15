@@ -34,3 +34,61 @@ def test_tsv_writer():
     assert os.path.exists("{}/{}_nodes.tsv".format(outdir, outfile)) and os.path.exists(
         "{}/{}_edges.tsv".format(outdir, outfile)
     )
+
+
+def test_tsv_writer_split():
+    """
+    Writes a test tsv file
+    """
+    g1 = Gene(id="HGNC:11603", name="TBX4")
+    d1 = Disease(id="MONDO:0005002", name="chronic obstructive pulmonary disease")
+    a1 = GeneToDiseaseAssociation(
+        id="uuid:5b06e86f-d768-4cd9-ac27-abe31e95ab1e",
+        subject=g1.id,
+        object=d1.id,
+        predicate="biolink:contributes_to",
+        knowledge_level="not_provided",
+        agent_type="not_provided",
+    )
+    g2 = Gene(id="HGNC:11604", name="TBX5")
+    d2 = Disease(id="MONDO:0005003", name="asthma")
+    a2 = GeneToDiseaseAssociation(
+        id="uuid:5b06e86f-d768-4cd9-ac27-abe31e95ab1f",
+        subject=g2.id,
+        object=d2.id,
+        predicate="biolink:contributes_to",
+        knowledge_level="not_provided",
+        agent_type="not_provided",
+    )
+    g3 = Gene(id="HGNC:11605", name="TBX6")
+    d3 = Disease(id="MONDO:0005004", name="lung cancer")
+    a3 = GeneToDiseaseAssociation(
+        id="uuid:5b06e86f-d768-4cd9-ac27-abe31e95ab1g",
+        subject=g3.id,
+        object=d3.id,
+        predicate="biolink:contributes_to",
+        knowledge_level="not_provided",
+        agent_type="not_provided",
+    )
+    ents = [[g1, d1, a1], [g2, d2, a2], [g3, d3, a3]]
+
+    node_properties = ["id", "category", "symbol", "in_taxon", "provided_by", "source"]
+    edge_properties = ["id", "subject", "predicate", "object", "category" "qualifiers", "publications", "provided_by"]
+
+    outdir = "output/tests/split-examples"
+    outfile = "tsvwriter"
+    split_edge_file_substring = "UnknownSubjectCategoryGeneToDiseaseAssociationUnknownObjectCategory"
+
+    t = TSVWriter(outdir, outfile, node_properties, edge_properties)
+    for ent in ents:
+        t.write(ent, split=True)
+
+    t.finalize()
+
+    assert os.path.exists("{}/splits/{}_Disease_nodes.tsv".format(outdir, outfile))
+    assert os.path.exists("{}/splits/{}_{}_edges.tsv".format(outdir, outfile, split_edge_file_substring))
+    assert os.path.exists("{}/splits/{}_Gene_nodes.tsv".format(outdir, outfile))
+
+    assert os.path.exists("{}/{}_nodes.tsv".format(outdir, outfile)) and os.path.exists(
+        "{}/{}_edges.tsv".format(outdir, outfile)
+    )

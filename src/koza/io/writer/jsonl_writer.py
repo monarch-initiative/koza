@@ -28,9 +28,9 @@ class JSONLWriter(KozaWriter):
         if edge_properties:
             self.edgeFH = open(f"{output_dir}/{source_name}_edges.jsonl", "w")
 
-    def write(self, entities: Iterable):
+    def write(self, entities: Iterable, split: bool = False) -> None:
         (nodes, edges) = self.converter.convert(entities)
-
+        # TODO: implement split
         if nodes:
             for n in nodes:
                 node = json.dumps(n, ensure_ascii=False)
