@@ -84,24 +84,22 @@ class TSVWriter(KozaWriter):
         if split:
             base_dir, filename = Path(fh.name).parent, getattr(self, f"{record_type}s_file_name").name
             if record_type == "node":
-                category = record.get("category", ["UnknownNodeCategory"])[0].split(":")[-1]
+                category = record.get("category", [""])[0].split(":")[-1]
             else:
                 subject_category = (
-                    record.get("subject_category", "UnknownSubjectCategory").split(":")[-1]
+                    record.get("subject_category", "").split(":")[-1]
                     if record.get("subject_category")
-                    else "UnknownSubjectCategory"
+                    else "UnknownCategory"
                 )
 
                 object_category = (
-                    record.get("object_category", "UnknownObjectCategory").split(":")[-1]
+                    record.get("object_category", "").split(":")[-1]
                     if record.get("object_category")
-                    else "UnknownObjectCategory"
+                    else "UnknownCategory"
                 )
 
                 edge_category = (
-                    record.get("category", ["UnknownEdgeCategory"])[0].split(":")[-1]
-                    if record.get("category")
-                    else "UnknownEdgeCategory"
+                    record.get("category", [""])[0].split(":")[-1] if record.get("category") else "UnknownCategory"
                 )
 
                 category = subject_category + edge_category + object_category
