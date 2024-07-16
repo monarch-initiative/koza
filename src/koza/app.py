@@ -148,7 +148,7 @@ class KozaApp:
         """
         raise NextRowException
 
-    def write(self, *entities):
+    def write(self, *entities, split: bool = False):
         # If a schema/validator is defined, validate before writing
         # if self.validate:
         if hasattr(self, 'schema'):
@@ -168,7 +168,7 @@ class KozaApp:
                     for edge in edges:
                         validate(instance=edge, target_class=self.edge_type, schema=self.schema, strict=True)
 
-        self.writer.write(entities)
+        self.writer.write(entities, split=split)
 
     def _get_writer(self) -> Union[TSVWriter, JSONLWriter]:
         writer_params = [

@@ -2,6 +2,7 @@
 # NOTE - May want to rename to KGXWriter at some point, if we develop writers for other models non biolink/kgx specific
 
 from pathlib import Path
+import shutil
 from typing import Dict, Iterable, List, Literal, Set, Union
 
 from ordered_set import OrderedSet
@@ -13,6 +14,8 @@ from koza.model.config.sssom_config import SSSOMConfig
 
 
 class TSVWriter(KozaWriter):
+    _splits_cleanup_done = False
+
     def __init__(
         self,
         output_dir: Union[str, Path],
@@ -44,39 +47,75 @@ class TSVWriter(KozaWriter):
             self.edgeFH = open(self.edges_file_name, "w")
             self.edgeFH.write(self.delimiter.join(self.edge_columns) + "\n")
 
-    def write(self, entities: Iterable) -> None:
+    def write(self, entities: Iterable, split: bool = False) -> None:
         """Write an entities object to separate node and edge .tsv files"""
 
         nodes, edges = self.converter.convert(entities)
 
         if nodes:
             for node in nodes:
-                self.write_row(node, record_type="node")
+                self.write_row(node, record_type="node", split=split)
 
         if edges:
             for edge in edges:
                 if self.sssom_config:
                     edge = self.sssom_config.apply_mapping(edge)
-                self.write_row(edge, record_type="edge")
+                self.write_row(edge, record_type="edge", split=split)
 
-    def write_row(self, record: Dict, record_type: Literal["node", "edge"]) -> None:
+    def write_row(self, record: Dict, record_type: Literal["node", "edge"], split: bool = False) -> None:
         """Write a row to the underlying store.
 
         Args:
             record: Dict - A node or edge record
             record_type: Literal["node", "edge"] - The record_type of record
         """
+
+        def get_new_fh_path(base_dir, filename, category):
+            new_dir = base_dir / "splits"
+            if not self._splits_cleanup_done:
+                shutil.rmtree(new_dir, ignore_errors=True)
+                self._splits_cleanup_done = True
+            new_dir.mkdir(parents=True, exist_ok=True)
+            return new_dir / filename.replace(record_type + "s", f"{category}_{record_type}s")
+
         fh = self.nodeFH if record_type == "node" else self.edgeFH
         columns = self.node_columns if record_type == "node" else self.edge_columns
-        row = build_export_row(record, list_delimiter=self.list_delimiter)
-        values = []
-        if record_type == "node":
-            row["id"] = record["id"]
-        for c in columns:
-            if c in row:
-                values.append(str(row[c]))
+
+        if split:
+            base_dir, filename = Path(fh.name).parent, getattr(self, f"{record_type}s_file_name").name
+            if record_type == "node":
+                category = record.get("category", [""])[0].split(":")[-1]
             else:
-                values.append("")
+                subject_category = (
+                    record.get("subject_category", "").split(":")[-1]
+                    if record.get("subject_category")
+                    else "UnknownCategory"
+                )
+
+                object_category = (
+                    record.get("object_category", "").split(":")[-1]
+                    if record.get("object_category")
+                    else "UnknownCategory"
+                )
+
+                edge_category = (
+                    record.get("category", [""])[0].split(":")[-1] if record.get("category") else "UnknownCategory"
+                )
+
+                category = subject_category + edge_category + object_category
+
+            new_fh_path = get_new_fh_path(base_dir, filename, category)
+
+            with open(new_fh_path, "a+") as new_fh:
+                if new_fh.tell() == 0:  # Check if file is empty
+                    new_fh.write(self.delimiter.join(columns) + "\n")
+                self._write_record_to_file(new_fh, record, columns)
+
+        self._write_record_to_file(fh, record, columns)
+
+    def _write_record_to_file(self, fh, record, columns):
+        row = build_export_row(record, list_delimiter=self.list_delimiter)
+        values = [str(row.get(c, "")) for c in columns]
         fh.write(self.delimiter.join(values) + "\n")
 
     def finalize(self):
