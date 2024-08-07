@@ -96,3 +96,41 @@ def test_sanitize_export_property(query):
         assert query[1] == value
     else:
         assert query[1] in value
+
+
+@pytest.mark.parametrize(
+    "input, expected",
+    [
+        ([1, None, 2, "", 3, " "], [1, 2, 3]),
+        ({"a": 1, "b": None, "c": "", "d": 2, "e": " "}, {"a": 1, "d": 2}),
+        ({"a": [1, None, 2], "b": {"c": None, "d": 3}}, {"a": [1, 2], "b": {"d": 3}}),
+        ("test", "test"),
+        ("", None),
+        (None, None),
+        (5, 5),
+        (5.5, 5.5),
+        (True, True),
+        (False, False),
+        (0, 0),  # Ensure zeroes are not turned into None
+        ([0, None, 1], [0, 1]),  # Ensure zeroes in lists are not turned into None
+        ({"a": 0, "b": None}, {"a": 0}),  # Ensure zeroes in dicts are not turned into None
+    ],
+)
+def test_remove_null(input, expected):
+    assert remove_null(input) == expected
+
+
+@pytest.mark.parametrize(
+    "input, expected",
+    [
+        (None, True),
+        ("", True),
+        (" ", True),
+        ("non-empty string", False),
+        (0, False),
+        (False, False),
+        (True, False),
+    ],
+)
+def test_is_null(input, expected):
+    assert is_null(input) == expected
