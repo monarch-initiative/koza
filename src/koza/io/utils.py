@@ -144,7 +144,7 @@ def build_export_row(data: Dict, list_delimiter: str = None) -> Dict:
     tidy_data = {}
     for key, value in data.items():
         new_value = remove_null(value)
-        if new_value:
+        if new_value is not None:
             tidy_data[key] = _sanitize_export_property(key, new_value, list_delimiter)
     return tidy_data
 
@@ -221,14 +221,14 @@ def remove_null(input: Any) -> Any:
         new_value = []
         for v in input:
             x = remove_null(v)
-            if x:
+            if x is not None:
                 new_value.append(x)
     elif isinstance(input, dict):
         # value is a dict
         new_value = {}
         for k, v in input.items():
             x = remove_null(v)
-            if x:
+            if x is not None:
                 new_value[k] = x
     elif isinstance(input, str):
         # value is a str
