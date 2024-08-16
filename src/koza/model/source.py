@@ -90,13 +90,13 @@ class Source:
         #If we built a filter for this source, run extra code to validate each row for inclusion in the final output.
         if self._filter:
             row = next(self._reader)
-            filter_current_row = not self._filter.include_row(row)
+            reject_current_row = not self._filter.include_row(row)
             #If the filter says we shouldn't include the current row; we filter it out and move onto the next row.
             #We'll only break out of the following loop if "filter_current_row" is false (i.e. we have a valid row
             #to return) or we hit a StopIteration exception from self._reader.
-            while filter_current_row:
+            while reject_current_row:
                 row = next(self._reader)
-                filter_current_row = not self._filter.include_row(row)
+                reject_current_row = not self._filter.include_row(row)
         else:
             row = next(self._reader)
         # Retain the most recent row so that it can be logged alongside validation errors
