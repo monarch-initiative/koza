@@ -92,8 +92,8 @@ class Source:
             row = next(self._reader)
             reject_current_row = not self._filter.include_row(row)
             #If the filter says we shouldn't include the current row; we filter it out and move onto the next row.
-            #We'll only break out of the following loop if "filter_current_row" is false (i.e. we have a valid row
-            #to return) or we hit a StopIteration exception from self._reader.
+            #We'll only break out of the following loop if "reject_current_row" is false (i.e. include_row is True/we
+            #have a valid row to return) or we hit a StopIteration exception from self._reader.
             while reject_current_row:
                 row = next(self._reader)
                 reject_current_row = not self._filter.include_row(row)
