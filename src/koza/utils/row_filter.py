@@ -54,6 +54,7 @@ class RowFilter:
         return include_row
 
     def inlist(self, column_value, filter_values):
+        print('FILTER VALUES',filter_values)
         #Check if the passed in column is exactly matched against
         #For a filter_list of ['abc','def','ghi']; this will be true
         #for column_value 'abc' but not 'abcde.'
@@ -61,7 +62,10 @@ class RowFilter:
         #The following iterates through all filters and will return true if
         #the text of the  filter is found within the column_value.
         #So for the above example this boolean will return True, because :'abc' in 'abcde': returns True. 
-        col_inexact_match = any([filter_value in column_value for filter_value in filter_values])
+        if(type(column_value)==str):
+            col_inexact_match = any([filter_value in column_value for filter_value in filter_values])
+        else:
+            col_inexact_match = False
         return col_exact_match or col_inexact_match
     
     def inlist_exact(self, column_value, filter_values):
