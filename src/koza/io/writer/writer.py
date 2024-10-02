@@ -18,3 +18,4 @@ class KozaWriter(ABC):
     @abstractmethod
     def finalize(self):
         pass
+

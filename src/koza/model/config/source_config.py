@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Dict, List, Union, Optional
 import yaml
 
-from pydantic import StrictFloat, StrictInt, StrictStr
+from pydantic import StrictFloat, StrictInt, StrictStr, BaseModel, Field
 from pydantic.dataclasses import dataclass
 
 from koza.model.config.pydantic_config import PYDANTIC_CONFIG
@@ -128,6 +128,11 @@ class DatasetDescription:
     # license: Optional[str] = None     # Possibly redundant, same as rights
     rights: Optional[str] = None  # License information for the data source
 
+@dataclass(config=PYDANTIC_CONFIG)
+class LinkMLWriter(BaseModel):
+    filename:str = Field(..., description="The file that this writer should write to")
+    linkml_schema:str = Field(..., description="Path to the schema file? url? python package? TODO: figure this out") # TODO
+    classes: List[str] = Field([], description="List of classes within the schema that will contribute")
 
 @dataclass(config=PYDANTIC_CONFIG)
 class SourceConfig:
@@ -180,6 +185,7 @@ class SourceConfig:
     transform_mode: TransformMode = TransformMode.flat
     global_table: Optional[Union[str, Dict]] = None
     local_table: Optional[Union[str, Dict]] = None
+    writers: Optional[Dict[str,LinkMLWriter]] = None
 
     def extract_archive(self):
         archive_path = Path(self.file_archive).parent  # .absolute()
@@ -321,3 +327,4 @@ class MapFileConfig(SourceConfig):
     curie_prefix: Optional[str] = None
     add_curie_prefix_to_columns: Optional[List[str]] = None
     depends_on: Optional[List[str]] = None
+
