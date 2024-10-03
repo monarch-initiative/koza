@@ -130,6 +130,7 @@ def transform_source(
 def split_file(file: str,
                fields: str,
                format: OutputFormat = OutputFormat.tsv,
+               remove_prefixes: bool = False,
                output_dir: str = "./output"):
     db = duckdb.connect(":memory:")
 
@@ -146,6 +147,9 @@ def split_file(file: str,
     list_of_value_dicts = [dict(zip(keys, v)) for v in values]
 
     def clean_value_for_filename(value):
+        if remove_prefixes and ':' in value:
+            value = value.split(":")[-1]
+
         return value.replace("biolink:", "").replace(" ", "_").replace(":", "_")
 
     def generate_filename_from_row(row):
