@@ -4,7 +4,7 @@
 from pathlib import Path
 from typing import Optional
 
-from koza.cli_utils import transform_source, validate_file
+from koza.cli_utils import transform_source, validate_file, split_file
 from koza.model.config.source_config import FormatType, OutputFormat
 
 import typer
@@ -65,6 +65,15 @@ def validate(
     """Validate a source file"""
     validate_file(file, format, delimiter, header_delimiter, skip_blank_lines)
 
+@typer_app.command()
+def split(
+    file: str = typer.Argument(..., help="Path to the source kgx file to be split"),
+    fields: str = typer.Argument(..., help="Comma separated list of fields to split on"),
+    remove_prefixes: bool = typer.Option(False, help="Remove prefixes from the file names for values from the specified fields. (e.g, NCBIGene:9606 becomes 9606"),
+    output_dir: str = typer.Option(default="output", help="Path to output directory"),
+):
+    """Split a file by fields"""
+    split_file(file, fields,remove_prefixes=remove_prefixes, output_dir=output_dir)
 
 if __name__ == "__main__":
     typer_app()
