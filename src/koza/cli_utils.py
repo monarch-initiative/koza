@@ -15,7 +15,7 @@ from koza.io.reader.jsonl_reader import JSONLReader
 from koza.io.utils import open_resource
 from koza.io.yaml_loader import UniqueIncludeLoader
 from koza.model.config.source_config import FormatType, OutputFormat, PrimaryFileConfig
-from koza.model.source import Source
+from koza.model.source import KozaSource
 from koza.model.translation_table import TranslationTable
 from koza.utils.log_utils import get_logger
 
@@ -24,7 +24,8 @@ koza_apps = {}
 
 
 def get_koza_app(source_name) -> Optional[KozaApp]:
-    """Return a KozaApp object for a given source
+    """Return a KozaApp object for a given source_name, if this app was
+    already built and constructed by _build_and_set_koza_app.
 
     Args:
         source_name (str): Name of source
@@ -48,10 +49,11 @@ def transform_source(
     verbose: bool = None,
     log: bool = False,
 ):
-    """Create a KozaApp object, process maps, and run the transform
+    """Create a KozaSource object. Use that KozaSource object to make
+    a KozaApp, and run the transform. This will be the primary entry
 
     Args:
-        source (str): Path to source metadata file
+        source (str): Path to source metadata yaml file. (Format described https://koza.monarchinitiative.org/Ingests/source_config/)
         output_dir (str): Path to output directory
         output_format (OutputFormat, optional): Output format. Defaults to OutputFormat('tsv').
         global_table (str, optional): Path to global translation table. Defaults to None.
@@ -61,24 +63,9 @@ def transform_source(
         verbose (bool, optional): Verbose logging. Defaults to None.
         log (bool, optional): Log to file. Defaults to False.
     """
+    koza_source = build_koza_source(source)
     logger = get_logger(name=Path(source).name if log else None, verbose=verbose)
 
-    with open(source, "r") as source_fh:
-        source_config = PrimaryFileConfig(**yaml.load(source_fh, Loader=UniqueIncludeLoader))
-
-    # Set name and transform code if not provided
-    if not source_config.name:
-        source_config.name = Path(source).stem
-
-    if not source_config.transform_code:
-        filename = f"{Path(source).parent / Path(source).stem}.py"
-        if not Path(filename).exists():
-            filename = Path(source).parent / "transform.py"
-        if not Path(filename).exists():
-            raise FileNotFoundError(f"Could not find transform file for {source}")
-        source_config.transform_code = filename
-
-    koza_source = Source(source_config, row_limit)
     logger.debug(f"Source created: {koza_source.config.name}")
     translation_table = get_translation_table(
         global_table if global_table else source_config.global_table,
@@ -86,12 +73,58 @@ def transform_source(
         logger,
     )
 
-    koza_app = _set_koza_app(
+    koza_app = _build_and_set_koza_app(
         koza_source, translation_table, output_dir, output_format, schema, node_type, edge_type, logger
     )
+    
     koza_app.process_maps()
     koza_app.process_sources()
 
+
+def build_koza_source(
+        source : str,
+        row_limit : int = None
+) -> KozaSource:
+    """Create a KozaSource object. Use that KozaSource object to make
+    a KozaApp, and run the transform. The bulk of this function is checks to ensure
+    the location of the python code representing the transformation code is properly formatted
+    and exists.
+
+    Args:
+        source (str): Path to source metadata yaml file which represents the ingest process.
+        row_limit (int, optional): Number of rows to process. Defaults to None.
+    """
+    with open(source, "r") as source_fh:
+        source_config = PrimaryFileConfig(**yaml.load(source_fh, Loader=UniqueIncludeLoader))
+
+    # Set name and transform code if not provided
+    if not source_config.name:
+        source_config.name = Path(source).stem
+
+    if not source_config.transform_code_location:
+        filename = f"{Path(source).parent / Path(source).stem}.py"
+        if not Path(filename).exists():
+            filename = Path(source).parent / "transform.py"
+        if not Path(filename).exists():
+            raise FileNotFoundError(f"Could not find transform file for {source}")
+        source_config.transform_code_location = filename
+
+    koza_source = Source(source_config, row_limit)
+    return koza_source
+
+def run_qc(
+        koza_app : KozaApp,
+        koza_source : KozaSource
+):
+    """Takes in a constructed KozaApp and KozaSource object; a
+    transformations described in the KozaApp and run quality control
+    protocols based upon the KozaSource.
+
+    Args:
+        koza_app (KozaApp): The KozaApp object which has had "process_maps()" and "process_sources()" run.
+        koza_source (KozaSource): The KozaSource object used to build the KozaApp object, for QC.
+    """
+    
     ### QC checks
 
     def _check_row_count(type: Literal["node", "edge"]):
@@ -124,7 +157,54 @@ def transform_source(
 
     if hasattr(koza_app, "edge_file") and source_config.min_edge_count is not None:
         _check_row_count("edge")
+                           
+def build_koza_app_from_source(
+        koza_source : KozaSource 
+):
+    """Create a KozaApp object.
 
+    Args:
+        koza_source (KozaSource): A KozaSource object representing the 
+        output_dir (str): Path to output directory
+        output_format (OutputFormat, optional): Output format. Defaults to OutputFormat('tsv').
+        global_table (str, optional): Path to global translation table. Defaults to None.
+        local_table (str, optional): Path to local translation table. Defaults to None.
+        schema (str, optional): Path to schema file. Defaults to None.
+        row_limit (int, optional): Number of rows to process. Defaults to None.
+        verbose (bool, optional): Verbose logging. Defaults to None.
+        log (bool, optional): Log to file. Defaults to False.
+    """
+    logger = get_logger(name=Path(source).name if log else None, verbose=verbose)
+
+    with open(source, "r") as source_fh:
+        source_config = PrimaryFileConfig(**yaml.load(source_fh, Loader=UniqueIncludeLoader))
+
+    # Set name and transform code location if not provided
+    if not source_config.name:
+        source_config.name = Path(source).stem
+
+    if not source_config.transform_code_location:
+        filename = f"{Path(source).parent / Path(source).stem}.py"
+        if not Path(filename).exists():
+            filename = Path(source).parent / "transform.py"
+        if not Path(filename).exists():
+            raise FileNotFoundError(f"Could not find transform file for {source}")
+        source_config.transform_code_location = filename
+
+    koza_source = Source(source_config, row_limit)
+    logger.debug(f"Source created: {koza_source.config.name}")
+
+    #Build a translation table. If 
+    translation_table = get_translation_table(
+        global_table if global_table else source_config.global_table,
+        local_table if local_table else source_config.local_table,
+        logger,
+    )
+
+    koza_app = _build_and_set_koza_app(
+        koza_source, translation_table, output_dir, output_format, schema, node_type, edge_type, logger
+    )
+    return koza_app
 
 def validate_file(
     file: str,
@@ -202,8 +282,8 @@ def get_translation_table(
     return TranslationTable(global_tt, local_tt)
 
 
-def _set_koza_app(
-    source: Source,
+def _build_and_set_koza_app(
+    koza_source: KozaSource,
     translation_table: TranslationTable = None,
     output_dir: str = "./output",
     output_format: OutputFormat = OutputFormat("tsv"),
@@ -215,7 +295,7 @@ def _set_koza_app(
     """Create a KozaApp object for a given source"""
 
     koza_apps[source.config.name] = KozaApp(
-        source, translation_table, output_dir, output_format, schema, node_type, edge_type, logger
+        koza_source, translation_table, output_dir, output_format, schema, node_type, edge_type, logger
     )
     logger.debug(f"koza_apps entry created for {source.config.name}: {koza_apps[source.config.name]}")
     return koza_apps[source.config.name]

@@ -11,14 +11,14 @@ from koza.model.config.source_config import MapFileConfig, PrimaryFileConfig  # 
 # import yaml
 
 
-class Source:
+class KozaSource:
     """
-    Source class for files and maps
+    KozaSource class for files and maps
 
-    Source is an iterator that provides a layer of abstraction over file types
+    KozaSource is an iterator that provides a layer of abstraction over file types
     and adds filter support to the readers in io.reader
 
-    config: Source config
+    config: KozaSource config
     row_limit: Number of rows to process
     reader: An iterator that takes in an IO[str] and yields a dictionary
     """

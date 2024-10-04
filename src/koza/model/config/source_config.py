@@ -153,7 +153,7 @@ class SourceConfig:
     comment_char: str (optional) - comment character for csv files
     skip_blank_lines: bool (optional) - skip blank lines in csv files
     json_path: List[str] (optional) - path within JSON object containing data to process
-    transform_code: str (optional) - path to a python file to transform the data
+    transform_code_location: str (optional) - path to a python file to transform the data
     transform_mode: TransformMode (optional) - how to process the transform file
     global_table: str (optional) - path to a global table file
     local_table: str (optional) - path to a local table file
@@ -176,7 +176,7 @@ class SourceConfig:
     comment_char: str = "#"
     skip_blank_lines: bool = True
     json_path: Optional[List[Union[StrictStr, StrictInt]]] = None
-    transform_code: Optional[str] = None
+    transform_code_location: Optional[str] = None
     transform_mode: TransformMode = TransformMode.flat
     global_table: Optional[Union[str, Dict]] = None
     local_table: Optional[Union[str, Dict]] = None

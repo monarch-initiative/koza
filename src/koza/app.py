@@ -62,7 +62,7 @@ class KozaApp:
             for map_file in source.config.depends_on:
                 with open(map_file, 'r') as map_file_fh:
                     map_file_config = MapFileConfig(**yaml.load(map_file_fh, Loader=UniqueIncludeLoader))
-                    map_file_config.transform_code = str(Path(map_file).parent / Path(map_file).stem) + '.py'
+                    map_file_config.transform_code_location = str(Path(map_file).parent / Path(map_file).stem) + '.py'
                 self._map_registry[map_file_config.name] = Source(map_file_config)
 
     def get_map(self, map_name: str):
@@ -82,7 +82,7 @@ class KozaApp:
     def process_sources(self):
         """
         Transform an entire file using ingest logic in a functionless python file
-        where the path to this file is stored in source.transform_code
+        where the path to this file is stored in source.transform_code_location
         or inferred by taking the name and path of the config file and looking for
         a .py file along side it (see constructor)
 
@@ -90,8 +90,8 @@ class KozaApp:
         """
         import sys
 
-        parent_path = Path(self.source.config.transform_code).parent
-        transform_code = Path(self.source.config.transform_code).stem
+        parent_path = Path(self.source.config.transform_code_location).parent
+        transform_code_location  = Path(self.source.config.transform_code_location).stem
         sys.path.append(str(parent_path))
         is_first = True
         transform_module = None
@@ -102,7 +102,7 @@ class KozaApp:
             while True:
                 try:
                     if is_first:
-                        transform_module = importlib.import_module(transform_code)
+                        transform_module = importlib.import_module(transform_code_location)
                         is_first = False
                     else:
                         importlib.reload(transform_module)
@@ -118,10 +118,10 @@ class KozaApp:
                 except StopIteration:
                     break
         elif self.source.config.transform_mode == 'loop':
-            if transform_code not in sys.modules.keys():
-                importlib.import_module(transform_code)
+            if transform_code_location not in sys.modules.keys():
+                importlib.import_module(transform_code_location)
             else:
-                importlib.reload(importlib.import_module(transform_code))
+                importlib.reload(importlib.import_module(transform_code_location))
         else:
             raise NotImplementedError
 
@@ -192,11 +192,11 @@ class KozaApp:
 
         self._map_cache[map_file.config.name] = map
 
-        transform_code_pth = Path(map_file.config.transform_code)
+        transform_code_pth = Path(map_file.config.transform_code_location)
 
         if transform_code_pth.exists():
             parent_path = transform_code_pth.parent
-            transform_code = transform_code_pth.stem
+            transform_code_location = transform_code_pth.stem
             sys.path.append(str(parent_path))
             is_first = True
             transform_module = None
@@ -204,7 +204,7 @@ class KozaApp:
             while True:
                 try:
                     if is_first:
-                        transform_module = importlib.import_module(transform_code)
+                        transform_module = importlib.import_module(transform_code_location)
                         is_first = False
                     else:
                         importlib.reload(transform_module)
