@@ -553,6 +553,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#koza-split" class="md-nav__link">
+    <span class="md-ellipsis">
+      koza split
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#koza-transform" class="md-nav__link">
     <span class="md-ellipsis">
       koza transform
@@ -625,6 +634,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#koza-split" class="md-nav__link">
+    <span class="md-ellipsis">
+      koza split
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#koza-transform" class="md-nav__link">
     <span class="md-ellipsis">
       koza transform
@@ -673,8 +691,25 @@
 </ul>
 <p><strong>Commands</strong>:</p>
 <ul>
+<li><code>split</code>: Split a file by fields</li>
 <li><code>transform</code>: Transform a source file</li>
 <li><code>validate</code>: Validate a source file</li>
+</ul>
+<h2 id="koza-split"><code>koza split</code></h2>
+<p>Split a file by fields</p>
+<p><strong>Usage</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>split<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>FILE<span class="w"> </span>FIELDS
+</code></pre></div>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>FILE</code>: Path to the source kgx file to be split  [required]</li>
+<li><code>FIELDS</code>: Comma separated list of fields to split on  [required]</li>
+</ul>
+<p><strong>Options</strong>:</p>
+<ul>
+<li><code>--remove-prefixes / --no-remove-prefixes</code>: Remove prefixes from the file names for values from the specified fields. (e.g, NCBIGene:9606 becomes 9606  [default: no-remove-prefixes]</li>
+<li><code>--output-dir TEXT</code>: Path to output directory  [default: output]</li>
+<li><code>--help</code>: Show this message and exit.</li>
 </ul>
 <h2 id="koza-transform"><code>koza transform</code></h2>
 <p>Transform a source file</p>
