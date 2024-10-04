@@ -16,7 +16,7 @@ from koza.io.yaml_loader import UniqueIncludeLoader
 from koza.model.config.source_config import MapFileConfig, OutputFormat
 from koza.model.curie_cleaner import CurieCleaner
 from koza.model.map_dict import MapDict
-from koza.model.source import Source
+from koza.model.source import KozaSource
 from koza.model.translation_table import TranslationTable
 
 
@@ -25,7 +25,7 @@ class KozaApp:
 
     def __init__(
         self,
-        source: Source,
+        source: KozaSource,
         translation_table: TranslationTable = None,
         output_dir: str = './output',
         output_format: OutputFormat = OutputFormat('jsonl'),
@@ -38,7 +38,7 @@ class KozaApp:
         self.translation_table = translation_table
         self.output_dir = output_dir
         self.output_format = output_format
-        self._map_registry: Dict[str, Source] = {}
+        self._map_registry: Dict[str, KozaSource] = {}
         self._map_cache: Dict[str, Dict] = {}
         self.curie_cleaner: CurieCleaner = CurieCleaner()
         self.writer: KozaWriter = self._get_writer()
@@ -63,7 +63,7 @@ class KozaApp:
                 with open(map_file, 'r') as map_file_fh:
                     map_file_config = MapFileConfig(**yaml.load(map_file_fh, Loader=UniqueIncludeLoader))
                     map_file_config.transform_code_location = str(Path(map_file).parent / Path(map_file).stem) + '.py'
-                self._map_registry[map_file_config.name] = Source(map_file_config)
+                self._map_registry[map_file_config.name] = KozaSource(map_file_config)
 
     def get_map(self, map_name: str):
         map = self._map_cache[map_name]
@@ -184,7 +184,7 @@ class KozaApp:
         elif self.output_format == OutputFormat.jsonl:
             return JSONLWriter(*writer_params)
 
-    def _load_map(self, map_file: Source):
+    def _load_map(self, map_file: KozaSource):
         if not isinstance(map_file.config, MapFileConfig):
             raise ValueError(f"Error loading map: {map_file.config.name} is not a MapFileConfig")
 

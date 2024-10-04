@@ -16,7 +16,7 @@ filters:
     filter_code: 'lt'
     value: 700
 
-transform_code: './examples/string/protein-links-detailed.py'
+transform_code_location: './examples/string/protein-links-detailed.py'
 
 transform_mode: 'loop'
 

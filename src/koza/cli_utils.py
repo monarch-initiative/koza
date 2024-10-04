@@ -66,10 +66,10 @@ def transform_source(
     koza_source = build_koza_source(source)
     logger = get_logger(name=Path(source).name if log else None, verbose=verbose)
 
-    logger.debug(f"Source created: {koza_source.config.name}")
+    logger.debug(f"KozaSource created: {koza_source.config.name}")
     translation_table = get_translation_table(
-        global_table if global_table else source_config.global_table,
-        local_table if local_table else source_config.local_table,
+        global_table if global_table else koza_source.config.global_table,
+        local_table if local_table else koza_source.config.local_table,
         logger,
     )
 
@@ -109,7 +109,7 @@ def build_koza_source(
             raise FileNotFoundError(f"Could not find transform file for {source}")
         source_config.transform_code_location = filename
 
-    koza_source = Source(source_config, row_limit)
+    koza_source = KozaSource(source_config, row_limit)
     return koza_source
 
 def run_qc(
@@ -132,10 +132,10 @@ def run_qc(
 
         if type == "node":
             outfile = koza_app.node_file
-            min_count = source_config.min_node_count
+            min_count = koza_source.config.min_node_count
         elif type == "edge":
             outfile = koza_app.edge_file
-            min_count = source_config.min_edge_count
+            min_count = koza_source.config.min_edge_count
 
         count = duckdb.sql(f"SELECT count(*) from '{outfile}' as count").fetchone()[0]
 
@@ -152,10 +152,10 @@ def run_qc(
                 )
 
     # Confirm min number of rows in output
-    if hasattr(koza_app, "node_file") and source_config.min_node_count is not None:
+    if hasattr(koza_app, "node_file") and koza_source.config.min_node_count is not None:
         _check_row_count("node")
 
-    if hasattr(koza_app, "edge_file") and source_config.min_edge_count is not None:
+    if hasattr(koza_app, "edge_file") and koza_source.config.min_edge_count is not None:
         _check_row_count("edge")
                            
 def build_koza_app_from_source(
@@ -191,8 +191,8 @@ def build_koza_app_from_source(
             raise FileNotFoundError(f"Could not find transform file for {source}")
         source_config.transform_code_location = filename
 
-    koza_source = Source(source_config, row_limit)
-    logger.debug(f"Source created: {koza_source.config.name}")
+    koza_source = KozaSource(source_config, row_limit)
+    logger.debug(f"KozaSource created: {koza_source.config.name}")
 
     #Build a translation table. If 
     translation_table = get_translation_table(
@@ -292,10 +292,12 @@ def _build_and_set_koza_app(
     edge_type: str = None,
     logger=None,
 ) -> KozaApp:
-    """Create a KozaApp object for a given source"""
+    """Create a KozaApp object for a given source. Sets the app into the global dictionary pointed to by the name provided in the orignal source yaml file."""
 
-    koza_apps[source.config.name] = KozaApp(
-        koza_source, translation_table, output_dir, output_format, schema, node_type, edge_type, logger
+    koza_app = KozaApp( koza_source, translation_table, output_dir, output_format, schema, node_type, edge_type, logger
     )
-    logger.debug(f"koza_apps entry created for {source.config.name}: {koza_apps[source.config.name]}")
-    return koza_apps[source.config.name]
+    #Set the app in the global dictonary
+    koza_apps[koza_source.config.name] = koza_app
+
+    logger.debug(f"koza_apps entry created for {koza_source.config.name}: {koza_apps[koza_source.config.name]}")
+    return koza_app

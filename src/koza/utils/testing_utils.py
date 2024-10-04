@@ -29,7 +29,7 @@ def mock_koza():
     def _make_mock_koza_app(
         name: str,
         data: Iterable,
-        transform_code: str,
+        transform_code_location: str,
         map_cache=None,
         filters=None,
         global_table=None,
@@ -38,7 +38,7 @@ def mock_koza():
         mock_source_file_config = PrimaryFileConfig(
             name=name,
             files=[],
-            transform_code=transform_code,
+            transform_code_location=transform_code_location,
         )
         mock_source_file = KozaSource(mock_source_file_config)
         mock_source_file._reader = data
@@ -59,7 +59,7 @@ def mock_koza():
     def _transform(
         name: str,
         data: Union[Dict, List[Dict]],
-        transform_code: str,
+        transform_code_location: str,
         map_cache=None,
         filters=None,
         global_table=None,
@@ -68,7 +68,7 @@ def mock_koza():
         koza_app = _make_mock_koza_app(
             name,
             iter(data) if isinstance(data, list) else iter([data]),
-            transform_code,
+            transform_code_location,
             map_cache=map_cache,
             filters=filters,
             global_table=global_table,
