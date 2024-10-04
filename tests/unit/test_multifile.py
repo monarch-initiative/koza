@@ -1,7 +1,7 @@
 import yaml
 from pathlib import Path
 
-from koza.model.source import Source
+from koza.model.source import KozaSource
 from koza.model.config.source_config import PrimaryFileConfig
 from koza.io.yaml_loader import UniqueIncludeLoader
 
@@ -15,7 +15,7 @@ def test_multiple_files():
         if not source_config.name:
             source_config.name = Path(source_file).stem
 
-    source = Source(source_config, row_limit)
+    source = KozaSource(source_config, row_limit)
 
     row_count = sum(1 for row in source)
 

@@ -5,9 +5,9 @@ import pytest
 from loguru import logger
 
 from koza.app import KozaApp
-from koza.cli_utils import get_koza_app, get_translation_table, _set_koza_app
+from koza.cli_utils import get_koza_app, get_translation_table, _build_and_set_koza_app
 from koza.model.config.source_config import PrimaryFileConfig
-from koza.model.source import Source
+from koza.model.source import KozaSource
 
 
 def test_koza(koza: KozaApp):
@@ -40,10 +40,10 @@ def mock_koza():
             files=[],
             transform_code=transform_code,
         )
-        mock_source_file = Source(mock_source_file_config)
+        mock_source_file = KozaSource(mock_source_file_config)
         mock_source_file._reader = data
 
-        _set_koza_app(
+        _build_and_set_koza_app(
             source=mock_source_file,
             translation_table=get_translation_table(global_table, local_table, logger),
             logger=logger,

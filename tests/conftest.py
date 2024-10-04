@@ -7,7 +7,7 @@ from loguru import logger
 from koza.app import KozaApp
 from koza.utils.testing_utils import test_koza
 from koza.model.config.source_config import PrimaryFileConfig
-from koza.model.source import Source
+from koza.model.source import KozaSource
 
 
 @pytest.fixture
@@ -36,7 +36,7 @@ def mock_koza():
             files=[],
             transform_code=transform_code,
         )
-        mock_source_file = Source(mock_source_file_config)
+        mock_source_file = KozaSource(mock_source_file_config)
         mock_source_file._reader = data
 
         koza = KozaApp(mock_source_file)
