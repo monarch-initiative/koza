@@ -54,7 +54,6 @@ class RowFilter:
         return include_row
 
     def inlist(self, column_value, filter_values):
-        print('FILTER VALUES',filter_values)
         #Check if the passed in column is exactly matched against
         #For a filter_list of ['abc','def','ghi']; this will be true
         #for column_value 'abc' but not 'abcde.'
