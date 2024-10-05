@@ -2,42 +2,42 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://koza.monarchinitiative.org/</loc>
-         <lastmod>2024-10-04</lastmod>
+         <lastmod>2024-10-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://koza.monarchinitiative.org/Ingests/</loc>
-         <lastmod>2024-10-04</lastmod>
+         <lastmod>2024-10-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://koza.monarchinitiative.org/Ingests/mapping/</loc>
-         <lastmod>2024-10-04</lastmod>
+         <lastmod>2024-10-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://koza.monarchinitiative.org/Ingests/source_config/</loc>
-         <lastmod>2024-10-04</lastmod>
+         <lastmod>2024-10-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://koza.monarchinitiative.org/Ingests/testing/</loc>
-         <lastmod>2024-10-04</lastmod>
+         <lastmod>2024-10-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://koza.monarchinitiative.org/Ingests/transform/</loc>
-         <lastmod>2024-10-04</lastmod>
+         <lastmod>2024-10-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://koza.monarchinitiative.org/Usage/CLI/</loc>
-         <lastmod>2024-10-04</lastmod>
+         <lastmod>2024-10-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://koza.monarchinitiative.org/Usage/Module/</loc>
-         <lastmod>2024-10-04</lastmod>
+         <lastmod>2024-10-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
 </urlset>
