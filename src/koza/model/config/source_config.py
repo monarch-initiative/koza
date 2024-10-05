@@ -32,6 +32,7 @@ class FilterCode(str, Enum):
     eq = "eq"
     ne = "ne"
     inlist = "in"
+    inlist_exact = "in_exact"
 
 
 class FilterInclusion(str, Enum):
