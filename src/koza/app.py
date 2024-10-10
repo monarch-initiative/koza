@@ -5,7 +5,9 @@ from typing import Dict, Union
 import yaml
 
 from linkml.validator import validate
+from openpyxl.styles.builtins import output
 from pydantic import ValidationError
+from sssom.cli import output_format_option
 
 from koza.converter.kgx_converter import KGXConverter
 from koza.utils.exceptions import MapItemException, NextRowException
@@ -42,6 +44,7 @@ class KozaApp:
         self._map_cache: Dict[str, Dict] = {}
         self.curie_cleaner: CurieCleaner = CurieCleaner()
         self.writer: KozaWriter = self._get_writer()
+        self.writers: Dict[str,KozaWriter] = self._get_writers()
         self.logger = logger
         self.outfiles = []
         if hasattr(self.writer, 'nodes_file_name'):
@@ -148,7 +151,7 @@ class KozaApp:
         """
         raise NextRowException
 
-    def write(self, *entities):
+    def write(self, *entities, writer=None):
         # If a schema/validator is defined, validate before writing
         # if self.validate:
         if hasattr(self, 'schema'):
@@ -169,6 +172,18 @@ class KozaApp:
                         validate(instance=edge, target_class=self.edge_type, schema=self.schema, strict=True)
 
         self.writer.write(entities)
+
+    def _get_writers(self) -> Dict[str,KozaWriter]:
+        return {}
+        # for writer_name in self.source.config.writers:
+        #     writer_config = self.source.config.writers[writer_name]
+        #     writer_params = {
+        #         "output_dir": self.output_dir,
+        #         self.source
+        #     }
+
+
+
 
     def _get_writer(self) -> Union[TSVWriter, JSONLWriter]:
         writer_params = [
