@@ -127,14 +127,16 @@ def transform_source(
         _check_row_count("edge")
 
 
-def split_file(file: str,
-               fields: str,
-               format: OutputFormat = OutputFormat.tsv,
-               remove_prefixes: bool = False,
-               output_dir: str = "./output"):
+def split_file(
+    file: str,
+    fields: str,
+    format: OutputFormat = OutputFormat.tsv,
+    remove_prefixes: bool = False,
+    output_dir: str = "./output",
+):
     db = duckdb.connect(":memory:")
 
-    #todo: validate that each of the fields is actually a column in the file
+    # todo: validate that each of the fields is actually a column in the file
     if format == OutputFormat.tsv:
         read_file = f"read_csv('{file}')"
     elif format == OutputFormat.json:
@@ -179,14 +181,18 @@ def split_file(file: str,
     for row in list_of_value_dicts:
         # export to a tsv file named with the values of the pivot fields
         where_clause = ' AND '.join([f"{k} = '{row[k]}'" for k in keys])
-        file_name = output_dir + "/" + get_filename_prefix(file) +  generate_filename_from_row(row) + get_filename_suffix(file)
+        file_name = (
+            output_dir + "/" + get_filename_prefix(file) + generate_filename_from_row(row) + get_filename_suffix(file)
+        )
         print(f"writing {file_name}")
-        db.execute(f"""
+        db.execute(
+            f"""
         COPY (
             SELECT * FROM {read_file}
             WHERE {where_clause}
         ) TO '{file_name}' (HEADER, DELIMITER '\t');
-        """)
+        """
+        )
 
 
 def validate_file(
