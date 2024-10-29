@@ -2,8 +2,9 @@
 # NOTE - May want to rename to KGXWriter at some point, if we develop writers for other models non biolink/kgx specific
 
 from pathlib import Path
-from typing import Dict, Iterable, List, Literal, Set, Union
+from typing import Dict, Iterable, List, Literal, Set, Tuple, Union
 
+from numpy.f2py.auxfuncs import throw_error
 from ordered_set import OrderedSet
 
 from koza.converter.kgx_converter import KGXConverter
@@ -69,6 +70,13 @@ class TSVWriter(KozaWriter):
         fh = self.nodeFH if record_type == "node" else self.edgeFH
         columns = self.node_columns if record_type == "node" else self.edge_columns
         row = build_export_row(record, list_delimiter=self.list_delimiter)
+
+        # Throw error if the record has extra columns
+        columns_tuple = tuple(columns)
+        row_keys_tuple = tuple(row.keys())
+        if self.has_extra_columns(row_keys_tuple, columns_tuple):
+            throw_error(f"Record has extra columns: {set(row.keys()) - set(columns)} not defined in {record_type}")
+
         values = []
         if record_type == "node":
             row["id"] = record["id"]
@@ -86,6 +94,19 @@ class TSVWriter(KozaWriter):
             self.nodeFH.close()
         if hasattr(self, "edgeFH"):
             self.edgeFH.close()
+
+    @staticmethod
+    def has_extra_columns(row_keys: Tuple[str, ...], columns_tuple: Tuple[str, ...]) -> bool:
+        """Check if a row has extra columns.
+
+        Args:
+            row_keys: Tuple[str, ...] - A tuple of row keys
+            columns_tuple: Tuple[str, ...] - A tuple of columns
+
+        Returns:
+            bool - True if row has extra columns, False otherwise
+        """
+        return not set(row_keys).issubset(set(columns_tuple))
 
     @staticmethod
     def _order_columns(cols: Set, record_type: Literal["node", "edge"]) -> OrderedSet:
