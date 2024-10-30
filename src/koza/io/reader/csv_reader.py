@@ -1,5 +1,5 @@
 from csv import reader
-from typing import IO, Any, Dict, Iterator, List, Union
+from typing import IO, Any, Dict, Iterator, List, Optional, Union
 
 from koza.model.config.source_config import FieldType, HeaderMode
 
@@ -43,16 +43,16 @@ class CSVReader:
     def __init__(
         self,
         io_str: IO[str],
-        field_type_map: Dict[str, FieldType] = None,
-        delimiter: str = ",",
+        field_type_map: Optional[Dict[str, FieldType]] = None,
+        delimiter: Optional[str] = None,
         header: Union[int, HeaderMode] = HeaderMode.infer,
-        header_delimiter: str = None,
-        header_prefix: str = None,
+        header_delimiter: Optional[str] = None,
+        header_prefix: Optional[str] = None,
         dialect: str = "excel",
         skip_blank_lines: bool = True,
         name: str = "csv file",
         comment_char: str = "#",
-        row_limit: int = None,
+        row_limit: Optional[int] = None,
         *args,
         **kwargs,
     ):
@@ -95,6 +95,9 @@ class CSVReader:
         self.line_count = 0
 
         self._header = None
+
+        if delimiter is None:
+            delimiter = ','
 
         if delimiter == '\\s':
             delimiter = ' '

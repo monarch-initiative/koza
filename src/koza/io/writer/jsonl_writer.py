@@ -12,9 +12,9 @@ class JSONLWriter(KozaWriter):
         self,
         output_dir: str,
         source_name: str,
-        node_properties: List[str],
-        edge_properties: Optional[List[str]] = [],
-        sssom_config: SSSOMConfig = None,
+        node_properties: Optional[List[str]] = None,
+        edge_properties: Optional[List[str]] = None,
+        sssom_config: Optional[SSSOMConfig] = None,
     ):
         self.output_dir = output_dir
         self.source_name = source_name

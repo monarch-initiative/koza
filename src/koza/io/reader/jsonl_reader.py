@@ -1,5 +1,5 @@
 import json
-from typing import IO, Any, Dict, Iterator, List
+from typing import IO, Any, Dict, Iterator, List, Optional
 
 from koza.io.utils import check_data
 
@@ -19,9 +19,9 @@ class JSONLReader:
     def __init__(
         self,
         io_str: IO[str],
-        required_properties: List[str] = None,
+        required_properties: Optional[List[str]] = None,
         name: str = 'jsonl file',
-        row_limit: int = None,
+        row_limit: Optional[int] = None,
     ):
         """
         :param io_str: Any IO stream that yields a string

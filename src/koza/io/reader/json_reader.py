@@ -1,6 +1,6 @@
 import json
 import yaml
-from typing import IO, Any, Dict, Iterator, List, Union
+from typing import IO, Any, Dict, Iterator, List, Optional, Union
 
 # from xmlrpc.client import Boolean
 
@@ -21,11 +21,11 @@ class JSONReader:
     def __init__(
         self,
         io_str: IO[str],
-        required_properties: List[str] = None,
-        json_path: List[Union[str, int]] = None,
+        required_properties: Optional[List[str]] = None,
+        json_path: Optional[List[Union[str, int]]] = None,
         name: str = 'json file',
         is_yaml: bool = False,
-        row_limit: int = None,
+        row_limit: Optional[int] = None,
     ):
         """
         :param io_str: Any IO stream that yields a string

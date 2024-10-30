@@ -2,7 +2,7 @@
 # NOTE - May want to rename to KGXWriter at some point, if we develop writers for other models non biolink/kgx specific
 
 from pathlib import Path
-from typing import Dict, Iterable, List, Literal, Set, Union
+from typing import Dict, Iterable, List, Literal, Optional, Union
 
 from ordered_set import OrderedSet
 
@@ -17,9 +17,9 @@ class TSVWriter(KozaWriter):
         self,
         output_dir: Union[str, Path],
         source_name: str,
-        node_properties: List[str] = None,
-        edge_properties: List[str] = None,
-        sssom_config: SSSOMConfig = None,
+        node_properties: Optional[List[str]] = None,
+        edge_properties: Optional[List[str]] = None,
+        sssom_config: Optional[SSSOMConfig] = None,
     ):
         self.basename = source_name
         self.dirname = output_dir

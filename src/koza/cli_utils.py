@@ -5,6 +5,7 @@ Module for managing koza runs through the CLI
 from pathlib import Path
 import os
 from typing import Dict, Literal, Optional, Union
+from loguru import Logger
 import yaml
 
 import duckdb
@@ -40,13 +41,13 @@ def transform_source(
     source: str,
     output_dir: str,
     output_format: OutputFormat = OutputFormat("tsv"),
-    global_table: str = None,
-    local_table: str = None,
-    schema: str = None,
-    node_type: str = None,
-    edge_type: str = None,
-    row_limit: int = None,
-    verbose: bool = None,
+    global_table: Optional[str] = None,
+    local_table: Optional[str] = None,
+    schema: Optional[str] = None,
+    node_type: Optional[str] = None,
+    edge_type: Optional[str] = None,
+    row_limit: Optional[int] = None,
+    verbose: Optional[bool] = None,
     log: bool = False,
 ):
     """Create a KozaApp object, process maps, and run the transform
@@ -193,7 +194,7 @@ def validate_file(
     file: str,
     format: FormatType = FormatType.csv,
     delimiter: str = ",",
-    header_delimiter: str = None,
+    header_delimiter: Optional[str] = None,
     skip_blank_lines: bool = True,
 ):
     """
@@ -223,9 +224,9 @@ def validate_file(
 
 
 def get_translation_table(
-    global_table: Union[str, Dict] = None,
-    local_table: Union[str, Dict] = None,
-    logger=None,
+    global_table: Optional[Union[str, Dict]] = None,
+    local_table: Optional[Union[str, Dict]] = None,
+    logger: Optional[Logger] = None,
 ) -> TranslationTable:
     """Create a translation table object from two file paths
 
@@ -243,7 +244,7 @@ def get_translation_table(
     if not global_table:
         if local_table:
             raise ValueError("Local table without a global table not allowed")
-        else:
+        elif logger:
             logger.debug("No global table used for transform")
     else:
         if isinstance(global_table, str):
@@ -259,7 +260,7 @@ def get_translation_table(
             elif isinstance(local_table, Dict):
                 local_tt = local_table
 
-        else:
+        elif logger:
             logger.debug("No local table used for transform")
 
     return TranslationTable(global_tt, local_tt)
@@ -267,18 +268,19 @@ def get_translation_table(
 
 def _set_koza_app(
     source: Source,
-    translation_table: TranslationTable = None,
+    translation_table: Optional[TranslationTable] = None,
     output_dir: str = "./output",
     output_format: OutputFormat = OutputFormat("tsv"),
-    schema: str = None,
-    node_type: str = None,
-    edge_type: str = None,
-    logger=None,
+    schema: Optional[str] = None,
+    node_type: Optional[str] = None,
+    edge_type: Optional[str] = None,
+    logger: Optional[Logger] =None,
 ) -> KozaApp:
     """Create a KozaApp object for a given source"""
 
     koza_apps[source.config.name] = KozaApp(
         source, translation_table, output_dir, output_format, schema, node_type, edge_type, logger
     )
-    logger.debug(f"koza_apps entry created for {source.config.name}: {koza_apps[source.config.name]}")
+    if logger:
+        logger.debug(f"koza_apps entry created for {source.config.name}: {koza_apps[source.config.name]}")
     return koza_apps[source.config.name]

@@ -1,7 +1,7 @@
 import importlib
 import sys
 from pathlib import Path
-from typing import Dict, Union
+from typing import Dict, Optional, Union
 import yaml
 
 from linkml.validator import validate
@@ -26,12 +26,12 @@ class KozaApp:
     def __init__(
         self,
         source: Source,
-        translation_table: TranslationTable = None,
+        translation_table: Optional[TranslationTable] = None,
         output_dir: str = './output',
         output_format: OutputFormat = OutputFormat('jsonl'),
-        schema: str = None,
-        node_type: str = None,
-        edge_type: str = None,
+        schema: Optional[str] = None,
+        node_type: Optional[str] = None,
+        edge_type: Optional[str] = None,
         logger=None,
     ):
         self.source = source
@@ -69,7 +69,7 @@ class KozaApp:
         map = self._map_cache[map_name]
         return map
 
-    def get_row(self, ingest_name: str = None) -> Dict:
+    def get_row(self, ingest_name: Optional[str] = None) -> Dict:
         if ingest_name and ingest_name == self.source.config.name:
             return next(self.source)
         elif ingest_name in self._map_registry:

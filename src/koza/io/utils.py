@@ -7,7 +7,7 @@ import tempfile
 from io import TextIOWrapper
 from os import PathLike
 from pathlib import Path
-from typing import IO, Any, Dict, Union
+from typing import IO, Any, Dict, Optional, Union
 from zipfile import ZipFile, is_zipfile
 
 import requests
@@ -126,7 +126,7 @@ column_types = {
 column_types.update(provenance_slot_types)
 
 
-def build_export_row(data: Dict, list_delimiter: str = None) -> Dict:
+def build_export_row(data: Dict, list_delimiter: Optional[str] = None) -> Dict:
     """
     Sanitize key-value pairs in dictionary.
     This should be used to ensure proper syntax and types for node and edge data as it is exported.
@@ -149,7 +149,7 @@ def build_export_row(data: Dict, list_delimiter: str = None) -> Dict:
     return tidy_data
 
 
-def _sanitize_export_property(key: str, value: Any, list_delimiter: str = None) -> Any:
+def _sanitize_export_property(key: str, value: Any, list_delimiter: Optional[str] = None) -> Any:
     """
     Sanitize value for a key for the purpose of export.
     Casts all values to primitive types like str or bool according to the
