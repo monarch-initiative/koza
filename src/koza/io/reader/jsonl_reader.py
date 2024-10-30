@@ -1,5 +1,5 @@
 import json
-from typing import IO, Any, Dict, Iterator, List, Optional
+from typing import IO, Any, Dict, List, Optional
 
 from koza.io.utils import check_data
 
@@ -35,7 +35,7 @@ class JSONLReader:
         self.name = name
         self.line_limit = row_limit
 
-    def __iter__(self) -> Iterator:
+    def __iter__(self):
         return self
 
     def __next__(self) -> Dict[str, Any]:

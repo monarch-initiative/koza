@@ -1,5 +1,5 @@
 from csv import reader
-from typing import IO, Any, Dict, Iterator, List, Optional, Union
+from typing import IO, Any, Dict, List, Optional, Union
 
 from koza.model.config.source_config import FieldType, HeaderMode
 
@@ -106,7 +106,7 @@ class CSVReader:
         kwargs['delimiter'] = delimiter
         self.reader = reader(io_str, *args, **kwargs)
 
-    def __iter__(self) -> Iterator:
+    def __iter__(self):
         return self
 
     def __next__(self) -> Dict[str, Any]:

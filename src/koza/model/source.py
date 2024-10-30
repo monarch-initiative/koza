@@ -1,4 +1,4 @@
-from typing import Any, Dict, Iterator, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from koza.io.reader.csv_reader import CSVReader
 from koza.io.reader.json_reader import JSONReader
@@ -70,7 +70,7 @@ class Source:
             else:
                 raise ValueError(f"File type {format} not supported")
 
-    def __iter__(self) -> Iterator:
+    def __iter__(self):
         return self
 
     def __next__(self) -> Dict[str, Any]:

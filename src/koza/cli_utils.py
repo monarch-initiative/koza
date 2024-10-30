@@ -78,7 +78,7 @@ def transform_source(
             filename = Path(source).parent / "transform.py"
         if not Path(filename).exists():
             raise FileNotFoundError(f"Could not find transform file for {source}")
-        source_config.transform_code = filename
+        source_config.transform_code = str(filename)
 
     koza_source = Source(source_config, row_limit)
     logger.debug(f"Source created: {koza_source.config.name}")
@@ -101,12 +101,15 @@ def transform_source(
 
         if type == "node":
             outfile = koza_app.node_file
-            min_count = source_config.min_node_count
+            min_count = source_config.min_node_count or 0
         elif type == "edge":
             outfile = koza_app.edge_file
-            min_count = source_config.min_edge_count
+            min_count = source_config.min_edge_count or 0
 
-        count = duckdb.sql(f"SELECT count(*) from '{outfile}' as count").fetchone()[0]
+        query = duckdb.sql(f"SELECT count(*) from '{outfile}' as count").fetchone()
+        if query is None:
+            raise Exception("Error querying duckdb")
+        count = query[0]
 
         if row_limit and row_limit < min_count:
             logger.warning(f"Row limit '{row_limit}' is less than expected count of {min_count} {type}s")

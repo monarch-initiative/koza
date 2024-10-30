@@ -1,6 +1,6 @@
 import json
 import yaml
-from typing import IO, Any, Dict, Iterator, List, Optional, Union
+from typing import IO, Any, Dict, List, Optional, Union
 
 # from xmlrpc.client import Boolean
 
@@ -66,7 +66,7 @@ class JSONReader:
         else:
             self._line_limit = self._len
 
-    def __iter__(self) -> Iterator:
+    def __iter__(self):
         return self
 
     def __next__(self) -> Dict[str, Any]:
