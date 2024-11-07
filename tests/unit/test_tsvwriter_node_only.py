@@ -14,7 +14,25 @@ def test_tsv_writer():
 
     ent = [g, d]
 
-    node_properties = ['id', 'category', 'symbol', 'in_taxon', 'provided_by', 'source']
+    node_properties = [
+        'id',
+        'category',
+        'symbol',
+        'in_taxon',
+        'provided_by',
+        'source',
+        'has_biological_sequence',
+        'iri',
+        'type',
+        'xref',
+        'description',
+        'synonym',
+        'in_taxon_label',
+        'deprecated',
+        'full_name',
+        'name',
+        'has_attribute'
+    ]
 
     outdir = "output/tests"
     outfile = "tsvwriter-node-only"
