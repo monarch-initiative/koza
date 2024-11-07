@@ -8,19 +8,9 @@ from koza.model.config.sssom_config import SSSOMConfig
 
 
 class JSONLWriter(KozaWriter):
-    def __init__(
-        self,
-        output_dir: str,
-        source_name: str,
-        node_properties: List[str],
-        edge_properties: Optional[List[str]] = [],
-        sssom_config: SSSOMConfig = None,
-    ):
-        self.output_dir = output_dir
-        self.source_name = source_name
-        self.sssom_config = sssom_config
-
-        self.converter = KGXConverter()
+    def __init__(self, output_dir: str, source_name: str, node_properties: List[str],
+                 edge_properties: Optional[List[str]] = None, sssom_config: SSSOMConfig = None):
+        super().__init__(output_dir, source_name, node_properties, edge_properties, sssom_config)
 
         os.makedirs(output_dir, exist_ok=True)
         if node_properties:
@@ -28,20 +18,13 @@ class JSONLWriter(KozaWriter):
         if edge_properties:
             self.edgeFH = open(f"{output_dir}/{source_name}_edges.jsonl", "w")
 
-    def write(self, entities: Iterable):
-        (nodes, edges) = self.converter.convert(entities)
+    def write_edge(self, edge: dict):
+        edge = json.dumps(edge, ensure_ascii=False)
+        self.edgeFH.write(edge + '\n')
 
-        if nodes:
-            for n in nodes:
-                node = json.dumps(n, ensure_ascii=False)
-                self.nodeFH.write(node + '\n')
-
-        if edges:
-            for e in edges:
-                if self.sssom_config:
-                    e = self.sssom_config.apply_mapping(e)
-                edge = json.dumps(e, ensure_ascii=False)
-                self.edgeFH.write(edge + '\n')
+    def write_node(self, node: dict):
+        node = json.dumps(node, ensure_ascii=False)
+        self.nodeFH.write(node + '\n')
 
     def finalize(self):
         if hasattr(self, 'nodeFH'):
