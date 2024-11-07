@@ -52,9 +52,7 @@ class KozaWriter(ABC):
 
         extra_fields = not set(row_keys).issubset(set(columns))
         if extra_fields:
-            raise ValueError(f"Extra fields found in row: {set(row_keys) - set(columns)}")
-
-        pass
+            raise ValueError(f"Extra fields found in row: {sorted(set(row_keys) - set(columns))}")
 
     @abstractmethod
     def write_edge(self, edge: dict):
