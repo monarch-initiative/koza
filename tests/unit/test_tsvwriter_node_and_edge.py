@@ -39,7 +39,8 @@ def test_tsv_writer():
         'deprecated',
         'has_attribute',
         'full_name',
-        'iri', 'name',
+        'iri',
+        'name',
     ]
     edge_properties = [
         "id",
@@ -90,7 +91,7 @@ def test_tsv_writer():
         'primary_knowledge_source',
         'object_aspect_qualifier',
         'object_closure',
-        'subject_aspect_qualifier'
+        'subject_aspect_qualifier',
     ]
 
     outdir = "output/tests"
@@ -115,7 +116,7 @@ def test_tsv_writer():
         lines = f.readlines()
         assert (
             lines[1].strip()
-            == "uuid:5b06e86f-d768-4cd9-ac27-abe31e95ab1e\tHGNC:11603\tbiolink:contributes_to\tMONDO:0005002\t" +
-                "biolink:GeneToDiseaseAssociation\t\tnot_provided\t\t\t\t\t\t\t0\t\t\t\t20\t\tnot_provided"
+            == "uuid:5b06e86f-d768-4cd9-ac27-abe31e95ab1e\tHGNC:11603\tbiolink:contributes_to\tMONDO:0005002\t"
+            + "biolink:GeneToDiseaseAssociation\t\tnot_provided\t\t\t\t\t\t\t0\t\t\t\t20\t\tnot_provided"
         )
         assert len(lines) == 2

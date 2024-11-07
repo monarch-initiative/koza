@@ -31,7 +31,7 @@ def test_tsv_writer():
         'deprecated',
         'full_name',
         'name',
-        'has_attribute'
+        'has_attribute',
     ]
 
     outdir = "output/tests"

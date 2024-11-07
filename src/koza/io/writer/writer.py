@@ -11,6 +11,7 @@ class KozaWriter(ABC):
     """
     An abstract base class for all koza writers
     """
+
     def __init__(
         self,
         output_dir: Union[str, Path],

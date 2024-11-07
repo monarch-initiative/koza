@@ -1,15 +1,20 @@
 import json
 import os
-from typing import Iterable, List, Optional
+from typing import List, Optional
 
-from koza.converter.kgx_converter import KGXConverter
 from koza.io.writer.writer import KozaWriter
 from koza.model.config.sssom_config import SSSOMConfig
 
 
 class JSONLWriter(KozaWriter):
-    def __init__(self, output_dir: str, source_name: str, node_properties: List[str],
-                 edge_properties: Optional[List[str]] = None, sssom_config: SSSOMConfig = None):
+    def __init__(
+        self,
+        output_dir: str,
+        source_name: str,
+        node_properties: List[str],
+        edge_properties: Optional[List[str]] = None,
+        sssom_config: SSSOMConfig = None,
+    ):
         super().__init__(output_dir, source_name, node_properties, edge_properties, sssom_config)
 
         os.makedirs(output_dir, exist_ok=True)

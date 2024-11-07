@@ -2,7 +2,7 @@
 # NOTE - May want to rename to KGXWriter at some point, if we develop writers for other models non biolink/kgx specific
 
 from pathlib import Path
-from typing import Dict, Iterable, List, Literal, Set, Tuple, Union
+from typing import Dict, List, Literal, Set, Tuple, Union
 
 from numpy.f2py.auxfuncs import throw_error
 from ordered_set import OrderedSet
