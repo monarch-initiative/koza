@@ -20,6 +20,7 @@ class KozaWriter(ABC):
         edge_properties: List[str] = None,
         sssom_config: SSSOMConfig = None,
         skip_checks: bool = False,
+        kwargs: dict = None,
     ):
         """Do not override this method; implement `init` instead."""
         self.output_dir = output_dir
@@ -30,7 +31,8 @@ class KozaWriter(ABC):
         self.skip_checks = skip_checks
         self.converter = KGXConverter()
 
-        self.init()
+        kwargs = kwargs or {}
+        self.init(**kwargs)
 
     def write(self, entities: Iterable):
         nodes, edges = self.converter.convert(entities)
@@ -61,7 +63,7 @@ class KozaWriter(ABC):
             raise ValueError(f"Extra fields found in row: {sorted(set(row_keys) - set(columns))}")
 
     @abstractmethod
-    def init(self):
+    def init(self, **kwargs):
         pass
 
     @abstractmethod
