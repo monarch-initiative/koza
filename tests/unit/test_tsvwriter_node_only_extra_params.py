@@ -1,5 +1,6 @@
-import os
+import re
 
+import pytest
 from biolink_model.datamodel.pydanticmodel_v2 import Disease, Gene
 
 from koza.io.writer.tsv_writer import TSVWriter
@@ -30,15 +31,14 @@ def test_tsv_writer():
         'in_taxon_label',
         'deprecated',
         'full_name',
-        'name',
-        'has_attribute',
     ]
 
     outdir = "output/tests"
     outfile = "tsvwriter-node-only"
 
     t = TSVWriter(outdir, outfile, node_properties)
-    t.write(ent)
-    t.finalize()
 
-    assert os.path.exists("{}/{}_nodes.tsv".format(outdir, outfile))
+    t = TSVWriter(outdir, outfile, node_properties)
+    expected_message = "Extra fields found in row: ['has_attribute', 'name']"
+    with pytest.raises(ValueError, match=re.escape(expected_message)):
+        t.write(ent)
