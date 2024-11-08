@@ -1,79 +1,71 @@
 #### TSV Writer ####
-# NOTE - May want to rename to KGXWriter at some point, if we develop writers for other models non biolink/kgx specific
 
 from pathlib import Path
-from typing import Dict, List, Literal, Set, Tuple, Union
+from typing import Dict, List, Literal, Set, TextIO
 
-from numpy.f2py.auxfuncs import throw_error
 from ordered_set import OrderedSet
 
-# from koza.converter.kgx_converter import KGXConverter
 from koza.io.utils import build_export_row
 from koza.io.writer.writer import KozaWriter
-from koza.model.config.sssom_config import SSSOMConfig
 
 
 class TSVWriter(KozaWriter):
-    def __init__(
-        self,
-        output_dir: Union[str, Path],
-        source_name: str,
-        node_properties: List[str] = None,
-        edge_properties: List[str] = None,
-        sssom_config: SSSOMConfig = None,
-    ):
-        super().__init__(output_dir, source_name, node_properties, edge_properties, sssom_config)
-        self.delimiter = "\t"
-        self.list_delimiter = "|"
+    delimiter: str = "\t"
+    list_delimiter: str = "|"
 
+    nodes_file_name: Path
+    edges_file_name: Path
+
+    nodeFH: TextIO
+    edgeFH: TextIO
+
+    def init(self):
         Path(self.output_dir).mkdir(parents=True, exist_ok=True)
 
-        if node_properties:  # Make node file
-            self.node_columns = TSVWriter._order_columns(set(node_properties), "node")
+        if self.node_properties:  # Make node file
+            self.node_properties = TSVWriter._order_columns(set(self.node_properties), "node")
             self.nodes_file_name = Path(self.output_dir if self.output_dir else "", f"{self.source_name}_nodes.tsv")
             self.nodeFH = open(self.nodes_file_name, "w")
-            self.nodeFH.write(self.delimiter.join(self.node_columns) + "\n")
+            self.nodeFH.write(self.delimiter.join(self.node_properties) + "\n")
 
-        if edge_properties:  # Make edge file
-            if sssom_config:
-                edge_properties = self.add_sssom_columns(edge_properties)
-            self.edge_columns = TSVWriter._order_columns(set(edge_properties), "edge")
+        if self.edge_properties:  # Make edge file
+            if self.sssom_config:
+                self.edge_properties = self.add_sssom_columns(self.edge_properties)
+            self.edge_properties = TSVWriter._order_columns(set(self.edge_properties), "edge")
             self.edges_file_name = Path(self.output_dir if self.output_dir else "", f"{self.source_name}_edges.tsv")
             self.edgeFH = open(self.edges_file_name, "w")
-            self.edgeFH.write(self.delimiter.join(self.edge_columns) + "\n")
+            self.edgeFH.write(self.delimiter.join(self.edge_properties) + "\n")
 
     def write_edge(self, edge: dict):
-        self.write_row(edge, record_type="edge")
-
-    def write_node(self, node: dict):
-        self.write_row(node, record_type="node")
-
-    def write_row(self, record: Dict, record_type: Literal["node", "edge"]) -> None:
-        """Write a row to the underlying store.
+        """Write an edge to the underlying store.
 
         Args:
-            record: Dict - A node or edge record
-            record_type: Literal["node", "edge"] - The record_type of record
+            edge: dict - An edge record
         """
-        fh = self.nodeFH if record_type == "node" else self.edgeFH
-        columns = self.node_columns if record_type == "node" else self.edge_columns
-        row = build_export_row(record, list_delimiter=self.list_delimiter)
+        row = build_export_row(edge, list_delimiter=self.list_delimiter)
+        values = self.get_columns(row, self.edge_properties)
+        self.edgeFH.write(self.delimiter.join(values) + "\n")
 
-        # Throw error if the record has extra columns
-        columns_tuple = tuple(columns)
-        row_keys_tuple = tuple(row.keys())
-        if self.has_extra_columns(row_keys_tuple, columns_tuple):
-            throw_error(f"Record has extra columns: {set(row.keys()) - set(columns)} not defined in {record_type}")
+    def write_node(self, node: dict):
+        """Write a node to the underlying store.
 
+        Args:
+            node: dict - A node record
+        """
+        row = build_export_row(node, list_delimiter=self.list_delimiter)
+        row["id"] = node["id"]
+        values = self.get_columns(row, self.node_properties)
+        self.nodeFH.write(self.delimiter.join(values) + "\n")
+
+    @staticmethod
+    def get_columns(row: Dict, columns) -> List[str]:
         values = []
-        if record_type == "node":
-            row["id"] = record["id"]
         for c in columns:
             if c in row:
                 values.append(str(row[c]))
             else:
                 values.append("")
-        fh.write(self.delimiter.join(values) + "\n")
+        return values
 
     def finalize(self):
         """Close file handles."""
@@ -82,19 +74,6 @@ class TSVWriter(KozaWriter):
             self.nodeFH.close()
         if hasattr(self, "edgeFH"):
             self.edgeFH.close()
-
-    @staticmethod
-    def has_extra_columns(row_keys: Tuple[str, ...], columns_tuple: Tuple[str, ...]) -> bool:
-        """Check if a row has extra columns.
-
-        Args:
-            row_keys: Tuple[str, ...] - A tuple of row keys
-            columns_tuple: Tuple[str, ...] - A tuple of columns
-
-        Returns:
-            bool - True if row has extra columns, False otherwise
-        """
-        return not set(row_keys).issubset(set(columns_tuple))
 
     @staticmethod
     def _order_columns(cols: Set, record_type: Literal["node", "edge"]) -> OrderedSet:

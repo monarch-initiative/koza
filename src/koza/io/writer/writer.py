@@ -19,28 +19,34 @@ class KozaWriter(ABC):
         node_properties: List[str] = None,
         edge_properties: List[str] = None,
         sssom_config: SSSOMConfig = None,
+        skip_checks: bool = False,
     ):
+        """Do not override this method; implement `init` instead."""
         self.output_dir = output_dir
         self.source_name = source_name
-        self.node_columns = node_properties
-        self.edge_columns = edge_properties
+        self.node_properties = node_properties
+        self.edge_properties = edge_properties
         self.sssom_config = sssom_config
-
+        self.skip_checks = skip_checks
         self.converter = KGXConverter()
 
-    def write(self, entities: Iterable, skip_checks: bool = False):
+        self.init()
+
+    def write(self, entities: Iterable):
         nodes, edges = self.converter.convert(entities)
 
         if nodes:
             for node in nodes:
-                self.check_extra_fields(tuple(node.keys()), tuple(self.node_columns))
+                if not self.skip_checks:
+                    self.check_extra_fields(tuple(node.keys()), tuple(self.node_properties))
                 self.write_node(node)
 
         if edges:
             for edge in edges:
                 if self.sssom_config:
                     edge = self.sssom_config.apply_mapping(edge)
-                self.check_extra_fields(tuple(edge.keys()), tuple(self.edge_columns))
+                if not self.skip_checks:
+                    self.check_extra_fields(tuple(edge.keys()), tuple(self.edge_properties))
                 self.write_edge(edge)
 
     @staticmethod
@@ -53,6 +59,10 @@ class KozaWriter(ABC):
         extra_fields = not set(row_keys).issubset(set(columns))
         if extra_fields:
             raise ValueError(f"Extra fields found in row: {sorted(set(row_keys) - set(columns))}")
+
+    @abstractmethod
+    def init(self):
+        pass
 
     @abstractmethod
     def write_edge(self, edge: dict):

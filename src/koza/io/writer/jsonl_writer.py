@@ -1,27 +1,22 @@
 import json
 import os
-from typing import List, Optional
+from typing import List, Optional, TextIO
 
 from koza.io.writer.writer import KozaWriter
-from koza.model.config.sssom_config import SSSOMConfig
 
 
 class JSONLWriter(KozaWriter):
-    def __init__(
-        self,
-        output_dir: str,
-        source_name: str,
-        node_properties: List[str],
-        edge_properties: Optional[List[str]] = None,
-        sssom_config: SSSOMConfig = None,
-    ):
-        super().__init__(output_dir, source_name, node_properties, edge_properties, sssom_config)
+    node_properties: List[str]
+    edge_properties: List[str]
+    nodeFH: Optional[TextIO]
+    edgeFH: Optional[TextIO]
 
-        os.makedirs(output_dir, exist_ok=True)
-        if node_properties:
-            self.nodeFH = open(f"{output_dir}/{source_name}_nodes.jsonl", "w")
-        if edge_properties:
-            self.edgeFH = open(f"{output_dir}/{source_name}_edges.jsonl", "w")
+    def init(self):
+        os.makedirs(self.output_dir, exist_ok=True)
+        if self.node_properties:
+            self.nodeFH = open(f"{self.output_dir}/{self.source_name}_nodes.jsonl", "w")
+        if self.edge_properties:
+            self.edgeFH = open(f"{self.output_dir}/{self.source_name}_edges.jsonl", "w")
 
     def write_edge(self, edge: dict):
         edge = json.dumps(edge, ensure_ascii=False)
