@@ -1,13 +1,11 @@
 import json
 import os
-from typing import List, Optional, TextIO
+from typing import Optional, TextIO
 
 from koza.io.writer.writer import KozaWriter
 
 
 class JSONLWriter(KozaWriter):
-    node_properties: List[str]
-    edge_properties: List[str]
     nodeFH: Optional[TextIO]
     edgeFH: Optional[TextIO]
 

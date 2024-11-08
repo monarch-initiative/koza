@@ -1,7 +1,7 @@
 #### TSV Writer ####
 
 from pathlib import Path
-from typing import Dict, List, Literal, Set, TextIO
+from typing import Dict, List, Literal, Optional, Set, TextIO
 
 from ordered_set import OrderedSet
 
@@ -13,27 +13,24 @@ class TSVWriter(KozaWriter):
     delimiter: str = "\t"
     list_delimiter: str = "|"
 
-    nodes_file_name: Path
-    edges_file_name: Path
-
-    nodeFH: TextIO
-    edgeFH: TextIO
+    nodeFH: Optional[TextIO]
+    edgeFH: Optional[TextIO]
 
     def init(self):
         Path(self.output_dir).mkdir(parents=True, exist_ok=True)
 
         if self.node_properties:  # Make node file
             self.node_properties = TSVWriter._order_columns(set(self.node_properties), "node")
-            self.nodes_file_name = Path(self.output_dir if self.output_dir else "", f"{self.source_name}_nodes.tsv")
-            self.nodeFH = open(self.nodes_file_name, "w")
+            nodes_file_name = Path(self.output_dir if self.output_dir else "", f"{self.source_name}_nodes.tsv")
+            self.nodeFH = open(nodes_file_name, "w")
             self.nodeFH.write(self.delimiter.join(self.node_properties) + "\n")
 
         if self.edge_properties:  # Make edge file
             if self.sssom_config:
                 self.edge_properties = self.add_sssom_columns(self.edge_properties)
             self.edge_properties = TSVWriter._order_columns(set(self.edge_properties), "edge")
-            self.edges_file_name = Path(self.output_dir if self.output_dir else "", f"{self.source_name}_edges.tsv")
-            self.edgeFH = open(self.edges_file_name, "w")
+            edges_file_name = Path(self.output_dir if self.output_dir else "", f"{self.source_name}_edges.tsv")
+            self.edgeFH = open(edges_file_name, "w")
             self.edgeFH.write(self.delimiter.join(self.edge_properties) + "\n")
 
     def write_edge(self, edge: dict):
