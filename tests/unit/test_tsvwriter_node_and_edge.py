@@ -97,7 +97,7 @@ def test_tsv_writer():
     outdir = "output/tests"
     outfile = "tsvwriter-node-and-edge"
 
-    t = TSVWriter(outdir, outfile, node_properties, edge_properties)
+    t = TSVWriter(outdir, outfile, node_properties, edge_properties, check_fields=True)
     t.write(ent)
     t.finalize()
 

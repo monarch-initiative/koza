@@ -19,7 +19,7 @@ class KozaWriter(ABC):
         node_properties: List[str] = None,
         edge_properties: List[str] = None,
         sssom_config: SSSOMConfig = None,
-        skip_checks: bool = False,
+        check_fields: bool = False,
         kwargs: dict = None,
     ):
         """Do not override this method; implement `init` instead."""
@@ -28,7 +28,7 @@ class KozaWriter(ABC):
         self.node_properties = node_properties
         self.edge_properties = edge_properties
         self.sssom_config = sssom_config
-        self.skip_checks = skip_checks
+        self.check_fields = check_fields
         self.converter = KGXConverter()
 
         kwargs = kwargs or {}
@@ -39,7 +39,7 @@ class KozaWriter(ABC):
 
         if nodes:
             for node in nodes:
-                if not self.skip_checks:
+                if self.check_fields:
                     self.check_extra_fields(tuple(node.keys()), tuple(self.node_properties))
                 self.write_node(node)
 
@@ -47,7 +47,7 @@ class KozaWriter(ABC):
             for edge in edges:
                 if self.sssom_config:
                     edge = self.sssom_config.apply_mapping(edge)
-                if not self.skip_checks:
+                if self.check_fields:
                     self.check_extra_fields(tuple(edge.keys()), tuple(self.edge_properties))
                 self.write_edge(edge)
 

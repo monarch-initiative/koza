@@ -37,7 +37,7 @@ def test_tsv_writer():
     outdir = "output/tests"
     outfile = "tsvwriter-node-only"
 
-    t = TSVWriter(outdir, outfile, node_properties)
+    t = TSVWriter(outdir, outfile, node_properties, check_fields=True)
     t.write(ent)
     t.finalize()
 

@@ -38,7 +38,7 @@ def test_tsv_writer():
 
     t = TSVWriter(outdir, outfile, node_properties)
 
-    t = TSVWriter(outdir, outfile, node_properties)
+    t = TSVWriter(outdir, outfile, node_properties, check_fields=True)
     expected_message = "Extra fields found in row: ['has_attribute', 'name']"
     with pytest.raises(ValueError, match=re.escape(expected_message)):
         t.write(ent)

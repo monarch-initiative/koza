@@ -89,7 +89,7 @@ def test_tsv_writer_extra_node_params():
     outdir = "output/tests"
     outfile = "tsvwriter-node-and-edge"
 
-    t = TSVWriter(outdir, outfile, node_properties, edge_properties)
+    t = TSVWriter(outdir, outfile, node_properties, edge_properties, check_fields=True)
     expected_message = "Extra fields found in row: ['deprecated', 'has_attribute', 'name']"
     with pytest.raises(ValueError, match=re.escape(expected_message)):
         t.write(ent)
@@ -184,7 +184,7 @@ def test_tsv_writer_extra_edge_params():
     outdir = "output/tests"
     outfile = "tsvwriter-node-and-edge"
 
-    t = TSVWriter(outdir, outfile, node_properties, edge_properties)
+    t = TSVWriter(outdir, outfile, node_properties, edge_properties, check_fields=True)
     expected_message = "Extra fields found in row: ['qualifier', 'retrieval_source_ids', 'subject_aspect_qualifier']"
     with pytest.raises(ValueError, match=re.escape(expected_message)):
         t.write(ent)
