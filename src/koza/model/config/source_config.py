@@ -313,6 +313,7 @@ class PrimaryFileConfig(SourceConfig):
     # edge_report_columns: Optional[List[str]] = None
     depends_on: List[str] = field(default_factory=list)
     on_map_failure: MapErrorEnum = MapErrorEnum.warning
+    check_fields: bool = False
 
 
 @dataclass(config=PYDANTIC_CONFIG)

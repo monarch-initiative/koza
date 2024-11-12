@@ -170,13 +170,14 @@ class KozaApp:
 
         self.writer.write(entities)
 
-    def _get_writer(self) -> Union[TSVWriter, JSONLWriter]:
+    def _get_writer(self) -> KozaWriter:
         writer_params = [
             self.output_dir,
             self.source.config.name,
             self.source.config.node_properties,
             self.source.config.edge_properties,
             self.source.config.sssom_config,
+            self.source.config.check_fields,
         ]
         if self.output_format == OutputFormat.tsv:
             return TSVWriter(*writer_params)
