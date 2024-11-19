@@ -21,16 +21,7 @@ def test_tsv_writer():
         'symbol',
         'in_taxon',
         'provided_by',
-        'source',
-        'has_biological_sequence',
-        'iri',
-        'type',
-        'xref',
         'description',
-        'synonym',
-        'in_taxon_label',
-        'deprecated',
-        'full_name',
     ]
 
     outdir = "output/tests"
@@ -39,6 +30,6 @@ def test_tsv_writer():
     t = TSVWriter(outdir, outfile, node_properties)
 
     t = TSVWriter(outdir, outfile, node_properties, check_fields=True)
-    expected_message = "Extra fields found in row: ['has_attribute', 'name']"
+    expected_message = "Extra fields found in row: ['name']"
     with pytest.raises(ValueError, match=re.escape(expected_message)):
         t.write(ent)

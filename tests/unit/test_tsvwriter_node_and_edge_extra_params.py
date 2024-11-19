@@ -28,17 +28,7 @@ def test_tsv_writer_extra_node_params():
         "id",
         "category",
         "symbol",
-        "in_taxon",
-        "provided_by",
-        "source",
-        'has_biological_sequence',
-        'type',
-        'xref',
         'description',
-        'in_taxon_label',
-        'synonym',
-        'iri',
-        'full_name',
     ]
     edge_properties = [
         "id",
@@ -48,49 +38,16 @@ def test_tsv_writer_extra_node_params():
         "category" "qualifiers",
         "has_count",
         "has_total",
-        "publications",
-        "provided_by",
-        'subject_category',
-        'object_direction_qualifier',
-        'sex_qualifier',
-        'negated',
-        'has_percentage',
-        'aggregator_knowledge_source',
-        'has_evidence',
-        'qualified_predicate',
-        'qualifiers',
-        'object_category',
-        'timepoint',
-        'subject_label_closure',
         'agent_type',
-        'has_attribute',
         'category',
-        'original_predicate',
-        'iri',
-        'frequency_qualifier',
-        'type',
-        'subject_namespace',
-        'subject_closure',
-        'object_label_closure',
-        'object_namespace',
-        'original_object',
-        'subject_category_closure',
-        'name',
-        'has_quotient',
         'knowledge_level',
-        'knowledge_source',
-        'description',
-        'subject_direction_qualifier',
-        'deprecated',
-        'original_subject',
-        'object_category_closure',
     ]
 
     outdir = "output/tests"
     outfile = "tsvwriter-node-and-edge"
 
     t = TSVWriter(outdir, outfile, node_properties, edge_properties, check_fields=True)
-    expected_message = "Extra fields found in row: ['deprecated', 'has_attribute', 'name']"
+    expected_message = "Extra fields found in row: ['in_taxon']"
     with pytest.raises(ValueError, match=re.escape(expected_message)):
         t.write(ent)
 
@@ -120,17 +77,6 @@ def test_tsv_writer_extra_edge_params():
         "in_taxon",
         "provided_by",
         "source",
-        'has_biological_sequence',
-        'type',
-        'xref',
-        'description',
-        'in_taxon_label',
-        'synonym',
-        'iri',
-        'full_name',
-        'deprecated',
-        'has_attribute',
-        'name',
     ]
     edge_properties = [
         "id",
@@ -140,51 +86,12 @@ def test_tsv_writer_extra_edge_params():
         "category" "qualifiers",
         "has_count",
         "has_total",
-        "publications",
-        "provided_by",
-        'subject_category',
-        'object_direction_qualifier',
-        'sex_qualifier',
-        'negated',
-        'has_percentage',
-        'aggregator_knowledge_source',
-        'has_evidence',
-        'qualified_predicate',
-        'qualifiers',
-        'object_category',
-        'timepoint',
-        'subject_label_closure',
-        'agent_type',
-        'has_attribute',
-        'category',
-        'original_predicate',
-        'iri',
-        'frequency_qualifier',
-        'type',
-        'subject_namespace',
-        'subject_closure',
-        'object_label_closure',
-        'object_namespace',
-        'original_object',
-        'subject_category_closure',
-        'name',
-        'has_quotient',
-        'knowledge_level',
-        'knowledge_source',
-        'description',
-        'subject_direction_qualifier',
-        'deprecated',
-        'original_subject',
-        'object_category_closure',
-        'object_aspect_qualifier',
-        'object_closure',
-        'primary_knowledge_source',
     ]
 
     outdir = "output/tests"
     outfile = "tsvwriter-node-and-edge"
 
     t = TSVWriter(outdir, outfile, node_properties, edge_properties, check_fields=True)
-    expected_message = "Extra fields found in row: ['qualifier', 'retrieval_source_ids', 'subject_aspect_qualifier']"
+    expected_message = "Extra fields found in row: ['description']"
     with pytest.raises(ValueError, match=re.escape(expected_message)):
         t.write(ent)
