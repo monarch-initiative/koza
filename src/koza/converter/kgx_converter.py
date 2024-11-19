@@ -1,7 +1,9 @@
 from dataclasses import asdict
-from typing import Iterable, Tuple
+from typing import Any, Dict, Iterable, List, Tuple, Union
+
 from pydantic import BaseModel
 
+from biolink_model.datamodel.pydanticmodel_v2 import Association, BiologicalEntity, ChemicalEntity
 
 class KGXConverter:
     """
@@ -15,35 +17,41 @@ class KGXConverter:
 
     """
 
-    def convert(self, entities: Iterable) -> Tuple[list, list]:
-        nodes = []
-        edges = []
+    def convert(self, entities: Iterable[Union[Association, BiologicalEntity, ChemicalEntity]]) \
+      -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+        nodes: List[Dict[str, Any]] = []
+        edges: List[Dict[str, Any]] = []
 
         for entity in entities:
-            # if entity has subject + object + predicate, treat as edge
-            if all(hasattr(entity, attr) for attr in ["subject", "object", "predicate"]):
-                edges.append(self.convert_association(entity))
+            # edge entities are Associations
+            if isinstance(entity, Association):
+                edges.append(self.convert_edge(entity))
 
-            # if entity has id and name, but not subject/object/predicate, treat as node
-            elif all(hasattr(entity, attr) for attr in ["id", "name"]) and not all(
-                hasattr(entity, attr) for attr in ["subject", "object", "predicate"]
-            ):
+            # node entities are BiologicalEntity or ChemicalEntity
+            elif isinstance(entity, (BiologicalEntity, ChemicalEntity)):
                 nodes.append(self.convert_node(entity))
 
             # otherwise, not a valid entity
             else:
                 raise ValueError(
-                    f"Cannot convert {entity}: Can only convert NamedThing or Association entities to KGX compatible dictionaries"
+                    f"Cannot convert {entity}: Can only convert Association, BiologicalEntity, or ChemicalEntity to KGX compatible dictionaries"
                 )
 
         return nodes, edges
 
-    def convert_node(self, node) -> dict:
-        if isinstance(node, BaseModel):
-            return dict(node)
-        return asdict(node)
+    def convert_node(self, node: Union[BiologicalEntity, ChemicalEntity]) -> Dict[str, Any]:
+        node_set_fields = self.get_set_fields(node)
+        node_set_fields["description"] = node.description # description field is not explicitly set?
+        return node_set_fields
 
-    def convert_association(self, association) -> dict:
-        if isinstance(association, BaseModel):
-            return dict(association)
-        return asdict(association)
+    def convert_edge(self, association: Association) -> Dict[str, Any]:
+        edge_set_fields = self.get_set_fields(association)
+        return edge_set_fields
+
+    @staticmethod
+    def get_set_fields(entity: BaseModel) -> Dict[str, Any]:
+        fields_set_keys = entity.model_fields_set
+        entity_set_fields = {key: getattr(entity, key) for key in fields_set_keys}
+        entity_set_fields["category"] = entity.category # category field is not explicitly set?
+        return entity_set_fields
+
