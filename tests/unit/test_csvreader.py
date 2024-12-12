@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from koza.io.reader.csv_reader import CSVReader
-from koza.model.config.source_config import FieldType
+from koza.model.config.source_config import FieldType, CSVReaderConfig, FormatType
 
 test_file = Path(__file__).parent.parent / 'resources' / 'source-files' / 'string.tsv'
 tsv_with_footer = Path(__file__).parent.parent / 'resources' / 'source-files' / 'tsv-with-footer.tsv'
@@ -25,7 +25,13 @@ field_type_map = {
 
 def test_no_exceptions_in_normal_case():
     with open(test_file, 'r') as string_file:
-        reader = CSVReader(string_file, field_type_map, delimiter=' ')
+        config = CSVReaderConfig(
+            format=FormatType.csv,
+            files=[],
+            field_type_map=field_type_map,
+            delimiter=' ',
+        )
+        reader = CSVReader(string_file, config)
         # TODO actually test something
         for _ in reader:
             pass
@@ -33,8 +39,14 @@ def test_no_exceptions_in_normal_case():
 
 def test_type_conversion():
     with open(test_file, 'r') as string_file:
-        reader = CSVReader(string_file, field_type_map, delimiter=' ')
-        row = next(reader)
+        config = CSVReaderConfig(
+            format=FormatType.csv,
+            files=[],
+            field_type_map=field_type_map,
+            delimiter=' ',
+        )
+        reader = CSVReader(string_file, config)
+        row = next(iter(reader))
         assert isinstance(row['protein1'], str)
         assert isinstance(row['textmining'], float)
         assert isinstance(row['combined_score'], int)
@@ -42,11 +54,16 @@ def test_type_conversion():
 
 def test_field_doesnt_exist_in_file_raises_exception():
     with open(test_file, 'r') as string_file:
-        field_map = field_type_map.copy()
-        field_map['some_field_that_doesnt_exist'] = FieldType.str
-        reader = CSVReader(string_file, field_map, delimiter=' ')
+        invalid_field_type_map = field_type_map.copy()
+        invalid_field_type_map['some_field_that_doesnt_exist'] = FieldType.str
+        config = CSVReaderConfig(
+            files=[],
+            field_type_map=invalid_field_type_map,
+            delimiter=' ',
+        )
+        reader = CSVReader(string_file, config)
         with pytest.raises(ValueError):
-            next(reader)
+            next(iter(reader))
 
 
 def test_field_in_file_but_not_in_config_logs_warning(caplog):
@@ -55,34 +72,59 @@ def test_field_in_file_but_not_in_config_logs_warning(caplog):
     :return:
     """
     with open(test_file, 'r') as string_file:
-        field_map = field_type_map.copy()
-        del field_map['combined_score']
-        reader = CSVReader(string_file, field_map, delimiter=' ')
-        next(reader)
-        assert caplog.records[1].levelname == 'WARNING'
-        assert caplog.records[1].msg.startswith('Additional column(s) in source file')
+        missing_field_field_type_map = field_type_map.copy()
+        del missing_field_field_type_map['combined_score']
+        config = CSVReaderConfig(
+            files=[],
+            field_type_map=missing_field_field_type_map,
+            delimiter=' ',
+        )
+        reader = CSVReader(string_file, config)
+        next(iter(reader))
+        assert caplog.records[0].levelname == 'WARNING'
+        assert caplog.records[0].msg.startswith('Additional column(s) in source file')
 
 
 def test_middle_field_in_file_but_not_in_config_logs_warning(caplog):
     with open(test_file, 'r') as string_file:
-        field_map = field_type_map.copy()
-        del field_map['cooccurence']
-        reader = CSVReader(string_file, field_map, delimiter=' ')
-        next(reader)
-        assert caplog.records[1].levelname == 'WARNING'
+        missing_field_field_type_map = field_type_map.copy()
+        del missing_field_field_type_map['cooccurence']
+        config = CSVReaderConfig(
+            files=[],
+            field_type_map=missing_field_field_type_map,
+            delimiter=' ',
+        )
+        reader = CSVReader(string_file, config)
+        next(iter(reader))
+        assert caplog.records[0].levelname == 'WARNING'
         # assert caplog.records[1].msg.startswith('Additional columns located within configured fields')
-        assert caplog.records[1].msg.startswith('Additional column(s) in source file')
+        assert caplog.records[0].msg.startswith('Additional column(s) in source file')
 
 
 def test_no_field_map(caplog):
     with open(test_file, 'r') as string_file:
-        reader = CSVReader(string_file, delimiter=' ')
-        next(reader)
+        config = CSVReaderConfig(
+            files=[],
+            delimiter=' ',
+        )
+        reader = CSVReader(string_file, config)
+        assert reader.field_type_map is None
+        header = reader.header
+        assert len(header) == 10
+        assert reader.field_type_map is not None
+        assert header == list(reader.field_type_map.keys())
 
 
 def test_no_exceptions_with_footer():
     with open(tsv_with_footer, 'r') as footer_file:
-        reader = CSVReader(footer_file, field_type_map, delimiter=' ', comment_char='!!')
+        config = CSVReaderConfig(
+            format=FormatType.csv,
+            files=[],
+            field_type_map=field_type_map,
+            delimiter=' ',
+            comment_char='!!',
+        )
+        reader = CSVReader(footer_file, config)
         # TODO actually test something
         for _ in reader:
             pass
