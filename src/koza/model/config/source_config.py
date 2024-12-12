@@ -3,21 +3,17 @@ source config data class
 map config data class
 """
 
-import os
-import tarfile
-import zipfile
 from dataclasses import field
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Union, Optional
-import yaml
+from typing import Annotated, Dict, List, Literal, Optional, Union
 
-from pydantic import StrictFloat, StrictInt, StrictStr
+import yaml
+from pydantic import Field, StrictFloat, StrictInt, StrictStr, TypeAdapter
 from pydantic.dataclasses import dataclass
 
 from koza.model.config.pydantic_config import PYDANTIC_CONFIG
 from koza.model.config.sssom_config import SSSOMConfig
-
 
 class FilterCode(str, Enum):
     """Enum for filter codes (ex. gt = greater than)
@@ -102,12 +98,31 @@ class TransformMode(str, Enum):
     loop = "loop"
 
 
-@dataclass(frozen=True)
-class ColumnFilter:
+@dataclass(config=PYDANTIC_CONFIG, frozen=True)
+class BaseColumnFilter:
     column: str
     inclusion: FilterInclusion
-    filter_code: FilterCode
-    value: Union[StrictInt, StrictFloat, StrictStr, List[Union[StrictInt, StrictFloat, StrictStr]]]
+
+
+@dataclass(config=PYDANTIC_CONFIG, frozen=True)
+class ComparisonFilter(BaseColumnFilter):
+    filter_code: Literal[FilterCode.lt, FilterCode.gt, FilterCode.lte, FilterCode.ge]
+    value: Union[StrictInt, StrictFloat]
+
+
+@dataclass(config=PYDANTIC_CONFIG, frozen=True)
+class EqualsFilter(BaseColumnFilter):
+    filter_code: Literal[FilterCode.eq]
+    value: Union[StrictInt, StrictFloat, StrictStr]
+
+
+@dataclass(config=PYDANTIC_CONFIG, frozen=True)
+class InListFilter(BaseColumnFilter):
+    filter_code: Literal[FilterCode.inlist, FilterCode.inlist_exact]
+    value: List[Union[StrictInt, StrictFloat, StrictStr]]
+
+
+ColumnFilter = Annotated[Union[ComparisonFilter, EqualsFilter, InListFilter], Field(..., discriminator="filter_code")]
 
 
 @dataclass(frozen=True)
@@ -130,8 +145,191 @@ class DatasetDescription:
     rights: Optional[str] = None  # License information for the data source
 
 
+# Reader configuration
+# ---
+
+
+@dataclass(config=PYDANTIC_CONFIG, frozen=True)
+class BaseReaderConfig:
+    files: List[str]
+
+
+@dataclass(config=PYDANTIC_CONFIG, frozen=True)
+class CSVReaderConfig(BaseReaderConfig):
+    format: Literal[FormatType.csv] = FormatType.csv
+    columns: Optional[List[Union[str, Dict[str, FieldType]]]] = None
+    field_type_map: Optional[dict[str, FieldType]] = None
+    delimiter: Optional[str] = None
+    dialect: str = "excel"
+    header_mode: Union[int, HeaderMode] = HeaderMode.infer
+    header_delimiter: Optional[str] = None
+    header_prefix: Optional[str] = None
+    skip_blank_lines: bool = True
+    comment_char: str = "#"
+
+    def __post_init__(self):
+        # Format tab as delimiter
+        if self.delimiter in ["tab", "\\t"]:
+            object.__setattr__(self, "delimiter", "\t")
+
+        # Create a field_type_map if columns are supplied
+        if self.columns:
+            field_type_map = {}
+            for field in self.columns:
+                if isinstance(field, str):
+                    field_type_map[field] = FieldType.str
+                else:
+                    if len(field) != 1:
+                        raise ValueError("Field type map contains more than one key")
+                    for key, val in field.items():
+                        field_type_map[key] = val
+            object.__setattr__(self, "field_type_map", field_type_map)
+
+        if self.header_mode == HeaderMode.none and not self.columns:
+            raise ValueError(
+                "there is no header and columns have not been supplied\n"
+                "configure the 'columns' field or set header to the 0-based"
+                "index in which it appears in the file, or set this value to"
+                "'infer'"
+            )
+
+
+@dataclass(config=PYDANTIC_CONFIG, frozen=True)
+class JSONLReaderConfig(BaseReaderConfig):
+    format: Literal[FormatType.jsonl] = FormatType.jsonl
+    required_properties: Optional[List[str]] = None
+
+
+@dataclass(config=PYDANTIC_CONFIG, frozen=True)
+class JSONReaderConfig(BaseReaderConfig):
+    format: Literal[FormatType.json] = FormatType.json
+    required_properties: Optional[List[str]] = None
+    json_path: Optional[List[Union[StrictStr, StrictInt]]] = None
+
+
+@dataclass(config=PYDANTIC_CONFIG, frozen=True)
+class YAMLReaderConfig(BaseReaderConfig):
+    format: Literal[FormatType.yaml] = FormatType.yaml
+    required_properties: Optional[List[str]] = None
+    json_path: Optional[List[Union[StrictStr, StrictInt]]] = None
+
+
+ReaderConfig = Annotated[
+    Union[CSVReaderConfig, JSONLReaderConfig, JSONReaderConfig, YAMLReaderConfig],
+    Field(..., discriminator="format"),
+]
+
+
+# Transform configuration
+# ---
+
+
+@dataclass(config=PYDANTIC_CONFIG, frozen=True)
+class BaseTransformConfig:
+    """
+    Source config data class
+
+    Parameters
+    ----------
+    name: name of the source
+    code: path to a python file to transform the data
+    mode: how to process the transform file
+    global_table: path to a global table file
+    local_table: path to a local table file
+    """
+
+    code: Optional[str] = None
+    mode: TransformMode = TransformMode.flat
+    filters: List[ColumnFilter] = field(default_factory=list)
+    global_table: Optional[Union[str, Dict]] = None
+    local_table: Optional[Union[str, Dict]] = None
+
+
+@dataclass(config=PYDANTIC_CONFIG, frozen=True)
+class PrimaryTransformConfig(BaseTransformConfig):
+    """
+    Primary configuration for transforming a source file
+
+    Parameters
+    ----------
+    node_properties: list of node properties/columns to include
+    edge_properties: list of edge properties/columns to include
+    min_node_count: minimum number of nodes required in output
+    min_edge_count: minimum number of edges required in output
+    node_report_columns: list of node properties to include in the report
+    edge_report_columns: list of edge properties to include in the report
+    depends_on: Optional lookup dictionary for basic mapping
+    on_map_failure: How to handle key errors in map files
+    """
+
+    metadata: Optional[Union[DatasetDescription, str]] = None
+
+    # node_report_columns: Optional[List[str]] = None
+    # edge_report_columns: Optional[List[str]] = None
+    depends_on: List[str] = field(default_factory=list)
+    on_map_failure: MapErrorEnum = MapErrorEnum.warning
+
+    def __post_init__(self):
+        # If metadata looks like a file path attempt to load it from the yaml
+        if self.metadata and isinstance(self.metadata, str):
+            try:
+                with open(self.metadata, "r") as meta:
+                    object.__setattr__(self, "metadata", DatasetDescription(**yaml.safe_load(meta)))
+            except Exception as e:
+                raise ValueError(f"Unable to load metadata from {self.metadata}: {e}") from e
+
+
+@dataclass(config=PYDANTIC_CONFIG, frozen=True)
+class MapTransformConfig(BaseTransformConfig):
+    key: Optional[str] = None
+    values: Optional[List[str]] = None
+    # curie_prefix: Optional[str] = None
+    # add_curie_prefix_to_columns: Optional[List[str]] = None
+    # depends_on: Optional[List[str]] = None
+
+
+# Writer configuration
+# ---
+
+
+@dataclass(config=PYDANTIC_CONFIG, frozen=True)
+class WriterConfig:
+    format: OutputFormat = OutputFormat.tsv
+    sssom_config: Optional[SSSOMConfig] = None
+    node_properties: Optional[List[str]] = None
+    edge_properties: Optional[List[str]] = None
+    min_node_count: Optional[int] = None
+    min_edge_count: Optional[int] = None
+
+
+# Main Koza configuration
+# ---
+
+
+@dataclass(config=PYDANTIC_CONFIG, frozen=True)
+class KozaConfig:
+    name: str
+    reader: ReaderConfig
+    transform: Union[PrimaryTransformConfig, MapTransformConfig]
+    writer: WriterConfig
+
+    def __post_init__(self):
+        if self.reader.format == FormatType.csv and self.reader.columns is not None:
+            filtered_columns = {column_filter.column for column_filter in self.transform.filters}
+            all_columns = {
+                column if isinstance(column, str) else list(column.keys())[0] for column in self.reader.columns
+            }
+            extra_filtered_columns = filtered_columns - all_columns
+            if extra_filtered_columns:
+                raise ValueError(f"Filter column not in defined CSV columns: \n\t{', '.join(extra_filtered_columns)}")
+
+
+def SourceConfig(**kwargs):
+    return DEPRECATEDSourceConfig(**kwargs).to_new_transform()
+
+
 @dataclass(config=PYDANTIC_CONFIG)
-class SourceConfig:
+class DEPRECATEDSourceConfig:
     """
     Source config data class
 
@@ -182,128 +380,7 @@ class SourceConfig:
     global_table: Optional[Union[str, Dict]] = None
     local_table: Optional[Union[str, Dict]] = None
 
-    def extract_archive(self):
-        archive_path = Path(self.file_archive).parent  # .absolute()
-        if self.file_archive.endswith(".tar.gz") or self.file_archive.endswith(".tar"):
-            with tarfile.open(self.file_archive) as archive:
-                archive.extractall(archive_path)
-        elif self.file_archive.endswith(".zip"):
-            with zipfile.ZipFile(self.file_archive, "r") as archive:
-                archive.extractall(archive_path)
-        else:
-            raise ValueError("Error extracting archive. Supported archive types: .tar.gz, .zip")
-        if self.files:
-            files = [os.path.join(archive_path, file) for file in self.files]
-        else:
-            files = [os.path.join(archive_path, file) for file in os.listdir(archive_path)]
-        return files
-
-    def __post_init__(self):
-        # Get files as paths, or extract them from an archive
-        if self.file_archive:
-            files = self.extract_archive()
-        else:
-            files = self.files
-
-        files_as_paths: List[Path] = []
-        for file in files:
-            if isinstance(file, str):
-                files_as_paths.append(Path(file))
-            else:
-                files_as_paths.append(file)
-        object.__setattr__(self, "files", files_as_paths)
-
-        # If metadata looks like a file path attempt to load it from the yaml
-        if self.metadata and isinstance(self.metadata, str):
-            try:
-                with open(self.metadata, "r") as meta:
-                    object.__setattr__(self, "metadata", DatasetDescription(**yaml.safe_load(meta)))
-            except Exception as e:
-                raise ValueError(f"Unable to load metadata from {self.metadata}: {e}")
-
-        # Format tab as delimiter
-        if self.delimiter in ["tab", "\\t"]:
-            object.__setattr__(self, "delimiter", "\t")
-
-        # Filter columns
-        filtered_columns = [column_filter.column for column_filter in self.filters]
-
-        all_columns = []
-        if self.columns:
-            all_columns = [next(iter(column)) if isinstance(column, Dict) else column for column in self.columns]
-
-        if self.header == HeaderMode.none and not self.columns:
-            raise ValueError(
-                "there is no header and columns have not been supplied\n"
-                "configure the 'columns' field or set header to the 0-based"
-                "index in which it appears in the file, or set this value to"
-                "'infer'"
-            )
-
-        for column in filtered_columns:
-            if column not in all_columns:
-                raise (ValueError(f"Filter column {column} not in column list"))
-
-        for column_filter in self.filters:
-            if column_filter.filter_code in ["lt", "gt", "lte", "gte"]:
-                if not isinstance(column_filter.value, (int, float)):
-                    raise ValueError(f"Filter value must be int or float for operator {column_filter.filter_code}")
-            elif column_filter.filter_code == "eq":
-                if not isinstance(column_filter.value, (str, int, float)):
-                    raise ValueError(
-                        f"Filter value must be string, int or float for operator {column_filter.filter_code}"
-                    )
-            elif column_filter.filter_code == "in":
-                if not isinstance(column_filter.value, List):
-                    raise ValueError(f"Filter value must be List for operator {column_filter.filter_code}")
-
-        # Check for conflicting configurations
-        if self.format == FormatType.csv and self.required_properties:
-            raise ValueError(
-                "CSV specified but required properties have been configured\n"
-                "Either set format to jsonl or change properties to columns in the config"
-            )
-        if self.columns and self.format != FormatType.csv:
-            raise ValueError(
-                "Columns have been configured but format is not csv\n"
-                "Either set format to csv or change columns to properties in the config"
-            )
-        if self.json_path and self.format != FormatType.json:
-            raise ValueError(
-                "iterate_over has been configured but format is not json\n"
-                "Either set format to json or remove iterate_over in the configuration"
-            )
-
-        # Create a field_type_map if columns are supplied
-        if self.columns:
-            field_type_map = {}
-            for field in self.columns:
-                if isinstance(field, str):
-                    field_type_map[field] = FieldType.str
-                else:
-                    if len(field) != 1:
-                        raise ValueError("Field type map contains more than one key")
-                    for key, val in field.items():
-                        field_type_map[key] = val
-            object.__setattr__(self, "field_type_map", field_type_map)
-
-
-@dataclass(config=PYDANTIC_CONFIG)
-class PrimaryFileConfig(SourceConfig):
-    """
-    Primary configuration for transforming a source file
-
-    Parameters
-    ----------
-    node_properties: List[str] (optional) - list of node properties/columns to include
-    edge_properties: List[str] (optional) - list of edge properties/columns to include
-    min_node_count: int (optional) - minimum number of nodes required in output
-    min_edge_count: int (optional) - minimum number of edges required in output
-    node_report_columns: List[str] (optional) - list of node properties to include in the report
-    edge_report_columns: List[str] (optional) - list of edge properties to include in the report
-    depends_on: List[str] (optional) - Optional lookup dictionary for basic mapping
-    on_map_failure: MapErrorEnum (optional) - How to handle key errors in map files
-    """
+    metadata: Optional[Union[DatasetDescription, str]] = None
 
     node_properties: Optional[List[str]] = None
     edge_properties: Optional[List[str]] = None
@@ -314,11 +391,42 @@ class PrimaryFileConfig(SourceConfig):
     depends_on: List[str] = field(default_factory=list)
     on_map_failure: MapErrorEnum = MapErrorEnum.warning
 
+    def to_new_transform(self):
+        files = self.files or []
+        if self.file_archive:
+            files.append(self.file_archive)
 
-@dataclass(config=PYDANTIC_CONFIG)
-class MapFileConfig(SourceConfig):
-    key: Optional[str] = None
-    values: Optional[List[str]] = None
-    curie_prefix: Optional[str] = None
-    add_curie_prefix_to_columns: Optional[List[str]] = None
-    depends_on: Optional[List[str]] = None
+        config_obj = {
+            "name": self.name,
+            "reader": {
+                "format": self.format,
+                "files": files,
+                "columns": self.columns,
+                "field_type_map": self.field_type_map,
+                "required_properties": self.required_properties,
+                "delimiter": self.delimiter,
+                "header_mode": self.header,  # Renamed to header_mode
+                "header_delimiter": self.header_delimiter,
+                "header_prefix": self.header_prefix,
+                "comment_char": self.comment_char,
+                "skip_blank_lines": self.skip_blank_lines,
+                "json_path": self.json_path,
+            },
+            "transform": {
+                "code": self.transform_code,
+                "filters": self.filters,
+                "mapping": self.depends_on,
+                "global_table": self.global_table,
+                "local_table": self.local_table,
+            },
+            "writer": {
+                "format": self.format,
+                "sssom_config": self.sssom_config,
+                "node_properties": self.node_properties,
+                "edge_properties": self.edge_properties,
+                "min_node_count": self.min_node_count,
+                "min_edge_count": self.min_edge_count,
+            },
+        }
+
+        return TypeAdapter(KozaConfig).validate_python(config_obj)
