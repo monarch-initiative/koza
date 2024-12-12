@@ -2,14 +2,14 @@
 # NOTE - May want to rename to KGXWriter at some point, if we develop writers for other models non biolink/kgx specific
 
 from pathlib import Path
-from typing import Dict, Iterable, List, Literal, Set, Union
+from typing import Dict, Iterable, List, Literal, Union
 
 from ordered_set import OrderedSet
 
 from koza.converter.kgx_converter import KGXConverter
 from koza.io.utils import build_export_row
 from koza.io.writer.writer import KozaWriter
-from koza.model.config.sssom_config import SSSOMConfig
+from koza.model.config.source_config import WriterConfig
 
 
 class TSVWriter(KozaWriter):
@@ -17,18 +17,19 @@ class TSVWriter(KozaWriter):
         self,
         output_dir: Union[str, Path],
         source_name: str,
-        node_properties: List[str] = None,
-        edge_properties: List[str] = None,
-        sssom_config: SSSOMConfig = None,
+        config: WriterConfig,
     ):
         self.basename = source_name
         self.dirname = output_dir
         self.delimiter = "\t"
         self.list_delimiter = "|"
         self.converter = KGXConverter()
-        self.sssom_config = sssom_config
+        self.sssom_config = config.sssom_config
 
         Path(self.dirname).mkdir(parents=True, exist_ok=True)
+
+        node_properties = config.node_properties
+        edge_properties = config.edge_properties
 
         if node_properties:  # Make node file
             self.node_columns = TSVWriter._order_columns(node_properties, "node")
@@ -37,7 +38,7 @@ class TSVWriter(KozaWriter):
             self.nodeFH.write(self.delimiter.join(self.node_columns) + "\n")
 
         if edge_properties:  # Make edge file
-            if sssom_config:
+            if config.sssom_config:
                 edge_properties = self.add_sssom_columns(edge_properties)
             self.edge_columns = TSVWriter._order_columns(edge_properties, "edge")
             self.edges_file_name = Path(self.dirname if self.dirname else "", f"{self.basename}_edges.tsv")
@@ -88,7 +89,7 @@ class TSVWriter(KozaWriter):
             self.edgeFH.close()
 
     @staticmethod
-    def _order_columns(cols: Set, record_type: Literal["node", "edge"]) -> OrderedSet:
+    def _order_columns(cols: List[str], record_type: Literal["node", "edge"]) -> OrderedSet[str]:
         """Arrange node or edge columns in a defined order.
 
         Args:
@@ -101,7 +102,7 @@ class TSVWriter(KozaWriter):
             core_columns = OrderedSet(["id", "category", "name", "description", "xref", "provided_by", "synonym"])
         elif record_type == "edge":
             core_columns = OrderedSet(["id", "subject", "predicate", "object", "category", "provided_by"])
-        ordered_columns = OrderedSet()
+        ordered_columns: OrderedSet[str] = OrderedSet([])
         for c in core_columns:
             if c in cols:
                 ordered_columns.add(c)

@@ -1,10 +1,10 @@
 import json
 import os
-from typing import Iterable, List, Optional
+from typing import Iterable
 
 from koza.converter.kgx_converter import KGXConverter
 from koza.io.writer.writer import KozaWriter
-from koza.model.config.sssom_config import SSSOMConfig
+from koza.model.config.source_config import WriterConfig
 
 
 class JSONLWriter(KozaWriter):
@@ -12,20 +12,18 @@ class JSONLWriter(KozaWriter):
         self,
         output_dir: str,
         source_name: str,
-        node_properties: List[str],
-        edge_properties: Optional[List[str]] = [],
-        sssom_config: SSSOMConfig = None,
+        config: WriterConfig,
     ):
         self.output_dir = output_dir
         self.source_name = source_name
-        self.sssom_config = sssom_config
+        self.sssom_config = config.sssom_config
 
         self.converter = KGXConverter()
 
         os.makedirs(output_dir, exist_ok=True)
-        if node_properties:
+        if config.node_properties:
             self.nodeFH = open(f"{output_dir}/{source_name}_nodes.jsonl", "w")
-        if edge_properties:
+        if config.edge_properties:
             self.edgeFH = open(f"{output_dir}/{source_name}_edges.jsonl", "w")
 
     def write(self, entities: Iterable):
