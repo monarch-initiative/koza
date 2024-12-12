@@ -2,35 +2,52 @@ import gzip
 from pathlib import Path
 
 import pytest
-
 from koza.io.reader.json_reader import JSONReader
+from koza.model.config.source_config import FormatType, JSONReaderConfig
 
-test_zfin_data = Path(__file__).parents[1] / 'resources' / 'source-files' / 'test_BGI_ZFIN.json.gz'
+test_zfin_data = Path(__file__).parents[1] / "resources" / "source-files" / "test_BGI_ZFIN.json.gz"
 
 json_path = [
-    'data',
+    "data",
     0,
 ]
 
 
 def test_normal_case():
-    with gzip.open(test_zfin_data, 'rt') as zfin:
-        json_reader = JSONReader(zfin, json_path=json_path)
-        row = next(json_reader)
-        assert row['symbol'] == 'gdnfa'
+    config = JSONReaderConfig(
+        format=FormatType.json,
+        json_path=json_path,
+        files=[],
+    )
+    with gzip.open(test_zfin_data, "rt") as zfin:
+        json_reader = JSONReader(zfin, config)
+        row = next(iter(json_reader))
+        assert row["symbol"] == "gdnfa"
 
 
 def test_required_properties():
-    with gzip.open(test_zfin_data, 'rt') as zfin:
-        json_reader = JSONReader(zfin, ['name', 'basicGeneticEntity.primaryId'], json_path=json_path)
+    config = JSONReaderConfig(
+        format=FormatType.json,
+        json_path=json_path,
+        required_properties=["name", "basicGeneticEntity.primaryId"],
+        files=[],
+    )
+    with gzip.open(test_zfin_data, "rt") as zfin:
+        json_reader = JSONReader(zfin, config)
         for row in json_reader:
             print(row)
-            assert row['name']
-            assert row['basicGeneticEntity']['primaryId']
+            assert row["name"]
+            assert row["basicGeneticEntity"]["primaryId"]
 
 
 def test_missing_req_property_raises_exception():
-    with gzip.open(test_zfin_data, 'rt') as zfin:
-        json_reader = JSONReader(zfin, ['fake_prop'], json_path=json_path)
+    config = JSONReaderConfig(
+        format=FormatType.json,
+        json_path=json_path,
+        required_properties=["fake_prop"],
+        files=[],
+    )
+    with gzip.open(test_zfin_data, "rt") as zfin:
+        json_reader = JSONReader(zfin, config)
         with pytest.raises(ValueError):
-            next(json_reader)
+            next(iter(json_reader))
