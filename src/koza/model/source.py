@@ -1,10 +1,12 @@
-from typing import Any, Dict, Iterable, List, Optional
+from tarfile import TarFile
+from typing import Any, Dict, Iterable, List, Optional, TextIO, Union
+from zipfile import ZipFile
 
 from koza.io.reader.csv_reader import CSVReader
 from koza.io.reader.json_reader import JSONReader
 from koza.io.reader.jsonl_reader import JSONLReader
 from koza.io.utils import open_resource
-from koza.model.config.source_config import KozaConfig
+from koza.model.config.source_config import FormatType, KozaConfig
 from koza.utils.row_filter import RowFilter
 
 # from koza.io.yaml_loader import UniqueIncludeLoader
@@ -31,35 +33,44 @@ class Source:
         self._reader = None
         self._readers: List[Iterable[Dict[str, Any]]] = []
         self.last_row: Optional[Dict[str, Any]] = None
+        self._opened: list[Union[ZipFile, TarFile, TextIO]] = []
 
         for file in reader_config.files:
-            resource_io = open_resource(file)
-            if reader_config.format == "csv":
-                self._readers.append(
-                    CSVReader(
-                        resource_io,
-                        config=reader_config,
-                        row_limit=self.row_limit,
-                    )
-                )
-            elif reader_config.format == "jsonl":
-                self._readers.append(
-                    JSONLReader(
-                        resource_io,
-                        config=reader_config,
-                        row_limit=self.row_limit,
-                    )
-                )
-            elif reader_config.format == "json" or reader_config.format == "yaml":
-                self._readers.append(
-                    JSONReader(
-                        resource_io,
-                        config=reader_config,
-                        row_limit=self.row_limit,
-                    )
-                )
+            opened_resource = open_resource(file)
+            if isinstance(opened_resource, tuple):
+                archive, resources = opened_resource
+                self._opened.append(archive)
             else:
-                raise ValueError(f"File type {format} not supported")
+                resources = [opened_resource]
+
+            for resource in resources:
+                self._opened.append(resource.reader)
+                if reader_config.format == FormatType.csv:
+                    self._readers.append(
+                        CSVReader(
+                            resource.reader,
+                            config=reader_config,
+                            row_limit=self.row_limit,
+                        )
+                    )
+                elif reader_config.format == FormatType.jsonl:
+                    self._readers.append(
+                        JSONLReader(
+                            resource.reader,
+                            config=reader_config,
+                            row_limit=self.row_limit,
+                        )
+                    )
+                elif reader_config.format == FormatType.json or reader_config.format == FormatType.yaml:
+                    self._readers.append(
+                        JSONReader(
+                            resource.reader,
+                            config=reader_config,
+                            row_limit=self.row_limit,
+                        )
+                    )
+                else:
+                    raise ValueError(f"File type {reader_config.format} not supported")
 
     def __iter__(self):
         for reader in self._readers:
@@ -68,3 +79,6 @@ class Source:
                     continue
                 self.last_row = item
                 yield item
+
+        for fh in self._opened:
+            fh.close()

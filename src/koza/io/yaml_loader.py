@@ -42,7 +42,10 @@ class UniqueIncludeLoader(SafeLoader):
         """
         Opens some resource (local or remote file) that appears after an !include tag
         """
-        return yaml.load(open_resource(self.construct_scalar(node)), Loader=UniqueIncludeLoader)
+        resource = open_resource(self.construct_scalar(node))
+        if isinstance(resource, tuple):
+            raise ValueError("Cannot load yaml from archive files")
+        return yaml.load(resource.reader, Loader=UniqueIncludeLoader)
 
 
 yaml.add_constructor('!include', UniqueIncludeLoader.include_constructor, UniqueIncludeLoader)

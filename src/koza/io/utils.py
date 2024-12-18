@@ -2,23 +2,48 @@
 """
 Set of functions to manage input and output
 """
+import dataclasses
 import gzip
+import tarfile
 import tempfile
 from io import TextIOWrapper
 from os import PathLike
 from pathlib import Path
-from typing import IO, Any, Dict, Union
+from tarfile import TarFile, is_tarfile
+from typing import Any, Callable, Dict, Generator, Optional, TextIO, Union
 from zipfile import ZipFile, is_zipfile
 
 import requests
-
 
 ######################
 ### Reader Helpers ###
 ######################
 
 
-def open_resource(resource: Union[str, PathLike]) -> IO[str]:
+@dataclasses.dataclass
+class SizedResource:
+    name: str
+    size: int
+    reader: TextIO
+    tell: Callable[[], int]
+
+
+def is_gzipped(filename: str):
+    with gzip.open(filename, "r") as fh:
+        try:
+            fh.read(1)
+            return True
+        except gzip.BadGzipFile:
+            return False
+        finally:
+            fh.close()
+
+
+def open_resource(resource: Union[str, PathLike]) -> Union[
+    SizedResource,
+    tuple[ZipFile, Generator[SizedResource, None, None]],
+    tuple[TarFile, Generator[SizedResource, None, None]],
+]:
     """
     A generic function for opening a local or remote file
 
@@ -35,43 +60,92 @@ def open_resource(resource: Union[str, PathLike]) -> IO[str]:
     :return: str, next line in resource
 
     """
+
     # Check if resource is a remote file
+    resource_name: Optional[Union[str, PathLike]] = None
+
     if isinstance(resource, str) and resource.startswith('http'):
-        tmp_file = tempfile.TemporaryFile('w+b')
-        request = requests.get(resource)
+        tmp_file = tempfile.NamedTemporaryFile('w+b')
+        request = requests.get(resource, timeout=10)
         if request.status_code != 200:
             raise ValueError(f"Remote file returned {request.status_code}: {request.text}")
         tmp_file.write(request.content)
-        # request.close()  # not sure this is needed
+        request.close()
         tmp_file.seek(0)
-        if resource.endswith('gz'):
-            # This should be more robust, either check headers
-            # or use https://github.com/ahupp/python-magic
-            remote_file = gzip.open(tmp_file, 'rt')
-            return remote_file
-        else:
-            return TextIOWrapper(tmp_file)
+        resource_name = resource
+        resource = tmp_file.name
+    else:
+        resource_name = resource
 
     # If resource is not remote or local, raise error
-    elif not Path(resource).exists():
+    if not Path(resource).exists():
         raise ValueError(
-            f"Cannot open local or remote file: {resource}. Check the URL/path, and that the file exists, and try again."
+            f"Cannot open local or remote file: {resource}. Check the URL/path, and that the file exists, "
+            "and try again."
         )
 
     # If resource is local, check for compression
     if is_zipfile(resource):
-        with ZipFile(resource, 'r') as zip_file:
-            file = TextIOWrapper(zip_file.open(zip_file.namelist()[0], 'r'))  # , encoding='utf-8')
-            # file = zip_file.read(zip_file.namelist()[0], 'r').decode('utf-8')
-    elif str(resource).endswith('gz'):
-        file = gzip.open(resource, 'rt')
-        file.read(1)
-        file.seek(0)
+        zip_fh = ZipFile(resource, 'r')
+
+        def generator():
+            for zip_info in zip_fh.infolist():
+                extracted = zip_fh.open(zip_info, 'r')
+                yield SizedResource(
+                    zip_info.filename,
+                    zip_info.file_size,
+                    TextIOWrapper(extracted),
+                    extracted.tell,
+                )
+
+        return zip_fh, generator()
+
+    elif is_tarfile(resource):
+        tar_fh = tarfile.open(resource, mode='r|*')
+
+        def generator():
+            for tarinfo in tar_fh:
+                extracted = tar_fh.extractfile(tarinfo)
+                if extracted:
+                    extracted.seekable = lambda: True
+                    reader = TextIOWrapper(extracted)
+                    yield SizedResource(
+                        tarinfo.name,
+                        tarinfo.size,
+                        reader,
+                        reader.tell,
+                    )
+
+        return tar_fh, generator()
+
+    elif is_gzipped(str(resource)):
+        path = Path(resource)
+        fh = path.open("rb")
+        gzip_fh = gzip.open(fh, 'rt')
+        assert isinstance(gzip_fh, TextIOWrapper)
+        gzip_fh.read(1)
+        gzip_fh.seek(0)
+        stat = path.stat()
+
+        return SizedResource(
+            str(resource_name),
+            stat.st_size,
+            gzip_fh,
+            lambda: fh.tell(),
+        )
 
     # If resource is local and not compressed, open as text
     else:
-        file = open(resource, 'r')
-    return file
+        path = Path(resource)
+        stat = path.stat()
+        fh = path.open("r")
+
+        return SizedResource(
+            str(resource_name),
+            stat.st_size,
+            fh,
+            fh.tell,
+        )
 
 
 def check_data(entry, path) -> bool:
@@ -126,7 +200,7 @@ column_types = {
 column_types.update(provenance_slot_types)
 
 
-def build_export_row(data: Dict, list_delimiter: str = None) -> Dict:
+def build_export_row(data: Dict, list_delimiter: Optional[str] = None) -> Dict:
     """
     Sanitize key-value pairs in dictionary.
     This should be used to ensure proper syntax and types for node and edge data as it is exported.
@@ -149,7 +223,7 @@ def build_export_row(data: Dict, list_delimiter: str = None) -> Dict:
     return tidy_data
 
 
-def _sanitize_export_property(key: str, value: Any, list_delimiter: str = None) -> Any:
+def _sanitize_export_property(key: str, value: Any, list_delimiter: Optional[str] = None) -> Any:
     """
     Sanitize value for a key for the purpose of export.
     Casts all values to primitive types like str or bool according to the
@@ -181,22 +255,22 @@ def _sanitize_export_property(key: str, value: Any, list_delimiter: str = None) 
         elif column_types[key] == bool:
             try:
                 new_value = bool(value)
-            except:
+            except Exception:
                 new_value = False
         else:
             new_value = str(value).replace("\n", " ").replace('\\"', "").replace("\t", " ")
     else:
-        if type(value) == list:
+        if isinstance(value, list):
             value = [
                 v.replace("\n", " ").replace('\\"', "").replace("\t", " ") if isinstance(v, str) else v for v in value
             ]
             new_value = list_delimiter.join([str(x) for x in value]) if list_delimiter else value
             column_types[key] = list
-        elif type(value) == bool:
+        elif isinstance(value, bool):
             try:
                 new_value = bool(value)
                 column_types[key] = bool  # this doesn't seem right, shouldn't column_types come from the biolink model?
-            except:
+            except Exception:
                 new_value = False
         else:
             new_value = str(value).replace("\n", " ").replace('\\"', "").replace("\t", " ")
