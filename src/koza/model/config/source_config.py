@@ -255,7 +255,7 @@ class TransformConfig:
     """
 
     code: Optional[str] = None
-    mode: TransformMode = TransformMode.flat
+    module: Optional[str] = None
     filters: List[ColumnFilter] = field(default_factory=list)
     global_table: Optional[Union[str, Dict]] = None
     local_table: Optional[Union[str, Dict]] = None
