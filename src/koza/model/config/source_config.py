@@ -164,6 +164,7 @@ class CSVReaderConfig(BaseReaderConfig):
     columns: Optional[List[Union[str, Dict[str, FieldType]]]] = None
     field_type_map: Optional[dict[str, FieldType]] = None
     delimiter: Optional[str] = None
+    header_delimiter: Optional[str] = None
     dialect: str = "excel"
     header_mode: Union[int, HeaderMode] = HeaderMode.infer
     header_delimiter: Optional[str] = None

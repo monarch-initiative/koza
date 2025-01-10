@@ -74,9 +74,12 @@ class CSVReader:
         if config.delimiter == '\\s':
             delimiter = ' '
 
-        kwargs['dialect'] = config.dialect
-        kwargs['delimiter'] = delimiter
-        self.reader = reader(io_str, *args, **kwargs)
+        self.csv_args = args
+        self.csv_kwargs = kwargs
+
+        self.csv_kwargs['dialect'] = config.dialect
+        self.csv_kwargs['delimiter'] = delimiter
+        self.csv_reader = reader(io_str, *self.csv_args, **self.csv_kwargs)
 
     @property
     def header(self):
@@ -95,7 +98,7 @@ class CSVReader:
         if self.field_type_map is None:
             raise ValueError("Field type map not set on CSV source")
 
-        for row in self.reader:
+        for row in self.csv_reader:
             if self.row_limit and item_ct >= self.row_limit:
                 logger.debug("Row limit reached")
                 return
@@ -115,13 +118,14 @@ class CSVReader:
             if len(item) > len(header):
                 num_extra_fields = len(item) - len(header)
                 logger.warning(
-                    f"CSV file {self.io_str.name} has {num_extra_fields} extra columns at {self.reader.line_num}"
+                    f"CSV file {self.io_str.name} has {num_extra_fields} extra columns at {self.csv_reader.line_num}"
                 )
 
             if len(header) > len(item):
                 num_missing_columns = len(header) - len(item)
                 raise ValueError(
-                    f"CSV file {self.io_str.name} is missing {num_missing_columns} column(s) at {self.reader.line_num}"
+                    f"CSV file {self.io_str.name} is missing {num_missing_columns} "
+                    f"column(s) at {self.csv_reader.line_num}"
                 )
 
             typed_item: dict[str, Any] = {}
@@ -144,7 +148,7 @@ class CSVReader:
         logger.info(f"Finished processing {item_ct} rows for from file {self.io_str.name}")
 
     def _consume_header(self):
-        if self.reader.line_num > 0:
+        if self.csv_reader.line_num > 0:
             raise RuntimeError("Can only set header at beginning of file.")
 
         if self.config.header_mode == HeaderMode.none:
@@ -159,8 +163,8 @@ class CSVReader:
             # logger.debug(f"headers for {self.name} parsed as {self._header}")
             return self._parse_header_line(skip_blank_or_commented_lines=True)
         elif isinstance(self.config.header_mode, int):
-            while self.reader.line_num < self.config.header_mode:
-                next(self.reader)
+            while self.csv_reader.line_num < self.config.header_mode:
+                next(self.csv_reader)
             return self._parse_header_line()
         else:
             raise ValueError(f"Invalid header mode given: {self.config.header_mode}.")
@@ -172,7 +176,14 @@ class CSVReader:
         header_prefix = self.config.header_prefix
         comment_char = self.config.comment_char
 
-        headers = next(self.reader)
+        csv_reader = self.csv_reader
+
+        # If the header delimiter is explicitly set create a new CSVReader using that one.
+        if self.config.header_delimiter is not None:
+            kwargs = self.csv_kwargs | { "delimiter": self.config.header_delimiter }
+            csv_reader = reader(self.io_str, *self.csv_args, **kwargs)
+
+        headers = next(csv_reader)
 
         # If a header_prefix was defined, remove that string from the first record in the first row.
         # For example, given the header_prefix of "#" and an initial CSV row of:
@@ -190,12 +201,12 @@ class CSVReader:
             while True:
                 # Continue if the line is empty
                 if not headers:
-                    headers = next(self.reader)
+                    headers = next(csv_reader)
                     continue
 
                 # Continue if the line starts with a comment character
                 if comment_char and headers[0].startswith(comment_char):
-                    headers = next(self.reader)
+                    headers = next(csv_reader)
                     continue
 
                 break
