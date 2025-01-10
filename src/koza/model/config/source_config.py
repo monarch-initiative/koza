@@ -3,18 +3,20 @@ source config data class
 map config data class
 """
 
-from dataclasses import field
+from dataclasses import field, fields
 from enum import Enum
 from pathlib import Path
-from typing import Annotated, Dict, List, Literal, Optional, Union
+from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 
 import yaml
 from pydantic import (Discriminator, Field, StrictFloat, StrictInt, StrictStr,
-                      Tag, TypeAdapter)
+                      Tag, TypeAdapter, model_validator)
 from pydantic.dataclasses import dataclass
+from pydantic_core import ArgsKwargs
 
 from koza.model.config.pydantic_config import PYDANTIC_CONFIG
 from koza.model.config.sssom_config import SSSOMConfig
+
 
 class FilterCode(str, Enum):
     """Enum for filter codes (ex. gt = greater than)
@@ -236,8 +238,8 @@ ReaderConfig = Annotated[
 # ---
 
 
-@dataclass(config=PYDANTIC_CONFIG, frozen=True)
-class BaseTransformConfig:
+@dataclass(config=PYDANTIC_CONFIG, frozen=True, kw_only=True)
+class TransformConfig:
     """
     Source config data class
 
@@ -255,39 +257,31 @@ class BaseTransformConfig:
     filters: List[ColumnFilter] = field(default_factory=list)
     global_table: Optional[Union[str, Dict]] = None
     local_table: Optional[Union[str, Dict]] = None
-
-
-@dataclass(config=PYDANTIC_CONFIG, frozen=True)
-class PrimaryTransformConfig(BaseTransformConfig):
-    """
-    Primary configuration for transforming a source file
-
-    Parameters
-    ----------
-    node_properties: list of node properties/columns to include
-    edge_properties: list of edge properties/columns to include
-    min_node_count: minimum number of nodes required in output
-    min_edge_count: minimum number of edges required in output
-    node_report_columns: list of node properties to include in the report
-    edge_report_columns: list of edge properties to include in the report
-    depends_on: Optional lookup dictionary for basic mapping
-    on_map_failure: How to handle key errors in map files
-    """
-
-    # node_report_columns: Optional[List[str]] = None
-    # edge_report_columns: Optional[List[str]] = None
-    depends_on: List[str] = field(default_factory=list)
+    mappings: List[str] = field(default_factory=list)
     on_map_failure: MapErrorEnum = MapErrorEnum.warning
+    extra_fields: Dict[str, Any] = field(default_factory=dict)
 
+    @model_validator(mode="before")
+    @classmethod
+    def extract_extra_fields(cls, values: dict | ArgsKwargs) -> Dict[str, Any]:
+        """Take any additional kwargs and put them in the `extra_fields` attribute."""
+        if isinstance(values, dict):
+            kwargs = values.copy()
+        elif isinstance(values, ArgsKwargs) and values.kwargs is not None:
+            kwargs = values.kwargs.copy()
+        else:
+            kwargs = {}
 
+        configured_field_names = {f.name for f in fields(cls) if f.name != "extra_fields"}
+        extra_fields: dict[str, Any] = kwargs.pop("extra_fields", {})
 
-@dataclass(config=PYDANTIC_CONFIG, frozen=True)
-class MapTransformConfig(BaseTransformConfig):
-    key: Optional[str] = None
-    values: Optional[List[str]] = None
-    # curie_prefix: Optional[str] = None
-    # add_curie_prefix_to_columns: Optional[List[str]] = None
-    # depends_on: Optional[List[str]] = None
+        for field_name in list(kwargs.keys()):
+            if field_name in configured_field_names:
+                continue
+            extra_fields[field_name] = kwargs.pop(field_name)
+        kwargs["extra_fields"] = extra_fields
+
+        return kwargs
 
 
 # Writer configuration
