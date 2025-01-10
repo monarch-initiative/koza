@@ -161,7 +161,8 @@ class KozaRunner:
             self.run_serial()
 
     @classmethod
-    def from_config(cls, config: KozaConfig, transform_code_path: Optional[Path] = None, output_dir: str = ""):
+    def from_config(cls, config: KozaConfig, transform_code_path: Optional[Path] = None, output_dir: str = "",
+                    output_format: Optional[OutputFormat] = None):
         if transform_code_path is None and config.transform.code:
             transform_code_path = Path(config.transform.code)
 
@@ -179,10 +180,11 @@ class KozaRunner:
 
         writer: Optional[KozaWriter] = None
 
+        output_format = output_format or config.writer.format
 
-        if config.writer.format == OutputFormat.tsv:
+        if output_format == OutputFormat.tsv:
             writer = TSVWriter(output_dir=output_dir, source_name=config.name, config=config.writer)
-        if config.writer.format == OutputFormat.jsonl:
+        if output_format == OutputFormat.jsonl:
             writer = JSONLWriter(output_dir=output_dir, source_name=config.name, config=config.writer)
 
         if writer is None:
@@ -196,12 +198,13 @@ class KozaRunner:
         )
 
     @classmethod
-    def from_config_file(cls, config_filename: str, output_dir: str = ""):
+    def from_config_file(cls, config_filename: str, output_dir: str = "", output_format: Optional[OutputFormat] = None):
         transform_code_path = None
         config_path = Path(config_filename)
 
         with config_path.open("r") as fh:
-            config = KozaConfig(**yaml.load(fh, Loader=UniqueIncludeLoader))  # noqa: S506
+            config_dict = yaml.load(fh, Loader=UniqueIncludeLoader)  # noqa: S506
+            config = KozaConfig(**config_dict)
 
         if not config.transform.code:
 
@@ -221,5 +224,6 @@ class KozaRunner:
         return cls.from_config(
             config,
             output_dir=output_dir,
+            output_format=output_format,
             transform_code_path=transform_code_path,
         )
