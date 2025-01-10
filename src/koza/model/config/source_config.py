@@ -262,21 +262,11 @@ class PrimaryTransformConfig(BaseTransformConfig):
     on_map_failure: How to handle key errors in map files
     """
 
-    metadata: Optional[Union[DatasetDescription, str]] = None
-
     # node_report_columns: Optional[List[str]] = None
     # edge_report_columns: Optional[List[str]] = None
     depends_on: List[str] = field(default_factory=list)
     on_map_failure: MapErrorEnum = MapErrorEnum.warning
 
-    def __post_init__(self):
-        # If metadata looks like a file path attempt to load it from the yaml
-        if self.metadata and isinstance(self.metadata, str):
-            try:
-                with open(self.metadata, "r") as meta:
-                    object.__setattr__(self, "metadata", DatasetDescription(**yaml.safe_load(meta)))
-            except Exception as e:
-                raise ValueError(f"Unable to load metadata from {self.metadata}: {e}") from e
 
 
 @dataclass(config=PYDANTIC_CONFIG, frozen=True)
@@ -312,8 +302,16 @@ class KozaConfig:
     reader: ReaderConfig
     transform: Union[PrimaryTransformConfig, MapTransformConfig]
     writer: WriterConfig
-
+    metadata: Optional[Union[DatasetDescription, str]] = None
     def __post_init__(self):
+        # If metadata looks like a file path attempt to load it from the yaml
+        if self.metadata and isinstance(self.metadata, str):
+            try:
+                with open(self.metadata, "r") as meta:
+                    object.__setattr__(self, "metadata", DatasetDescription(**yaml.safe_load(meta)))
+            except Exception as e:
+                raise ValueError(f"Unable to load metadata from {self.metadata}: {e}") from e
+
         if self.reader.format == FormatType.csv and self.reader.columns is not None:
             filtered_columns = {column_filter.column for column_filter in self.transform.filters}
             all_columns = {
@@ -398,6 +396,7 @@ class DEPRECATEDSourceConfig:
 
         config_obj = {
             "name": self.name,
+            "metadata": self.metadata,
             "reader": {
                 "format": self.format,
                 "files": files,
