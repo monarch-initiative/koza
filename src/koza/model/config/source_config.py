@@ -81,6 +81,7 @@ class OutputFormat(str, Enum):
     tsv = "tsv"
     jsonl = "jsonl"
     kgx = "kgx"
+    passthrough = "passthrough"
 
 
 class StandardFormat(str, Enum):
