@@ -1,49 +1,51 @@
 name: 'declarative-protein-links-detailed'
 
-delimiter: ' '
-
-files:
-  - './examples/data/string.tsv'
-  - './examples/data/string2.tsv'
-
 metadata:
   ingest_title: 'String DB'
   ingest_url: 'https://string-db.org'
   description: 'STRING: functional protein association networks'
   rights: 'https://string-db.org/cgi/access.pl?footer_active_subpage=licensing'
 
-global_table: './examples/translation_table.yaml'
+reader:
+  format: csv
 
-columns:
-  - 'protein1'
-  - 'protein2'
-  - 'neighborhood'
-  - 'fusion'
-  - 'cooccurence'
-  - 'coexpression'
-  - 'experimental'
-  - 'database'
-  - 'textmining'
-  - 'combined_score' : 'int'
+  delimiter: ' '
 
-filters:
-  - inclusion: 'include'
-    column: 'combined_score'
-    filter_code: 'lt'
-    value: 700
+  files:
+    - './examples/data/string.tsv'
+    - './examples/data/string2.tsv'
 
-transform_mode: 'flat'
+  columns:
+    - 'protein1'
+    - 'protein2'
+    - 'neighborhood'
+    - 'fusion'
+    - 'cooccurence'
+    - 'coexpression'
+    - 'experimental'
+    - 'database'
+    - 'textmining'
+    - 'combined_score' : 'int'
 
-node_properties:
-  - 'id'
-  - 'category'
-  - 'provided_by'
 
-edge_properties:
-  - 'id'
-  - 'subject'
-  - 'predicate'
-  - 'object'
-  - 'category'
-  - 'relation'
-  - 'provided_by'
+transform:
+  filters:
+    - inclusion: 'include'
+      column: 'combined_score'
+      filter_code: 'lt'
+      value: 700
+
+writer:
+  node_properties:
+    - 'id'
+    - 'category'
+    - 'provided_by'
+
+  edge_properties:
+    - 'id'
+    - 'subject'
+    - 'predicate'
+    - 'object'
+    - 'category'
+    - 'relation'
+    - 'provided_by'

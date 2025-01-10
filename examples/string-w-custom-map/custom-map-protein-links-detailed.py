@@ -2,23 +2,23 @@ import uuid
 
 from biolink_model.datamodel.pydanticmodel_v2 import Gene, PairwiseGeneToGeneInteraction
 
-from koza.cli_utils import get_koza_app
+from koza.runner import KozaTransform
 
-source_name = "custom-map-protein-links-detailed"
-koza_app = get_koza_app(source_name)
-row = koza_app.get_row()
-entrez_2_string = koza_app.get_map("custom-entrez-2-string")
+def transform_record(koza: KozaTransform, record: dict):
+    a = record["protein1"]
+    b = record["protein2"]
+    mapped_a = koza.lookup(a, "entrez")
+    mapped_b = koza.lookup(b, "entrez")
+    gene_a = Gene(id="NCBIGene:" + mapped_a)
+    gene_b = Gene(id="NCBIGene:" + mapped_b)
 
-gene_a = Gene(id="NCBIGene:" + entrez_2_string[row["protein1"]]["entrez"])
-gene_b = Gene(id="NCBIGene:" + entrez_2_string[row["protein2"]]["entrez"])
+    pairwise_gene_to_gene_interaction = PairwiseGeneToGeneInteraction(
+        id="uuid:" + str(uuid.uuid1()),
+        subject=gene_a.id,
+        object=gene_b.id,
+        predicate="biolink:interacts_with",
+        knowledge_level="not_provided",
+        agent_type="not_provided",
+    )
 
-pairwise_gene_to_gene_interaction = PairwiseGeneToGeneInteraction(
-    id="uuid:" + str(uuid.uuid1()),
-    subject=gene_a.id,
-    object=gene_b.id,
-    predicate="biolink:interacts_with",
-    knowledge_level="not_provided",
-    agent_type="not_provided",
-)
-
-koza_app.write(gene_a, gene_b, pairwise_gene_to_gene_interaction)
+    koza.write(gene_a, gene_b, pairwise_gene_to_gene_interaction)

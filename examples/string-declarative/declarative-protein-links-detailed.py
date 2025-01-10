@@ -1,24 +1,22 @@
 import re
+from typing import Any
 import uuid
 
 from biolink_model.datamodel.pydanticmodel_v2 import PairwiseGeneToGeneInteraction, Protein
 
-from koza.cli_utils import get_koza_app
+from koza.runner import KozaTransform
 
-koza_app = get_koza_app("declarative-protein-links-detailed")
+def transform_record(koza: KozaTransform, record: dict[str, Any]):
+    protein_a = Protein(id="ENSEMBL:" + re.sub(r"\d+\.", "", record["protein1"]))
+    protein_b = Protein(id="ENSEMBL:" + re.sub(r"\d+\.", "", record["protein2"]))
 
-row = koza_app.get_row()
+    pairwise_gene_to_gene_interaction = PairwiseGeneToGeneInteraction(
+        id="uuid:" + str(uuid.uuid1()),
+        subject=protein_a.id,
+        object=protein_b.id,
+        predicate="biolink:interacts_with",
+        knowledge_level="not_provided",
+        agent_type="not_provided",
+    )
 
-protein_a = Protein(id="ENSEMBL:" + re.sub(r"\d+\.", "", row["protein1"]))
-protein_b = Protein(id="ENSEMBL:" + re.sub(r"\d+\.", "", row["protein2"]))
-
-pairwise_gene_to_gene_interaction = PairwiseGeneToGeneInteraction(
-    id="uuid:" + str(uuid.uuid1()),
-    subject=protein_a.id,
-    object=protein_b.id,
-    predicate="biolink:interacts_with",
-    knowledge_level="not_provided",
-    agent_type="not_provided",
-)
-
-koza_app.write(protein_a, protein_b, pairwise_gene_to_gene_interaction)
+    koza.write(protein_a, protein_b, pairwise_gene_to_gene_interaction)

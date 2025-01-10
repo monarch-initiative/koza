@@ -3,23 +3,25 @@ name: 'custom-entrez-2-string'
 metadata:
   description: 'Mapping file provided by StringDB that contains entrez to protein ID mappings'
 
-delimiter: '\t'
-header_delimiter: '/'
+reader:
+  delimiter: '\t'
+  header_prefix: '#'
+  header_delimiter: '/'
 
-# Assumes that no identifiers are overlapping
-# otherwise these should go into separate configs
-files:
-  - './examples/data/entrez-2-string.tsv'
-  - './examples/data/additional-entrez-2-string.tsv'
+  # Assumes that no identifiers are overlapping
+  # otherwise these should go into separate configs
+  files:
+    - './examples/data/entrez-2-string.tsv'
+    - './examples/data/additional-entrez-2-string.tsv'
 
-header: 0
+  header_mode: 0
 
-columns:
+  columns:
   - 'NCBI taxid'
   - 'entrez'
   - 'STRING'
 
-key: 'STRING'
-
-values:
-  - 'entrez'
+transform:
+  key: 'STRING'
+  values:
+    - 'entrez'
