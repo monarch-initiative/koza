@@ -9,7 +9,8 @@ from pathlib import Path
 from typing import Annotated, Dict, List, Literal, Optional, Union
 
 import yaml
-from pydantic import Field, StrictFloat, StrictInt, StrictStr, TypeAdapter
+from pydantic import (Discriminator, Field, StrictFloat, StrictInt, StrictStr,
+                      Tag, TypeAdapter)
 from pydantic.dataclasses import dataclass
 
 from koza.model.config.pydantic_config import PYDANTIC_CONFIG
@@ -214,9 +215,20 @@ class YAMLReaderConfig(BaseReaderConfig):
     json_path: Optional[List[Union[StrictStr, StrictInt]]] = None
 
 
+def get_reader_discriminator(model: Any):
+    if isinstance(model, dict):
+        return model.get("format", FormatType.csv)
+    return getattr(model, "format", FormatType.csv)
+
+
 ReaderConfig = Annotated[
-    Union[CSVReaderConfig, JSONLReaderConfig, JSONReaderConfig, YAMLReaderConfig],
-    Field(..., discriminator="format"),
+    (
+        Annotated[CSVReaderConfig, Tag(FormatType.csv)]
+        | Annotated[JSONLReaderConfig, Tag(FormatType.jsonl)]
+        | Annotated[JSONReaderConfig, Tag(FormatType.json)]
+        | Annotated[YAMLReaderConfig, Tag(FormatType.yaml)]
+    ),
+    Discriminator(get_reader_discriminator),
 ]
 
 
