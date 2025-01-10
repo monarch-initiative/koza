@@ -6,6 +6,8 @@ from koza.model.config.source_config import KozaConfig
 from koza.runner import KozaRunner, KozaTransform
 from pydantic import TypeAdapter
 
+from koza.utils.exceptions import NoTransformException
+
 
 class MockWriter(KozaWriter):
     def __init__(self):
@@ -49,8 +51,9 @@ def test_fn_required():
     data = iter([])
     writer = MockWriter()
 
-    with pytest.raises(ValueError):
-        KozaRunner(data=data, writer=writer)
+    with pytest.raises(NoTransformException):
+        runner = KozaRunner(data=data, writer=writer)
+        runner.run()
 
 
 def test_exactly_one_fn_required():
@@ -65,7 +68,8 @@ def test_exactly_one_fn_required():
         koza.write(record)
 
     with pytest.raises(ValueError):
-        KozaRunner(data=data, writer=writer, transform=transform, transform_record=transform_record)
+        runner = KozaRunner(data=data, writer=writer, transform=transform, transform_record=transform_record)
+        runner.run()
 
 
 def test_load_config():

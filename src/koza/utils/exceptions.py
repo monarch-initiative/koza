@@ -12,3 +12,6 @@ class MapItemException(KeyError):
     Special case of KeyError for source maps based on configuration,
     a source may opt to warn or exit with an error
     """
+
+class NoTransformException(ValueError):
+    """Exception raised when a transform was not passed to KozaRunner"""
