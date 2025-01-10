@@ -155,7 +155,7 @@ class DatasetDescription:
 
 @dataclass(config=PYDANTIC_CONFIG, frozen=True)
 class BaseReaderConfig:
-    files: List[str]
+    files: List[str] = field(default_factory=list)
 
 
 @dataclass(config=PYDANTIC_CONFIG, frozen=True)
@@ -163,7 +163,7 @@ class CSVReaderConfig(BaseReaderConfig):
     format: Literal[FormatType.csv] = FormatType.csv
     columns: Optional[List[Union[str, Dict[str, FieldType]]]] = None
     field_type_map: Optional[dict[str, FieldType]] = None
-    delimiter: Optional[str] = None
+    delimiter: str = "\t"
     header_delimiter: Optional[str] = None
     dialect: str = "excel"
     header_mode: Union[int, HeaderMode] = HeaderMode.infer
@@ -307,10 +307,11 @@ class WriterConfig:
 @dataclass(config=PYDANTIC_CONFIG, frozen=True)
 class KozaConfig:
     name: str
-    reader: ReaderConfig
-    transform: Union[PrimaryTransformConfig, MapTransformConfig]
-    writer: WriterConfig
+    reader: ReaderConfig = field(default_factory=CSVReaderConfig)
+    transform: TransformConfig = field(default_factory=TransformConfig)
+    writer: WriterConfig = field(default_factory=WriterConfig)
     metadata: Optional[Union[DatasetDescription, str]] = None
+
     def __post_init__(self):
         # If metadata looks like a file path attempt to load it from the yaml
         if self.metadata and isinstance(self.metadata, str):
