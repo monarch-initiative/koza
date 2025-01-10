@@ -7,6 +7,7 @@ from typing import Any, Callable, Dict, Iterator, Optional
 
 import loguru
 import yaml
+from mergedeep import merge
 
 from koza.io.writer.jsonl_writer import JSONLWriter
 from koza.io.writer.tsv_writer import TSVWriter
@@ -198,8 +199,13 @@ class KozaRunner:
         )
 
     @classmethod
-    def from_config_file(cls, config_filename: str, output_dir: str = "", output_format: Optional[OutputFormat] = None):
-        transform_code_path = None
+    def from_config_file(
+        cls,
+        config_filename: str,
+        output_dir: str = "",
+        output_format: Optional[OutputFormat] = None,
+        overrides: Optional[dict] = None,
+    ):
         config_path = Path(config_filename)
 
         with config_path.open("r") as fh:
@@ -221,9 +227,18 @@ class KozaRunner:
             if not transform_code_path.exists():
                 raise FileNotFoundError(f"Could not find transform file for {config_filename}")
 
-        return cls.from_config(
-            config,
-            output_dir=output_dir,
-            output_format=output_format,
-            transform_code_path=transform_code_path,
-        )
+        # Override any necessary fields
+        config_dict = asdict(config)
+        _overrides = {}
+        if output_format is not None:
+            _overrides["writer"] = {
+                "format": output_format,
+            }
+        if transform_code_path is not None:
+            _overrides["transform"] = {
+                "code": str(transform_code_path),
+            }
+        config_dict = merge(config_dict, _overrides, overrides or {})
+        config = KozaConfig(**config_dict)
+
+        return config, cls.from_config(config, output_dir=output_dir)
