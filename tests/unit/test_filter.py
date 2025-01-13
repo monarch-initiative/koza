@@ -3,11 +3,17 @@ Testing for row filtering
 
 """
 
+import pydantic
 import pytest
 
 from koza.model.config.source_config import ColumnFilter, FilterCode, FilterInclusion
 from koza.utils.row_filter import RowFilter
 
+class Filter(pydantic.BaseModel):
+    filter: ColumnFilter
+
+def get_filter(**kwargs):
+    return Filter.model_validate({ "filter": kwargs }).filter
 
 @pytest.mark.parametrize(
     "column, inclusion, code, value, result",
@@ -39,7 +45,8 @@ from koza.utils.row_filter import RowFilter
 )
 def test_filter(column, inclusion, code, value, result):
     row = {'a': 0.3, 'b': 10, 'c': 'llama'}
-    column_filter = ColumnFilter(
+
+    column_filter = get_filter(
         column=column,
         inclusion=FilterInclusion(inclusion),
         filter_code=FilterCode(code),
@@ -56,13 +63,13 @@ def test_filter(column, inclusion, code, value, result):
     [
         (
             [
-                ColumnFilter(
+                get_filter(
                     column='a',
                     inclusion=FilterInclusion('include'),
                     filter_code=FilterCode('lt'),
                     value=0.4,
                 ),
-                ColumnFilter(
+                get_filter(
                     column='a',
                     inclusion=FilterInclusion('include'),
                     filter_code=FilterCode('gt'),
@@ -73,13 +80,13 @@ def test_filter(column, inclusion, code, value, result):
         ),
         (
             [
-                ColumnFilter(
+                get_filter(
                     column='a',
                     inclusion=FilterInclusion('include'),
                     filter_code=FilterCode('lt'),
                     value=0.4,
                 ),
-                ColumnFilter(
+                get_filter(
                     column='a',
                     inclusion=FilterInclusion('exclude'),
                     filter_code=FilterCode('gt'),
@@ -90,13 +97,13 @@ def test_filter(column, inclusion, code, value, result):
         ),
         (
             [
-                ColumnFilter(
+                get_filter(
                     column='a',
                     inclusion=FilterInclusion('include'),
                     filter_code=FilterCode('in'),
                     value=[0.2, 0.3, 0.4],
                 ),
-                ColumnFilter(
+                get_filter(
                     column='b',
                     inclusion=FilterInclusion('exclude'),
                     filter_code=FilterCode('lt'),
@@ -107,13 +114,13 @@ def test_filter(column, inclusion, code, value, result):
         ),
         (
             [
-                ColumnFilter(
+                get_filter(
                     column='a',
                     inclusion=FilterInclusion('include'),
                     filter_code=FilterCode('in'),
                     value=[0.2, 0.3, 0.4],
                 ),
-                ColumnFilter(
+                get_filter(
                     column='b',
                     inclusion=FilterInclusion('exclude'),
                     filter_code=FilterCode('gt'),

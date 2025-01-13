@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 
 import yaml
+from ordered_set import OrderedSet
 from pydantic import (Discriminator, Field, StrictFloat, StrictInt, StrictStr,
                       Tag, TypeAdapter, model_validator)
 from pydantic.dataclasses import dataclass
@@ -121,12 +122,21 @@ class EqualsFilter(BaseColumnFilter):
 
 
 @dataclass(config=PYDANTIC_CONFIG, frozen=True)
+class NotEqualsFilter(BaseColumnFilter):
+    filter_code: Literal[FilterCode.ne]
+    value: Union[StrictInt, StrictFloat, StrictStr]
+
+
+@dataclass(config=PYDANTIC_CONFIG, frozen=True)
 class InListFilter(BaseColumnFilter):
     filter_code: Literal[FilterCode.inlist, FilterCode.inlist_exact]
     value: List[Union[StrictInt, StrictFloat, StrictStr]]
 
 
-ColumnFilter = Annotated[Union[ComparisonFilter, EqualsFilter, InListFilter], Field(..., discriminator="filter_code")]
+ColumnFilter = Annotated[
+    Union[ComparisonFilter, EqualsFilter, NotEqualsFilter, InListFilter],
+    Field(..., discriminator="filter_code"),
+]
 
 
 @dataclass(frozen=True)
@@ -322,13 +332,17 @@ class KozaConfig:
                 raise ValueError(f"Unable to load metadata from {self.metadata}: {e}") from e
 
         if self.reader.format == FormatType.csv and self.reader.columns is not None:
-            filtered_columns = {column_filter.column for column_filter in self.transform.filters}
-            all_columns = {
+            filtered_columns = OrderedSet([column_filter.column for column_filter in self.transform.filters])
+            all_columns = OrderedSet([
                 column if isinstance(column, str) else list(column.keys())[0] for column in self.reader.columns
-            }
+            ])
             extra_filtered_columns = filtered_columns - all_columns
             if extra_filtered_columns:
-                raise ValueError(f"Filter column not in defined CSV columns: \n\t{', '.join(extra_filtered_columns)}")
+                quote = "'"
+                raise ValueError(
+                    "One or more filter columns not present in designated CSV columns:"
+                    f" {', '.join([f'{quote}{c}{quote}' for c in extra_filtered_columns])}"
+                )
 
 
 def SourceConfig(**kwargs):
