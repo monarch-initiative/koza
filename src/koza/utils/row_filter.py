@@ -1,7 +1,7 @@
 from operator import eq, ge, gt, le, lt, ne
 from typing import List
 
-from koza.model.config.source_config import ColumnFilter, FilterInclusion
+from koza.model.filters import ColumnFilter, FilterInclusion
 
 
 class RowFilter:

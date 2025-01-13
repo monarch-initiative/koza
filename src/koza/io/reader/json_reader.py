@@ -3,7 +3,7 @@ from typing import IO, Any, Dict, Generator, List, Union
 
 import yaml
 from koza.io.utils import check_data
-from koza.model.config.source_config import JSONReaderConfig, YAMLReaderConfig
+from koza.model.reader import JSONReaderConfig, YAMLReaderConfig
 
 # FIXME: Add back logging as part of progress
 

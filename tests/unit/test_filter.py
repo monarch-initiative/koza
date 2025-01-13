@@ -6,7 +6,7 @@ Testing for row filtering
 import pydantic
 import pytest
 
-from koza.model.config.source_config import ColumnFilter, FilterCode, FilterInclusion
+from koza.model.filters import ColumnFilter, FilterCode, FilterInclusion
 from koza.utils.row_filter import RowFilter
 
 class Filter(pydantic.BaseModel):

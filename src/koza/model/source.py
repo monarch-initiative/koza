@@ -6,7 +6,8 @@ from koza.io.reader.csv_reader import CSVReader
 from koza.io.reader.json_reader import JSONReader
 from koza.io.reader.jsonl_reader import JSONLReader
 from koza.io.utils import open_resource
-from koza.model.config.source_config import FormatType, KozaConfig
+from koza.model.formats import InputFormat
+from koza.model.koza import KozaConfig
 from koza.utils.row_filter import RowFilter
 
 # from koza.io.yaml_loader import UniqueIncludeLoader
@@ -45,7 +46,7 @@ class Source:
 
             for resource in resources:
                 self._opened.append(resource.reader)
-                if reader_config.format == FormatType.csv:
+                if reader_config.format == InputFormat.csv:
                     self._readers.append(
                         CSVReader(
                             resource.reader,
@@ -53,7 +54,7 @@ class Source:
                             row_limit=self.row_limit,
                         )
                     )
-                elif reader_config.format == FormatType.jsonl:
+                elif reader_config.format == InputFormat.jsonl:
                     self._readers.append(
                         JSONLReader(
                             resource.reader,
@@ -61,7 +62,7 @@ class Source:
                             row_limit=self.row_limit,
                         )
                     )
-                elif reader_config.format == FormatType.json or reader_config.format == FormatType.yaml:
+                elif reader_config.format == InputFormat.json or reader_config.format == InputFormat.yaml:
                     self._readers.append(
                         JSONReader(
                             resource.reader,

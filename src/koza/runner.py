@@ -16,7 +16,9 @@ from koza.io.writer.passthrough_writer import PassthroughWriter
 from koza.io.writer.tsv_writer import TSVWriter
 from koza.io.writer.writer import KozaWriter
 from koza.io.yaml_loader import UniqueIncludeLoader
-from koza.model.config.source_config import KozaConfig, MapErrorEnum, OutputFormat
+from koza.model.koza import KozaConfig
+from koza.model.transform import MapErrorEnum
+from koza.model.formats import OutputFormat
 from koza.model.source import Source
 from koza.utils.exceptions import MapItemException, NoTransformException
 

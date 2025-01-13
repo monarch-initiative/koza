@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from koza.runner import KozaRunner
-from koza.model.config.source_config import OutputFormat
+from koza.model.formats import OutputFormat
 
 
 @pytest.mark.parametrize(

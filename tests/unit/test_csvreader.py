@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pytest
 from koza.io.reader.csv_reader import CSVReader
-from koza.model.config.source_config import (CSVReaderConfig, FieldType,
-                                             FormatType)
+from koza.model.formats import InputFormat
+from koza.model.reader import CSVReaderConfig, FieldType
 
 test_file = Path(__file__).parent.parent / 'resources' / 'source-files' / 'string.tsv'
 tsv_with_footer = Path(__file__).parent.parent / 'resources' / 'source-files' / 'tsv-with-footer.tsv'
@@ -27,7 +27,7 @@ field_type_map = {
 def test_no_exceptions_in_normal_case():
     with open(test_file, 'r') as string_file:
         config = CSVReaderConfig(
-            format=FormatType.csv,
+            format=InputFormat.csv,
             field_type_map=field_type_map,
             delimiter=' ',
         )
@@ -40,7 +40,7 @@ def test_no_exceptions_in_normal_case():
 def test_type_conversion():
     with open(test_file, 'r') as string_file:
         config = CSVReaderConfig(
-            format=FormatType.csv,
+            format=InputFormat.csv,
             field_type_map=field_type_map,
             delimiter=' ',
         )
@@ -113,7 +113,7 @@ def test_no_field_map(caplog):
 def test_no_exceptions_with_footer():
     with open(tsv_with_footer, 'r') as footer_file:
         config = CSVReaderConfig(
-            format=FormatType.csv,
+            format=InputFormat.csv,
             field_type_map=field_type_map,
             delimiter=' ',
             comment_char='!!',

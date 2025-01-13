@@ -4,7 +4,8 @@ Testing the biolink config dataclasses + pydandic
 """
 
 import pytest
-from koza.model.config.source_config import KozaConfig, TransformConfig
+from koza.model.koza import KozaConfig
+from koza.model.transform import TransformConfig
 from pydantic import TypeAdapter, ValidationError
 
 

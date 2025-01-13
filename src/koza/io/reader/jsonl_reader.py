@@ -2,7 +2,7 @@ import json
 from typing import IO
 
 from koza.io.utils import check_data
-from koza.model.config.source_config import JSONLReaderConfig
+from koza.model.reader import JSONLReaderConfig
 
 # FIXME: Add back logging as part of progress
 

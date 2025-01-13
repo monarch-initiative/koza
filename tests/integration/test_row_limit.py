@@ -6,7 +6,7 @@ Assert correct number of rows has been processed
 from pathlib import Path
 
 import pytest
-from koza.model.config.source_config import OutputFormat
+from koza.model.formats import OutputFormat
 from koza.runner import KozaRunner
 
 # TODO: Parameterize row_limit, and test reading from JSON and JSONL

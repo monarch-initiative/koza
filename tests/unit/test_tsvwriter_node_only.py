@@ -3,7 +3,7 @@ import os
 from biolink_model.datamodel.pydanticmodel_v2 import Disease, Gene
 
 from koza.io.writer.tsv_writer import TSVWriter
-from koza.model.config.source_config import WriterConfig
+from koza.model.writer import WriterConfig
 
 
 def test_tsv_writer():

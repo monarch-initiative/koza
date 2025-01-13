@@ -4,7 +4,8 @@ from pathlib import Path
 import pytest
 
 from koza.io.reader.json_reader import JSONReader
-from koza.model.config.source_config import FormatType, JSONReaderConfig
+from koza.model.formats import InputFormat
+from koza.model.reader import JSONReaderConfig
 
 test_ddpheno = Path(__file__).parents[1] / 'resources' / 'source-files' / 'ddpheno.json.gz'
 
@@ -13,7 +14,7 @@ json_path = ['graphs', 0, 'nodes']
 
 def test_normal_case():
     config = JSONReaderConfig(
-        format=FormatType.json,
+        format=InputFormat.json,
         json_path=json_path,
         files=[],
     )
@@ -25,7 +26,7 @@ def test_normal_case():
 
 def test_required_properties():
     config = JSONReaderConfig(
-        format=FormatType.json,
+        format=InputFormat.json,
         required_properties=["id"],
         json_path=json_path,
         files=[],
@@ -42,7 +43,7 @@ def test_required_properties():
 
 def test_missing_req_property_raises_exception():
     config = JSONReaderConfig(
-        format=FormatType.json,
+        format=InputFormat.json,
         required_properties=["fake_prop"],
         json_path=json_path,
         files=[],

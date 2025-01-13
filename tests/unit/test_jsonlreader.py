@@ -4,14 +4,15 @@ from pathlib import Path
 import pytest
 
 from koza.io.reader.jsonl_reader import JSONLReader
-from koza.model.config.source_config import JSONLReaderConfig, FormatType
+from koza.model.formats import InputFormat
+from koza.model.reader import JSONLReaderConfig
 
 test_zfin_data = Path(__file__).parents[1] / 'resources' / 'source-files' / 'ZFIN_PHENOTYPE_0.jsonl.gz'
 
 
 def test_normal_case():
     config = JSONLReaderConfig(
-        format=FormatType.jsonl,
+        format=InputFormat.jsonl,
         files=[],
     )
     with gzip.open(test_zfin_data, 'rt') as zfin:
@@ -24,7 +25,7 @@ def test_normal_case():
 
 def test_required_property():
     config = JSONLReaderConfig(
-        format=FormatType.jsonl,
+        format=InputFormat.jsonl,
         required_properties=["objectId", "evidence.publicationId"],
         files=[],
     )
@@ -39,7 +40,7 @@ def test_required_property():
 
 def test_missing_req_property_raises_exception():
     config = JSONLReaderConfig(
-        format=FormatType.jsonl,
+        format=InputFormat.jsonl,
         required_properties=["objectId", "foobar"],
         files=[],
     )

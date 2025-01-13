@@ -2,7 +2,7 @@ from typing import Any, Dict
 
 import pytest
 from koza.io.writer.writer import KozaWriter
-from koza.model.config.source_config import KozaConfig
+from koza.model.koza import KozaConfig
 from koza.runner import KozaRunner, KozaTransform
 from pydantic import TypeAdapter
 

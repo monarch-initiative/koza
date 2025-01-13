@@ -1,7 +1,7 @@
 from csv import reader
 from typing import IO, Any, Callable, Dict, List
 
-from koza.model.config.source_config import FieldType, CSVReaderConfig, HeaderMode
+from koza.model.reader import FieldType, CSVReaderConfig, HeaderMode
 
 # from koza.utils.log_utils import get_logger
 # logger = get_logger(__name__)

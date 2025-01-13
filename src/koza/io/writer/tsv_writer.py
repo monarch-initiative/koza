@@ -9,7 +9,7 @@ from ordered_set import OrderedSet
 from koza.converter.kgx_converter import KGXConverter
 from koza.io.utils import build_export_row
 from koza.io.writer.writer import KozaWriter
-from koza.model.config.source_config import WriterConfig
+from koza.model.writer import WriterConfig
 
 
 class TSVWriter(KozaWriter):
