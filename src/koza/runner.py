@@ -7,8 +7,8 @@ from types import ModuleType
 from typing import Any, Callable, Dict, Iterator, Optional
 from typing_extensions import assert_never
 
-import loguru
 import yaml
+from loguru import logger
 from mergedeep import merge
 
 from koza.io.writer.jsonl_writer import JSONLWriter
@@ -35,7 +35,6 @@ class KozaTransform(ABC):
     extra_fields: Dict[str, Any]
     writer: KozaWriter
     mappings: Mappings
-    logger: "loguru.Logger"
     on_map_failure: MapErrorEnum = MapErrorEnum.warning
 
     @property
@@ -102,10 +101,9 @@ class KozaTransform(ABC):
                 case _:
                     assert_never(self.on_map_failure)
 
-    @abstractmethod
-    def log(self, msg: str, level: str = "INFO") -> None:
+    def log(self, msg: str, level: str = "info") -> None:
         """Log a message."""
-        ...
+        logger.log(level, msg)
 
     @property
     @abstractmethod
@@ -128,9 +126,6 @@ class SingleTransform(KozaTransform):
     def data(self):
         return self._data
 
-    def log(self, msg: str, level: str = "INFO") -> None:
-        raise NotImplementedError()
-
     @property
     def current_reader(self):
         raise NotImplementedError()
@@ -140,9 +135,6 @@ class SingleTransform(KozaTransform):
 class SerialTransform(KozaTransform):
     @property
     def data(self):
-        raise NotImplementedError()
-
-    def log(self, msg: str, level: str = "INFO") -> None:
         raise NotImplementedError()
 
     @property
@@ -157,7 +149,6 @@ class KozaRunner:
         writer: KozaWriter,
         mapping_filenames: Optional[list[str]] = None,
         extra_transform_fields: Optional[dict[str, Any]] = None,
-        logger: Optional["loguru.Logger"] = None,
         transform_record: Optional[Callable[[KozaTransform, Record], None]] = None,
         transform: Optional[Callable[[KozaTransform], None]] = None,
     ):
@@ -168,11 +159,6 @@ class KozaRunner:
         self.transform = transform
         self.extra_transform_fields = extra_transform_fields or {}
 
-        if logger:
-            self.logger = logger
-        else:
-            self.logger = loguru.logger
-
     def run_single(self):
         fn = self.transform
 
@@ -181,11 +167,11 @@ class KozaRunner:
 
         mappings = self.load_mappings()
 
+        logger.info("Running single transform")
         transform = SingleTransform(
             _data=self.data,
             mappings=mappings,
             writer=self.writer,
-            logger=self.logger,
             extra_fields=self.extra_transform_fields,
         )
         fn(transform)
@@ -198,10 +184,10 @@ class KozaRunner:
 
         mappings = self.load_mappings()
 
+        logger.info("Running serial transform")
         transform = SerialTransform(
             mappings=mappings,
             writer=self.writer,
-            logger=self.logger,
             extra_fields=self.extra_transform_fields,
         )
         for item in self.data:
@@ -221,6 +207,9 @@ class KozaRunner:
 
     def load_mappings(self):
         mappings: Mappings = {}
+
+        if self.mapping_filenames:
+            logger.info("Loading mappings")
 
         for mapping_config_filename in self.mapping_filenames:
             # Check if a transform has been defined for the mapping
@@ -259,6 +248,9 @@ class KozaRunner:
 
             mappings[config.name] = mapping_entry
 
+        if self.mapping_filenames:
+            logger.info("Completed loading mappings")
+
         return mappings
 
     @classmethod
@@ -275,15 +267,22 @@ class KozaRunner:
             transform_code_path = Path(config.transform.code)
             parent_path = transform_code_path.absolute().parent
             module_name = transform_code_path.stem
+            logger.debug(f"Adding `{parent_path}` to system path to load transform module")
             sys.path.append(str(parent_path))
+            # FIXME: Remove this from sys.path
         elif config.transform.module:
             module_name = config.transform.module
 
         if module_name:
+            logger.debug(f"Loading module `{module_name}`")
             transform_module = importlib.import_module(module_name)
 
         transform = getattr(transform_module, "transform", None)
+        if transform:
+            logger.debug(f"Found transform function `{module_name}.transform`")
         transform_record = getattr(transform_module, "transform_record", None)
+        if transform_record:
+            logger.debug(f"Found transform function `{module_name}.transform_record`")
         source = Source(config, row_limit)
 
         writer: Optional[KozaWriter] = None
@@ -319,6 +318,8 @@ class KozaRunner:
         transform_code_path: Optional[Path] = None
         config_path = Path(config_filename)
 
+        logger.info(f"Loading configuration from `{config_filename}`")
+
         with config_path.open("r") as fh:
             config_dict = yaml.load(fh, Loader=UniqueIncludeLoader)  # noqa: S506
             config = KozaConfig(**config_dict)
@@ -338,6 +339,9 @@ class KozaRunner:
                 transform_code_path = mirrored_path
             elif transform_literal_path.exists():
                 transform_code_path = transform_literal_path
+
+            if transform_code_path:
+                logger.debug(f"Using transform code from `{mirrored_path}`")
 
         # Override any necessary fields
         config_dict = asdict(config)
