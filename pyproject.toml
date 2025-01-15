@@ -49,6 +49,26 @@ skip-string-normalization = true
 
 [tool.ruff]
 line-length = 120
+
+lint.fixable = ["ALL"]
+
 lint.ignore = [
     "F541", # f-strings with no placeholders
+    "S101", # allow asserts
 ]
+
+# Select or ignore from https://beta.ruff.rs/docs/rules/
+lint.select = [
+    "B",  # bugbear
+    # "D",  # pydocstyle
+    "E",  # pycodestyle errors
+    "F",  # Pyflakes
+    "I",  # isort
+    "Q",  # flake8-quotes
+    "S",  # flake8-bandit
+    "W",  # Warning
+]
+
+[tool.ruff.format]
+quote-style = "double"
+line-ending = "lf"
