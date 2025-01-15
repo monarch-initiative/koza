@@ -44,9 +44,9 @@ clean:
 .PHONY: lint
 lint:
 	$(RUN) ruff check --diff --exit-zero src/ tests/ examples/
-	$(RUN) black --check --diff -l 120 src/ tests/ examples/
+	$(RUN) ruff format --check --diff src/ tests/ examples/
 
 .PHONY: format
 format:
 	$(RUN) ruff check --fix --exit-zero src/ tests/ examples/
-	$(RUN) black -l 120 src/ tests/ examples/
+	$(RUN) ruff format src/ tests/ examples/
