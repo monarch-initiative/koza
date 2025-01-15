@@ -2,6 +2,7 @@
 """
 Set of functions to manage input and output
 """
+
 import dataclasses
 import gzip
 import tarfile
@@ -39,7 +40,9 @@ def is_gzipped(filename: str):
             fh.close()
 
 
-def open_resource(resource: Union[str, PathLike]) -> Union[
+def open_resource(
+    resource: Union[str, PathLike],
+) -> Union[
     SizedResource,
     tuple[ZipFile, Generator[SizedResource, None, None]],
     tuple[TarFile, Generator[SizedResource, None, None]],
@@ -64,8 +67,8 @@ def open_resource(resource: Union[str, PathLike]) -> Union[
     # Check if resource is a remote file
     resource_name: Optional[Union[str, PathLike]] = None
 
-    if isinstance(resource, str) and resource.startswith('http'):
-        tmp_file = tempfile.NamedTemporaryFile('w+b')
+    if isinstance(resource, str) and resource.startswith("http"):
+        tmp_file = tempfile.NamedTemporaryFile("w+b")
         request = requests.get(resource, timeout=10)
         if request.status_code != 200:
             raise ValueError(f"Remote file returned {request.status_code}: {request.text}")
@@ -86,11 +89,11 @@ def open_resource(resource: Union[str, PathLike]) -> Union[
 
     # If resource is local, check for compression
     if is_zipfile(resource):
-        zip_fh = ZipFile(resource, 'r')
+        zip_fh = ZipFile(resource, "r")
 
         def generator():
             for zip_info in zip_fh.infolist():
-                extracted = zip_fh.open(zip_info, 'r')
+                extracted = zip_fh.open(zip_info, "r")
                 yield SizedResource(
                     zip_info.filename,
                     zip_info.file_size,
@@ -101,7 +104,7 @@ def open_resource(resource: Union[str, PathLike]) -> Union[
         return zip_fh, generator()
 
     elif is_tarfile(resource):
-        tar_fh = tarfile.open(resource, mode='r|*')
+        tar_fh = tarfile.open(resource, mode="r|*")
 
         def generator():
             for tarinfo in tar_fh:
@@ -121,7 +124,7 @@ def open_resource(resource: Union[str, PathLike]) -> Union[
     elif is_gzipped(str(resource)):
         path = Path(resource)
         fh = path.open("rb")
-        gzip_fh = gzip.open(fh, 'rt')
+        gzip_fh = gzip.open(fh, "rt")
         assert isinstance(gzip_fh, TextIOWrapper)
         gzip_fh.read(1)
         gzip_fh.seek(0)

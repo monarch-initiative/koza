@@ -2,13 +2,12 @@ import importlib
 import sys
 from pathlib import Path
 from typing import Dict, Union
-import yaml
 
+import yaml
 from linkml.validator import validate
 from pydantic import ValidationError
 
 from koza.converter.kgx_converter import KGXConverter
-from koza.utils.exceptions import MapItemException, NextRowException
 from koza.io.writer.jsonl_writer import JSONLWriter
 from koza.io.writer.tsv_writer import TSVWriter
 from koza.io.writer.writer import KozaWriter
@@ -18,6 +17,7 @@ from koza.model.curie_cleaner import CurieCleaner
 from koza.model.map_dict import MapDict
 from koza.model.source import Source
 from koza.model.translation_table import TranslationTable
+from koza.utils.exceptions import MapItemException, NextRowException
 
 
 class KozaApp:
@@ -27,8 +27,8 @@ class KozaApp:
         self,
         source: Source,
         translation_table: TranslationTable = None,
-        output_dir: str = './output',
-        output_format: OutputFormat = OutputFormat('jsonl'),
+        output_dir: str = "./output",
+        output_format: OutputFormat = OutputFormat("jsonl"),
         schema: str = None,
         node_type: str = None,
         edge_type: str = None,
@@ -44,9 +44,9 @@ class KozaApp:
         self.writer: KozaWriter = self._get_writer()
         self.logger = logger
         self.outfiles = []
-        if hasattr(self.writer, 'nodes_file_name'):
+        if hasattr(self.writer, "nodes_file_name"):
             self.node_file = self.writer.nodes_file_name
-        if hasattr(self.writer, 'edges_file_name'):
+        if hasattr(self.writer, "edges_file_name"):
             self.edge_file = self.writer.edges_file_name
 
         if schema:
@@ -60,9 +60,9 @@ class KozaApp:
 
         if source.config.depends_on is not None:
             for map_file in source.config.depends_on:
-                with open(map_file, 'r') as map_file_fh:
+                with open(map_file, "r") as map_file_fh:
                     map_file_config = MapFileConfig(**yaml.load(map_file_fh, Loader=UniqueIncludeLoader))
-                    map_file_config.transform_code = str(Path(map_file).parent / Path(map_file).stem) + '.py'
+                    map_file_config.transform_code = str(Path(map_file).parent / Path(map_file).stem) + ".py"
                 self._map_registry[map_file_config.name] = Source(map_file_config)
 
     def get_map(self, map_name: str):
@@ -98,7 +98,7 @@ class KozaApp:
 
         if self.logger:
             self.logger.info(f"Transforming source: {self.source.config.name}")
-        if self.source.config.transform_mode == 'flat':
+        if self.source.config.transform_mode == "flat":
             while True:
                 try:
                     if is_first:
@@ -117,7 +117,7 @@ class KozaApp:
                     raise ValidationError
                 except StopIteration:
                     break
-        elif self.source.config.transform_mode == 'loop':
+        elif self.source.config.transform_mode == "loop":
             if transform_code not in sys.modules.keys():
                 importlib.import_module(transform_code)
             else:
@@ -151,7 +151,7 @@ class KozaApp:
     def write(self, *entities):
         # If a schema/validator is defined, validate before writing
         # if self.validate:
-        if hasattr(self, 'schema'):
+        if hasattr(self, "schema"):
             (nodes, edges) = self.converter.convert(entities)
             if self.output_format == OutputFormat.tsv:
                 if nodes:

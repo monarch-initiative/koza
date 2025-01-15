@@ -1,5 +1,6 @@
 from dataclasses import asdict
 from typing import Iterable, Tuple
+
 from pydantic import BaseModel
 
 

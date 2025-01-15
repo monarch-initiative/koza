@@ -15,14 +15,14 @@ class RowFilter:
         """
         self.filters = filters
         self.operators = {
-            'gt': gt,
-            'ge': ge,
-            'lt': lt,
-            'le': le,
-            'eq': eq,
-            'ne': ne,
-            'in': self.inlist,  # not using operator.contains because the it expects opposite argument order
-            'in_exact': self.inlist_exact,  # not using operator.contains because the it expects opposite argument order
+            "gt": gt,
+            "ge": ge,
+            "lt": lt,
+            "le": le,
+            "eq": eq,
+            "ne": ne,
+            "in": self.inlist,  # not using operator.contains because the it expects opposite argument order
+            "in_exact": self.inlist_exact,  # not using operator.contains because the it expects opposite argument order
         }
 
     def include_row(self, row) -> bool:
@@ -42,8 +42,8 @@ class RowFilter:
             if row.get(column_filter.column) is None:
                 return False
 
-            include = column_filter.inclusion == FilterInclusion('include')
-            exclude = column_filter.inclusion == FilterInclusion('exclude')
+            include = column_filter.inclusion == FilterInclusion("include")
+            exclude = column_filter.inclusion == FilterInclusion("exclude")
 
             comparison_method = self.operators.get(column_filter.filter_code)
             comparison_match = comparison_method(row.get(column_filter.column), column_filter.value)

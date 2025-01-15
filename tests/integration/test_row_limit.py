@@ -6,11 +6,13 @@ Assert correct number of rows has been processed
 from pathlib import Path
 
 import pytest
+
 from koza.model.formats import OutputFormat
 from koza.runner import KozaRunner
 
 # TODO: Parameterize row_limit, and test reading from JSON and JSONL
 # TODO: Address filter in examples/string-declarative/protein-links-detailed.yaml
+
 
 @pytest.mark.parametrize(
     "source_name, ingest, output_format, row_limit, header_len, expected_node_len, expected_edge_len",
@@ -29,7 +31,7 @@ from koza.runner import KozaRunner
 def test_examples(source_name, ingest, output_format, row_limit, header_len, expected_node_len, expected_edge_len):
     config_filename = f"examples/{source_name}/{ingest}.yaml"
 
-    output_suffix = str(output_format).split('.')[1]
+    output_suffix = str(output_format).split(".")[1]
     output_dir = "./output/tests/string-test-examples"
 
     output_files = [f"{output_dir}/{ingest}_nodes.{output_suffix}", f"{output_dir}/{ingest}_edges.{output_suffix}"]

@@ -8,10 +8,11 @@ from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
-from koza.model.config.pydantic_config import PYDANTIC_CONFIG
-from koza.model.config.sssom_config import SSSOMConfig
 from pydantic import StrictInt, StrictStr, TypeAdapter
 from pydantic.dataclasses import dataclass
+
+from koza.model.config.pydantic_config import PYDANTIC_CONFIG
+from koza.model.config.sssom_config import SSSOMConfig
 
 
 class StandardFormat(str, Enum):

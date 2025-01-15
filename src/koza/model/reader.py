@@ -7,13 +7,14 @@ from dataclasses import field
 from enum import Enum
 from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 
-from koza.model.config.pydantic_config import PYDANTIC_CONFIG
-from koza.model.formats import InputFormat
 from pydantic import Discriminator, StrictInt, StrictStr, Tag
 from pydantic.dataclasses import dataclass
 
+from koza.model.config.pydantic_config import PYDANTIC_CONFIG
+from koza.model.formats import InputFormat
 
-__all__ = ('ReaderConfig',)
+__all__ = ("ReaderConfig",)
+
 
 class FieldType(str, Enum):
     """Enum for field types"""
@@ -28,7 +29,6 @@ class HeaderMode(str, Enum):
 
     infer = "infer"
     none = "none"
-
 
 
 @dataclass(config=PYDANTIC_CONFIG, frozen=True)

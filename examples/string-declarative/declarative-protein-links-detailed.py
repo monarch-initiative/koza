@@ -1,10 +1,11 @@
 import re
-from typing import Any
 import uuid
+from typing import Any
 
 from biolink_model.datamodel.pydanticmodel_v2 import PairwiseGeneToGeneInteraction, Protein
 
 from koza.runner import KozaTransform
+
 
 def transform_record(koza: KozaTransform, record: dict[str, Any]):
     protein_a = Protein(id="ENSEMBL:" + re.sub(r"\d+\.", "", record["protein1"]))

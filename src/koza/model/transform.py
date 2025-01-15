@@ -2,11 +2,12 @@ from dataclasses import field, fields
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
-from koza.model.config.pydantic_config import PYDANTIC_CONFIG
-from koza.model.filters import ColumnFilter
 from pydantic import model_validator
 from pydantic.dataclasses import dataclass
 from pydantic_core import ArgsKwargs
+
+from koza.model.config.pydantic_config import PYDANTIC_CONFIG
+from koza.model.filters import ColumnFilter
 
 
 class MapErrorEnum(str, Enum):

@@ -11,7 +11,7 @@ from koza.model.reader import CSVReaderConfig, ReaderConfig
 from koza.model.transform import TransformConfig
 from koza.model.writer import WriterConfig
 
-__all__ = ('DatasetDescription', 'KozaConfig')
+__all__ = ("DatasetDescription", "KozaConfig")
 
 
 @dataclass(frozen=True)

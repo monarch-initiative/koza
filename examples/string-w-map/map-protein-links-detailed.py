@@ -4,6 +4,7 @@ from biolink_model.datamodel.pydanticmodel_v2 import Gene, PairwiseGeneToGeneInt
 
 from koza.runner import KozaTransform
 
+
 def transform_record(koza: KozaTransform, record: dict):
     a = record["protein1"]
     b = record["protein2"]

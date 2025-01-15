@@ -1,4 +1,5 @@
 from typing import Iterable
+
 from koza.io.writer.writer import KozaWriter
 
 

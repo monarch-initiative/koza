@@ -18,13 +18,13 @@ def gpi2gene(row: dict) -> Gene:
         xrefs = [koza_app.curie_cleaner.clean(xref) for xref in row["DB_Xref(s)"].split("|")]
 
     gene = Gene(
-        id=row['DB_Object_ID'],
-        symbol=row['DB_Object_Symbol'],
-        name=row['DB_Object_Name'],
-        synonym=row['DB_Object_Synonym(s)'].split("|") if row['DB_Object_Synonym(s)'] else [],
-        in_taxon=koza_app.curie_cleaner.clean(row['Taxon']),
+        id=row["DB_Object_ID"],
+        symbol=row["DB_Object_Symbol"],
+        name=row["DB_Object_Name"],
+        synonym=row["DB_Object_Synonym(s)"].split("|") if row["DB_Object_Synonym(s)"] else [],
+        in_taxon=koza_app.curie_cleaner.clean(row["Taxon"]),
         xref=xrefs,
-        source=row['DB'],
+        source=row["DB"],
     )
 
     return gene

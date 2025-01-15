@@ -1,7 +1,7 @@
 from pathlib import Path
-import yaml
 
 import pytest
+import yaml
 from linkml.validator import validate
 
 # pytest.skip("validation tests are not working", allow_module_level=True)
@@ -17,7 +17,7 @@ valid_input = {
 }
 invalid_input = {"name": "Bogus Gene 98765", "type": "biolink:NamedThing"}
 
-model_path = Path(__file__).parent.parent / 'resources' / 'test-model.yaml'
+model_path = Path(__file__).parent.parent / "resources" / "test-model.yaml"
 with open(model_path) as f:
     model = yaml.load(f, Loader=yaml.FullLoader)
 

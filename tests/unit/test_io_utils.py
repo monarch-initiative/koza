@@ -14,6 +14,7 @@ from tarfile import TarFile
 from zipfile import ZipFile
 
 import pytest
+
 from koza.io import utils as io_utils
 from koza.io.utils import _sanitize_export_property
 
@@ -150,7 +151,7 @@ def test_sanitize_export_property(query):
     """
     Test sanitize_export method.
     """
-    value = _sanitize_export_property(query[0][0], query[0][1], list_delimiter='|')
+    value = _sanitize_export_property(query[0][0], query[0][1], list_delimiter="|")
     if isinstance(query[1], str):
         assert value == query[1]
     elif isinstance(query[1], (list, set, tuple)):

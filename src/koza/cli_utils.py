@@ -2,12 +2,12 @@
 Module for managing koza runs through the CLI
 """
 
-from pathlib import Path
 import os
+from pathlib import Path
 from typing import Dict, Literal, Optional, Union
-import yaml
 
 import duckdb
+import yaml
 
 from koza.app import KozaApp
 from koza.io.reader.csv_reader import CSVReader
@@ -144,12 +144,12 @@ def split_file(
     else:
         raise ValueError(f"Format {format} not supported")
 
-    values = db.execute(f'SELECT DISTINCT {fields} FROM {read_file};').fetchall()
-    keys = fields.split(',')
+    values = db.execute(f"SELECT DISTINCT {fields} FROM {read_file};").fetchall()
+    keys = fields.split(",")
     list_of_value_dicts = [dict(zip(keys, v)) for v in values]
 
     def clean_value_for_filename(value):
-        if remove_prefixes and ':' in value:
+        if remove_prefixes and ":" in value:
             value = value.split(":")[-1]
 
         return value.replace("biolink:", "").replace(" ", "_").replace(":", "_")
@@ -160,18 +160,18 @@ def split_file(
     def get_filename_prefix(name):
         # get just the filename part of the path
         name = os.path.basename(name)
-        if name.endswith('_edges.tsv'):
+        if name.endswith("_edges.tsv"):
             return name[:-9]
-        elif name.endswith('_nodes.tsv'):
+        elif name.endswith("_nodes.tsv"):
             return name[:-9]
         else:
             raise ValueError(f"Unexpected file name {name}, not sure how to make am output prefix for it")
 
     def get_filename_suffix(name):
-        if name.endswith('_edges.tsv'):
-            return '_edges.tsv'
-        elif name.endswith('_nodes.tsv'):
-            return '_nodes.tsv'
+        if name.endswith("_edges.tsv"):
+            return "_edges.tsv"
+        elif name.endswith("_nodes.tsv"):
+            return "_nodes.tsv"
         else:
             raise ValueError(f"Unexpected file name {name}, not sure how to make am output prefix for it")
 
@@ -180,7 +180,7 @@ def split_file(
 
     for row in list_of_value_dicts:
         # export to a tsv file named with the values of the pivot fields
-        where_clause = ' AND '.join([f"{k} = '{row[k]}'" for k in keys])
+        where_clause = " AND ".join([f"{k} = '{row[k]}'" for k in keys])
         file_name = (
             output_dir + "/" + get_filename_prefix(file) + generate_filename_from_row(row) + get_filename_suffix(file)
         )

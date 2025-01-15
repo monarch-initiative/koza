@@ -1,4 +1,5 @@
 import sys
+
 import loguru
 
 LOGURU_FORMAT = "<green>{time:YYYY-MM-DD_HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name: <16}</cyan> | <level>{message}</level>"

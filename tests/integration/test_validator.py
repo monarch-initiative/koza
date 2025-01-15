@@ -7,9 +7,9 @@ TODO:
 
 from pathlib import Path
 from urllib.request import urlopen
-import yaml
 
 import pytest
+import yaml
 
 from koza.cli_utils import transform_source
 from koza.model.formats import OutputFormat
@@ -37,7 +37,7 @@ with urlopen(model_url) as f:
 def test_validator(source_name, ingest, output_format, schema):
     source_config = f"examples/{source_name}/{ingest}.yaml"
 
-    output_suffix = str(output_format).split('.')[1]
+    output_suffix = str(output_format).split(".")[1]
     output_dir = "./output/tests/string-test-validator"
 
     output_files = [f"{output_dir}/{ingest}_nodes.{output_suffix}", f"{output_dir}/{ingest}_edges.{output_suffix}"]

@@ -2,6 +2,7 @@ import json
 from typing import IO, Any, Dict, Generator, List, Union
 
 import yaml
+
 from koza.io.utils import check_data
 from koza.model.reader import JSONReaderConfig, YAMLReaderConfig
 

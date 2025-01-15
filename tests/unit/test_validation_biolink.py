@@ -1,7 +1,7 @@
 from urllib.request import urlopen
-import yaml
 
 import pytest
+import yaml
 from linkml.validator import validate
 
 pytest.skip("LinkML issue with `category` slot has `designates_type: true`", allow_module_level=True)

@@ -1,7 +1,7 @@
 from dataclasses import field
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Union, Literal
+from typing import Dict, List, Literal, Union
 
 from loguru import logger
 from pydantic.dataclasses import dataclass
@@ -69,7 +69,10 @@ class SSSOMConfig:
         )
         logger.debug(f"Filtering SSSOM by {filters}")
         new_msdf = filter_prefixes(
-            df=new_msdf.df, filter_prefixes=filters, require_all_prefixes=False, features=new_msdf.df.columns  # type: ignore
+            df=new_msdf.df,
+            filter_prefixes=filters,
+            require_all_prefixes=False,
+            features=new_msdf.df.columns,  # type: ignore
         )
 
         return new_msdf

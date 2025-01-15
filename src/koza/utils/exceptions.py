@@ -13,5 +13,6 @@ class MapItemException(KeyError):
     a source may opt to warn or exit with an error
     """
 
+
 class NoTransformException(ValueError):
     """Exception raised when a transform was not passed to KozaRunner"""

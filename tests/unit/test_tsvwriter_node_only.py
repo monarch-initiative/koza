@@ -15,7 +15,7 @@ def test_tsv_writer():
 
     entities = [gene, disease]
 
-    node_properties = ['id', 'category', 'symbol', 'in_taxon', 'provided_by', 'source']
+    node_properties = ["id", "category", "symbol", "in_taxon", "provided_by", "source"]
 
     config = WriterConfig(node_properties=node_properties)
 

@@ -1,13 +1,13 @@
 from csv import reader
 from typing import IO, Any, Callable, Dict, List
 
-from koza.model.reader import FieldType, CSVReaderConfig, HeaderMode
-
 # from koza.utils.log_utils import get_logger
 # logger = get_logger(__name__)
 # import logging
 # logger = logging.getLogger(__name__)
 from loguru import logger
+
+from koza.model.reader import CSVReaderConfig, FieldType, HeaderMode
 
 FIELDTYPE_CLASS: Dict[FieldType, Callable[[str], Any]] = {
     FieldType.str: str,
@@ -71,14 +71,14 @@ class CSVReader:
 
         delimiter = config.delimiter
 
-        if config.delimiter == '\\s':
-            delimiter = ' '
+        if config.delimiter == "\\s":
+            delimiter = " "
 
         self.csv_args = args
         self.csv_kwargs = kwargs
 
-        self.csv_kwargs['dialect'] = config.dialect
-        self.csv_kwargs['delimiter'] = delimiter
+        self.csv_kwargs["dialect"] = config.dialect
+        self.csv_kwargs["delimiter"] = delimiter
         self.csv_reader = reader(io_str, *self.csv_args, **self.csv_kwargs)
 
     @property
@@ -107,7 +107,7 @@ class CSVReader:
                 if self.config.skip_blank_lines:
                     continue
                 else:
-                    row = ['NaN' for _ in range(len(header))]
+                    row = ["NaN" for _ in range(len(header))]
 
             elif comment_char and row[0].startswith(comment_char):
                 continue
@@ -180,7 +180,7 @@ class CSVReader:
 
         # If the header delimiter is explicitly set create a new CSVReader using that one.
         if self.config.header_delimiter is not None:
-            kwargs = self.csv_kwargs | { "delimiter": self.config.header_delimiter }
+            kwargs = self.csv_kwargs | {"delimiter": self.config.header_delimiter}
             csv_reader = reader(self.io_str, *self.csv_args, **kwargs)
 
         headers = next(csv_reader)
@@ -217,11 +217,7 @@ class CSVReader:
         # The field type map is either set explicitly, or derived based on config.columns. If
         # neither of those are set, then set the field type map based on the parsed headers.
         if self.field_type_map is None:
-            self.field_type_map = {
-                key: FieldType.str
-                for key in header
-            }
-
+            self.field_type_map = {key: FieldType.str for key in header}
 
     def _compare_headers_to_supplied_columns(self, header: list[str]):
         """

@@ -1,15 +1,15 @@
 import re
 import uuid
 
-from biolink_model.datamodel.pydanticmodel_v2 import (
-    PairwiseGeneToGeneInteraction, Protein)
+from biolink_model.datamodel.pydanticmodel_v2 import PairwiseGeneToGeneInteraction, Protein
+
 from koza.runner import KozaTransform
 
 
 def transform(koza: KozaTransform):
     for row in koza.data:
-        protein_a = Protein(id='ENSEMBL:' + re.sub(r'\d+\.', '', row['protein1']))
-        protein_b = Protein(id='ENSEMBL:' + re.sub(r'\d+\.', '', row['protein2']))
+        protein_a = Protein(id="ENSEMBL:" + re.sub(r"\d+\.", "", row["protein1"]))
+        protein_b = Protein(id="ENSEMBL:" + re.sub(r"\d+\.", "", row["protein2"]))
 
         pairwise_gene_to_gene_interaction = PairwiseGeneToGeneInteraction(
             id="uuid:" + str(uuid.uuid1()),

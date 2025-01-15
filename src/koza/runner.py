@@ -5,21 +5,21 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from types import ModuleType
 from typing import Any, Callable, Dict, Iterator, Optional
-from typing_extensions import assert_never
 
 import yaml
 from loguru import logger
 from mergedeep import merge
+from typing_extensions import assert_never
 
 from koza.io.writer.jsonl_writer import JSONLWriter
 from koza.io.writer.passthrough_writer import PassthroughWriter
 from koza.io.writer.tsv_writer import TSVWriter
 from koza.io.writer.writer import KozaWriter
 from koza.io.yaml_loader import UniqueIncludeLoader
-from koza.model.koza import KozaConfig
-from koza.model.transform import MapErrorEnum
 from koza.model.formats import OutputFormat
+from koza.model.koza import KozaConfig
 from koza.model.source import Source
+from koza.model.transform import MapErrorEnum
 from koza.utils.exceptions import MapItemException, NoTransformException
 
 Record = Dict[str, Any]
@@ -325,7 +325,6 @@ class KozaRunner:
             config = KozaConfig(**config_dict)
 
         if not config.transform.code and not config.transform.module:
-
             # If config file is named:
             #   /path/to/transform_name.yaml
             # then look for a transform at

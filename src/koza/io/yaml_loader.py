@@ -32,9 +32,7 @@ class UniqueIncludeLoader(SafeLoader):
         for key_node, value_node in node.value:
             key = self.construct_object(key_node, deep=deep)
             if key in mapping:
-                raise ConstructorError(
-                    f"while constructing a mapping for {value_node.value} " f"found duplicate key {key}"
-                )
+                raise ConstructorError(f"while constructing a mapping for {value_node.value} found duplicate key {key}")
             mapping.append(key)
         return super().construct_mapping(node, deep)
 
@@ -48,4 +46,4 @@ class UniqueIncludeLoader(SafeLoader):
         return yaml.load(resource.reader, Loader=UniqueIncludeLoader)
 
 
-yaml.add_constructor('!include', UniqueIncludeLoader.include_constructor, UniqueIncludeLoader)
+yaml.add_constructor("!include", UniqueIncludeLoader.include_constructor, UniqueIncludeLoader)

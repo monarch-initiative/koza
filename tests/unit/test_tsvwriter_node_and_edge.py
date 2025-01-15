@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from biolink_model.datamodel.pydanticmodel_v2 import (Disease, Gene,
-                                                      GeneToDiseaseAssociation)
+from biolink_model.datamodel.pydanticmodel_v2 import Disease, Gene, GeneToDiseaseAssociation
+
 from koza.io.writer.tsv_writer import TSVWriter
 from koza.model.writer import WriterConfig
 
@@ -24,7 +24,8 @@ def test_tsv_writer():
         "subject",
         "predicate",
         "object",
-        "category" "qualifiers",
+        "category",
+        "qualifiers",
         "has_count",
         "has_total",
         "publications",

@@ -2,6 +2,7 @@ import gzip
 from pathlib import Path
 
 import pytest
+
 from koza.io.reader.json_reader import JSONReader
 from koza.model.formats import InputFormat
 from koza.model.reader import JSONReaderConfig

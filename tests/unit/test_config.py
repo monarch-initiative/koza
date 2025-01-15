@@ -4,24 +4,25 @@ Testing the biolink config dataclasses + pydandic
 """
 
 import pytest
+from pydantic import TypeAdapter, ValidationError
+
 from koza.model.koza import KozaConfig
 from koza.model.transform import TransformConfig
-from pydantic import TypeAdapter, ValidationError
 
 
 @pytest.mark.parametrize(
     "inclusion, column, filter_code, value",
     (
         [
-            ('include', 'combined_score', 'lt', '70'),
-            ('exclude', 'combined_score', 'lt', '70'),
-            ('include', 'combined_score', 'in', '70'),
-            ('exclude', 'combined_score', 'in', '70'),
-            ('exclude', 'combined_score', 'in', 70),
-            ('exclude', 'combined_score', 'in', 0.7),
-            ('include', 'combined_score', 'eq', ['goat', 'sheep']),
-            ('include', 'combined_score', 'lt', ['goat', 'sheep']),
-            ('include', 'combined_score', 'ge', ['goat', 'sheep']),
+            ("include", "combined_score", "lt", "70"),
+            ("exclude", "combined_score", "lt", "70"),
+            ("include", "combined_score", "in", "70"),
+            ("exclude", "combined_score", "in", "70"),
+            ("exclude", "combined_score", "in", 70),
+            ("exclude", "combined_score", "in", 0.7),
+            ("include", "combined_score", "eq", ["goat", "sheep"]),
+            ("include", "combined_score", "lt", ["goat", "sheep"]),
+            ("include", "combined_score", "ge", ["goat", "sheep"]),
         ]
     ),
 )
@@ -34,10 +35,10 @@ def test_wrong_filter_type_raises_exception(inclusion, column, filter_code, valu
     config = {
         "filters": [
             {
-                'column': column,
-                'inclusion': inclusion,
-                'filter_code': filter_code,
-                'value': value,
+                "column": column,
+                "inclusion": inclusion,
+                "filter_code": filter_code,
+                "value": value,
             }
         ],
     }
@@ -52,8 +53,8 @@ def test_wrong_filter_type_raises_exception(inclusion, column, filter_code, valu
     "inclusion, code",
     (
         [
-            ('include', 'lgt'),
-            ('exclude', 'ngte'),
+            ("include", "lgt"),
+            ("exclude", "ngte"),
         ]
     ),
 )

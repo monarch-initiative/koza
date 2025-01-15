@@ -8,5 +8,5 @@ from pydantic import ConfigDict
 PYDANTIC_CONFIG = ConfigDict(
     validate_assignment=True,
     validate_default=True,
-    extra='forbid',
+    extra="forbid",
 )

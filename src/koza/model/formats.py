@@ -1,6 +1,6 @@
 from enum import Enum
 
-__all__ = ('InputFormat', 'OutputFormat')
+__all__ = ("InputFormat", "OutputFormat")
 
 
 class InputFormat(str, Enum):

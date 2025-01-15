@@ -1,11 +1,11 @@
 from typing import Any, Dict
 
 import pytest
+from pydantic import TypeAdapter
+
 from koza.io.writer.writer import KozaWriter
 from koza.model.koza import KozaConfig
 from koza.runner import KozaRunner, KozaTransform
-from pydantic import TypeAdapter
-
 from koza.utils.exceptions import NoTransformException
 
 
@@ -73,18 +73,17 @@ def test_exactly_one_fn_required():
 
 
 def test_load_config():
-    config = TypeAdapter(KozaConfig).validate_python({
-        "name": "my-transform",
-        "reader": {
-            "format": "csv",
-            "files": [],
-        },
-        "transform": {
-            "code": "examples/minimal.py"
-        },
-        "writer": {
-        },
-    })
+    config = TypeAdapter(KozaConfig).validate_python(
+        {
+            "name": "my-transform",
+            "reader": {
+                "format": "csv",
+                "files": [],
+            },
+            "transform": {"code": "examples/minimal.py"},
+            "writer": {},
+        }
+    )
 
     runner = KozaRunner.from_config(config)
     assert callable(runner.transform)

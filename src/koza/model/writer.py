@@ -1,9 +1,10 @@
 from typing import List, Optional
 
+from pydantic.dataclasses import dataclass
+
 from koza.model.config.pydantic_config import PYDANTIC_CONFIG
 from koza.model.config.sssom_config import SSSOMConfig
 from koza.model.formats import OutputFormat
-from pydantic.dataclasses import dataclass
 
 
 @dataclass(config=PYDANTIC_CONFIG, frozen=True)

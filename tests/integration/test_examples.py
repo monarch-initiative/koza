@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from koza.runner import KozaRunner
 from koza.model.formats import OutputFormat
+from koza.runner import KozaRunner
 
 
 @pytest.mark.parametrize(
@@ -26,7 +26,7 @@ from koza.model.formats import OutputFormat
 def test_examples(source_name, ingest, output_format):
     config_filename = f"examples/{source_name}/{ingest}.yaml"
 
-    output_suffix = str(output_format).split('.')[1]
+    output_suffix = str(output_format).split(".")[1]
     output_dir = "./output/tests/string-test-examples"
 
     output_files = [f"{output_dir}/{ingest}_nodes.{output_suffix}", f"{output_dir}/{ingest}_edges.{output_suffix}"]

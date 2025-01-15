@@ -32,17 +32,17 @@ class JSONLWriter(KozaWriter):
         if nodes:
             for n in nodes:
                 node = json.dumps(n, ensure_ascii=False)
-                self.nodeFH.write(node + '\n')
+                self.nodeFH.write(node + "\n")
 
         if edges:
             for e in edges:
                 if self.sssom_config:
                     e = self.sssom_config.apply_mapping(e)
                 edge = json.dumps(e, ensure_ascii=False)
-                self.edgeFH.write(edge + '\n')
+                self.edgeFH.write(edge + "\n")
 
     def finalize(self):
-        if hasattr(self, 'nodeFH'):
+        if hasattr(self, "nodeFH"):
             self.nodeFH.close()
-        if hasattr(self, 'edgeFH'):
+        if hasattr(self, "edgeFH"):
             self.edgeFH.close()

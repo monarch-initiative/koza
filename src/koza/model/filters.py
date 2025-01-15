@@ -1,12 +1,13 @@
 from enum import Enum
 from typing import Annotated, List, Literal, Union
 
-from koza.model.config.pydantic_config import PYDANTIC_CONFIG
 from pydantic import Field, StrictFloat, StrictInt, StrictStr
 from pydantic.dataclasses import dataclass
 
+from koza.model.config.pydantic_config import PYDANTIC_CONFIG
 
-__all__ = ('ColumnFilter',)
+__all__ = ("ColumnFilter",)
+
 
 class FilterCode(str, Enum):
     """Enum for filter codes (ex. gt = greater than)
