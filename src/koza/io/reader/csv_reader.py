@@ -79,7 +79,12 @@ class CSVReader:
 
         self.csv_kwargs["dialect"] = config.dialect
         self.csv_kwargs["delimiter"] = delimiter
-        self.csv_reader = reader(io_str, *self.csv_args, **self.csv_kwargs)
+
+        self.reset()
+
+    def reset(self):
+        self.io_str.seek(0)
+        self.csv_reader = reader(self.io_str, *self.csv_args, **self.csv_kwargs)
 
     @property
     def header(self):

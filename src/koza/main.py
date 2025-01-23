@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """CLI for Koza - wraps the koza library to provide a command line interface"""
 
-import sys
 from pathlib import Path
 from typing import Annotated, Optional
 
 import typer
 from loguru import logger
+from tqdm import tqdm
 
 from koza.model.formats import OutputFormat
 from koza.runner import KozaRunner
@@ -43,6 +43,10 @@ def transform(
         int,
         typer.Option("--limit", "-n", help="Number of rows to process (if skipped, processes entire source file)"),
     ] = 0,
+    show_progress: Annotated[
+        bool,
+        typer.Option("--progress", "-p", help="Display progress of transform"),
+    ] = False,
     quiet: Annotated[
         bool,
         typer.Option("--quiet", "-q", help="Disable log output"),
@@ -60,7 +64,11 @@ def transform(
 
     if not quiet:
         prompt = "{time:YYYY-MM-DD HH:mm:ss.SSS} | <level>{level}</level> | <level>{message}</level>"
-        logger.add(sys.stderr, format=prompt, colorize=True)
+
+        def log(msg: str):
+            tqdm.write(msg, end="")
+
+        logger.add(log, format=prompt, colorize=True)
 
     # FIXME: Verbosity, logging
     config, runner = KozaRunner.from_config_file(
@@ -68,6 +76,7 @@ def transform(
         output_dir=output_dir,
         output_format=output_format,
         row_limit=row_limit,
+        show_progress=show_progress,
     )
 
     logger.info(f"Running transform for {config.name} with output to `{output_dir}`")

@@ -259,6 +259,7 @@ class KozaRunner:
         config: KozaConfig,
         output_dir: str = "",
         row_limit: int = 0,
+        show_progress: bool = False,
     ):
         module_name: Optional[str] = None
         transform_module: Optional[ModuleType] = None
@@ -283,7 +284,7 @@ class KozaRunner:
         transform_record = getattr(transform_module, "transform_record", None)
         if transform_record:
             logger.debug(f"Found transform function `{module_name}.transform_record`")
-        source = Source(config, row_limit)
+        source = Source(config, row_limit, show_progress)
 
         writer: Optional[KozaWriter] = None
 
@@ -313,6 +314,7 @@ class KozaRunner:
         output_dir: str = "",
         output_format: Optional[OutputFormat] = None,
         row_limit: int = 0,
+        show_progress: bool = False,
         overrides: Optional[dict] = None,
     ):
         transform_code_path: Optional[Path] = None
@@ -356,4 +358,5 @@ class KozaRunner:
         config_dict = merge(config_dict, _overrides, overrides or {})
         config = KozaConfig(**config_dict)
 
-        return config, cls.from_config(config, output_dir=output_dir, row_limit=row_limit)
+        return config, cls.from_config(config, output_dir=output_dir, row_limit=row_limit,
+                                       show_progress=show_progress)

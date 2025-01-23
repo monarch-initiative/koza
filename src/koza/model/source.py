@@ -2,6 +2,8 @@ from tarfile import TarFile
 from typing import Any, Dict, Iterable, List, Optional, TextIO, Union
 from zipfile import ZipFile
 
+from tqdm import tqdm
+
 from koza.io.reader.csv_reader import CSVReader
 from koza.io.reader.json_reader import JSONReader
 from koza.io.reader.jsonl_reader import JSONLReader
@@ -26,10 +28,11 @@ class Source:
     reader: An iterator that takes in an IO[str] and yields a dictionary
     """
 
-    def __init__(self, config: KozaConfig, row_limit: int = 0):
+    def __init__(self, config: KozaConfig, row_limit: int = 0, show_progress=False):
         reader_config = config.reader
 
         self.row_limit = row_limit
+        self.show_progress = show_progress
         self._filter = RowFilter(config.transform.filters)
         self._reader = None
         self._readers: List[Iterable[Dict[str, Any]]] = []
@@ -75,7 +78,23 @@ class Source:
 
     def __iter__(self):
         for reader in self._readers:
+            pbar: Optional[tqdm[dict[str, Any]]] = None
+            numlines = 0
+
+            if self.show_progress and isinstance(reader, CSVReader):
+                reader.header  # noqa: B018
+                numlines = sum(1 for i in reader.io_str)
+                pbar = tqdm(reader, total=numlines, leave=True)
+                reader.reset()
+
+            if self.show_progress and isinstance(reader, JSONLReader):
+                numlines = sum(1 for i in reader.io_str)
+                reader.io_str.seek(0)
+                pbar = tqdm(reader, total=numlines, leave=True)
+
             for item in reader:
+                if pbar is not None:
+                    pbar.update(1)
                 if self._filter and not self._filter.include_row(item):
                     continue
                 self.last_row = item
