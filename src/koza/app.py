@@ -111,10 +111,10 @@ class KozaApp:
                         self.logger.debug(f"{str(mie)} not found in map")
                 except NextRowException:
                     continue
-                except ValidationError:
+                except ValidationError as ve:
                     if self.logger:
                         self.logger.error(f"Validation error while processing: {self.source.last_row}")
-                    raise ValidationError
+                    raise ve
                 except StopIteration:
                     break
         elif self.source.config.transform_mode == 'loop':
