@@ -54,12 +54,6 @@ class CSVReader:
         self.config = config
         self.field_type_map = config.field_type_map
 
-        # used by _set_header
-        self.line_num = 0
-
-        # used for row_limit
-        self.line_count = 0
-
         self._header = None
 
         delimiter = config.delimiter
@@ -145,23 +139,21 @@ class CSVReader:
         if self.csv_reader.line_num > 0:
             raise RuntimeError("Can only set header at beginning of file.")
 
-        if self.config.header_mode == HeaderMode.none:
-            if self.config.field_type_map is None:
-                raise ValueError(
-                    "Header mode was set to 'none', but no columns were supplied.\n"
-                    "Configure the 'columns' property in the transform yaml."
-                )
-            return list(self.config.field_type_map.keys())
-
-        if self.config.header_mode == HeaderMode.infer:
-            # logger.debug(f"headers for {self.name} parsed as {self._header}")
-            return self._parse_header_line(skip_blank_or_commented_lines=True)
-        elif isinstance(self.config.header_mode, int):
-            while self.csv_reader.line_num < self.config.header_mode:
-                next(self.csv_reader)
-            return self._parse_header_line()
-        else:
-            raise ValueError(f"Invalid header mode given: {self.config.header_mode}.")
+        match self.config.header_mode:
+            case HeaderMode.none:
+                if self.config.field_type_map is None:
+                    raise ValueError(
+                        "Header mode was set to 'none', but no columns were supplied.\n"
+                        "Configure the 'columns' property in the transform yaml."
+                    )
+                return list(self.config.field_type_map.keys())
+            case HeaderMode.infer:
+                # logger.debug(f"headers for {self.name} parsed as {self._header}")
+                return self._parse_header_line(skip_blank_or_commented_lines=True)
+            case int():
+                while self.csv_reader.line_num < self.config.header_mode:
+                    next(self.csv_reader)
+                return self._parse_header_line()
 
     def _parse_header_line(self, skip_blank_or_commented_lines: bool = False) -> List[str]:
         """
