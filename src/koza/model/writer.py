@@ -1,5 +1,3 @@
-from typing import List, Optional
-
 from pydantic.dataclasses import dataclass
 
 from koza.model.config.pydantic_config import PYDANTIC_CONFIG
@@ -10,8 +8,8 @@ from koza.model.formats import OutputFormat
 @dataclass(config=PYDANTIC_CONFIG, frozen=True)
 class WriterConfig:
     format: OutputFormat = OutputFormat.tsv
-    sssom_config: Optional[SSSOMConfig] = None
-    node_properties: Optional[List[str]] = None
-    edge_properties: Optional[List[str]] = None
-    min_node_count: Optional[int] = None
-    min_edge_count: Optional[int] = None
+    sssom_config: SSSOMConfig | None = None
+    node_properties: list[str] | None = None
+    edge_properties: list[str] | None = None
+    min_node_count: int | None = None
+    min_edge_count: int | None = None

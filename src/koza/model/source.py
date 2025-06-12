@@ -1,5 +1,6 @@
+from collections.abc import Iterable
 from tarfile import TarFile
-from typing import Any, Dict, Iterable, List, Optional, TextIO, Union
+from typing import Any, TextIO
 from zipfile import ZipFile
 
 from loguru import logger
@@ -33,9 +34,9 @@ class Source:
         self.show_progress = show_progress
         self._filter = RowFilter(config.transform.filters)
         self._reader = None
-        self._readers: List[Iterable[Dict[str, Any]]] = []
-        self.last_row: Optional[Dict[str, Any]] = None
-        self._opened: list[Union[ZipFile, TarFile, TextIO]] = []
+        self._readers: list[Iterable[dict[str, Any]]] = []
+        self.last_row: dict[str, Any] | None = None
+        self._opened: list[ZipFile | TarFile | TextIO] = []
 
         for file in reader_config.files:
             opened_resource = open_resource(file)
@@ -75,7 +76,7 @@ class Source:
         num_rows = 0
 
         for reader in self._readers:
-            pbar: Optional[tqdm[dict[str, Any]]] = None
+            pbar: tqdm[dict[str, Any]] | None = None
             numlines = 0
 
             if self.show_progress and isinstance(reader, CSVReader):

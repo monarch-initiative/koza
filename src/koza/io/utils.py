@@ -6,11 +6,12 @@ import dataclasses
 import gzip
 import tarfile
 import tempfile
+from collections.abc import Callable, Generator
 from io import TextIOWrapper
 from os import PathLike
 from pathlib import Path
 from tarfile import TarFile, is_tarfile
-from typing import Any, Callable, Dict, Generator, Optional, TextIO, Union
+from typing import Any, TextIO
 from zipfile import ZipFile, is_zipfile
 
 import requests
@@ -41,11 +42,11 @@ def is_gzipped(filename: str):
 
 def open_resource(
     resource: str | PathLike[str],
-) -> Union[
-    SizedResource,
-    tuple[ZipFile, Generator[SizedResource, None, None]],
-    tuple[TarFile, Generator[SizedResource, None, None]],
-]:
+) -> (
+    SizedResource
+    | tuple[ZipFile, Generator[SizedResource, None, None]]
+    | tuple[TarFile, Generator[SizedResource, None, None]]
+):
     """
     A generic function for opening a local or remote file
 
@@ -64,7 +65,7 @@ def open_resource(
     """
 
     # Check if resource is a remote file
-    resource_name: Optional[Union[str, PathLike[str]]] = None
+    resource_name: str | PathLike[str] | None = None
 
     if isinstance(resource, str) and resource.startswith("http"):
         tmp_file = tempfile.NamedTemporaryFile("w+b")
@@ -150,7 +151,7 @@ def open_resource(
         )
 
 
-def check_data(entry: Dict[str, Any], path: str) -> bool:
+def check_data(entry: dict[str, Any], path: str) -> bool:
     """
     Given a dot delimited JSON tag path,
     returns the value of the field in the entry.
@@ -201,7 +202,7 @@ column_types: dict[str, type] = {
 column_types.update(provenance_slot_types)
 
 
-def build_export_row(data: dict[str, Any], list_delimiter: Optional[str] = None) -> dict[str, Any]:
+def build_export_row(data: dict[str, Any], list_delimiter: str | None = None) -> dict[str, Any]:
     """
     Sanitize key-value pairs in dictionary.
     This should be used to ensure proper syntax and types for node and edge data as it is exported.
@@ -223,11 +224,12 @@ def build_export_row(data: dict[str, Any], list_delimiter: Optional[str] = None)
             tidy_data[key] = _sanitize_export_property(key, new_value, list_delimiter)
     return tidy_data
 
+
 def trim(value: str) -> str:
     return value.replace("\n", " ").replace('\\"', "").replace("\t", " ")
 
 
-def _sanitize_export_property(key: str, value: Any, list_delimiter: Optional[str] = None) -> list[Any] | bool | str:
+def _sanitize_export_property(key: str, value: Any, list_delimiter: str | None = None) -> list[Any] | bool | str:
     """
     Sanitize value for a key for the purpose of export.
     Casts all values to primitive types like str or bool according to the

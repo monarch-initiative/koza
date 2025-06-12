@@ -1,5 +1,5 @@
+from collections.abc import Iterable
 from dataclasses import asdict
-from typing import Iterable, Tuple
 
 from pydantic import BaseModel
 
@@ -16,7 +16,7 @@ class KGXConverter:
 
     """
 
-    def convert(self, entities: Iterable) -> Tuple[list, list]:
+    def convert(self, entities: Iterable) -> tuple[list, list]:
         nodes = []
         edges = []
 

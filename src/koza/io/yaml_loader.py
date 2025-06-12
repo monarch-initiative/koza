@@ -34,6 +34,7 @@ class UniqueIncludeLoader(SafeLoader):
             mapping.append(key)
         return super().construct_mapping(node, deep)
 
+
 def include_constructor(loader: yaml.SafeLoader, node: yaml.ScalarNode):
     """
     Opens some resource (local or remote file) that appears after an !include tag
@@ -43,5 +44,6 @@ def include_constructor(loader: yaml.SafeLoader, node: yaml.ScalarNode):
     if isinstance(resource, tuple):
         raise ValueError("Cannot load yaml from archive files")
     return yaml.load(resource.reader, Loader=UniqueIncludeLoader)  # noqa: S506
+
 
 UniqueIncludeLoader.add_constructor("!include", include_constructor)

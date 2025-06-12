@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Iterable
+from collections.abc import Iterable
 
 from koza.converter.kgx_converter import KGXConverter
 from koza.io.writer.writer import KozaWriter

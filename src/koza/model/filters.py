@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Annotated, List, Literal, Union
+from typing import Annotated, Literal
 
 from pydantic import Field, StrictFloat, StrictInt, StrictStr
 from pydantic.dataclasses import dataclass
@@ -41,28 +41,28 @@ class BaseColumnFilter:
 @dataclass(config=PYDANTIC_CONFIG, frozen=True)
 class ComparisonFilter(BaseColumnFilter):
     filter_code: Literal[FilterCode.lt, FilterCode.gt, FilterCode.lte, FilterCode.ge]
-    value: Union[StrictInt, StrictFloat]
+    value: StrictInt | StrictFloat
 
 
 @dataclass(config=PYDANTIC_CONFIG, frozen=True)
 class EqualsFilter(BaseColumnFilter):
     filter_code: Literal[FilterCode.eq]
-    value: Union[StrictInt, StrictFloat, StrictStr]
+    value: StrictInt | StrictFloat | StrictStr
 
 
 @dataclass(config=PYDANTIC_CONFIG, frozen=True)
 class NotEqualsFilter(BaseColumnFilter):
     filter_code: Literal[FilterCode.ne]
-    value: Union[StrictInt, StrictFloat, StrictStr]
+    value: StrictInt | StrictFloat | StrictStr
 
 
 @dataclass(config=PYDANTIC_CONFIG, frozen=True)
 class InListFilter(BaseColumnFilter):
     filter_code: Literal[FilterCode.inlist, FilterCode.inlist_exact]
-    value: List[Union[StrictInt, StrictFloat, StrictStr]]
+    value: list[StrictInt | StrictFloat | StrictStr]
 
 
 ColumnFilter = Annotated[
-    Union[ComparisonFilter, EqualsFilter, NotEqualsFilter, InListFilter],
+    ComparisonFilter | EqualsFilter | NotEqualsFilter | InListFilter,
     Field(..., discriminator="filter_code"),
 ]

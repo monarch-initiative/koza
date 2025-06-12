@@ -1,5 +1,4 @@
 from dataclasses import field
-from typing import Optional, Union
 
 import yaml
 from ordered_set import OrderedSet
@@ -24,14 +23,14 @@ class DatasetDescription:
     """
 
     # id: Optional[str] = None          # Can uncomment when we have a standard
-    name: Optional[str] = None  # If empty use source name
-    ingest_title: Optional[str] = None  # Title of source of data, map to biolink name
-    ingest_url: Optional[str] = None  # URL to source of data, maps to biolink iri
-    description: Optional[str] = None  # Description of the data/ingest
+    name: str | None = None  # If empty use source name
+    ingest_title: str | None = None  # Title of source of data, map to biolink name
+    ingest_url: str | None = None  # URL to source of data, maps to biolink iri
+    description: str | None = None  # Description of the data/ingest
     # source: Optional[str] = None      # Possibly replaced with provided_by
-    provided_by: Optional[str] = None  # <data source>_<type_of_ingest>, ex. hpoa_gene_to_disease
+    provided_by: str | None = None  # <data source>_<type_of_ingest>, ex. hpoa_gene_to_disease
     # license: Optional[str] = None     # Possibly redundant, same as rights
-    rights: Optional[str] = None  # License information for the data source
+    rights: str | None = None  # License information for the data source
 
 
 @dataclass(config=PYDANTIC_CONFIG, frozen=True)
@@ -40,13 +39,13 @@ class KozaConfig:
     reader: ReaderConfig = field(default_factory=CSVReaderConfig)
     transform: TransformConfig = field(default_factory=TransformConfig)
     writer: WriterConfig = field(default_factory=WriterConfig)
-    metadata: Optional[Union[DatasetDescription, str]] = None
+    metadata: DatasetDescription | str | None = None
 
     def __post_init__(self):
         # If metadata looks like a file path attempt to load it from the yaml
         if self.metadata and isinstance(self.metadata, str):
             try:
-                with open(self.metadata, "r") as meta:
+                with open(self.metadata) as meta:
                     object.__setattr__(self, "metadata", DatasetDescription(**yaml.safe_load(meta)))
             except Exception as e:
                 raise ValueError(f"Unable to load metadata from {self.metadata}: {e}") from e

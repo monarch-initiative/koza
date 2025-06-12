@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 from pydantic import TypeAdapter
@@ -38,7 +38,7 @@ def test_run_serial():
     data = iter([{"a": 1, "b": 2}])
     writer = MockWriter()
 
-    def transform_record(koza: KozaTransform, record: Dict[str, Any]):
+    def transform_record(koza: KozaTransform, record: dict[str, Any]):
         koza.write(record)
 
     runner = KozaRunner(data=data, writer=writer, transform_record=transform_record)
@@ -64,7 +64,7 @@ def test_exactly_one_fn_required():
         for record in koza.data:
             koza.write(record)
 
-    def transform_record(koza: KozaTransform, record: Dict[str, Any]):
+    def transform_record(koza: KozaTransform, record: dict[str, Any]):
         koza.write(record)
 
     with pytest.raises(ValueError):

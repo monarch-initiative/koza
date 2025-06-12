@@ -24,7 +24,7 @@ def split_file(
 
     values = db.execute(f"SELECT DISTINCT {fields} FROM {read_file};").fetchall()
     keys = fields.split(",")
-    list_of_value_dicts = [dict(zip(keys, v)) for v in values]
+    list_of_value_dicts = [dict(zip(keys, v, strict=False)) for v in values]
 
     def clean_value_for_filename(value):
         if remove_prefixes and ":" in value:

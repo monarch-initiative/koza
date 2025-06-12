@@ -2,7 +2,7 @@
 """CLI for Koza - wraps the koza library to provide a command line interface"""
 
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated
 
 import typer
 from loguru import logger
@@ -17,7 +17,7 @@ typer_app = typer.Typer(
 
 
 @typer_app.callback(invoke_without_command=True)
-def callback(version: Optional[bool] = typer.Option(None, "--version", is_eager=True)):
+def callback(version: bool | None = typer.Option(None, "--version", is_eager=True)):
     if version:
         from koza import __version__
 

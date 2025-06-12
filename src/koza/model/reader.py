@@ -5,7 +5,7 @@ map config data class
 
 from dataclasses import field
 from enum import Enum
-from typing import Annotated, Any, Dict, List, Literal, Optional, Union
+from typing import Annotated, Any, Literal
 
 from pydantic import Discriminator, StrictInt, StrictStr, Tag
 from pydantic.dataclasses import dataclass
@@ -33,20 +33,20 @@ class HeaderMode(str, Enum):
 
 @dataclass(config=PYDANTIC_CONFIG, frozen=True)
 class BaseReaderConfig:
-    files: List[str] = field(default_factory=list)
+    files: list[str] = field(default_factory=list)
 
 
 @dataclass(config=PYDANTIC_CONFIG, frozen=True)
 class CSVReaderConfig(BaseReaderConfig):
     format: Literal[InputFormat.csv] = InputFormat.csv
-    columns: Optional[List[Union[str, Dict[str, FieldType]]]] = None
-    field_type_map: Optional[dict[str, FieldType]] = None
+    columns: list[str | dict[str, FieldType]] | None = None
+    field_type_map: dict[str, FieldType] | None = None
     delimiter: str = "\t"
-    header_delimiter: Optional[str] = None
+    header_delimiter: str | None = None
     dialect: str = "excel"
-    header_mode: Union[int, HeaderMode] = HeaderMode.infer
-    header_delimiter: Optional[str] = None
-    header_prefix: Optional[str] = None
+    header_mode: int | HeaderMode = HeaderMode.infer
+    header_delimiter: str | None = None
+    header_prefix: str | None = None
     skip_blank_lines: bool = True
     comment_char: str = "#"
 
@@ -80,21 +80,21 @@ class CSVReaderConfig(BaseReaderConfig):
 @dataclass(config=PYDANTIC_CONFIG, frozen=True)
 class JSONLReaderConfig(BaseReaderConfig):
     format: Literal[InputFormat.jsonl] = InputFormat.jsonl
-    required_properties: Optional[List[str]] = None
+    required_properties: list[str] | None = None
 
 
 @dataclass(config=PYDANTIC_CONFIG, frozen=True)
 class JSONReaderConfig(BaseReaderConfig):
     format: Literal[InputFormat.json] = InputFormat.json
-    required_properties: Optional[List[str]] = None
-    json_path: Optional[List[Union[StrictStr, StrictInt]]] = None
+    required_properties: list[str] | None = None
+    json_path: list[StrictStr | StrictInt] | None = None
 
 
 @dataclass(config=PYDANTIC_CONFIG, frozen=True)
 class YAMLReaderConfig(BaseReaderConfig):
     format: Literal[InputFormat.yaml] = InputFormat.yaml
-    required_properties: Optional[List[str]] = None
-    json_path: Optional[List[Union[StrictStr, StrictInt]]] = None
+    required_properties: list[str] | None = None
+    json_path: list[StrictStr | StrictInt] | None = None
 
 
 def get_reader_discriminator(model: Any):

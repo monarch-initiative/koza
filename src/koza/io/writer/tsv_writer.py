@@ -1,8 +1,9 @@
 #### TSV Writer ####
 # NOTE - May want to rename to KGXWriter at some point, if we develop writers for other models non biolink/kgx specific
 
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Dict, Iterable, List, Literal, Union
+from typing import Literal
 
 from ordered_set import OrderedSet
 
@@ -15,7 +16,7 @@ from koza.model.writer import WriterConfig
 class TSVWriter(KozaWriter):
     def __init__(
         self,
-        output_dir: Union[str, Path],
+        output_dir: str | Path,
         source_name: str,
         config: WriterConfig,
     ):
@@ -60,7 +61,7 @@ class TSVWriter(KozaWriter):
                     edge = self.sssom_config.apply_mapping(edge)
                 self.write_row(edge, record_type="edge")
 
-    def write_row(self, record: Dict, record_type: Literal["node", "edge"]) -> None:
+    def write_row(self, record: dict, record_type: Literal["node", "edge"]) -> None:
         """Write a row to the underlying store.
 
         Args:
@@ -89,7 +90,7 @@ class TSVWriter(KozaWriter):
             self.edgeFH.close()
 
     @staticmethod
-    def _order_columns(cols: List[str], record_type: Literal["node", "edge"]) -> OrderedSet[str]:
+    def _order_columns(cols: list[str], record_type: Literal["node", "edge"]) -> OrderedSet[str]:
         """Arrange node or edge columns in a defined order.
 
         Args:

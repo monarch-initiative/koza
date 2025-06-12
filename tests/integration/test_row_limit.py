@@ -13,6 +13,7 @@ from koza.runner import KozaRunner
 # TODO: Parameterize row_limit, and test reading from JSON and JSONL
 # TODO: Address filter in examples/string-declarative/protein-links-detailed.yaml
 
+
 @pytest.mark.parametrize(
     "source_name, ingest, output_format, row_limit, expected_node_len, expected_edge_len",
     [
@@ -21,7 +22,6 @@ from koza.runner import KozaRunner
             "declarative-protein-links-detailed",  # output_names
             OutputFormat.tsv,  # output_format
             5,  # row_limit
-
             # In this ingest, eace line produces two protein nodes, and one edge for a pairwise interaction.
             # Files also have one header line.
             1 + 5 * 2,  # expected_node_len
@@ -34,7 +34,7 @@ from koza.runner import KozaRunner
             5,  # row_limit
             5 * 2,  # expected_node_len
             5,  # expected_edge_len
-        )
+        ),
     ],
 )
 def test_examples(source_name, ingest, output_format, row_limit, expected_node_len, expected_edge_len):
@@ -51,8 +51,8 @@ def test_examples(source_name, ingest, output_format, row_limit, expected_node_l
     config, runner = KozaRunner.from_config_file(config_filename, output_dir, output_format, row_limit)
     runner.run()
 
-    with open(output_files[0], "r") as fp:
+    with open(output_files[0]) as fp:
         assert expected_node_len == len([line for line in fp])
 
-    with open(output_files[1], "r") as fp:
+    with open(output_files[1]) as fp:
         assert expected_edge_len == len([line for line in fp])

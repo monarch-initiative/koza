@@ -1,5 +1,6 @@
 import json
-from typing import IO, Any, Dict, Generator, List, Union
+from collections.abc import Generator
+from typing import IO, Any
 
 import yaml
 
@@ -17,7 +18,7 @@ class JSONReader:
     def __init__(
         self,
         io_str: IO[str],
-        config: Union[JSONReaderConfig, YAMLReaderConfig],
+        config: JSONReaderConfig | YAMLReaderConfig,
     ):
         """
         :param io_str: Any IO stream that yields a string
@@ -37,11 +38,11 @@ class JSONReader:
                 json_obj = json_obj[path]
 
         if isinstance(json_obj, list):
-            self.json_obj: List[Any] = json_obj
+            self.json_obj: list[Any] = json_obj
         else:
             self.json_obj = [json_obj]
 
-    def __iter__(self) -> Generator[Dict[str, Any], None, None]:
+    def __iter__(self) -> Generator[dict[str, Any], None, None]:
         for item in self.json_obj:
             if not isinstance(item, dict):
                 raise ValueError()

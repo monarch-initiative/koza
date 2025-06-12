@@ -1,5 +1,6 @@
+from collections.abc import Callable
 from operator import eq, ge, gt, le, lt, ne
-from typing import Any, Callable
+from typing import Any
 
 from koza.model.filters import ColumnFilter, FilterInclusion
 

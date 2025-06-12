@@ -1,11 +1,12 @@
+from collections.abc import Callable
 from csv import reader
-from typing import IO, Any, Callable, Dict, List
+from typing import IO, Any
 
 from loguru import logger
 
 from koza.model.reader import CSVReaderConfig, FieldType, HeaderMode
 
-FIELDTYPE_CLASS: Dict[FieldType, Callable[[str], Any]] = {
+FIELDTYPE_CLASS: dict[FieldType, Callable[[str], Any]] = {
     FieldType.str: str,
     FieldType.int: int,
     FieldType.float: float,
@@ -101,7 +102,7 @@ class CSVReader:
                 continue
 
             row = [val.strip() for val in row]
-            item = dict(zip(header, row))
+            item = dict(zip(header, row, strict=False))
 
             if len(item) > len(header):
                 num_extra_fields = len(item) - len(header)
@@ -155,7 +156,7 @@ class CSVReader:
                     next(self.csv_reader)
                 return self._parse_header_line()
 
-    def _parse_header_line(self, skip_blank_or_commented_lines: bool = False) -> List[str]:
+    def _parse_header_line(self, skip_blank_or_commented_lines: bool = False) -> list[str]:
         """
         Parse the header line and return a list of headers
         """

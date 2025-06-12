@@ -13,6 +13,7 @@ def test_multiple_file_source():
 
     assert row_count == 15
 
+
 def test_multiple_file_row_limit():
     config_file = f"examples/string/protein-links-detailed.yaml"
     config, runner = KozaRunner.from_config_file(config_file)

@@ -26,7 +26,7 @@ field_type_map = {
 
 
 def test_no_exceptions_in_normal_case():
-    with open(test_file, "r") as string_file:
+    with open(test_file) as string_file:
         config = CSVReaderConfig(
             field_type_map=field_type_map,
             delimiter=" ",
@@ -38,7 +38,7 @@ def test_no_exceptions_in_normal_case():
 
 
 def test_type_conversion():
-    with open(test_file, "r") as string_file:
+    with open(test_file) as string_file:
         config = CSVReaderConfig(
             field_type_map=field_type_map,
             delimiter=" ",
@@ -51,7 +51,7 @@ def test_type_conversion():
 
 
 def test_field_doesnt_exist_in_file_raises_exception():
-    with open(test_file, "r") as string_file:
+    with open(test_file) as string_file:
         invalid_field_type_map = field_type_map.copy()
         invalid_field_type_map["some_field_that_doesnt_exist"] = FieldType.str
         config = CSVReaderConfig(
@@ -68,7 +68,7 @@ def test_field_in_file_but_not_in_config_logs_warning(caplog):
     https://docs.pytest.org/en/latest/logging.html#caplog-fixture
     :return:
     """
-    with open(test_file, "r") as string_file:
+    with open(test_file) as string_file:
         missing_field_field_type_map = field_type_map.copy()
         del missing_field_field_type_map["combined_score"]
         config = CSVReaderConfig(
@@ -82,7 +82,7 @@ def test_field_in_file_but_not_in_config_logs_warning(caplog):
 
 
 def test_middle_field_in_file_but_not_in_config_logs_warning(caplog):
-    with open(test_file, "r") as string_file:
+    with open(test_file) as string_file:
         missing_field_field_type_map = field_type_map.copy()
         del missing_field_field_type_map["cooccurence"]
         config = CSVReaderConfig(
@@ -97,7 +97,7 @@ def test_middle_field_in_file_but_not_in_config_logs_warning(caplog):
 
 
 def test_no_field_map(caplog):
-    with open(test_file, "r") as string_file:
+    with open(test_file) as string_file:
         config = CSVReaderConfig(
             delimiter=" ",
         )
@@ -110,7 +110,7 @@ def test_no_field_map(caplog):
 
 
 def test_no_exceptions_with_footer():
-    with open(tsv_with_footer, "r") as footer_file:
+    with open(tsv_with_footer) as footer_file:
         config = CSVReaderConfig(
             format=InputFormat.csv,
             field_type_map=field_type_map,

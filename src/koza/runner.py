@@ -1,10 +1,11 @@
 import importlib
 import sys
 from abc import ABC, abstractmethod
+from collections.abc import Callable, Iterator
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Callable, Dict, Iterator, Optional
+from typing import Any
 
 import yaml
 from loguru import logger
@@ -22,7 +23,7 @@ from koza.model.source import Source
 from koza.model.transform import MapErrorEnum
 from koza.utils.exceptions import MapItemException, NoTransformException
 
-Record = Dict[str, Any]
+Record = dict[str, Any]
 Mappings = dict[str, dict[str, dict[str, str]]]
 
 
@@ -32,7 +33,7 @@ def is_function(obj: object, attr: str):
 
 @dataclass(kw_only=True)
 class KozaTransform(ABC):
-    extra_fields: Dict[str, Any]
+    extra_fields: dict[str, Any]
     writer: KozaWriter
     mappings: Mappings
     on_map_failure: MapErrorEnum = MapErrorEnum.warning
@@ -41,7 +42,7 @@ class KozaTransform(ABC):
     @abstractmethod
     def data(self) -> Iterator[Record]: ...
 
-    def write(self, *records: Record, writer: Optional[str] = None) -> None:
+    def write(self, *records: Record, writer: str | None = None) -> None:
         """Write a series of records to a writer.
 
         The writer argument specifies the specific writer to write to (named
@@ -49,7 +50,7 @@ class KozaTransform(ABC):
         """
         self.writer.write(records)
 
-    def lookup(self, name: str, map_column: str, map_name: Optional[str] = None) -> str:
+    def lookup(self, name: str, map_column: str, map_name: str | None = None) -> str:
         """Look up a term in the configured mappings.
 
         In the one argument form:
@@ -147,10 +148,10 @@ class KozaRunner:
         self,
         data: Iterator[Record],
         writer: KozaWriter,
-        mapping_filenames: Optional[list[str]] = None,
-        extra_transform_fields: Optional[dict[str, Any]] = None,
-        transform_record: Optional[Callable[[KozaTransform, Record], None]] = None,
-        transform: Optional[Callable[[KozaTransform], None]] = None,
+        mapping_filenames: list[str] | None = None,
+        extra_transform_fields: dict[str, Any] | None = None,
+        transform_record: Callable[[KozaTransform, Record], None] | None = None,
+        transform: Callable[[KozaTransform], None] | None = None,
     ):
         self.data = data
         self.writer = writer
@@ -225,8 +226,8 @@ class KozaRunner:
                 data = map_runner.data
 
             mapping_entry: dict[str, dict[str, str]] = {}
-            key_column: Optional[str] = map_runner.extra_transform_fields.get("key", None)
-            value_columns: Optional[list[str]] = map_runner.extra_transform_fields.get("values", None)
+            key_column: str | None = map_runner.extra_transform_fields.get("key", None)
+            value_columns: list[str] | None = map_runner.extra_transform_fields.get("values", None)
 
             if key_column is None:
                 raise ValueError(f"Must define transform mapping key column in configuration for {config.name}")
@@ -261,8 +262,8 @@ class KozaRunner:
         row_limit: int = 0,
         show_progress: bool = False,
     ):
-        module_name: Optional[str] = None
-        transform_module: Optional[ModuleType] = None
+        module_name: str | None = None
+        transform_module: ModuleType | None = None
 
         if config.transform.code:
             transform_code_path = Path(config.transform.code)
@@ -286,7 +287,7 @@ class KozaRunner:
             logger.debug(f"Found transform function `{module_name}.transform_record`")
         source = Source(config, row_limit=row_limit, show_progress=show_progress)
 
-        writer: Optional[KozaWriter] = None
+        writer: KozaWriter | None = None
 
         if config.writer.format == OutputFormat.tsv:
             writer = TSVWriter(output_dir=output_dir, source_name=config.name, config=config.writer)
@@ -312,12 +313,12 @@ class KozaRunner:
         cls,
         config_filename: str,
         output_dir: str = "",
-        output_format: Optional[OutputFormat] = None,
+        output_format: OutputFormat | None = None,
         row_limit: int = 0,
         show_progress: bool = False,
-        overrides: Optional[dict] = None,
+        overrides: dict | None = None,
     ):
-        transform_code_path: Optional[Path] = None
+        transform_code_path: Path | None = None
         config_path = Path(config_filename)
 
         logger.info(f"Loading configuration from `{config_filename}`")
@@ -358,5 +359,4 @@ class KozaRunner:
         config_dict = merge(config_dict, _overrides, overrides or {})
         config = KozaConfig(**config_dict)
 
-        return config, cls.from_config(config, output_dir=output_dir, row_limit=row_limit,
-                                       show_progress=show_progress)
+        return config, cls.from_config(config, output_dir=output_dir, row_limit=row_limit, show_progress=show_progress)

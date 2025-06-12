@@ -1,6 +1,6 @@
 from dataclasses import field, fields
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from pydantic import model_validator
 from pydantic.dataclasses import dataclass
@@ -31,18 +31,18 @@ class TransformConfig:
     local_table: path to a local table file
     """
 
-    code: Optional[str] = None
-    module: Optional[str] = None
-    filters: List[ColumnFilter] = field(default_factory=list)
-    global_table: Optional[Union[str, Dict]] = None
-    local_table: Optional[Union[str, Dict]] = None
-    mappings: List[str] = field(default_factory=list)
+    code: str | None = None
+    module: str | None = None
+    filters: list[ColumnFilter] = field(default_factory=list)
+    global_table: str | dict | None = None
+    local_table: str | dict | None = None
+    mappings: list[str] = field(default_factory=list)
     on_map_failure: MapErrorEnum = MapErrorEnum.warning
-    extra_fields: Dict[str, Any] = field(default_factory=dict)
+    extra_fields: dict[str, Any] = field(default_factory=dict)
 
     @model_validator(mode="before")
     @classmethod
-    def extract_extra_fields(cls, values: dict | ArgsKwargs) -> Dict[str, Any]:
+    def extract_extra_fields(cls, values: dict | ArgsKwargs) -> dict[str, Any]:
         """Take any additional kwargs and put them in the `extra_fields` attribute."""
         if isinstance(values, dict):
             kwargs = values.copy()
