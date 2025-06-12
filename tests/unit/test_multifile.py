@@ -2,9 +2,9 @@ from koza.model.source import Source
 from koza.runner import KozaRunner
 
 
-def test_source_with_multiple_files():
-    source_file = f"examples/string/protein-links-detailed.yaml"
-    config, runner = KozaRunner.from_config_file(source_file)
+def test_multiple_file_source():
+    config_file = f"examples/string/protein-links-detailed.yaml"
+    config, runner = KozaRunner.from_config_file(config_file)
 
     assert len(config.reader.files) == 2
 

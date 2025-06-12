@@ -64,13 +64,28 @@ def test_tsv_writer():
     # read the node and edges tsv files and confirm the expected values
     with nodes_path.open("r") as fh:
         lines = fh.readlines()
-        assert lines[1] == "HGNC:11603\tbiolink:Gene\t\tNCBITaxon:9606\t\tTBX4\n"
+        assert lines[1].split("\t") == [
+            "HGNC:11603",
+            "biolink:Gene",
+            "",
+            "NCBITaxon:9606",
+            "",
+            "TBX4\n",
+        ]
         assert len(lines) == 3
 
     with edges_path.open("r") as fh:
         lines = fh.readlines()
-        assert (
-            lines[1].strip()
-            == "uuid:5b06e86f-d768-4cd9-ac27-abe31e95ab1e\tHGNC:11603\tbiolink:contributes_to\tMONDO:0005002\t\t\t0\t20"
-        )
+        assert lines[1].split("\t") == [
+            "uuid:5b06e86f-d768-4cd9-ac27-abe31e95ab1e",
+            "HGNC:11603",
+            "biolink:contributes_to",
+            "MONDO:0005002",
+            "biolink:GeneToDiseaseAssociation",
+            "",
+            "0",
+            "20",
+            "",
+            "\n",
+        ]
         assert len(lines) == 2

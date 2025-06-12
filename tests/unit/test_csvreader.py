@@ -28,7 +28,6 @@ field_type_map = {
 def test_no_exceptions_in_normal_case():
     with open(test_file, "r") as string_file:
         config = CSVReaderConfig(
-            format=InputFormat.csv,
             field_type_map=field_type_map,
             delimiter=" ",
         )
@@ -41,7 +40,6 @@ def test_no_exceptions_in_normal_case():
 def test_type_conversion():
     with open(test_file, "r") as string_file:
         config = CSVReaderConfig(
-            format=InputFormat.csv,
             field_type_map=field_type_map,
             delimiter=" ",
         )
