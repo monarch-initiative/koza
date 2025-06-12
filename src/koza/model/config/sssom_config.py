@@ -1,11 +1,10 @@
 from dataclasses import field
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Literal, Union
 
 from loguru import logger
 from pydantic.dataclasses import dataclass
-from sssom.parsers import parse_sssom_table
+from sssom.parsers import MappingSetDataFrame, parse_sssom_table
 from sssom.util import filter_prefixes, merge_msdf
 
 
@@ -21,21 +20,24 @@ class Match(str, Enum):
 class SSSOMConfig:
     """SSSOM config options
 
-    Attributes:
-        files: List of SSSOM files to use
-        filter_prefixes: Optional list of prefixes to filter by
-        subject_target_prefixes: Optional list of prefixes to use for subject mapping
-        object_target_prefixes: Optional list of prefixes to use for object mapping
-        use_match: Optional list of match types to use
+    :param files: SSSOM files to use
+    :param filter_prefixes: Prefixes to filter by
+    :param subject_target_prefixes: Prefixes to use for subject mapping
+    :param object_target_prefixes: Prefixes to use for object mapping
+    :param use_match: Match types to use
     """
 
-    files: List[Union[str, Path]] = field(default_factory=list)
-    filter_prefixes: List[str] = field(default_factory=list)
-    subject_target_prefixes: List[str] = field(default_factory=list)
-    object_target_prefixes: List[str] = field(default_factory=list)
-    use_match: List[Match] = field(default_factory=list)
+    files: list[str | Path] = field(default_factory=list)
+    filter_prefixes: list[str] = field(default_factory=list)
+    subject_target_prefixes: list[str] = field(default_factory=list)
+    object_target_prefixes: list[str] = field(default_factory=list)
+    use_match: list[Match] = field(default_factory=list)
 
-    predicates = {"exact": ["skos:exactMatch"], "narrow": ["skos:narrowMatch"], "broad": ["skos:broadMatch"]}
+    predicates = {
+        "exact": ["skos:exactMatch"],
+        "narrow": ["skos:narrowMatch"],
+        "broad": ["skos:broadMatch"],
+    }
 
     def __post_init__(self):
         if not self.use_match:
@@ -43,7 +45,7 @@ class SSSOMConfig:
         logger.debug("Building SSSOM Dataframe...")
         self.df = self._merge_and_filter_sssom()
         logger.debug("Building SSSOM Lookup Table...")
-        self.lut = self._build_sssom_lut()  # use_match=self.use_match)
+        self.lookup_table = self._build_sssom_lookup_table()  # use_match=self.use_match)
 
     def apply_mapping(self, entity: dict) -> dict:
         """Apply SSSOM mappings to an edge record."""
@@ -59,42 +61,56 @@ class SSSOMConfig:
         return entity
 
     def _merge_and_filter_sssom(self):
-        mapping_sets = []
+        mapping_sets: list[MappingSetDataFrame] = []
         for file in self.files:
             msdf = parse_sssom_table(file)
             mapping_sets.append(msdf)
-        new_msdf = merge_msdf(*mapping_sets)
-        filters = (self.subject_target_prefixes + self.object_target_prefixes) + list(
-            set(self.filter_prefixes) - set(self.subject_target_prefixes) - set(self.object_target_prefixes)
-        )
+        merged_msdf = merge_msdf(*mapping_sets)
+        filters = [
+            *self.subject_target_prefixes,
+            *self.object_target_prefixes,
+            *(set(self.filter_prefixes) - set(self.subject_target_prefixes) - set(self.object_target_prefixes)),
+        ]
         logger.debug(f"Filtering SSSOM by {filters}")
-        new_msdf = filter_prefixes(
-            df=new_msdf.df,
+        merged_msdf = filter_prefixes(
+            df=merged_msdf.df,
             filter_prefixes=filters,
             require_all_prefixes=False,
-            features=new_msdf.df.columns,  # type: ignore
+            features=merged_msdf.df.columns,  # type: ignore
         )
 
-        return new_msdf
+        return merged_msdf
 
-    def _build_sssom_lut(self) -> Dict:
+    def _build_sssom_lookup_table(self):
         """Build a lookup table from SSSOM mapping dataframe."""
-        sssom_lut = {}
-        for _, row in self.df.iterrows():
-            subject_id = row["subject_id"]
-            object_id = row["object_id"]
-            predicate = row["predicate_id"]
+        sssom_lookup_table: dict[str, dict[str, str]] = {}
+        for _, row in self.df.itertuples():
+            subject_id: str = row["subject_id"]
+            object_id: str = row["object_id"]
+            predicate: str = row["predicate_id"]
             if Match.exact in self.use_match:
                 # Add exact match mappings in both directions
-                sssom_lut = self._set_mapping(subject_id, object_id, predicate, match="exact", lut=sssom_lut)
-                sssom_lut = self._set_mapping(object_id, subject_id, predicate, match="exact", lut=sssom_lut)
+                sssom_lookup_table = self._set_mapping(
+                    subject_id,
+                    object_id,
+                    predicate,
+                    match=Match.exact,
+                    lookup_table=sssom_lookup_table,
+                )
+                sssom_lookup_table = self._set_mapping(
+                    object_id,
+                    subject_id,
+                    predicate,
+                    match=Match.exact,
+                    lookup_table=sssom_lookup_table,
+                )
             if Match.narrow in self.use_match:
                 logger.warning("Narrow match not yet implemented")
             if Match.broad in self.use_match:
                 logger.warning("Broad match not yet implemented")
-        return sssom_lut
+        return sssom_lookup_table
 
-    def _has_match(self, predicate, match: Literal[Match.exact, Match.narrow, Match.broad]):
+    def _has_match(self, predicate: str, match: Match):
         """Check if a predicate has a match."""
         if match == Match.exact:
             return predicate in self.predicates[Match.exact]
@@ -105,32 +121,32 @@ class SSSOMConfig:
             # return predicate in self.predicates["broad"] or predicate in self.predicates[Match.exact]
             return False
 
-    def _has_mapping(self, id, target_prefixes=None):
+    def _has_mapping(self, _id: str, target_prefixes: list[str] | None = None):
         """Check if an ID has a mapping."""
         if target_prefixes is None:
-            return id in self.lut
+            return _id in self.lookup_table
         else:
-            if id not in self.lut:
+            if _id not in self.lookup_table:
                 return False
             for target_prefix in target_prefixes:
-                if target_prefix in self.lut[id]:
+                if target_prefix in self.lookup_table[_id]:
                     return True
             return False  # No mapping found
 
-    def _get_mapping(self, id, target_prefixes):
+    def _get_mapping(self, _id: str, target_prefixes: list[str]):
         """Get the mapping for an ID."""
         for target_prefix in target_prefixes:
-            if target_prefix in self.lut[id]:
-                return self.lut[id][target_prefix]
-        raise KeyError(f"Could not find mapping for {id} in {target_prefixes}: {self.lut[id]}")
+            if target_prefix in self.lookup_table[_id]:
+                return self.lookup_table[_id][target_prefix]
+        raise KeyError(f"Could not find mapping for {_id} in {target_prefixes}: {self.lookup_table[_id]}")
 
     def _set_mapping(
         self,
-        original_id,
-        mapped_id,
-        predicate,
-        match: Literal[Match.exact, Match.narrow, Match.broad],
-        lut: Dict[str, dict],
+        original_id: str,
+        mapped_id: str,
+        predicate: str,
+        match: Match,
+        lookup_table: dict[str, dict[str, str]],
     ):
         """Set a mapping for an ID."""
         original_prefix = original_id.split(":")[0]
@@ -139,14 +155,14 @@ class SSSOMConfig:
         if (
             original_prefix in self.filter_prefixes or len(self.filter_prefixes) == 0
         ) and mapped_prefix in target_prefixes:
-            if original_id not in lut:
-                lut[original_id] = {}
-            if mapped_prefix in lut[original_id]:
+            if original_id not in lookup_table:
+                lookup_table[original_id] = {}
+            if mapped_prefix in lookup_table[original_id]:
                 logger.warning(f"Duplicate mapping for {original_id} to {mapped_prefix}")
             elif self._has_match(predicate, match):
-                lut[original_id][mapped_prefix] = mapped_id
+                lookup_table[original_id][mapped_prefix] = mapped_id
             else:
                 logger.warning(
                     f"{match} match not found for {original_id} to {mapped_prefix} with predicate {predicate}"
                 )
-        return lut
+        return lookup_table
