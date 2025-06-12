@@ -6,19 +6,17 @@ map config data class
 from dataclasses import field
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Union
 
 from pydantic import StrictInt, StrictStr, TypeAdapter
 from pydantic.dataclasses import dataclass
 
 from koza.model.config.pydantic_config import PYDANTIC_CONFIG
 from koza.model.config.sssom_config import SSSOMConfig
-
-
-class StandardFormat(str, Enum):
-    gpi = "gpi"
-    bgi = "bgi"
-    oban = "oban"
+from koza.model.filters import ColumnFilter
+from koza.model.formats import InputFormat
+from koza.model.koza import DatasetDescription, KozaConfig
+from koza.model.reader import FieldType, HeaderMode
+from koza.model.transform import MapErrorEnum
 
 
 class TransformMode(str, Enum):
@@ -33,28 +31,12 @@ class TransformMode(str, Enum):
     loop = "loop"
 
 
-# Reader configuration
-# ---
-
-
-# Transform configuration
-# ---
-
-
-# Writer configuration
-# ---
-
-
-# Main Koza configuration
-# ---
-
-
 def SourceConfig(**kwargs):
-    return DEPRECATEDSourceConfig(**kwargs).to_new_transform()
+    return _DeprecatedSourceConfig(**kwargs).to_new_transform()
 
 
 @dataclass(config=PYDANTIC_CONFIG)
-class DEPRECATEDSourceConfig:
+class _DeprecatedSourceConfig:
     """
     Source config data class
 
@@ -84,36 +66,36 @@ class DEPRECATEDSourceConfig:
     """
 
     name: str
-    files: List[Union[str, Path]]
-    file_archive: Optional[Union[str, Path]] = None
-    format: FormatType = FormatType.csv
-    sssom_config: Optional[SSSOMConfig] = None
-    columns: Optional[List[Union[str, Dict[str, FieldType]]]] = None
-    field_type_map: Optional[dict] = None
-    filters: List[ColumnFilter] = field(default_factory=list)
-    required_properties: Optional[List[str]] = None
-    metadata: Optional[Union[DatasetDescription, str]] = None
-    delimiter: Optional[str] = None
-    header: Union[int, HeaderMode] = HeaderMode.infer
-    header_delimiter: Optional[str] = None
-    header_prefix: Optional[str] = None
+    files: list[str | Path]
+    file_archive: str | Path | None = None
+    format: InputFormat = InputFormat.csv
+    sssom_config: SSSOMConfig | None = None
+    columns: list[str | dict[str, FieldType]] | None = None
+    field_type_map: dict | None = None
+    filters: list[ColumnFilter] = field(default_factory=list)
+    required_properties: list[str] | None = None
+    metadata: DatasetDescription | str | None = None
+    delimiter: str | None = None
+    header: int | HeaderMode = HeaderMode.infer
+    header_delimiter: str | None = None
+    header_prefix: str | None = None
     comment_char: str = "#"
     skip_blank_lines: bool = True
-    json_path: Optional[List[Union[StrictStr, StrictInt]]] = None
-    transform_code: Optional[str] = None
+    json_path: list[StrictStr | StrictInt] | None = None
+    transform_code: str | None = None
     transform_mode: TransformMode = TransformMode.flat
-    global_table: Optional[Union[str, Dict]] = None
-    local_table: Optional[Union[str, Dict]] = None
+    global_table: str | dict | None = None
+    local_table: str | dict | None = None
 
-    metadata: Optional[Union[DatasetDescription, str]] = None
+    metadata: DatasetDescription | str | None = None
 
-    node_properties: Optional[List[str]] = None
-    edge_properties: Optional[List[str]] = None
-    min_node_count: Optional[int] = None
-    min_edge_count: Optional[int] = None
+    node_properties: list[str] | None = None
+    edge_properties: list[str] | None = None
+    min_node_count: int | None = None
+    min_edge_count: int | None = None
     # node_report_columns: Optional[List[str]] = None
     # edge_report_columns: Optional[List[str]] = None
-    depends_on: List[str] = field(default_factory=list)
+    depends_on: list[str] = field(default_factory=list)
     on_map_failure: MapErrorEnum = MapErrorEnum.warning
 
     def to_new_transform(self):
