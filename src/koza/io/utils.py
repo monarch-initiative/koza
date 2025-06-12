@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Set of functions to manage input and output
 """
@@ -41,7 +40,7 @@ def is_gzipped(filename: str):
 
 
 def open_resource(
-    resource: Union[str, PathLike],
+    resource: str | PathLike[str],
 ) -> Union[
     SizedResource,
     tuple[ZipFile, Generator[SizedResource, None, None]],
@@ -65,7 +64,7 @@ def open_resource(
     """
 
     # Check if resource is a remote file
-    resource_name: Optional[Union[str, PathLike]] = None
+    resource_name: Optional[Union[str, PathLike[str]]] = None
 
     if isinstance(resource, str) and resource.startswith("http"):
         tmp_file = tempfile.NamedTemporaryFile("w+b")
@@ -125,7 +124,7 @@ def open_resource(
         path = Path(resource)
         fh = path.open("rb")
         gzip_fh = gzip.open(fh, "rt")
-        assert isinstance(gzip_fh, TextIOWrapper)
+        assert isinstance(gzip_fh, TextIO)
         gzip_fh.read(1)
         gzip_fh.seek(0)
         stat = path.stat()
@@ -151,7 +150,7 @@ def open_resource(
         )
 
 
-def check_data(entry, path) -> bool:
+def check_data(entry: Dict[str, Any], path: str) -> bool:
     """
     Given a dot delimited JSON tag path,
     returns the value of the field in the entry.
@@ -160,7 +159,6 @@ def check_data(entry, path) -> bool:
     :return: str value of the given path into the entry
     """
     ppart = path.split(".")
-
     tag = ppart.pop(0)
 
     while True:
@@ -190,7 +188,7 @@ provenance_slot_types = {
     "provided_by": list,
 }
 
-column_types = {
+column_types: dict[str, type] = {
     "publications": list,
     "qualifiers": list,
     "category": list,
@@ -203,7 +201,7 @@ column_types = {
 column_types.update(provenance_slot_types)
 
 
-def build_export_row(data: Dict, list_delimiter: Optional[str] = None) -> Dict:
+def build_export_row(data: dict[str, Any], list_delimiter: Optional[str] = None) -> dict[str, Any]:
     """
     Sanitize key-value pairs in dictionary.
     This should be used to ensure proper syntax and types for node and edge data as it is exported.
@@ -218,15 +216,18 @@ def build_export_row(data: Dict, list_delimiter: Optional[str] = None) -> Dict:
     Dict
         A dictionary containing processed key-value pairs
     """
-    tidy_data = {}
+    tidy_data: dict[str, Any] = {}
     for key, value in data.items():
         new_value = remove_null(value)
         if new_value is not None:
             tidy_data[key] = _sanitize_export_property(key, new_value, list_delimiter)
     return tidy_data
 
+def trim(value: str) -> str:
+    return value.replace("\n", " ").replace('\\"', "").replace("\t", " ")
 
-def _sanitize_export_property(key: str, value: Any, list_delimiter: Optional[str] = None) -> Any:
+
+def _sanitize_export_property(key: str, value: Any, list_delimiter: Optional[str] = None) -> list[Any] | bool | str:
     """
     Sanitize value for a key for the purpose of export.
     Casts all values to primitive types like str or bool according to the
@@ -246,16 +247,16 @@ def _sanitize_export_property(key: str, value: Any, list_delimiter: Optional[str
         Sanitized value
     """
     if key in column_types:
-        if column_types[key] == list:
+        if column_types[key] is list:
             if isinstance(value, (list, set, tuple)):
-                value = [
+                ret: list[Any] = [
                     v.replace("\n", " ").replace('\\"', "").replace("\t", " ") if isinstance(v, str) else v
                     for v in value
                 ]
-                new_value = list_delimiter.join([str(x) for x in value]) if list_delimiter else value
+                new_value = list_delimiter.join([str(x) for x in ret]) if list_delimiter else ret
             else:
                 new_value = str(value).replace("\n", " ").replace('\\"', "").replace("\t", " ")
-        elif column_types[key] == bool:
+        elif column_types[key] is bool:
             try:
                 new_value = bool(value)
             except Exception:
@@ -280,7 +281,7 @@ def _sanitize_export_property(key: str, value: Any, list_delimiter: Optional[str
     return new_value
 
 
-def remove_null(input: Any) -> Any:
+def remove_null(value: Any) -> Any:
     """
     Remove any null values from input.
     Parameters
@@ -293,27 +294,27 @@ def remove_null(input: Any) -> Any:
         The input without any null values
     """
     new_value: Any = None
-    if isinstance(input, (list, set, tuple)):
+    if isinstance(value, (list, set, tuple)):
         # value is a list, set or a tuple
         new_value = []
-        for v in input:
+        for v in value:
             x = remove_null(v)
             if x is not None:
                 new_value.append(x)
-    elif isinstance(input, dict):
+    elif isinstance(value, dict):
         # value is a dict
         new_value = {}
-        for k, v in input.items():
+        for k, v in value.items():
             x = remove_null(v)
             if x is not None:
                 new_value[k] = x
-    elif isinstance(input, str):
+    elif isinstance(value, str):
         # value is a str
-        if not is_null(input):
-            new_value = input
+        if not is_null(value):
+            new_value = value
     else:
-        if not is_null(input):
-            new_value = input
+        if not is_null(value):
+            new_value = value
     return new_value
 
 
