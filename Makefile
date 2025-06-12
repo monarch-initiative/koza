@@ -41,6 +41,11 @@ clean:
 	rm -rf output test-output
 	rm -rf dist
 
+.PHONY: coverage
+coverage:
+	-$(RUN) coverage run -m pytest tests
+	$(RUN) coverage report -m
+
 .PHONY: lint
 lint:
 	$(RUN) ruff check --diff --exit-zero src/ tests/ examples/
