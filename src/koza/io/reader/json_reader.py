@@ -18,17 +18,14 @@ class JSONReader:
         self,
         io_str: IO[str],
         config: Union[JSONReaderConfig, YAMLReaderConfig],
-        row_limit: int = 0,
     ):
         """
         :param io_str: Any IO stream that yields a string
                        See https://docs.python.org/3/library/io.html#io.IOBase
         :param config: The JSON or YAML reader configuration
-        :param row_limit: The number of lines to be read. No limit if 0.
         """
         self.io_str = io_str
         self.config = config
-        self.row_limit = row_limit
 
         if isinstance(config, YAMLReaderConfig):
             json_obj = yaml.safe_load(self.io_str)
@@ -45,10 +42,7 @@ class JSONReader:
             self.json_obj = [json_obj]
 
     def __iter__(self) -> Generator[Dict[str, Any], None, None]:
-        for i, item in enumerate(self.json_obj):
-            if self.row_limit and i >= self.row_limit:
-                return
-
+        for item in self.json_obj:
             if not isinstance(item, dict):
                 raise ValueError()
 

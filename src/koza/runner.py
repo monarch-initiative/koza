@@ -284,7 +284,7 @@ class KozaRunner:
         transform_record = getattr(transform_module, "transform_record", None)
         if transform_record:
             logger.debug(f"Found transform function `{module_name}.transform_record`")
-        source = Source(config, row_limit, show_progress)
+        source = Source(config, row_limit=row_limit, show_progress=show_progress)
 
         writer: Optional[KozaWriter] = None
 

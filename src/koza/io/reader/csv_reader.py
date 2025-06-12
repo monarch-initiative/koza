@@ -1,10 +1,6 @@
 from csv import reader
 from typing import IO, Any, Callable, Dict, List
 
-# from koza.utils.log_utils import get_logger
-# logger = get_logger(__name__)
-# import logging
-# logger = logging.getLogger(__name__)
 from loguru import logger
 
 from koza.model.reader import CSVReaderConfig, FieldType, HeaderMode
@@ -44,21 +40,18 @@ class CSVReader:
         self,
         io_str: IO[str],
         config: CSVReaderConfig,
-        row_limit: int = 0,
-        *args,
-        **kwargs,
+        *args: Any,
+        **kwargs: Any,
     ):
         """
         :param io_str: Any IO stream that yields a string
                        See https://docs.python.org/3/library/io.html#io.IOBase
         :param config: A configuration for the CSV reader. See model/config/source_config.py
-        :param row_limit: int number of lines to process
         :param args: additional args to pass to csv.reader
         :param kwargs: additional kwargs to pass to csv.reader
         """
         self.io_str = io_str
         self.config = config
-        self.row_limit = row_limit
         self.field_type_map = config.field_type_map
 
         # used by _set_header
@@ -104,10 +97,6 @@ class CSVReader:
             raise ValueError("Field type map not set on CSV source")
 
         for row in self.csv_reader:
-            if self.row_limit and item_ct >= self.row_limit:
-                logger.debug("Row limit reached")
-                return
-
             if not row:
                 if self.config.skip_blank_lines:
                     continue

@@ -17,7 +17,6 @@ class JSONLReader:
         self,
         io_str: IO[str],
         config: JSONLReaderConfig,
-        row_limit: int = 0,
     ):
         """
         :param io_str: Any IO stream that yields a string
@@ -27,13 +26,9 @@ class JSONLReader:
         """
         self.io_str = io_str
         self.config = config
-        self.row_limit = row_limit
 
     def __iter__(self):
-        for i, line in enumerate(self.io_str):
-            if self.row_limit and self.row_limit >= i:
-                return
-
+        for line in self.io_str:
             item = json.loads(line)
             if self.config.required_properties:
                 missing_properties = [prop for prop in self.config.required_properties if not check_data(item, prop)]

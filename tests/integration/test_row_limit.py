@@ -13,22 +13,31 @@ from koza.runner import KozaRunner
 # TODO: Parameterize row_limit, and test reading from JSON and JSONL
 # TODO: Address filter in examples/string-declarative/protein-links-detailed.yaml
 
-
 @pytest.mark.parametrize(
-    "source_name, ingest, output_format, row_limit, header_len, expected_node_len, expected_edge_len",
+    "source_name, ingest, output_format, row_limit, expected_node_len, expected_edge_len",
     [
         (
             "string-declarative",  # ingest
             "declarative-protein-links-detailed",  # output_names
             OutputFormat.tsv,  # output_format
-            3,  # row_limit
-            1,  # header_len
-            11,  # expected_node_leng
-            6,  # expected_edge_leng
+            5,  # row_limit
+
+            # In this ingest, eace line produces two protein nodes, and one edge for a pairwise interaction.
+            # Files also have one header line.
+            1 + 5 * 2,  # expected_node_len
+            1 + 5,  # expected_edge_len
+        ),
+        (
+            "string-declarative",  # ingest
+            "declarative-protein-links-detailed",  # output_names
+            OutputFormat.jsonl,  # output_format
+            5,  # row_limit
+            5 * 2,  # expected_node_len
+            5,  # expected_edge_len
         )
     ],
 )
-def test_examples(source_name, ingest, output_format, row_limit, header_len, expected_node_len, expected_edge_len):
+def test_examples(source_name, ingest, output_format, row_limit, expected_node_len, expected_edge_len):
     config_filename = f"examples/{source_name}/{ingest}.yaml"
 
     output_suffix = str(output_format).split(".")[1]
@@ -41,10 +50,6 @@ def test_examples(source_name, ingest, output_format, row_limit, header_len, exp
 
     config, runner = KozaRunner.from_config_file(config_filename, output_dir, output_format, row_limit)
     runner.run()
-
-    # hacky check that correct number of rows was processed
-    # node_file = f"{output_dir}/string/{ingest}-row-limit_nodes{output_suffix}"
-    # edge_file = f"{output_dir}/string/{ingest}-row-limit_edges{output_suffix}"
 
     with open(output_files[0], "r") as fp:
         assert expected_node_len == len([line for line in fp])
