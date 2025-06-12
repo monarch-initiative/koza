@@ -1,13 +1,14 @@
-[tool.poetry]
+[project]
 name = "koza"
 version = "0.0.0"
 description = "Data transformation framework for LinkML data models"
+requires-python = ">=3.10"
 authors = [
-    "The Monarch Initiative <info@monarchinitiative.org>",
-    "Kevin Schaper <kevinschaper@gmail.com>",
-    "Glass Elsarboukh <g.elsarboukh@gmail.com>",
-    "Kent Shefchek <kent@tislab.org>",
-    ]
+    { name="The Monarch Initiative", email="info@monarchinitiative.org" },
+    { name="Kevin Schaper", email="kevinschaper@gmail.com" },
+    { name="Glass Elsarboukh", email="g.elsarboukh@gmail.com" },
+    { name="Kent Shefchek", email="kent@tislab.org" },
+]
 readme = "README.md"
 license = "BSD License"
 packages = [
@@ -15,7 +16,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.10"
 duckdb = "*"
 linkml = ">=1.7.8"
 loguru = "*"
@@ -63,6 +64,7 @@ lint.select = [
     "I",  # isort
     "Q",  # flake8-quotes
     "S",  # flake8-bandit
+    "UP", # pyupgrade
     "W",  # Warning
 ]
 
