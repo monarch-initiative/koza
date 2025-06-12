@@ -19,7 +19,7 @@ invalid_input = {"name": "Bogus Gene 98765", "type": "biolink:NamedThing"}
 
 model_path = Path(__file__).parent.parent / "resources" / "test-model.yaml"
 with open(model_path) as f:
-    model = yaml.load(f, Loader=yaml.FullLoader)
+    model = yaml.load(f, Loader=yaml.FullLoader)  # noqa: S506
 
 
 @pytest.mark.parametrize("entity", [valid_input])

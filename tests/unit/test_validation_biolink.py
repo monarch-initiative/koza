@@ -7,8 +7,8 @@ from linkml.validator import validate
 pytest.skip("LinkML issue with `category` slot has `designates_type: true`", allow_module_level=True)
 
 model_url = "https://raw.githubusercontent.com/biolink/biolink-model/latest/biolink-model.yaml"
-with urlopen(model_url) as f:
-    model = yaml.load(f, Loader=yaml.FullLoader)
+with urlopen(model_url) as f:  # noqa: S310
+    model = yaml.load(f, Loader=yaml.FullLoader)  # noqa: S506
 
 valid_input = {
     "id": "BOGUS:12345",

@@ -250,7 +250,7 @@ def _sanitize_export_property(key: str, value: Any, list_delimiter: str | None =
     """
     if key in column_types:
         if column_types[key] is list:
-            if isinstance(value, (list, set, tuple)):
+            if isinstance(value, list | set | tuple):
                 ret: list[Any] = [
                     v.replace("\n", " ").replace('\\"', "").replace("\t", " ") if isinstance(v, str) else v
                     for v in value
@@ -296,7 +296,7 @@ def remove_null(value: Any) -> Any:
         The input without any null values
     """
     new_value: Any = None
-    if isinstance(value, (list, set, tuple)):
+    if isinstance(value, list | set | tuple):
         # value is a list, set or a tuple
         new_value = []
         for v in value:

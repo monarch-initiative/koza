@@ -7,5 +7,5 @@ class CurieCleaner:
 
     def clean(self, curie: str) -> str:
         for curie_synonym in self.mappings:
-            curie = re.sub("^%s:" % curie_synonym, self.mappings[curie_synonym] + ":", curie)
+            curie = re.sub(f"^{curie_synonym}:", self.mappings[curie_synonym] + ":", curie)
         return curie

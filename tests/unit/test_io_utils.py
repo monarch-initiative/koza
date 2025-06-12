@@ -154,7 +154,7 @@ def test_sanitize_export_property(query):
     value = _sanitize_export_property(query[0][0], query[0][1], list_delimiter="|")
     if isinstance(query[1], str):
         assert value == query[1]
-    elif isinstance(query[1], (list, set, tuple)):
+    elif isinstance(query[1], list | set | tuple):
         for x in query[1]:
             assert x in value
     elif isinstance(query[1], bool):

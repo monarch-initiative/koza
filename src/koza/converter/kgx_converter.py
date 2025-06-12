@@ -34,7 +34,8 @@ class KGXConverter:
             # otherwise, not a valid entity
             else:
                 raise ValueError(
-                    f"Cannot convert {entity}: Can only convert NamedThing or Association entities to KGX compatible dictionaries"
+                    f"Cannot convert {entity}: Can only convert NamedThing or Association entities to KGX "
+                    "compatible dictionaries"
                 )
 
         return nodes, edges

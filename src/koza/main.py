@@ -104,7 +104,10 @@ def transform(
 #     fields: str = typer.Argument(..., help="Comma separated list of fields to split on"),
 #     remove_prefixes: bool = typer.Option(
 #         False,
-#         help="Remove prefixes from the file names for values from the specified fields. (e.g, NCBIGene:9606 becomes 9606",
+#         help=(
+#             "Remove prefixes from the file names for values from the specified fields. "
+#             "(e.g, NCBIGene:9606 becomes 9606).",
+#         )
 #     ),
 #     output_dir: str = typer.Option(default="output", help="Path to output directory"),
 # ):
