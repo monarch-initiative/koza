@@ -18,7 +18,6 @@ packages = [
 [tool.poetry.dependencies]
 python = "^3.10"
 duckdb = "*"
-linkml = ">=1.7.8"
 loguru = "*"
 ordered-set = ">=4.1.0"
 pydantic = "^2.4"
