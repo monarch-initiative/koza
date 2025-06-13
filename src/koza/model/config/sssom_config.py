@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from dataclasses import field
 from enum import Enum
 from pathlib import Path
@@ -27,7 +28,7 @@ class SSSOMConfig:
     :param use_match: Match types to use
     """
 
-    files: list[str | Path] = field(default_factory=list)
+    files: Sequence[str | Path] = field(default_factory=list)
     filter_prefixes: list[str] = field(default_factory=list)
     subject_target_prefixes: list[str] = field(default_factory=list)
     object_target_prefixes: list[str] = field(default_factory=list)
@@ -84,10 +85,10 @@ class SSSOMConfig:
     def _build_sssom_lookup_table(self):
         """Build a lookup table from SSSOM mapping dataframe."""
         sssom_lookup_table: dict[str, dict[str, str]] = {}
-        for _, row in self.df.itertuples():
-            subject_id: str = row["subject_id"]
-            object_id: str = row["object_id"]
-            predicate: str = row["predicate_id"]
+        for row in self.df.itertuples():
+            subject_id: str = row.subject_id  # type: ignore
+            object_id: str = row.object_id  # type: ignore
+            predicate: str = row.predicate_id  # type: ignore
             if Match.exact in self.use_match:
                 # Add exact match mappings in both directions
                 sssom_lookup_table = self._set_mapping(
