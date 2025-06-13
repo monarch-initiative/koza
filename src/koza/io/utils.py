@@ -125,7 +125,7 @@ def open_resource(
         path = Path(resource)
         fh = path.open("rb")
         gzip_fh = gzip.open(fh, "rt")
-        assert isinstance(gzip_fh, TextIO)
+        assert isinstance(gzip_fh, TextIOWrapper)
         gzip_fh.read(1)
         gzip_fh.seek(0)
         stat = path.stat()
