@@ -6,7 +6,9 @@ from pathlib import Path
 from loguru import logger
 from pydantic.dataclasses import dataclass
 from sssom.parsers import MappingSetDataFrame, parse_sssom_table
-from sssom.util import filter_prefixes, merge_msdf
+from sssom.util import filter_prefixes, merge_msdf, pandas_set_no_silent_downcasting
+
+pandas_set_no_silent_downcasting()
 
 
 class Match(str, Enum):
