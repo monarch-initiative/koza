@@ -1,15 +1,12 @@
+from collections.abc import Callable
 from csv import reader
-from typing import IO, Any, Dict, Iterator, List, Union
+from typing import IO, Any
 
-from koza.model.config.source_config import FieldType, HeaderMode
-
-# from koza.utils.log_utils import get_logger
-# logger = get_logger(__name__)
-# import logging
-# logger = logging.getLogger(__name__)
 from loguru import logger
 
-FIELDTYPE_CLASS = {
+from koza.model.reader import CSVReaderConfig, FieldType, HeaderMode
+
+FIELDTYPE_CLASS: dict[FieldType, Callable[[str], Any]] = {
     FieldType.str: str,
     FieldType.int: int,
     FieldType.float: float,
@@ -43,201 +40,201 @@ class CSVReader:
     def __init__(
         self,
         io_str: IO[str],
-        field_type_map: Dict[str, FieldType] = None,
-        delimiter: str = ",",
-        header: Union[int, HeaderMode] = HeaderMode.infer,
-        header_delimiter: str = None,
-        header_prefix: str = None,
-        dialect: str = "excel",
-        skip_blank_lines: bool = True,
-        name: str = "csv file",
-        comment_char: str = "#",
-        row_limit: int = None,
-        *args,
-        **kwargs,
+        config: CSVReaderConfig,
+        *args: Any,
+        **kwargs: Any,
     ):
         """
         :param io_str: Any IO stream that yields a string
                        See https://docs.python.org/3/library/io.html#io.IOBase
-        :param field_type_map: A dictionary of field names and their type (using the FieldType enum)
-        :param delimiter: Field delimiter (eg. '\t' ',' ' ')
-        :param header: 0 based index of the file that contains the header,
-                       or header mode 'infer'|'none' ( default='infer' )
-                       if 'infer' will use the first non-empty and uncommented line
-                       if 'none' will use the user supplied columns in field_type_map keys,
-                           if field_type_map is None this will raise a ValueError
-
-        :param header_delimiter: delimiter for the header row, default = self.delimiter
-        :param header_prefix: prefix for the header row, default = None
-        :param dialect: csv dialect, default=excel
-        :param skip_blank_lines: true to skip blank lines, false to insert NaN for blank lines,
-        :param name: filename or alias
-        :param comment_char: string representing a commented line, eg # or !!
-        :param row_limit: int number of lines to process
+        :param config: A configuration for the CSV reader. See model/config/source_config.py
         :param args: additional args to pass to csv.reader
         :param kwargs: additional kwargs to pass to csv.reader
         """
         self.io_str = io_str
-        self.field_type_map = field_type_map
-        self.dialect = dialect
-        self.header = header
-        self.header_delimiter = header_delimiter if header_delimiter else delimiter
-        self.header_prefix = header_prefix
-        self.skip_blank_lines = skip_blank_lines
-        self.name = name
-        self.comment_char = comment_char
-        self.row_limit = row_limit
-
-        # used by _set_header
-        self.line_num = 0
-
-        # used for row_limit
-        self.line_count = 0
+        self.config = config
+        self.field_type_map = config.field_type_map
 
         self._header = None
 
-        if delimiter == '\\s':
-            delimiter = ' '
+        delimiter = config.delimiter
 
-        kwargs['dialect'] = dialect
-        kwargs['delimiter'] = delimiter
-        self.reader = reader(io_str, *args, **kwargs)
+        if config.delimiter == "\\s":
+            delimiter = " "
 
-    def __iter__(self) -> Iterator:
-        return self
+        self.csv_args = args
+        self.csv_kwargs = kwargs
 
-    def __next__(self) -> Dict[str, Any]:
-        if not self._header:
-            self._set_header()
+        self.csv_kwargs["dialect"] = config.dialect
+        self.csv_kwargs["delimiter"] = delimiter
 
-        try:
-            if self.line_count == self.row_limit:
-                logger.debug("Row limit reached")
-                raise StopIteration
-            else:
-                row = next(self.reader)
-                self.line_count += 1
-        except StopIteration:
-            logger.info(f"Finished processing {self.line_num} rows for {self.name} from file {self.io_str.name}")
-            raise StopIteration
-        self.line_num = self.reader.line_num
+        self.reset()
 
-        # skip blank lines
-        if self.skip_blank_lines:
-            while not row:
-                row = next(self.reader)
-        else:
-            row = ['NaN' for _ in range(len(self._header))]
+    def reset(self):
+        self.io_str.seek(0)
+        self.csv_reader = reader(self.io_str, *self.csv_args, **self.csv_kwargs)
 
-        # skip commented lines (this is for footers)
-        if self.comment_char is not None:
-            while row[0].startswith(self.comment_char):
-                row = next(self.reader)
+    @property
+    def header(self):
+        if self._header is None:
+            header = self._consume_header()
+            self._ensure_field_type_map(header)
+            self._compare_headers_to_supplied_columns(header)
+            self._header = header
+        return self._header
 
-        # Check row length discrepancies for each row
-        fields_len = len(self._header)
-        row_len = len(row)
-        stripped_row = [val.strip() for val in row]
+    def __iter__(self):
+        header = self.header
+        item_ct = 0
+        comment_char = self.config.comment_char
 
-        # if we've made it here we can convert a row to a dict
-        field_map = dict(zip(self._header, stripped_row))
+        if self.field_type_map is None:
+            raise ValueError("Field type map not set on CSV source")
 
-        if fields_len > row_len:
-            raise ValueError(f"CSV file {self.name} has {fields_len - row_len} fewer columns at {self.reader.line_num}")
+        for row in self.csv_reader:
+            if not row:
+                if self.config.skip_blank_lines:
+                    continue
+                else:
+                    row = ["NaN" for _ in range(len(header))]
 
-        elif fields_len < row_len:
-            logger.warning(f"CSV file {self.name} has {row_len - fields_len} extra columns at {self.reader.line_num}")
-            # # Not sure if this would serve a purpose:
-            # if 'extra_cols' not in self.field_type_map:
-            #     # Create a type map for extra columns
-            #     self.field_type_map['extra_cols'] = FieldType.str
-            # field_map['extra_cols'] = row[fields_len:]
+            elif comment_char and row[0].startswith(comment_char):
+                continue
 
-        typed_field_map = {}
+            row = [val.strip() for val in row]
+            item = dict(zip(header, row, strict=False))
 
-        for field, field_value in field_map.items():
-            # Take the value and coerce it using self.field_type_map (field: FieldType)
-            # FIELD_TYPE is map of the field_type enum to the python
-            # to built-in type or custom extras defined in the source config
-            try:
-                typed_field_map[field] = FIELDTYPE_CLASS[self.field_type_map[field]](field_value)
-            except KeyError as key_error:
-                logger.warning(f"Field {field} not found in field_type_map ({key_error})")
-
-        return typed_field_map
-
-    def _set_header(self):
-        if isinstance(self.header, int):
-            while self.line_num < self.header:
-                next(self.reader)
-                self.line_num = self.reader.line_num
-            self._header = self._parse_header_line()
-
-            if self.field_type_map:
-                self._compare_headers_to_supplied_columns()
-            else:
-                self.field_type_map = {field: FieldType.str for field in self._header}
-
-        elif self.header == 'infer':
-            self._header = self._parse_header_line(skip_blank_or_commented_lines=True)
-            logger.debug(f"headers for {self.name} parsed as {self._header}")
-            if self.field_type_map:
-                self._compare_headers_to_supplied_columns()
-            else:
-                self.field_type_map = {field: FieldType.str for field in self._header}
-
-        elif self.header == 'none':
-            if self.field_type_map:
-                self._header = list(self.field_type_map.keys())
-            else:
-                raise ValueError(
-                    "there is no header and columns have not been supplied\n"
-                    "configure the 'columns' property in the source yaml"
+            if len(item) > len(header):
+                num_extra_fields = len(item) - len(header)
+                logger.warning(
+                    f"CSV file {self.io_str.name} has {num_extra_fields} extra columns at {self.csv_reader.line_num}"
                 )
 
-    def _parse_header_line(self, skip_blank_or_commented_lines: bool = False) -> List[str]:
+            if len(header) > len(item):
+                num_missing_columns = len(header) - len(item)
+                raise ValueError(
+                    f"CSV file {self.io_str.name} is missing {num_missing_columns} "
+                    f"column(s) at {self.csv_reader.line_num}"
+                )
+
+            typed_item: dict[str, Any] = {}
+
+            for k, v in item.items():
+                field_type = self.field_type_map.get(k, None)
+                if field_type is None:
+                    # FIXME: is this the right behavior? Or should we raise an error?
+                    # raise ValueError(f"No field type found for field {k}")
+                    field_type = FieldType.str
+
+                # By default, use `str` as a converter (essentially a noop)
+                converter = FIELDTYPE_CLASS.get(field_type, str)
+
+                typed_item[k] = converter(v)
+
+            item_ct += 1
+            yield typed_item
+
+        logger.info(f"Finished processing {item_ct} rows for from file {self.io_str.name}")
+
+    def _consume_header(self):
+        if self.csv_reader.line_num > 0:
+            raise RuntimeError("Can only set header at beginning of file.")
+
+        match self.config.header_mode:
+            case HeaderMode.none:
+                if self.config.field_type_map is None:
+                    raise ValueError(
+                        "Header mode was set to 'none', but no columns were supplied.\n"
+                        "Configure the 'columns' property in the transform yaml."
+                    )
+                return list(self.config.field_type_map.keys())
+            case HeaderMode.infer:
+                # logger.debug(f"headers for {self.name} parsed as {self._header}")
+                return self._parse_header_line(skip_blank_or_commented_lines=True)
+            case int():
+                while self.csv_reader.line_num < self.config.header_mode:
+                    next(self.csv_reader)
+                return self._parse_header_line()
+
+    def _parse_header_line(self, skip_blank_or_commented_lines: bool = False) -> list[str]:
         """
         Parse the header line and return a list of headers
         """
-        fieldnames = next(reader(self.io_str, **{'delimiter': self.header_delimiter, 'dialect': self.dialect}))
-        if self.header_prefix and fieldnames[0].startswith(self.header_prefix):
-            fieldnames[0] = fieldnames[0].lstrip(self.header_prefix)
-        if skip_blank_or_commented_lines:
-            # there has to be a cleaner way to do this
-            while not fieldnames or (self.comment_char is not None and fieldnames[0].startswith(self.comment_char)):
-                fieldnames = next(reader(self.io_str, **{'delimiter': self.header_delimiter, 'dialect': self.dialect}))
-        fieldnames[0] = fieldnames[0].lstrip(self.comment_char)
-        return [f.strip() for f in fieldnames]
+        header_prefix = self.config.header_prefix
+        comment_char = self.config.comment_char
 
-    def _compare_headers_to_supplied_columns(self):
+        csv_reader = self.csv_reader
+
+        # If the header delimiter is explicitly set create a new CSVReader using that one.
+        if self.config.header_delimiter is not None:
+            kwargs = self.csv_kwargs | {"delimiter": self.config.header_delimiter}
+            csv_reader = reader(self.io_str, *self.csv_args, **kwargs)
+
+        headers = next(csv_reader)
+
+        # If a header_prefix was defined, remove that string from the first record in the first row.
+        # For example, given the header_prefix of "#" and an initial CSV row of:
+        #
+        # #ID,LABEL,DESCRIPTION
+        #
+        # The headers would be ["ID", "LABEL", "DESCRIPTION"].
+        #
+        # This is run before skipping commented lines since a header prefix may be "#", which is the default comment
+        # character.
+        if headers and header_prefix:
+            headers[0] = headers[0].lstrip(header_prefix)
+
+        if skip_blank_or_commented_lines:
+            while True:
+                # Continue if the line is empty
+                if not headers:
+                    headers = next(csv_reader)
+                    continue
+
+                # Continue if the line starts with a comment character
+                if comment_char and headers[0].startswith(comment_char):
+                    headers = next(csv_reader)
+                    continue
+
+                break
+
+        return [field.strip() for field in headers]
+
+    def _ensure_field_type_map(self, header: list[str]):
+        # The field type map is either set explicitly, or derived based on config.columns. If
+        # neither of those are set, then set the field type map based on the parsed headers.
+        if self.field_type_map is None:
+            self.field_type_map = {key: FieldType.str for key in header}
+
+    def _compare_headers_to_supplied_columns(self, header: list[str]):
         """
         Compares headers to supplied columns
         :return:
         """
+        if self.field_type_map is None:
+            raise ValueError("No field type map set for CSV reader")
+
         configured_fields = list(self.field_type_map.keys())
 
-        if set(configured_fields) > set(self._header):
+        if set(configured_fields) > set(header):
             raise ValueError(
-                f"Configured columns missing in source file {self.name}\n"
-                f"\t{set(configured_fields) - set(self._header)}"
+                f"Configured columns missing in source file {self.io_str.name}\n"
+                f"\t{set(configured_fields) - set(header)}"
             )
 
-        if set(self._header) > set(configured_fields):
+        if set(header) > set(configured_fields):
             logger.warning(
-                f"Additional column(s) in source file {self.name}\n"
-                f"\t{set(self._header) - set(configured_fields)}\n"
+                f"Additional column(s) in source file {self.io_str.name}\n"
+                f"\t{set(header) - set(configured_fields)}\n"
                 f"\tChecking if new column(s) inserted at end of the row"
             )
-            # add to type map
-            for new_fields in set(self._header) - set(configured_fields):
-                self.field_type_map[new_fields] = FieldType.str
 
         # Check if the additional columns are appended
         # not sure if this would useful or just noise
-        if self._header[: len(configured_fields)] != configured_fields:
+        if header[: len(configured_fields)] != configured_fields:
             logger.warning(
                 f"Additional columns located within configured fields\n"
                 f"\tgiven: {configured_fields}\n"
-                f"\tfound: {self._header}\n"
-                f"\tadditional columns: {set(self._header) - set(configured_fields)}"
+                f"\tfound: {header}\n"
+                f"\tadditional columns: {set(header) - set(configured_fields)}"
             )

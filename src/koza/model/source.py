@@ -1,14 +1,18 @@
-from typing import Any, Dict, Iterator, List, Optional, Union
+from collections.abc import Iterable
+from tarfile import TarFile
+from typing import Any, TextIO
+from zipfile import ZipFile
+
+from loguru import logger
+from tqdm import tqdm
 
 from koza.io.reader.csv_reader import CSVReader
 from koza.io.reader.json_reader import JSONReader
 from koza.io.reader.jsonl_reader import JSONLReader
 from koza.io.utils import open_resource
+from koza.model.formats import InputFormat
+from koza.model.koza import KozaConfig
 from koza.utils.row_filter import RowFilter
-from koza.model.config.source_config import MapFileConfig, PrimaryFileConfig  # , SourceConfig
-
-# from koza.io.yaml_loader import UniqueIncludeLoader
-# import yaml
 
 
 class Source:
@@ -23,82 +27,91 @@ class Source:
     reader: An iterator that takes in an IO[str] and yields a dictionary
     """
 
-    def __init__(self, config: Union[PrimaryFileConfig, MapFileConfig], row_limit: Optional[int] = None):
-        self.config = config
+    def __init__(self, config: KozaConfig, row_limit: int = 0, show_progress: bool = False):
+        reader_config = config.reader
+
         self.row_limit = row_limit
-        self._filter = RowFilter(config.filters)
+        self.show_progress = show_progress
+        self._filter = RowFilter(config.transform.filters)
         self._reader = None
-        self._readers: List = []
-        self.last_row: Optional[Dict] = None
+        self._readers: list[Iterable[dict[str, Any]]] = []
+        self.last_row: dict[str, Any] | None = None
+        self._opened: list[ZipFile | TarFile | TextIO] = []
 
-        for file in config.files:
-            resource_io = open_resource(file)
-            if self.config.format == "csv":
-                self._readers.append(
-                    CSVReader(
-                        resource_io,
-                        name=config.name,
-                        field_type_map=config.field_type_map,
-                        delimiter=config.delimiter,
-                        header=config.header,
-                        header_delimiter=config.header_delimiter,
-                        header_prefix=config.header_prefix,
-                        comment_char=self.config.comment_char,
-                        row_limit=self.row_limit,
-                    )
-                )
-            elif self.config.format == "jsonl":
-                self._readers.append(
-                    JSONLReader(
-                        resource_io,
-                        name=config.name,
-                        required_properties=config.required_properties,
-                        row_limit=self.row_limit,
-                    )
-                )
-            elif self.config.format == "json" or self.config.format == "yaml":
-                self._readers.append(
-                    JSONReader(
-                        resource_io,
-                        name=config.name,
-                        json_path=config.json_path,
-                        required_properties=config.required_properties,
-                        is_yaml=(self.config.format == "yaml"),
-                        row_limit=self.row_limit,
-                    )
-                )
+        for file in reader_config.files:
+            opened_resource = open_resource(file)
+            if isinstance(opened_resource, tuple):
+                archive, resources = opened_resource
+                self._opened.append(archive)
             else:
-                raise ValueError(f"File type {format} not supported")
+                resources = [opened_resource]
 
-    def __iter__(self) -> Iterator:
-        return self
+            for resource in resources:
+                self._opened.append(resource.reader)
+                if reader_config.format == InputFormat.csv:
+                    self._readers.append(
+                        CSVReader(
+                            resource.reader,
+                            config=reader_config,
+                        )
+                    )
+                elif reader_config.format == InputFormat.jsonl:
+                    self._readers.append(
+                        JSONLReader(
+                            resource.reader,
+                            config=reader_config,
+                        )
+                    )
+                elif reader_config.format == InputFormat.json or reader_config.format == InputFormat.yaml:
+                    self._readers.append(
+                        JSONReader(
+                            resource.reader,
+                            config=reader_config,
+                        )
+                    )
+                else:
+                    raise ValueError(f"File type {reader_config.format} not supported")
 
-    def __next__(self) -> Dict[str, Any]:
-        if self._reader is None:
-            self._reader = self._readers.pop()
-        try:
-            row = self._get_row()
-        except StopIteration as si:
-            if len(self._readers) == 0:
-                raise si
+    def __iter__(self):
+        num_rows = 0
+
+        for reader in self._readers:
+            pbar: tqdm[dict[str, Any]] | None = None
+            numlines = 0
+
+            if self.show_progress and isinstance(reader, CSVReader):
+                reader.header  # noqa: B018
+                numlines = sum(1 for _ in reader.io_str)
+                pbar = tqdm(reader, total=numlines, leave=True)
+                reader.reset()
+
+            if self.show_progress and isinstance(reader, JSONLReader):
+                numlines = sum(1 for _ in reader.io_str)
+                reader.io_str.seek(0)
+                pbar = tqdm(reader, total=numlines, leave=True)
+
+            for item in reader:
+                if pbar is not None:
+                    pbar.update(1)
+
+                if self._filter and not self._filter.include_row(item):
+                    continue
+
+                self.last_row = item
+
+                yield item
+
+                num_rows += 1
+                if self.row_limit and num_rows == self.row_limit:
+                    logger.info(f"Reached row limit {self.row_limit} (read {num_rows})")
+                    break
+
             else:
-                self._reader = self._readers.pop()
-                row = self._get_row()
-        return row
+                # If this reader was consumed without breaking, continue on to the next reader
+                continue
 
-    def _get_row(self):
-        # If we built a filter for this source, run extra code to validate each row for inclusion in the final output.
-        if self._filter:
-            row = next(self._reader)
-            reject_current_row = not self._filter.include_row(row)
-            # If the filter says we shouldn't include the current row; we filter it out and move onto the next row.
-            # We'll only break out of the following loop if "reject_current_row" is false (i.e. include_row is True/we
-            # have a valid row to return) or we hit a StopIteration exception from self._reader.
-            while reject_current_row:
-                row = next(self._reader)
-                reject_current_row = not self._filter.include_row(row)
-        else:
-            row = next(self._reader)
-        # Retain the most recent row so that it can be logged alongside validation errors
-        self.last_row = row
-        return row
+            # If it did break (i.e. it reached its row limit), then do not proceed to the next reader
+            break
+
+        for fh in self._opened:
+            fh.close()

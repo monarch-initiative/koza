@@ -1,13 +1,10 @@
 import json
-from typing import IO, Any, Dict, Iterator, List
+from typing import IO
 
 from koza.io.utils import check_data
+from koza.model.reader import JSONLReaderConfig
 
-# from koza.utils.log_utils import get_logger
-# logger = get_logger(__name__)
-# import logging
-# logger = logging.getLogger(__name__)
-from loguru import logger
+# FIXME: Add back logging as part of progress
 
 
 class JSONLReader:
@@ -19,49 +16,28 @@ class JSONLReader:
     def __init__(
         self,
         io_str: IO[str],
-        required_properties: List[str] = None,
-        name: str = 'jsonl file',
-        row_limit: int = None,
+        config: JSONLReaderConfig,
     ):
         """
         :param io_str: Any IO stream that yields a string
                        See https://docs.python.org/3/library/io.html#io.IOBase
-        :param required_properties: List of required top level properties
-        :param name: todo
+        :param config: The JSONL reader configuration
+        :param row_limit: The number of lines to be read. No limit if 0.
         """
         self.io_str = io_str
-        self.required_properties = required_properties
-        self.line_num = 0
-        self.name = name
-        self.line_limit = row_limit
+        self.config = config
 
-    def __iter__(self) -> Iterator:
-        return self
+    def __iter__(self):
+        for line in self.io_str:
+            item = json.loads(line)
+            if self.config.required_properties:
+                missing_properties = [prop for prop in self.config.required_properties if not check_data(item, prop)]
 
-    def __next__(self) -> Dict[str, Any]:
-        next_line = self.io_str.readline()
-        if not next_line:
-            logger.info(f"Finished processing {self.line_num} lines for {self.name} from {self.io_str.name}")
-            raise StopIteration
-        self.line_num += 1
-        if self.line_limit:
-            if self.line_num == self.line_limit:
-                raise StopIteration
+                if missing_properties:
+                    raise ValueError(
+                        f"Required properties are missing from {self.io_str.name}\n"
+                        f"Missing properties: {missing_properties}\n"
+                        f"Row: {item}"
+                    )
 
-        json_obj = json.loads(next_line)
-
-        # Check that required properties exist in row
-        if self.required_properties:
-            properties = []
-            for prop in self.required_properties:
-                new_prop = check_data(json_obj, prop)
-                properties.append(new_prop)
-
-            if False in properties:
-                raise ValueError(
-                    f"Required properties defined for {self.name} are missing from {self.io_str.name}\n"
-                    f"Missing properties: {set(self.required_properties) - set(json_obj.keys())}\n"
-                    f"Row: {json_obj}"
-                )
-
-        return json_obj
+            yield item

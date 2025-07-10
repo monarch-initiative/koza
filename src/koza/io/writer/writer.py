@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Iterable
+from collections.abc import Iterable
 
 
 class KozaWriter(ABC):
@@ -18,3 +18,6 @@ class KozaWriter(ABC):
     @abstractmethod
     def finalize(self):
         pass
+
+    def result(self):
+        raise NotImplementedError()

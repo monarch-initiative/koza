@@ -1,46 +1,46 @@
 name: 'map-protein-links-detailed'
 
-delimiter: ' '
-
-files:
-  - './examples/data/string.tsv'
-  - './examples/data/string2.tsv'
-
 metadata: !include './examples/string-w-map/metadata.yaml'
 
-columns:
-  - 'protein1'
-  - 'protein2'
-  - 'neighborhood'
-  - 'fusion'
-  - 'cooccurence'
-  - 'coexpression'
-  - 'experimental'
-  - 'database'
-  - 'textmining'
-  - 'combined_score' : 'int'
+reader:
+  format: csv
+  delimiter: ' '
+  files:
+    - './examples/data/string.tsv'
+    - './examples/data/string2.tsv'
 
-filters:
-  - inclusion: 'include'
-    column: 'combined_score'
-    filter_code: 'lt'
-    value: 700
+  columns:
+    - 'protein1'
+    - 'protein2'
+    - 'neighborhood'
+    - 'fusion'
+    - 'cooccurence'
+    - 'coexpression'
+    - 'experimental'
+    - 'database'
+    - 'textmining'
+    - 'combined_score' : 'int'
 
-depends_on:
-  - './examples/maps/entrez-2-string.yaml'
+transform:
+  filters:
+    - inclusion: 'include'
+      column: 'combined_score'
+      filter_code: 'lt'
+      value: 700
+  mappings:
+    - './examples/maps/entrez-2-string.yaml'
 
-transform_mode: 'flat'
+writer:
+  node_properties:
+    - 'id'
+    - 'category'
+    - 'provided_by'
 
-node_properties:
-  - 'id'
-  - 'category'
-  - 'provided_by'
-
-edge_properties:
-  - 'id'
-  - 'subject'
-  - 'predicate'
-  - 'object'
-  - 'category'
-  - 'relation'
-  - 'provided_by'
+  edge_properties:
+    - 'id'
+    - 'subject'
+    - 'predicate'
+    - 'object'
+    - 'category'
+    - 'relation'
+    - 'provided_by'

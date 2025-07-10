@@ -3,24 +3,28 @@ import os
 from biolink_model.datamodel.pydanticmodel_v2 import Disease, Gene
 
 from koza.io.writer.tsv_writer import TSVWriter
+from koza.model.writer import WriterConfig
 
 
 def test_tsv_writer():
     """
     Writes a test tsv file
     """
-    g = Gene(id="HGNC:11603", name="TBX4")
-    d = Disease(id="MONDO:0005002", name="chronic obstructive pulmonary disease")
+    gene = Gene(id="HGNC:11603", name="TBX4")
+    disease = Disease(id="MONDO:0005002", name="chronic obstructive pulmonary disease")
 
-    ent = [g, d]
+    entities = [gene, disease]
 
-    node_properties = ['id', 'category', 'symbol', 'in_taxon', 'provided_by', 'source']
+    node_properties = ["id", "category", "symbol", "in_taxon", "provided_by", "source"]
+
+    config = WriterConfig(node_properties=node_properties)
 
     outdir = "output/tests"
-    outfile = "tsvwriter-node-only"
+    source_name = "tsvwriter-node-only"
 
-    t = TSVWriter(outdir, outfile, node_properties)
-    t.write(ent)
+    t = TSVWriter(outdir, source_name, config=config)
+    t.write(entities)
     t.finalize()
 
-    assert os.path.exists("{}/{}_nodes.tsv".format(outdir, outfile))
+    assert os.path.exists(f"{outdir}/{source_name}_nodes.tsv")
+    assert not os.path.exists(f"{outdir}/{source_name}_edges.tsv")

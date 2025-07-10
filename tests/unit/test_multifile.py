@@ -1,22 +1,26 @@
-import yaml
-from pathlib import Path
-
 from koza.model.source import Source
-from koza.model.config.source_config import PrimaryFileConfig
-from koza.io.yaml_loader import UniqueIncludeLoader
+from koza.runner import KozaRunner
 
 
-def test_multiple_files():
-    source_file = Path(__file__).parent.parent / 'resources' / 'multifile.yaml'
+def test_multiple_file_source():
+    config_file = f"examples/string/protein-links-detailed.yaml"
+    config, runner = KozaRunner.from_config_file(config_file)
 
-    row_limit = None
-    with open(source_file, 'r') as source_fh:
-        source_config = PrimaryFileConfig(**yaml.load(source_fh, Loader=UniqueIncludeLoader))
-        if not source_config.name:
-            source_config.name = Path(source_file).stem
+    assert len(config.reader.files) == 2
 
-    source = Source(source_config, row_limit)
-
-    row_count = sum(1 for row in source)
+    source = Source(config)
+    row_count = len(list(source))
 
     assert row_count == 15
+
+
+def test_multiple_file_row_limit():
+    config_file = f"examples/string/protein-links-detailed.yaml"
+    config, runner = KozaRunner.from_config_file(config_file)
+
+    assert len(config.reader.files) == 2
+
+    source = Source(config, row_limit=2)
+    row_count = len(list(source))
+
+    assert row_count == 2

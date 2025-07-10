@@ -1,5 +1,6 @@
+from collections.abc import Iterable
 from dataclasses import asdict
-from typing import Iterable, Tuple
+
 from pydantic import BaseModel
 
 
@@ -15,7 +16,7 @@ class KGXConverter:
 
     """
 
-    def convert(self, entities: Iterable) -> Tuple[list, list]:
+    def convert(self, entities: Iterable) -> tuple[list, list]:
         nodes = []
         edges = []
 
@@ -33,7 +34,8 @@ class KGXConverter:
             # otherwise, not a valid entity
             else:
                 raise ValueError(
-                    f"Cannot convert {entity}: Can only convert NamedThing or Association entities to KGX compatible dictionaries"
+                    f"Cannot convert {entity}: Can only convert NamedThing or Association entities to KGX "
+                    "compatible dictionaries"
                 )
 
         return nodes, edges

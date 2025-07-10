@@ -9,17 +9,82 @@ https://github.com/monarch-initiative/dipper/blob/6f1fe5bb/dipper/utils/TestUtil
 https://github.com/monarch-initiative/dipper/blob/682560f/tests/test_udp.py#L85
 """
 
+from pathlib import Path
+from tarfile import TarFile
+from zipfile import ZipFile
+
 import pytest
 
-from koza.io.utils import *
+from koza.io import utils as io_utils
 from koza.io.utils import _sanitize_export_property
 
 
 def test_404():
     resource = "http://httpstat.us/404"
     with pytest.raises(ValueError):
-        with open_resource(resource) as _:
-            pass
+        io_utils.open_resource(resource)
+
+
+def test_http():
+    resource = "https://github.com/monarch-initiative/koza/blob/8a3bab998958ecbd406c6a150cbd5c009f3f2510/tests/resources/source-files/string.tsv?raw=true"
+    resource = io_utils.open_resource(resource)
+    assert not isinstance(resource, tuple)
+
+
+def check_resource_completion(resource: io_utils.SizedResource):
+    assert resource.reader.tell() == 0
+    contents = [line for line in resource.reader]
+    assert resource.tell() == resource.size
+    return contents
+
+
+def test_open_zipfile():
+    resource = io_utils.open_resource("tests/resources/source-files/string-split.zip")
+    assert isinstance(resource, tuple)
+    zip_fh, resources = resource
+    assert isinstance(zip_fh, ZipFile)
+    assert zip_fh.filename == "tests/resources/source-files/string-split.zip"
+
+    resource_1 = next(resources)
+    assert resource_1.name == "string-a.tsv"
+    contents = check_resource_completion(resource_1)
+    assert len(contents) == 9
+
+    resource_2 = next(resources)
+    assert resource_2.name == "string-b.tsv"
+    contents = check_resource_completion(resource_2)
+    assert len(contents) == 11
+
+    zip_fh.close()
+
+
+def test_open_tarfile():
+    resource = io_utils.open_resource("tests/resources/source-files/string-split.tar.gz")
+    assert isinstance(resource, tuple)
+    tar_fh, resources = resource
+    assert isinstance(tar_fh, TarFile)
+    assert tar_fh.name == str(Path("tests/resources/source-files/string-split.tar.gz").absolute())
+
+    resource_1 = next(resources)
+    assert resource_1.name == "string-a.tsv"
+    contents = check_resource_completion(resource_1)
+    assert len(contents) == 9
+
+    resource_2 = next(resources)
+    assert resource_2.name == "string-b.tsv"
+    contents = check_resource_completion(resource_2)
+    assert len(contents) == 11
+
+    tar_fh.close()
+
+
+def test_open_gzip():
+    resource = io_utils.open_resource("tests/resources/source-files/ZFIN_PHENOTYPE_0.jsonl.gz")
+    assert not isinstance(resource, tuple)
+    contents = check_resource_completion(resource)
+    assert len(contents) == 10
+
+    resource.reader.close()
 
 
 @pytest.mark.parametrize(
@@ -57,7 +122,7 @@ def test_build_export_row(query):
     """
     Test build_export_row method.
     """
-    d = build_export_row(query[0], list_delimiter="|")
+    d = io_utils.build_export_row(query[0], list_delimiter="|")
     for k, v in query[1].items():
         assert k in d
         assert d[k] == v
@@ -86,10 +151,10 @@ def test_sanitize_export_property(query):
     """
     Test sanitize_export method.
     """
-    value = _sanitize_export_property(query[0][0], query[0][1], list_delimiter='|')
+    value = _sanitize_export_property(query[0][0], query[0][1], list_delimiter="|")
     if isinstance(query[1], str):
         assert value == query[1]
-    elif isinstance(query[1], (list, set, tuple)):
+    elif isinstance(query[1], list | set | tuple):
         for x in query[1]:
             assert x in value
     elif isinstance(query[1], bool):
@@ -117,7 +182,7 @@ def test_sanitize_export_property(query):
     ],
 )
 def test_remove_null(input, expected):
-    assert remove_null(input) == expected
+    assert io_utils.remove_null(input) == expected
 
 
 @pytest.mark.parametrize(
@@ -133,4 +198,4 @@ def test_remove_null(input, expected):
     ],
 )
 def test_is_null(input, expected):
-    assert is_null(input) == expected
+    assert io_utils.is_null(input) == expected

@@ -1,13 +1,14 @@
-[tool.poetry]
+[project]
 name = "koza"
 version = "0.0.0"
 description = "Data transformation framework for LinkML data models"
+requires-python = ">=3.10"
 authors = [
-    "The Monarch Initiative <info@monarchinitiative.org>",
-    "Kevin Schaper <kevinschaper@gmail.com>",
-    "Glass Elsarboukh <g.elsarboukh@gmail.com>",
-    "Kent Shefchek <kent@tislab.org>",
-    ]
+    { name="The Monarch Initiative", email="info@monarchinitiative.org" },
+    { name="Kevin Schaper", email="kevinschaper@gmail.com" },
+    { name="Glass Elsarboukh", email="g.elsarboukh@gmail.com" },
+    { name="Kent Shefchek", email="kent@tislab.org" },
+]
 readme = "README.md"
 license = "BSD License"
 packages = [
@@ -15,9 +16,8 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.10"
 duckdb = "*"
-linkml = ">=1.7.8"
 loguru = "*"
 ordered-set = ">=4.1.0"
 pydantic = "^2.4"
@@ -25,13 +25,14 @@ pyyaml = ">=5.0.0"
 requests = "^2.24.0"
 sssom = ">=0.4"
 typer = ">=0.12.3"
+mergedeep = "1.3.4"
+tqdm = "^4.67.1"
+coverage = "^7.6.10"
 
-[tool.poetry.dev-dependencies]
-black = "^24.4"
+[tool.poetry.group.dev.dependencies]
 ruff = "*"
 pytest = ">=6.0.0"
 biolink-model = ">=4.2"
-dask = ">=2022.5.2"
 mkdocs = ">=1.4"
 mkdocs-material = ">=9.5"
 mkdocstrings = {extras = ["python"], version = ">=0.22.0"}
@@ -43,12 +44,29 @@ koza = "koza.main:typer_app"
 requires = ["poetry-core", "poetry-dynamic-versioning"]
 build-backend = "poetry_dynamic_versioning.backend"
 
-[tool.black]
-line-length = 120
-skip-string-normalization = true
-
 [tool.ruff]
 line-length = 120
+
+lint.fixable = ["ALL"]
+
 lint.ignore = [
     "F541", # f-strings with no placeholders
+    "S101", # allow asserts
 ]
+
+# Select or ignore from https://beta.ruff.rs/docs/rules/
+lint.select = [
+    "B",  # bugbear
+    # "D",  # pydocstyle
+    "E",  # pycodestyle errors
+    "F",  # Pyflakes
+    "I",  # isort
+    "Q",  # flake8-quotes
+    "S",  # flake8-bandit
+    "UP", # pyupgrade
+    "W",  # Warning
+]
+
+[tool.ruff.format]
+quote-style = "double"
+line-ending = "lf"
