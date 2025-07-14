@@ -150,12 +150,14 @@ class KozaRunner:
         writer: KozaWriter,
         mapping_filenames: list[str] | None = None,
         extra_transform_fields: dict[str, Any] | None = None,
+        prepare: Callable[[Iterator[Record]], Iterator[Record]] | None = None,
         transform_record: Callable[[Record], (Iterator, Iterator)] | None = None,
         transform: Callable[[Iterator[Record]], Iterator[tuple[Iterator, Iterator]]] | None = None,
     ):
         self.data = data
         self.writer = writer
         self.mapping_filenames = mapping_filenames or []
+        self.prepare = prepare
         self.transform_record = transform_record
         self.transform = transform
         self.extra_transform_fields = extra_transform_fields or {}
@@ -204,6 +206,8 @@ class KozaRunner:
             self.writer.write(edges)
 
     def run(self):
+        if callable(self.prepare):
+            self.data = self.prepare(self.data)
         if callable(self.transform) and callable(self.transform_record):
             raise ValueError("Can only define one of `transform` or `transform_record`")
         elif callable(self.transform):
@@ -288,6 +292,9 @@ class KozaRunner:
             logger.debug(f"Loading module `{module_name}`")
             transform_module = importlib.import_module(module_name)
 
+        prepare = getattr(transform_module, "prepare", None)
+        if prepare:
+            logger.debug(f"Found prepare function `{module_name}.prepare`")
         transform = getattr(transform_module, "transform", None)
         if transform:
             logger.debug(f"Found transform function `{module_name}.transform`")
@@ -313,6 +320,7 @@ class KozaRunner:
             writer=writer,
             mapping_filenames=config.transform.mappings,
             extra_transform_fields=config.transform.extra_fields,
+            prepare=prepare,
             transform=transform,
             transform_record=transform_record,
         )
