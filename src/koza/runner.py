@@ -150,8 +150,8 @@ class KozaRunner:
         writer: KozaWriter,
         mapping_filenames: list[str] | None = None,
         extra_transform_fields: dict[str, Any] | None = None,
-        transform_record: Callable[[KozaTransform, Record], None] | None = None,
-        transform: Callable[[KozaTransform], None] | None = None,
+        transform_record: Callable[[Record], (Iterator, Iterator)] | None = None,
+        transform: Callable[[Iterator[Record]], Iterator[tuple[Iterator, Iterator]]] | None = None,
     ):
         self.data = data
         self.writer = writer
@@ -161,21 +161,25 @@ class KozaRunner:
         self.extra_transform_fields = extra_transform_fields or {}
 
     def run_single(self):
-        fn = self.transform
 
-        if fn is None:
+        if self.transform is None:
             raise NoTransformException("Can only be run when `transform` is defined")
 
-        mappings = self.load_mappings()
-
         logger.info("Running single transform")
+
+        """
+        mappings = self.load_mappings()
         transform = SingleTransform(
             _data=self.data,
             mappings=mappings,
             writer=self.writer,
             extra_fields=self.extra_transform_fields,
         )
-        fn(transform)
+        """
+
+        for nodes, edges in self.transform(self.data):
+            self.writer.write(nodes)
+            self.writer.write(edges)
 
     def run_serial(self):
         fn = self.transform_record
@@ -183,16 +187,21 @@ class KozaRunner:
         if fn is None:
             raise NoTransformException("Can only be run when `transform_record` is defined")
 
-        mappings = self.load_mappings()
-
         logger.info("Running serial transform")
+
+        """
+        mappings = self.load_mappings()
         transform = SerialTransform(
             mappings=mappings,
             writer=self.writer,
             extra_fields=self.extra_transform_fields,
         )
+        """
+
         for item in self.data:
-            fn(transform, item)
+            nodes, edges = fn(item)
+            self.writer.write(nodes)
+            self.writer.write(edges)
 
     def run(self):
         if callable(self.transform) and callable(self.transform_record):
