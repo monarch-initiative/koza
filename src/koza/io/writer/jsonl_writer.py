@@ -20,6 +20,8 @@ class JSONLWriter(KozaWriter):
 
         self.converter = KGXConverter()
 
+        self.written_node_ids = set()
+
         os.makedirs(output_dir, exist_ok=True)
         if config.node_properties:
             self.nodeFH = open(f"{output_dir}/{source_name}_nodes.jsonl", "w")
@@ -31,8 +33,11 @@ class JSONLWriter(KozaWriter):
 
         if nodes:
             for n in nodes:
-                node = json.dumps(n, ensure_ascii=False)
-                self.nodeFH.write(node + "\n")
+                node_id = n["id"]
+                if node_id not in self.written_node_ids:
+                    node = json.dumps(n, ensure_ascii=False)
+                    self.nodeFH.write(node + "\n")
+                    self.written_node_ids.add(node_id)
 
         if edges:
             for e in edges:
