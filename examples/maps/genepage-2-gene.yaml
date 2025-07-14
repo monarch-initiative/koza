@@ -5,7 +5,7 @@ metadata:
 delimiter: '\t'
 
 files:
-  - './examples/data/XenbaseGenepageToGeneIdMapping.txt'
+  - '../data/XenbaseGenepageToGeneIdMapping.txt'
 
 columns:
   - 'gene_page_id'

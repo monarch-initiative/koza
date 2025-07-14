@@ -12,8 +12,8 @@ reader:
   delimiter: ' '
 
   files:
-    - './examples/data/string.tsv'
-    - './examples/data/string2.tsv'
+    - '../data/string.tsv'
+    - '../data/string2.tsv'
 
   columns:
     - 'protein1'

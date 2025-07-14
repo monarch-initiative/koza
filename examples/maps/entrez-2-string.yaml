@@ -13,8 +13,8 @@ reader:
   # Assumes that no identifiers are overlapping
   # otherwise these should go into separate configs
   files:
-    - './examples/data/entrez-2-string.tsv'
-    - './examples/data/additional-entrez-2-string.tsv'
+    - '../data/entrez-2-string.tsv'
+    - '../data/additional-entrez-2-string.tsv'
 
   columns:
     - 'NCBI taxid'

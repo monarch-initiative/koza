@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -85,7 +86,7 @@ def test_load_config():
         }
     )
 
-    runner = KozaRunner.from_config(config)
+    runner = KozaRunner.from_config(config, base_directory=Path(__file__).parent.parent.parent)
     assert callable(runner.transform)
     assert runner.transform_record is None
     assert callable(runner.run)

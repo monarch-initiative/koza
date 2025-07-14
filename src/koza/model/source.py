@@ -1,4 +1,5 @@
 from collections.abc import Iterable
+from pathlib import Path
 from tarfile import TarFile
 from typing import Any, TextIO
 from zipfile import ZipFile
@@ -27,7 +28,7 @@ class Source:
     reader: An iterator that takes in an IO[str] and yields a dictionary
     """
 
-    def __init__(self, config: KozaConfig, row_limit: int = 0, show_progress: bool = False):
+    def __init__(self, config: KozaConfig, base_directory: Path, row_limit: int = 0, show_progress: bool = False):
         reader_config = config.reader
 
         self.row_limit = row_limit
@@ -39,7 +40,10 @@ class Source:
         self._opened: list[ZipFile | TarFile | TextIO] = []
 
         for file in reader_config.files:
-            opened_resource = open_resource(file)
+            file_path = Path(file)
+            if not file_path.is_absolute():
+                file_path = base_directory / file_path
+            opened_resource = open_resource(file_path)
             if isinstance(opened_resource, tuple):
                 archive, resources = opened_resource
                 self._opened.append(archive)

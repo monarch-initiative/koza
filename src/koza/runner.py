@@ -148,6 +148,7 @@ class KozaRunner:
         self,
         data: Iterator[Record],
         writer: KozaWriter,
+        base_directory: Path | None = None,
         mapping_filenames: list[str] | None = None,
         extra_transform_fields: dict[str, Any] | None = None,
         transform_record: Callable[[KozaTransform, Record], None] | None = None,
@@ -159,6 +160,7 @@ class KozaRunner:
         self.transform_record = transform_record
         self.transform = transform
         self.extra_transform_fields = extra_transform_fields or {}
+        self.base_directory = base_directory
 
     def run_single(self):
         fn = self.transform
@@ -206,6 +208,8 @@ class KozaRunner:
 
         self.writer.finalize()
 
+        return self.writer
+
     def load_mappings(self):
         mappings: Mappings = {}
 
@@ -213,9 +217,11 @@ class KozaRunner:
             logger.info("Loading mappings")
 
         for mapping_config_filename in self.mapping_filenames:
+            if self.base_directory is None:
+                raise ValueError("Cannot load config maps without a `base_directory` set.")
             # Check if a transform has been defined for the mapping
             config, map_runner = KozaRunner.from_config_file(
-                mapping_config_filename,
+                str(self.base_directory / mapping_config_filename),
                 output_format=OutputFormat.passthrough,
             )
             try:
@@ -258,6 +264,7 @@ class KozaRunner:
     def from_config(
         cls,
         config: KozaConfig,
+        base_directory: Path,
         output_dir: str = "",
         row_limit: int = 0,
         show_progress: bool = False,
@@ -266,7 +273,7 @@ class KozaRunner:
         transform_module: ModuleType | None = None
 
         if config.transform.code:
-            transform_code_path = Path(config.transform.code)
+            transform_code_path = base_directory / config.transform.code
             parent_path = transform_code_path.absolute().parent
             module_name = transform_code_path.stem
             logger.debug(f"Adding `{parent_path}` to system path to load transform module")
@@ -285,7 +292,7 @@ class KozaRunner:
         transform_record = getattr(transform_module, "transform_record", None)
         if transform_record:
             logger.debug(f"Found transform function `{module_name}.transform_record`")
-        source = Source(config, row_limit=row_limit, show_progress=show_progress)
+        source = Source(config, base_directory, row_limit=row_limit, show_progress=show_progress)
 
         writer: KozaWriter | None = None
 
@@ -302,6 +309,7 @@ class KozaRunner:
         return cls(
             data=iter(source),
             writer=writer,
+            base_directory=base_directory,
             mapping_filenames=config.transform.mappings,
             extra_transform_fields=config.transform.extra_fields,
             transform=transform,
@@ -324,7 +332,7 @@ class KozaRunner:
         logger.info(f"Loading configuration from `{config_filename}`")
 
         with config_path.open("r") as fh:
-            config_dict = yaml.load(fh, Loader=UniqueIncludeLoader)  # noqa: S506
+            config_dict = yaml.load(fh, Loader=UniqueIncludeLoader.with_file_base(str(config_path)))  # noqa: S506
             config = KozaConfig(**config_dict)
 
         if not config.transform.code and not config.transform.module:
@@ -338,9 +346,9 @@ class KozaRunner:
             transform_literal_path = config_path.parent / "transform.py"
 
             if mirrored_path.exists():
-                transform_code_path = mirrored_path
+                transform_code_path = Path(mirrored_path.name)
             elif transform_literal_path.exists():
-                transform_code_path = transform_literal_path
+                transform_code_path = Path(transform_literal_path.name)
 
             if transform_code_path:
                 logger.debug(f"Using transform code from `{mirrored_path}`")
@@ -359,4 +367,10 @@ class KozaRunner:
         config_dict = merge(config_dict, _overrides, overrides or {})
         config = KozaConfig(**config_dict)
 
-        return config, cls.from_config(config, output_dir=output_dir, row_limit=row_limit, show_progress=show_progress)
+        return config, cls.from_config(
+            config,
+            base_directory=config_path.parent,
+            output_dir=output_dir,
+            row_limit=row_limit,
+            show_progress=show_progress,
+        )

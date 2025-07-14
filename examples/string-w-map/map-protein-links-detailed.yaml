@@ -1,13 +1,13 @@
 name: 'map-protein-links-detailed'
 
-metadata: !include './examples/string-w-map/metadata.yaml'
+metadata: !include 'metadata.yaml'
 
 reader:
   format: csv
   delimiter: ' '
   files:
-    - './examples/data/string.tsv'
-    - './examples/data/string2.tsv'
+    - '../data/string.tsv'
+    - '../data/string2.tsv'
 
   columns:
     - 'protein1'
@@ -28,7 +28,7 @@ transform:
       filter_code: 'lt'
       value: 700
   mappings:
-    - './examples/maps/entrez-2-string.yaml'
+    - '../maps/entrez-2-string.yaml'
 
 writer:
   node_properties:
