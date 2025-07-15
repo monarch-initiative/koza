@@ -11,6 +11,7 @@ runner = CliRunner()
 def test_cli():
     config_file = (Path(__file__).parent / "../../examples/string/protein-links-detailed.yaml").resolve()
     test_output_dir = (Path(__file__).parent / "../output").resolve()
+    test_output_dir.mkdir(exist_ok=True)
 
     with tempfile.TemporaryDirectory(dir=test_output_dir) as output_dir:
         result = runner.invoke(
