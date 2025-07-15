@@ -217,11 +217,15 @@ class KozaRunner:
             logger.info("Loading mappings")
 
         for mapping_config_filename in self.mapping_filenames:
-            if self.base_directory is None:
-                raise ValueError("Cannot load config maps without a `base_directory` set.")
+            mapping_config = Path(mapping_config_filename)
+            if not mapping_config.is_absolute():
+                if self.base_directory is None:
+                    raise ValueError("Cannot load config maps without a `base_directory` set.")
+                mapping_config = self.base_directory / mapping_config
+
             # Check if a transform has been defined for the mapping
             config, map_runner = KozaRunner.from_config_file(
-                str(self.base_directory / mapping_config_filename),
+                str(mapping_config),
                 output_format=OutputFormat.passthrough,
             )
             try:
@@ -273,7 +277,9 @@ class KozaRunner:
         transform_module: ModuleType | None = None
 
         if config.transform.code:
-            transform_code_path = base_directory / config.transform.code
+            transform_code_path = Path(config.transform.code)
+            if not transform_code_path.is_absolute():
+                transform_code_path = base_directory / transform_code_path
             parent_path = transform_code_path.absolute().parent
             module_name = transform_code_path.stem
             logger.debug(f"Adding `{parent_path}` to system path to load transform module")
