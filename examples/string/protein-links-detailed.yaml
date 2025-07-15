@@ -1,16 +1,16 @@
 name: 'protein-links-detailed'
-metadata: !include './examples/string/metadata.yaml'
+metadata: !include './metadata.yaml'
 
 reader:
   format: csv
   files:
-    - './examples/data/string.tsv'
-    - './examples/data/string2.tsv'
+    - '../data/string.tsv'
+    - '../data/string2.tsv'
   delimiter: ' '
-  columns: !include './examples/standards/string.yaml'
+  columns: !include '../standards/string.yaml'
 
 transform:
-  code: './examples/string/protein-links-detailed.py'
+  code: 'protein-links-detailed.py'
   filters:
     - inclusion: 'include'
       column: 'combined_score'
