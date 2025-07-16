@@ -1,0 +1,33 @@
+name: 'protein-links-detailed'
+metadata: !include './metadata.yaml'
+
+reader:
+  format: csv
+  files:
+    - '../data/string.tsv'
+    - '../data/string2.tsv'
+  delimiter: ' '
+  columns: !include '../standards/string.yaml'
+
+transform:
+  code: 'protein-links-detailed.py'
+  filters:
+    - inclusion: 'include'
+      column: 'combined_score'
+      filter_code: 'lt'
+      value: 700
+
+writer:
+  node_properties:
+    - 'id'
+    - 'category'
+    - 'provided_by'
+
+  edge_properties:
+    - 'id'
+    - 'subject'
+    - 'predicate'
+    - 'object'
+    - 'category'
+    - 'relation'
+    - 'provided_by'

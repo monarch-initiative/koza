@@ -48,6 +48,57 @@ def test_run_serial():
     assert writer.items == [{"a": 1, "b": 2}]
 
 
+def test_transform_state():
+    writer = MockWriter()
+
+    data = iter([{"a": 1}, {"b": 2}])
+
+    def on_data_begin(koza: KozaTransform):
+        koza.state["count"] = 0
+
+    def on_data_end(koza: KozaTransform):
+        koza.write(koza.state)
+
+    def transform_record(koza: KozaTransform, record: dict[str, Any]):
+        koza.state["count"] += 1
+
+    runner = KozaRunner(
+        data=data,
+        writer=writer,
+        transform_record=transform_record,
+        on_data_begin=on_data_begin,
+        on_data_end=on_data_end,
+    )
+    runner.run()
+
+    assert writer.items == [{"count": 2}]
+
+def test_post_transform_fn(caplog):
+    writer = MockWriter()
+
+    def transform_record(koza: KozaTransform, record: dict[str, Any]):
+        koza.write(record)
+
+    def on_data_begin(koza: KozaTransform):
+        writer.write(["called at start"])
+
+    def on_data_end(koza: KozaTransform):
+        koza.log("logged post transform function")
+        writer.write(["called at end"])
+
+    runner = KozaRunner(
+        data=iter([{"my": "data"}]),
+        writer=writer,
+        transform_record=transform_record,
+        on_data_begin=on_data_begin,
+        on_data_end=on_data_end,
+    )
+    runner.run()
+
+    assert writer.items == ["called at start", {"my": "data"}, "called at end"]
+    assert caplog.records[-1].msg == "logged post transform function"
+
+
 def test_fn_required():
     data = iter([])
     writer = MockWriter()

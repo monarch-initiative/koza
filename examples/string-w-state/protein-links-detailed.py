@@ -6,6 +6,10 @@ from biolink_model.datamodel.pydanticmodel_v2 import PairwiseGeneToGeneInteracti
 import koza
 
 
+@koza.on_data_begin()
+def init(koza: koza.KozaTransform):
+    koza.state["counter"] = 0
+
 @koza.transform()
 def string_transform(koza: koza.KozaTransform):
     for row in koza.data:
@@ -22,3 +26,8 @@ def string_transform(koza: koza.KozaTransform):
         )
 
         koza.write(protein_a, protein_b, pairwise_gene_to_gene_interaction)
+        koza.state["counter"] += 1
+
+@koza.on_data_end()
+def end(koza: koza.KozaTransform):
+    koza.log(f"Total records: {koza.state['counter']}")

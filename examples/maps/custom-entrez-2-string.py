@@ -1,7 +1,8 @@
-from koza.runner import KozaTransform
+import koza
 
 
-def transform_record(koza: KozaTransform, record: dict):
+@koza.transform_record()
+def transform_record(koza: koza.KozaTransform, record: dict):
     koza.write(
         {
             "STRING": record["STRING"],
