@@ -21,6 +21,8 @@ from koza.runner import KozaRunner
         ("string-w-map", "map-protein-links-detailed", OutputFormat.jsonl),
         ("string-w-custom-map", "custom-map-protein-links-detailed", OutputFormat.tsv),
         ("string-w-custom-map", "custom-map-protein-links-detailed", OutputFormat.jsonl),
+        ("string-w-state", "protein-links-detailed", OutputFormat.tsv),
+        ("string-w-state", "protein-links-detailed", OutputFormat.jsonl),
     ],
 )
 def test_examples(source_name, ingest, output_format):

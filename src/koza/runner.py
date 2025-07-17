@@ -1,17 +1,16 @@
 import importlib
 import sys
-from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterator
-from dataclasses import asdict, dataclass
+from dataclasses import asdict
 from pathlib import Path
 from types import ModuleType
-from typing import Any
+from typing import Any, TypeVar
 
 import yaml
 from loguru import logger
 from mergedeep import merge
-from typing_extensions import assert_never
 
+from koza import decorators
 from koza.io.writer.jsonl_writer import JSONLWriter
 from koza.io.writer.passthrough_writer import PassthroughWriter
 from koza.io.writer.tsv_writer import TSVWriter
@@ -20,127 +19,18 @@ from koza.io.yaml_loader import UniqueIncludeLoader
 from koza.model.formats import OutputFormat
 from koza.model.koza import KozaConfig
 from koza.model.source import Source
-from koza.model.transform import MapErrorEnum
-from koza.utils.exceptions import MapItemException, NoTransformException
+from koza.transform import KozaTransform, Mappings, Record, SerialTransform, SingleTransform
+from koza.utils.exceptions import NoTransformException
 
-Record = dict[str, Any]
-Mappings = dict[str, dict[str, dict[str, str]]]
-
-
-def is_function(obj: object, attr: str):
-    return hasattr(obj, attr) and callable(getattr(obj, attr))
+T = TypeVar("T")
 
 
-@dataclass(kw_only=True)
-class KozaTransform(ABC):
-    extra_fields: dict[str, Any]
-    writer: KozaWriter
-    mappings: Mappings
-    on_map_failure: MapErrorEnum = MapErrorEnum.warning
-
-    @property
-    @abstractmethod
-    def data(self) -> Iterator[Record]: ...
-
-    def write(self, *records: Record, writer: str | None = None) -> None:
-        """Write a series of records to a writer.
-
-        The writer argument specifies the specific writer to write to (named
-        writers not yet implemented)
-        """
-        self.writer.write(records)
-
-    def lookup(self, name: str, map_column: str, map_name: str | None = None) -> str:
-        """Look up a term in the configured mappings.
-
-        In the one argument form:
-
-            koza.lookup("name")
-
-        It will look for the first match for "name" in the configured mappings.
-        The first mapping will have precendence over any proceeding ones.
-
-        If a map name is provided, only that named mapping will be used:
-
-            koza.lookup("name", map_name="mapping_a")
-
-        """
-        try:
-            if map_name:
-                mapping = self.mappings.get(map_name, None)
-                if mapping is None:
-                    raise MapItemException(f"Map {map_name} does not exist")
-
-                values = mapping.get(name, None)
-                if values is None:
-                    raise MapItemException(f"No record for {name} in map {map_name}")
-
-                mapped_value = values.get(map_column, None)
-                if mapped_value is None:
-                    raise MapItemException(f"No record for {name} in column {map_column} in {map_name}")
-
-                return mapped_value
-            else:
-                for mapping in self.mappings.values():
-                    values = mapping.get(name, None)
-                    if values is None:
-                        raise MapItemException(f"No record for {name} in map {map_name}")
-
-                    mapped_value = values.get(map_column, None)
-                    if mapped_value is None:
-                        raise MapItemException(f"No record for {name} in column {map_column} in {map_name}")
-
-                    return mapped_value
-                else:
-                    raise MapItemException(f"No record found in any mapping for {name} in column {map_column}")
-        except MapItemException as e:
-            match self.on_map_failure:
-                case MapErrorEnum.error:
-                    raise e
-                case MapErrorEnum.warning:
-                    return name
-                case _:
-                    assert_never(self.on_map_failure)
-
-    def log(self, msg: str, level: str = "info") -> None:
-        """Log a message."""
-        logger.log(level, msg)
-
-    @property
-    @abstractmethod
-    def current_reader(self) -> str:
-        """Returns the reader for the last row read.
-
-        Useful for getting the filename of the file that a row was read from:
-
-            for row in koza.iter_rows():
-                filename = koza.current_reader.filename
-        """
-        ...
-
-
-@dataclass(kw_only=True)
-class SingleTransform(KozaTransform):
-    _data: Iterator[Record]
-
-    @property
-    def data(self):
-        return self._data
-
-    @property
-    def current_reader(self):
-        raise NotImplementedError()
-
-
-@dataclass(kw_only=True)
-class SerialTransform(KozaTransform):
-    @property
-    def data(self):
-        raise NotImplementedError()
-
-    @property
-    def current_reader(self):
-        raise NotImplementedError()
+def get_instances(cls: type[T], from_list: list[Any]) -> list[T]:
+    ret: list[T] = []
+    for item in from_list:
+        if isinstance(item, cls):
+            ret.append(item)
+    return ret
 
 
 class KozaRunner:
@@ -153,6 +43,8 @@ class KozaRunner:
         extra_transform_fields: dict[str, Any] | None = None,
         transform_record: Callable[[KozaTransform, Record], None] | None = None,
         transform: Callable[[KozaTransform], None] | None = None,
+        on_data_begin: Callable[[KozaTransform], None] | None = None,
+        on_data_end: Callable[[KozaTransform], None] | None = None,
     ):
         self.data = data
         self.writer = writer
@@ -161,50 +53,43 @@ class KozaRunner:
         self.transform = transform
         self.extra_transform_fields = extra_transform_fields or {}
         self.base_directory = base_directory
-
-    def run_single(self):
-        fn = self.transform
-
-        if fn is None:
-            raise NoTransformException("Can only be run when `transform` is defined")
-
-        mappings = self.load_mappings()
-
-        logger.info("Running single transform")
-        transform = SingleTransform(
-            _data=self.data,
-            mappings=mappings,
-            writer=self.writer,
-            extra_fields=self.extra_transform_fields,
-        )
-        fn(transform)
-
-    def run_serial(self):
-        fn = self.transform_record
-
-        if fn is None:
-            raise NoTransformException("Can only be run when `transform_record` is defined")
-
-        mappings = self.load_mappings()
-
-        logger.info("Running serial transform")
-        transform = SerialTransform(
-            mappings=mappings,
-            writer=self.writer,
-            extra_fields=self.extra_transform_fields,
-        )
-        for item in self.data:
-            fn(transform, item)
+        self.on_data_begin = on_data_begin
+        self.on_data_end = on_data_end
 
     def run(self):
+        mappings = self.load_mappings()
+
         if callable(self.transform) and callable(self.transform_record):
             raise ValueError("Can only define one of `transform` or `transform_record`")
         elif callable(self.transform):
-            self.run_single()
+            logger.info("Running single transform")
+            transform = SingleTransform(
+                _data=self.data,
+                mappings=mappings,
+                writer=self.writer,
+                extra_fields=self.extra_transform_fields,
+            )
+            if callable(self.on_data_begin):
+                self.on_data_begin(transform)
+
+            self.transform(transform)
         elif callable(self.transform_record):
-            self.run_serial()
+            logger.info("Running serial transform")
+            transform = SerialTransform(
+                mappings=mappings,
+                writer=self.writer,
+                extra_fields=self.extra_transform_fields,
+            )
+            if callable(self.on_data_begin):
+                self.on_data_begin(transform)
+
+            for item in self.data:
+                self.transform_record(transform, item)
         else:
             raise NoTransformException("Must define one of `transform` or `transform_record`")
+
+        if callable(self.on_data_end):
+            self.on_data_end(transform)
 
         self.writer.finalize()
 
@@ -292,12 +177,54 @@ class KozaRunner:
             logger.debug(f"Loading module `{module_name}`")
             transform_module = importlib.import_module(module_name)
 
-        transform = getattr(transform_module, "transform", None)
-        if transform:
-            logger.debug(f"Found transform function `{module_name}.transform`")
-        transform_record = getattr(transform_module, "transform_record", None)
-        if transform_record:
-            logger.debug(f"Found transform function `{module_name}.transform_record`")
+        on_data_begin = None
+        on_data_end = None
+
+        if transform_module is not None:
+            module_contents = list(transform_module.__dict__.values())
+            transform_single_fns = get_instances(decorators.KozaSingleTransformFunction, module_contents)
+            transform_serial_fns = get_instances(decorators.KozaSerialTransformFunction, module_contents)
+            on_data_begin_fns = get_instances(decorators.KozaDataBeginFunction, module_contents)
+            on_data_end_fns = get_instances(decorators.KozaDataEndFunction, module_contents)
+
+            def _on_data_begin(koza: KozaTransform):
+                for fn in on_data_begin_fns:
+                    fn(koza)
+
+            def _on_data_end(koza: KozaTransform):
+                for fn in on_data_end_fns:
+                    fn(koza)
+
+            on_data_begin = _on_data_begin if on_data_begin_fns else None
+            on_data_end = _on_data_end if on_data_end_fns else None
+
+            if len(transform_single_fns) > 1:
+                raise ValueError("Only mark one function with `@koza.transform`")
+
+            if len(transform_serial_fns) > 1:
+                raise ValueError("Only mark one function with `@koza.transform_record`")
+
+            transform = transform_single_fns[0] if transform_single_fns else None
+            transform_record = transform_serial_fns[0] if transform_serial_fns else None
+
+            if transform and transform_record:
+                raise ValueError("Use one of `@koza.transform` or `@koza.transform_record`, not both")
+
+            if transform is None and transform_record is None:
+                raise NoTransformException(
+                    "Must mark one function with either `@koza.transform_record` or `@koza.transform`"
+                )
+
+            if transform:
+                logger.debug(f"Found transform function `{module_name}.{transform.fn.__name__}`")
+            if transform_record:
+                logger.debug(f"Found transform record function `{module_name}.{transform_record.fn.__name__}`")
+        else:
+            transform = None
+            transform_record = None
+            on_data_begin = None
+            on_data_end = None
+
         source = Source(config, base_directory, row_limit=row_limit, show_progress=show_progress)
 
         writer: KozaWriter | None = None
@@ -320,6 +247,8 @@ class KozaRunner:
             extra_transform_fields=config.transform.extra_fields,
             transform=transform,
             transform_record=transform_record,
+            on_data_begin=on_data_begin,
+            on_data_end=on_data_end,
         )
 
     @classmethod

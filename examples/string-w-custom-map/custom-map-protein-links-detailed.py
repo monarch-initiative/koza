@@ -2,10 +2,11 @@ import uuid
 
 from biolink_model.datamodel.pydanticmodel_v2 import Gene, PairwiseGeneToGeneInteraction
 
-from koza.runner import KozaTransform
+import koza
 
 
-def transform_record(koza: KozaTransform, record: dict):
+@koza.transform_record()
+def transform_string_record(koza: koza.KozaTransform, record: dict):
     a = record["protein1"]
     b = record["protein2"]
     mapped_a = koza.lookup(a, "entrez")

@@ -1,5 +1,6 @@
-from koza.runner import KozaTransform
+import koza
 
 
-def transform(koza: KozaTransform):
+@koza.transform()
+def transform(koza: koza.KozaTransform):
     pass
