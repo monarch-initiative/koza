@@ -28,8 +28,15 @@ class Source:
     reader: An iterator that takes in an IO[str] and yields a dictionary
     """
 
-    def __init__(self, config: KozaConfig, base_directory: Path, row_limit: int = 0, show_progress: bool = False):
-        reader_config = config.reader
+    def __init__(
+        self,
+        config: KozaConfig,
+        base_directory: Path,
+        row_limit: int = 0,
+        show_progress: bool = False,
+    ):
+        self.reader_config = config.reader
+        self.base_directory = base_directory
 
         self.row_limit = row_limit
         self.show_progress = show_progress
@@ -39,10 +46,11 @@ class Source:
         self.last_row: dict[str, Any] | None = None
         self._opened: list[ZipFile | TarFile | TextIO] = []
 
-        for file in reader_config.files:
+    def _open_files(self):
+        for file in self.reader_config.files:
             file_path = Path(file)
             if not file_path.is_absolute():
-                file_path = base_directory / file_path
+                file_path = self.base_directory / file_path
             opened_resource = open_resource(file_path)
             if isinstance(opened_resource, tuple):
                 archive, resources = opened_resource
@@ -52,31 +60,32 @@ class Source:
 
             for resource in resources:
                 self._opened.append(resource.reader)
-                if reader_config.format == InputFormat.csv:
+                if self.reader_config.format == InputFormat.csv:
                     self._readers.append(
                         CSVReader(
                             resource.reader,
-                            config=reader_config,
+                            config=self.reader_config,
                         )
                     )
-                elif reader_config.format == InputFormat.jsonl:
+                elif self.reader_config.format == InputFormat.jsonl:
                     self._readers.append(
                         JSONLReader(
                             resource.reader,
-                            config=reader_config,
+                            config=self.reader_config,
                         )
                     )
-                elif reader_config.format == InputFormat.json or reader_config.format == InputFormat.yaml:
+                elif self.reader_config.format == InputFormat.json or self.reader_config.format == InputFormat.yaml:
                     self._readers.append(
                         JSONReader(
                             resource.reader,
-                            config=reader_config,
+                            config=self.reader_config,
                         )
                     )
                 else:
-                    raise ValueError(f"File type {reader_config.format} not supported")
+                    raise ValueError(f"File type {self.reader_config.format} not supported")
 
     def __iter__(self):
+        self._open_files()
         num_rows = 0
 
         for reader in self._readers:
