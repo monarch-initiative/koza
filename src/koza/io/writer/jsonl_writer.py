@@ -21,20 +21,28 @@ class JSONLWriter(KozaWriter):
         self.converter = KGXConverter()
 
         os.makedirs(output_dir, exist_ok=True)
-        if config.node_properties:
-            self.nodeFH = open(f"{output_dir}/{source_name}_nodes.jsonl", "w")
-        if config.edge_properties:
-            self.edgeFH = open(f"{output_dir}/{source_name}_edges.jsonl", "w")
+
+    def _ensure_node_file_handle(self):
+        """Create node file handle if it doesn't exist"""
+        if not hasattr(self, "nodeFH"):
+            self.nodeFH = open(f"{self.output_dir}/{self.source_name}_nodes.jsonl", "w")
+
+    def _ensure_edge_file_handle(self):
+        """Create edge file handle if it doesn't exist"""
+        if not hasattr(self, "edgeFH"):
+            self.edgeFH = open(f"{self.output_dir}/{self.source_name}_edges.jsonl", "w")
 
     def write(self, entities: Iterable):
         (nodes, edges) = self.converter.convert(entities)
 
         if nodes:
+            self._ensure_node_file_handle()
             for n in nodes:
                 node = json.dumps(n, ensure_ascii=False)
                 self.nodeFH.write(node + "\n")
 
         if edges:
+            self._ensure_edge_file_handle()
             for e in edges:
                 if self.sssom_config:
                     e = self.sssom_config.apply_mapping(e)
