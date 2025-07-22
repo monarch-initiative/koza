@@ -1,6 +1,8 @@
 name: publish on pypi
 
 on:
+  workflow_dispatch:
+  pull_request:
   release:
     types: [published]
 
@@ -30,6 +32,7 @@ jobs:
           uv build
 
       - name: Publish to PyPi
+        if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
         env:
           UV_PUBLISH_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
         run: |

@@ -1,6 +1,7 @@
 name: Build and Deploy Docs to GitHub Pages
 on:
   workflow_dispatch:
+  pull_request:
   push:
     branches:
       - main
@@ -42,6 +43,7 @@ jobs:
 
       - name: Deploy to gh-pages
         uses: JamesIves/github-pages-deploy-action@v4
+        if: github.ref == 'refs/heads/main'
         with:
           folder: site
           target-folder: docs
