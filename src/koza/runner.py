@@ -4,7 +4,7 @@ from collections.abc import Callable, Iterator
 from dataclasses import asdict
 from pathlib import Path
 from types import ModuleType
-from typing import Any, TypeVar
+from typing import Any, TypeVar, Iterable, Tuple
 
 import yaml
 from loguru import logger
@@ -41,8 +41,8 @@ class KozaRunner:
         base_directory: Path | None = None,
         mapping_filenames: list[str] | None = None,
         extra_transform_fields: dict[str, Any] | None = None,
-        transform_record: Callable[[KozaTransform, Record], None] | None = None,
-        transform: Callable[[KozaTransform], None] | None = None,
+        transform_record: Callable[[KozaTransform, Record], (Iterable, Iterable)] | None = None,
+        transform: Callable[[KozaTransform], Iterable[Tuple[Iterable, Iterable]]] | None = None,
         on_data_begin: Callable[[KozaTransform], None] | None = None,
         on_data_end: Callable[[KozaTransform], None] | None = None,
     ):
@@ -72,7 +72,10 @@ class KozaRunner:
             if callable(self.on_data_begin):
                 self.on_data_begin(transform)
 
-            self.transform(transform)
+            for nodes, edges in self.transform(transform):
+                self.write(nodes)
+                self.write(edges)
+
         elif callable(self.transform_record):
             logger.info("Running serial transform")
             transform = SerialTransform(
@@ -84,7 +87,9 @@ class KozaRunner:
                 self.on_data_begin(transform)
 
             for item in self.data:
-                self.transform_record(transform, item)
+                for nodes, edges in self.transform_record(transform, item):
+                    self.write(nodes)
+                    self.write(edges)
         else:
             raise NoTransformException("Must define one of `transform` or `transform_record`")
 
