@@ -123,7 +123,9 @@ class KozaRunner:
                 extra_fields=self.extra_transform_fields,
             )
             run_before_hooks(hooks, transform)
-            transform_fn(transform)
+            result = transform_fn(transform)
+            if result is not None:
+                self.writer.write(result)
             run_end_hooks(hooks, transform)
         elif hooks.transform_record:
             logger.info("Running serial transform")
@@ -135,7 +137,9 @@ class KozaRunner:
             run_before_hooks(hooks, transform)
             for item in data:
                 for transform_record_fn in hooks.transform_record:
-                    transform_record_fn(transform, item)
+                    result = transform_record_fn(transform, item)
+                    if result is not None:
+                        self.writer.write(result)
             run_end_hooks(hooks, transform)
 
     def run(self):

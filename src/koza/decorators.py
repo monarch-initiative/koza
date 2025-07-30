@@ -1,4 +1,4 @@
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from typing import Any
 
 from koza.transform import KozaTransform
@@ -15,12 +15,12 @@ class KozaTransformHook:
 # @koza.transform()
 # Mark a function as being a single transform
 class KozaSingleTransformFunction(KozaTransformHook):
-    def __call__(self, koza: KozaTransform):
-        self.fn(koza)
+    def __call__(self, koza: KozaTransform) -> Iterable | None:
+        return self.fn(koza)
 
 
 def transform(tag: Tag = None):
-    def decorator(fn: Callable[[KozaTransform], None]):
+    def decorator(fn: Callable[[KozaTransform], Iterable | None]):
         return KozaSingleTransformFunction(fn, tag)
 
     return decorator
@@ -29,12 +29,12 @@ def transform(tag: Tag = None):
 # @koza.transform_record()
 # Mark a function as being a function to transform single records
 class KozaSerialTransformFunction(KozaTransformHook):
-    def __call__(self, koza: KozaTransform, data: dict[str, Any]):
-        self.fn(koza, data)
+    def __call__(self, koza: KozaTransform, data: dict[str, Any]) -> Iterable | None:
+        return self.fn(koza, data)
 
 
 def transform_record(tag: Tag = None):
-    def decorator(fn: Callable[[KozaTransform, dict[str, Any]], None]):
+    def decorator(fn: Callable[[KozaTransform, dict[str, Any]], Iterable | None]):
         return KozaSerialTransformFunction(fn, tag)
 
     return decorator
