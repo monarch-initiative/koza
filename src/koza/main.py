@@ -31,6 +31,10 @@ def transform(
         str,
         typer.Argument(help="Configuration YAML file"),
     ],
+    input_files: Annotated[
+        Optional[list[str]],
+        typer.Option("--input-file", "-i", help="Override input files"),
+    ] = None,
     output_dir: Annotated[
         str,
         typer.Option("--output-dir", "-o", help="Path to output directory"),

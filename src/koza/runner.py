@@ -258,6 +258,7 @@ class KozaRunner:
         output_dir: str = "",
         output_format: OutputFormat | None = None,
         row_limit: int = 0,
+        input_files: list[str] | None = None,
         show_progress: bool = False,
         overrides: dict | None = None,
     ):
@@ -299,6 +300,8 @@ class KozaRunner:
             _overrides["transform"] = {
                 "code": str(transform_code_path),
             }
+        if input_files is not None:
+            _overrides["reader"] = {"files": input_files}
         config_dict = merge(config_dict, _overrides, overrides or {})
         config = KozaConfig(**config_dict)
 

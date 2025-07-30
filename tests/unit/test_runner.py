@@ -5,6 +5,7 @@ import pytest
 from pydantic import TypeAdapter
 
 from koza.io.writer.writer import KozaWriter
+from koza.model.formats import InputFormat
 from koza.model.koza import KozaConfig
 from koza.runner import KozaRunner, KozaTransform
 from koza.utils.exceptions import NoTransformException
@@ -72,6 +73,7 @@ def test_transform_state():
     runner.run()
 
     assert writer.items == [{"count": 2}]
+
 
 def test_post_transform_fn(caplog):
     writer = MockWriter()
@@ -141,3 +143,16 @@ def test_load_config():
     assert callable(runner.transform)
     assert runner.transform_record is None
     assert callable(runner.run)
+
+
+def test_override_input_files():
+    config_file = (Path(__file__).parent / "../../examples/string/protein-links-detailed.yaml").resolve()
+    config, runner = KozaRunner.from_config_file(
+        str(config_file),
+        input_files=[
+            "foo.tsv",
+            "bar.tsv",
+        ],
+    )
+    assert config.reader.files == ["foo.tsv", "bar.tsv"]
+    assert config.reader.format == InputFormat.csv
