@@ -12,7 +12,7 @@ from koza.io.reader.json_reader import JSONReader
 from koza.io.reader.jsonl_reader import JSONLReader
 from koza.io.utils import open_resource
 from koza.model.formats import InputFormat
-from koza.model.koza import KozaConfig
+from koza.model.reader import ReaderConfig
 from koza.utils.row_filter import RowFilter
 
 
@@ -30,17 +30,17 @@ class Source:
 
     def __init__(
         self,
-        config: KozaConfig,
+        config: ReaderConfig,
         base_directory: Path,
         row_limit: int = 0,
         show_progress: bool = False,
     ):
-        self.reader_config = config.reader
+        self.reader_config = config
         self.base_directory = base_directory
 
         self.row_limit = row_limit
         self.show_progress = show_progress
-        self._filter = RowFilter(config.transform.filters)
+        self._filter = RowFilter(config.filters)
         self._reader = None
         self._readers: list[Iterable[dict[str, Any]]] = []
         self.last_row: dict[str, Any] | None = None

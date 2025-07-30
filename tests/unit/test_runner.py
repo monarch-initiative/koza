@@ -4,10 +4,11 @@ from typing import Any
 import pytest
 from pydantic import TypeAdapter
 
+import koza
 from koza.io.writer.writer import KozaWriter
 from koza.model.formats import InputFormat
 from koza.model.koza import KozaConfig
-from koza.runner import KozaRunner, KozaTransform
+from koza.runner import KozaRunner, KozaTransform, KozaTransformHooks
 from koza.utils.exceptions import NoTransformException
 
 
@@ -26,11 +27,16 @@ def test_run_single():
     data = iter([{"a": 1, "b": 2}])
     writer = MockWriter()
 
+    @koza.transform()
     def transform(koza: KozaTransform):
         for record in koza.data:
             koza.write(record)
 
-    runner = KozaRunner(data=data, writer=writer, transform=transform)
+    runner = KozaRunner(
+        data=data,
+        writer=writer,
+        hooks=KozaTransformHooks(transform=[transform]),
+    )
     runner.run()
 
     assert writer.items == [{"a": 1, "b": 2}]
@@ -40,10 +46,15 @@ def test_run_serial():
     data = iter([{"a": 1, "b": 2}])
     writer = MockWriter()
 
+    @koza.transform_record()
     def transform_record(koza: KozaTransform, record: dict[str, Any]):
         koza.write(record)
 
-    runner = KozaRunner(data=data, writer=writer, transform_record=transform_record)
+    runner = KozaRunner(
+        data=data,
+        writer=writer,
+        hooks=KozaTransformHooks(transform_record=[transform_record]),
+    )
     runner.run()
 
     assert writer.items == [{"a": 1, "b": 2}]
@@ -54,21 +65,26 @@ def test_transform_state():
 
     data = iter([{"a": 1}, {"b": 2}])
 
+    @koza.on_data_begin()
     def on_data_begin(koza: KozaTransform):
         koza.state["count"] = 0
 
+    @koza.on_data_end()
     def on_data_end(koza: KozaTransform):
         koza.write(koza.state)
 
+    @koza.transform_record()
     def transform_record(koza: KozaTransform, record: dict[str, Any]):
         koza.state["count"] += 1
 
     runner = KozaRunner(
         data=data,
         writer=writer,
-        transform_record=transform_record,
-        on_data_begin=on_data_begin,
-        on_data_end=on_data_end,
+        hooks=KozaTransformHooks(
+            transform_record=[transform_record],
+            on_data_begin=[on_data_begin],
+            on_data_end=[on_data_end],
+        ),
     )
     runner.run()
 
@@ -78,12 +94,15 @@ def test_transform_state():
 def test_post_transform_fn(caplog):
     writer = MockWriter()
 
+    @koza.transform_record()
     def transform_record(koza: KozaTransform, record: dict[str, Any]):
         koza.write(record)
 
+    @koza.on_data_begin()
     def on_data_begin(koza: KozaTransform):
         writer.write(["called at start"])
 
+    @koza.on_data_end()
     def on_data_end(koza: KozaTransform):
         koza.log("logged post transform function")
         writer.write(["called at end"])
@@ -91,9 +110,11 @@ def test_post_transform_fn(caplog):
     runner = KozaRunner(
         data=iter([{"my": "data"}]),
         writer=writer,
-        transform_record=transform_record,
-        on_data_begin=on_data_begin,
-        on_data_end=on_data_end,
+        hooks=KozaTransformHooks(
+            transform_record=[transform_record],
+            on_data_begin=[on_data_begin],
+            on_data_end=[on_data_end],
+        ),
     )
     runner.run()
 
@@ -106,7 +127,7 @@ def test_fn_required():
     writer = MockWriter()
 
     with pytest.raises(NoTransformException):
-        runner = KozaRunner(data=data, writer=writer)
+        runner = KozaRunner(data=data, writer=writer, hooks=KozaTransformHooks())
         runner.run()
 
 
@@ -114,15 +135,24 @@ def test_exactly_one_fn_required():
     data = iter([])
     writer = MockWriter()
 
+    @koza.transform()
     def transform(koza: KozaTransform):
         for record in koza.data:
             koza.write(record)
 
+    @koza.transform_record()
     def transform_record(koza: KozaTransform, record: dict[str, Any]):
         koza.write(record)
 
     with pytest.raises(ValueError):
-        runner = KozaRunner(data=data, writer=writer, transform=transform, transform_record=transform_record)
+        runner = KozaRunner(
+            data=data,
+            writer=writer,
+            hooks=KozaTransformHooks(
+                transform=[transform],
+                transform_record=[transform_record],
+            ),
+        )
         runner.run()
 
 
@@ -140,9 +170,8 @@ def test_load_config():
     )
 
     runner = KozaRunner.from_config(config, base_directory=Path(__file__).parent.parent.parent)
-    assert callable(runner.transform)
-    assert runner.transform_record is None
-    assert callable(runner.run)
+    hooks = runner.hooks_by_tag[None]
+    assert len(hooks.transform) == 1
 
 
 def test_override_input_files():
@@ -154,5 +183,6 @@ def test_override_input_files():
             "bar.tsv",
         ],
     )
-    assert config.reader.files == ["foo.tsv", "bar.tsv"]
-    assert config.reader.format == InputFormat.csv
+    readers = config.get_readers()
+    assert readers[0].reader.files == ["foo.tsv", "bar.tsv"]
+    assert readers[0].reader.format == InputFormat.csv

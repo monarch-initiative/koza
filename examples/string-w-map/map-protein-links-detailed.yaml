@@ -21,12 +21,13 @@ reader:
     - 'textmining'
     - 'combined_score' : 'int'
 
-transform:
   filters:
     - inclusion: 'include'
       column: 'combined_score'
       filter_code: 'lt'
       value: 700
+
+transform:
   mappings:
     - '../maps/entrez-2-string.yaml'
 

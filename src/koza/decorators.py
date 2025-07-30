@@ -3,10 +3,13 @@ from typing import Any
 
 from koza.transform import KozaTransform
 
+Tag = str | list[str] | None
+
 
 class KozaTransformHook:
-    def __init__(self, fn: Callable[..., Any]):
+    def __init__(self, fn: Callable[..., Any], tag: Tag):
         self.fn = fn
+        self.tag = tag
 
 
 # @koza.transform()
@@ -16,9 +19,9 @@ class KozaSingleTransformFunction(KozaTransformHook):
         self.fn(koza)
 
 
-def transform():
+def transform(tag: Tag = None):
     def decorator(fn: Callable[[KozaTransform], None]):
-        return KozaSingleTransformFunction(fn)
+        return KozaSingleTransformFunction(fn, tag)
 
     return decorator
 
@@ -30,9 +33,9 @@ class KozaSerialTransformFunction(KozaTransformHook):
         self.fn(koza, data)
 
 
-def transform_record():
+def transform_record(tag: Tag = None):
     def decorator(fn: Callable[[KozaTransform, dict[str, Any]], None]):
-        return KozaSerialTransformFunction(fn)
+        return KozaSerialTransformFunction(fn, tag)
 
     return decorator
 
@@ -44,9 +47,9 @@ class KozaDataBeginFunction(KozaTransformHook):
         self.fn(koza)
 
 
-def on_data_begin():
+def on_data_begin(tag: Tag = None):
     def decorator(fn: Callable[[KozaTransform], None]):
-        return KozaDataBeginFunction(fn)
+        return KozaDataBeginFunction(fn, tag)
 
     return decorator
 
@@ -58,8 +61,8 @@ class KozaDataEndFunction(KozaTransformHook):
         self.fn(koza)
 
 
-def on_data_end():
+def on_data_end(tag: Tag = None):
     def decorator(fn: Callable[[KozaTransform], None]):
-        return KozaDataEndFunction(fn)
+        return KozaDataEndFunction(fn, tag)
 
     return decorator
