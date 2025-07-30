@@ -1,11 +1,11 @@
 import importlib
 import sys
 from collections import defaultdict
-from collections.abc import Iterator
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from types import ModuleType
-from typing import Any, TypeAlias, TypeVar
+from typing import Any, TypeAlias, TypeVar, cast
 
 import yaml
 from loguru import logger
@@ -77,7 +77,7 @@ def run_end_hooks(hooks: KozaTransformHooks, transform: KozaTransform):
 class KozaRunner:
     def __init__(
         self,
-        data: Iterator[Record] | dict[str | None, Iterator[Record]],
+        data: Iterable[Record] | dict[str | None, Iterable[Record]],
         writer: KozaWriter,
         hooks: KozaTransformHooks | dict[str | None, KozaTransformHooks],
         base_directory: Path | None = None,
@@ -85,9 +85,11 @@ class KozaRunner:
         extra_transform_fields: dict[str, Any] | None = None,
     ):
         if isinstance(data, dict):
-            self.data = data
+            # This cast is necessary because a dict with Records as keys is an
+            # Iterable[Record]. So... don't pass a dict with records as its keys.
+            self.data = cast(dict[str | None, Iterable[Record]], data)
         else:
-            self.data: dict[str | None, Iterator[Record]] = {None: data}
+            self.data: dict[str | None, Iterable[Record]] = {None: data}
         self.writer = writer
         self.base_directory = base_directory
         self.mapping_filenames = mapping_filenames or []
@@ -96,7 +98,7 @@ class KozaRunner:
         if isinstance(hooks, dict):
             self.hooks_by_tag = hooks
         else:
-            self.hooks_by_tag: dict[str | None, KozaTransformHooks] = { None: hooks }
+            self.hooks_by_tag: dict[str | None, KozaTransformHooks] = {None: hooks}
 
     def run_for_tag(self, tag: str | None, mappings: Mappings):
         data = self.data[tag]
@@ -249,7 +251,7 @@ class KozaRunner:
         # if transform_record:
         #     logger.debug(f"Found transform record function `{module_name}.{transform_record.fn.__name__}`")
 
-        sources_by_tag: dict[str | None, Iterator[Record]] = {
+        sources_by_tag: dict[str | None, Iterable[Record]] = {
             reader.tag: iter(
                 Source(
                     reader.reader,

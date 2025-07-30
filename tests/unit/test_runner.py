@@ -24,7 +24,7 @@ class MockWriter(KozaWriter):
 
 
 def test_run_single():
-    data = iter([{"a": 1, "b": 2}])
+    data = [{"a": 1, "b": 2}]
     writer = MockWriter()
 
     @koza.transform()
@@ -43,7 +43,7 @@ def test_run_single():
 
 
 def test_run_serial():
-    data = iter([{"a": 1, "b": 2}])
+    data = [{"a": 1, "b": 2}]
     writer = MockWriter()
 
     @koza.transform_record()
@@ -63,7 +63,7 @@ def test_run_serial():
 def test_transform_state():
     writer = MockWriter()
 
-    data = iter([{"a": 1}, {"b": 2}])
+    data = [{"a": 1}, {"b": 2}]
 
     @koza.on_data_begin()
     def on_data_begin(koza: KozaTransform):
@@ -108,7 +108,7 @@ def test_post_transform_fn(caplog):
         writer.write(["called at end"])
 
     runner = KozaRunner(
-        data=iter([{"my": "data"}]),
+        data=[{"my": "data"}],
         writer=writer,
         hooks=KozaTransformHooks(
             transform_record=[transform_record],
@@ -123,16 +123,14 @@ def test_post_transform_fn(caplog):
 
 
 def test_fn_required():
-    data = iter([])
     writer = MockWriter()
 
     with pytest.raises(NoTransformException):
-        runner = KozaRunner(data=data, writer=writer, hooks=KozaTransformHooks())
+        runner = KozaRunner(data=[], writer=writer, hooks=KozaTransformHooks())
         runner.run()
 
 
 def test_exactly_one_fn_required():
-    data = iter([])
     writer = MockWriter()
 
     @koza.transform()
@@ -146,7 +144,7 @@ def test_exactly_one_fn_required():
 
     with pytest.raises(ValueError):
         runner = KozaRunner(
-            data=data,
+            data=[],
             writer=writer,
             hooks=KozaTransformHooks(
                 transform=[transform],

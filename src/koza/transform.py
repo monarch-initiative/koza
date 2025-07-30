@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from collections.abc import Iterator
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -24,7 +24,7 @@ class KozaTransform(ABC):
 
     @property
     @abstractmethod
-    def data(self) -> Iterator[Record]: ...
+    def data(self) -> Iterable[Record]: ...
 
     def write(self, *records: Any, writer: str | None = None) -> None:
         """Write a series of records to a writer.
@@ -105,7 +105,7 @@ class KozaTransform(ABC):
 
 @dataclass(kw_only=True)
 class SingleTransform(KozaTransform):
-    _data: Iterator[Record]
+    _data: Iterable[Record]
 
     @property
     def data(self):
