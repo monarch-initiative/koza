@@ -33,6 +33,7 @@ def get_instances(cls: type[T], from_list: list[Any]) -> list[T]:
 
 @dataclass
 class KozaTransformHooks:
+    process_data: list[decorators.KozaProcessDataFunction] = field(default_factory=list)
     transform: list[decorators.KozaSingleTransformFunction] = field(default_factory=list)
     transform_record: list[decorators.KozaSerialTransformFunction] = field(default_factory=list)
     on_data_begin: list[decorators.KozaDataBeginFunction] = field(default_factory=list)
@@ -112,6 +113,18 @@ class KozaRunner:
 
         if not hooks.transform_record and len(hooks.transform) > 1:
             raise ValueError("Can only define one `transform` function")
+
+        if hooks.process_data and len(hooks.process_data) > 1:
+            raise ValueError("Can only define one `process_data` function")
+
+        if hooks.process_data:
+            transform = SingleTransform(
+                _data=data,
+                mappings=mappings,
+                writer=self.writer,
+                extra_fields=self.extra_transform_fields,
+            )
+            data = hooks.process_data[0](transform)
 
         if hooks.transform:
             logger.info("Running single transform")

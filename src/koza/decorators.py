@@ -1,7 +1,7 @@
 from collections.abc import Callable, Iterable
 from typing import Any
 
-from koza.transform import KozaTransform
+from koza.transform import KozaTransform, Record
 
 Tag = str | list[str] | None
 
@@ -10,6 +10,19 @@ class KozaTransformHook:
     def __init__(self, fn: Callable[..., Any], tag: Tag):
         self.fn = fn
         self.tag = tag
+
+# @koza.process_data()
+# Pre-process data before continuing with transform
+class KozaProcessDataFunction(KozaTransformHook):
+    def __call__(self, koza: KozaTransform) -> Iterable[Record]:
+        return self.fn(koza)
+
+
+def process_data(tag: Tag = None):
+    def decorator(fn: Callable[[KozaTransform], Iterable | None]):
+        return KozaProcessDataFunction(fn, tag)
+
+    return decorator
 
 
 # @koza.transform()

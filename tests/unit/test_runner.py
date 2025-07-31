@@ -60,6 +60,34 @@ def test_run_serial():
     assert writer.items == [{"a": 1, "b": 2}]
 
 
+def test_process_data():
+    data = [{"a": 1}, {"b": 2}]
+    writer = MockWriter()
+
+    @koza.process_data()
+    def process_data(koza: KozaTransform):
+        assert koza.data == [{"a": 1}, {"b": 2}]
+        for record in data:
+            for k, v in record.items():
+                yield {k: v + 1}
+
+    @koza.transform_record()
+    def transform_record(koza: KozaTransform, record: dict[str, Any]):
+        yield record
+
+    runner = KozaRunner(
+        data=data,
+        writer=writer,
+        hooks=KozaTransformHooks(
+            process_data=[process_data],
+            transform_record=[transform_record],
+        ),
+    )
+    runner.run()
+
+    assert writer.items == [{"a": 2}, {"b": 3}]
+
+
 def test_transform_state():
     writer = MockWriter()
 
