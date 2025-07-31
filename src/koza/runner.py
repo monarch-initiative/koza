@@ -1,10 +1,10 @@
 import importlib
 import sys
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Iterable
 from dataclasses import asdict
 from pathlib import Path
 from types import ModuleType
-from typing import Any, TypeVar, Iterable, Tuple
+from typing import Any, TypeVar
 
 import yaml
 from loguru import logger
@@ -41,8 +41,8 @@ class KozaRunner:
         base_directory: Path | None = None,
         mapping_filenames: list[str] | None = None,
         extra_transform_fields: dict[str, Any] | None = None,
-        transform_record: Callable[[KozaTransform, Record], (Iterable, Iterable)] | None = None,
-        transform: Callable[[KozaTransform], Iterable[Tuple[Iterable, Iterable]]] | None = None,
+        transform_record: Callable[[KozaTransform, Record], tuple[Iterable, Iterable]] | None = None,
+        transform: Callable[[KozaTransform], Iterable[tuple[Iterable, Iterable]]] | None = None,
         on_data_begin: Callable[[KozaTransform], None] | None = None,
         on_data_end: Callable[[KozaTransform], None] | None = None,
     ):
@@ -73,8 +73,8 @@ class KozaRunner:
                 self.on_data_begin(transform)
 
             for nodes, edges in self.transform(transform):
-                self.write(nodes)
-                self.write(edges)
+                self.writer.write(nodes)
+                self.writer.write(edges)
 
         elif callable(self.transform_record):
             logger.info("Running serial transform")
@@ -87,9 +87,9 @@ class KozaRunner:
                 self.on_data_begin(transform)
 
             for item in self.data:
-                for nodes, edges in self.transform_record(transform, item):
-                    self.write(nodes)
-                    self.write(edges)
+                nodes, edges = self.transform_record(transform, item)
+                self.writer.write(nodes)
+                self.writer.write(edges)
         else:
             raise NoTransformException("Must define one of `transform` or `transform_record`")
 
