@@ -13,7 +13,7 @@ class KozaTransformHook:
 # Mark a function as being a single transform
 class KozaSingleTransformFunction(KozaTransformHook):
     def __call__(self, koza: KozaTransform):
-        self.fn(koza)
+        return self.fn(koza)
 
 
 def transform():
@@ -27,7 +27,7 @@ def transform():
 # Mark a function as being a function to transform single records
 class KozaSerialTransformFunction(KozaTransformHook):
     def __call__(self, koza: KozaTransform, data: dict[str, Any]):
-        self.fn(koza, data)
+        return self.fn(koza, data)
 
 
 def transform_record():
