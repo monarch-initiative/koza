@@ -72,9 +72,11 @@ class KozaRunner:
             if callable(self.on_data_begin):
                 self.on_data_begin(transform)
 
-            for nodes, edges in self.transform(transform):
-                self.writer.write(nodes)
-                self.writer.write(edges)
+            for transform_output in self.transform(transform):
+                if transform_output is not None:
+                    nodes, edges = transform_output
+                    self.writer.write(nodes)
+                    self.writer.write(edges)
 
         elif callable(self.transform_record):
             logger.info("Running serial transform")
@@ -87,9 +89,11 @@ class KozaRunner:
                 self.on_data_begin(transform)
 
             for item in self.data:
-                nodes, edges = self.transform_record(transform, item)
-                self.writer.write(nodes)
-                self.writer.write(edges)
+                transform_record_output = self.transform_record(transform, item)
+                if transform_record_output is not None:
+                    nodes, edges = transform_record_output
+                    self.writer.write(nodes)
+                    self.writer.write(edges)
         else:
             raise NoTransformException("Must define one of `transform` or `transform_record`")
 
