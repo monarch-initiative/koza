@@ -45,7 +45,6 @@ def load_transform(transform_module: ModuleType | None) -> dict[str | None, Koza
         return {}
 
     module_contents = list(vars(transform_module).values())
-    logger.info(f"module_contents: {module_contents}")
 
     hook_class_map: dict[str, type[decorators.KozaTransformHook]] = {
         "transform": decorators.KozaSingleTransformFunction,
@@ -59,14 +58,11 @@ def load_transform(transform_module: ModuleType | None) -> dict[str | None, Koza
 
     for fn_name, fn_class in hook_class_map.items():
         hooks = get_instances(fn_class, module_contents)
-        logger.info(f"{fn_name} hooks: {hooks}")
         for hook in hooks:
             tags = hook.tag if isinstance(hook.tag, list) else [hook.tag]
             for tag in tags:
-                logger.info(f"adding {fn_name} for {tag}")
                 getattr(by_tag[tag], fn_name).append(hook)
 
-    logger.info(f"by_tag dict: {by_tag}")
     return dict(by_tag)
 
 
