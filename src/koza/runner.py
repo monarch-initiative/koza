@@ -51,6 +51,7 @@ def load_transform(transform_module: ModuleType | None) -> dict[str | None, Koza
         "transform_record": decorators.KozaSerialTransformFunction,
         "on_data_begin": decorators.KozaDataBeginFunction,
         "on_data_end": decorators.KozaDataEndFunction,
+        "prepare_data": decorators.KozaPrepareDataFunction
     }
 
     by_tag: defaultdict[str | None, KozaTransformHooks] = defaultdict(KozaTransformHooks)
