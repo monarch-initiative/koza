@@ -11,16 +11,16 @@ class KozaTransformHook:
         self.fn = fn
         self.tag = tag
 
-# @koza.process_data()
+# @koza.prepare_data()
 # Pre-process data before continuing with transform
-class KozaProcessDataFunction(KozaTransformHook):
+class KozaPrepareDataFunction(KozaTransformHook):
     def __call__(self, koza: KozaTransform) -> Iterable[Record]:
         return self.fn(koza)
 
 
-def process_data(tag: Tag = None):
+def prepare_data(tag: Tag = None):
     def decorator(fn: Callable[[KozaTransform], Iterable | None]):
-        return KozaProcessDataFunction(fn, tag)
+        return KozaPrepareDataFunction(fn, tag)
 
     return decorator
 

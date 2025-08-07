@@ -60,12 +60,12 @@ def test_run_serial():
     assert writer.items == [{"a": 1, "b": 2}]
 
 
-def test_process_data():
+def test_prepare_data():
     data = [{"a": 1}, {"b": 2}]
     writer = MockWriter()
 
-    @koza.process_data()
-    def process_data(koza: KozaTransform):
+    @koza.prepare_data()
+    def prepare_data(koza: KozaTransform):
         assert koza.data == [{"a": 1}, {"b": 2}]
         for record in data:
             for k, v in record.items():
@@ -79,7 +79,7 @@ def test_process_data():
         data=data,
         writer=writer,
         hooks=KozaTransformHooks(
-            process_data=[process_data],
+            prepare_data=[prepare_data],
             transform_record=[transform_record],
         ),
     )
