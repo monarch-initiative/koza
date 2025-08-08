@@ -33,7 +33,7 @@ def get_instances(cls: type[T], from_list: list[Any]) -> list[T]:
 
 @dataclass
 class KozaTransformHooks:
-    process_data: list[decorators.KozaProcessDataFunction] = field(default_factory=list)
+    prepare_data: list[decorators.KozaPrepareDataFunction] = field(default_factory=list)
     transform: list[decorators.KozaSingleTransformFunction] = field(default_factory=list)
     transform_record: list[decorators.KozaSerialTransformFunction] = field(default_factory=list)
     on_data_begin: list[decorators.KozaDataBeginFunction] = field(default_factory=list)
@@ -47,6 +47,7 @@ def load_transform(transform_module: ModuleType | None) -> dict[str | None, Koza
     module_contents = list(vars(transform_module).values())
 
     hook_class_map: dict[str, type[decorators.KozaTransformHook]] = {
+        "prepare_data": decorators.KozaPrepareDataFunction,
         "transform": decorators.KozaSingleTransformFunction,
         "transform_record": decorators.KozaSerialTransformFunction,
         "on_data_begin": decorators.KozaDataBeginFunction,

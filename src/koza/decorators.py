@@ -11,16 +11,49 @@ class KozaTransformHook:
         self.fn = fn
         self.tag = tag
 
-# @koza.process_data()
+
+# @koza.prepare_data()
 # Pre-process data before continuing with transform
-class KozaProcessDataFunction(KozaTransformHook):
-    def __call__(self, koza: KozaTransform) -> Iterable[Record]:
-        return self.fn(koza)
+class KozaPrepareDataFunction(KozaTransformHook):
+    def __call__(self, koza: KozaTransform, data: Iterable[Record]) -> Iterable:
+        return self.fn(koza, data)
 
 
-def process_data(tag: Tag = None):
-    def decorator(fn: Callable[[KozaTransform], Iterable | None]):
-        return KozaProcessDataFunction(fn, tag)
+def prepare_data(tag: Tag = None):
+    """
+    Decorator to prepare input data before starting a transform.
+
+    The return value of a function marked with this decorator will be used as
+    the input for the transform function(s) for this transform.
+
+    Usage:
+
+        @koza.prepare_data()
+        def convert_to_pandas(koza: KozaTransform, data: Iterable[dict[str, Any]]):
+            return pd.DataFrame(data)
+
+        @koza.transform()
+        def transform_with_pandas(koza: KozaTransform: data: pd.DataFrame):
+            # `data` here is the pandas data frame returned from above
+
+    Any sort of iterator may be returned from this function. For example, a cursor
+    from a database query:
+
+        @koza.prepare_data()
+        def load_db_data(koza, data):
+            conn = db.connect("localhost:9152")
+            res = conn.query("SELECT * FROM table")
+            return res
+
+        @koza.transform_record()
+        def transform_db_row(koza, record):
+            # `record` here will be a row from the database query
+
+    :param tag: The tag with which this hook should be associated.
+    """
+
+    def decorator(fn: Callable[[KozaTransform, Record], Iterable | None]):
+        return KozaPrepareDataFunction(fn, tag)
 
     return decorator
 
