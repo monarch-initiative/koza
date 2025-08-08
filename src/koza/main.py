@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """CLI for Koza - wraps the koza library to provide a command line interface"""
 
+from collections import defaultdict
 from pathlib import Path
 from typing import Annotated, Optional
 
@@ -23,6 +24,26 @@ def callback(version: Optional[bool] = typer.Option(None, "--version", is_eager=
 
         typer.echo(f"Koza version: {__version__}")
         raise typer.Exit()
+
+
+def parse_input_files(args: list[str]):
+    tagged_ret: defaultdict[str, list[str]] = defaultdict(list)
+    untagged_ret: list[str] = []
+    parse_as_single_arg: bool | None = None
+    for arg in args:
+        parts = arg.split(":", 1)
+        is_single_arg = len(parts) == 1
+
+        if parse_as_single_arg is None:
+            parse_as_single_arg = is_single_arg
+        elif is_single_arg != parse_as_single_arg:
+            raise ValueError("Cannot mix tagged and untagged input files")
+
+        if is_single_arg:
+            untagged_ret.append(parts[0])
+        else:
+            tagged_ret[parts[0]].append(parts[1])
+    return untagged_ret if untagged_ret else dict(tagged_ret)
 
 
 @typer_app.command()
@@ -74,9 +95,12 @@ def transform(
 
         logger.add(log, format=prompt, colorize=True)
 
+    parsed_input_files = parse_input_files(input_files) if input_files else None
+
     # FIXME: Verbosity, logging
     config, runner = KozaRunner.from_config_file(
         configuration_yaml,
+        input_files=parsed_input_files,
         output_dir=output_dir,
         output_format=output_format,
         row_limit=row_limit,

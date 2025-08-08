@@ -276,7 +276,7 @@ class KozaRunner:
         output_dir: str = "",
         output_format: OutputFormat | None = None,
         row_limit: int = 0,
-        input_files: list[str] | None = None,
+        input_files: list[str] | dict[str, list[str]] | None = None,
         show_progress: bool = False,
         overrides: dict | None = None,
     ):
@@ -319,7 +319,14 @@ class KozaRunner:
                 "code": str(transform_code_path),
             }
         if input_files is not None:
-            _overrides["reader"] = {"files": input_files}
+            if isinstance(input_files, list):
+                _overrides["reader"] = {"files": input_files}
+            elif config.readers:
+                _overrides["readers"] = {}
+                for reader in config.get_readers():
+                    if reader.tag in input_files:
+                        _overrides["readers"][reader.tag] = input_files[reader.tag]
+
         config_dict = merge(config_dict, _overrides, overrides or {})
         config = KozaConfig(**config_dict)
 
