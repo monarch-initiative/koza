@@ -97,12 +97,33 @@ def transform(tag: Tag = None):
 # @koza.transform_record()
 # Mark a function as being a function to transform single records
 class KozaSerialTransformFunction(KozaTransformHook):
-    def __call__(self, koza: KozaTransform, data: dict[str, Any]) -> Iterable | None:
+    def __call__(self, koza: KozaTransform, data: Record) -> Iterable | None:
         return self.fn(koza, data)
 
 
 def transform_record(tag: Tag = None):
-    def decorator(fn: Callable[[KozaTransform, dict[str, Any]], Iterable | None]):
+    """
+    Decorator to mark a record transformation function.
+
+    This function will be called on every record for a configured reader. By
+    default, these records will be of the type `dict[str, Any]`, but may be
+    different if a `@koza.prepare_data` decorator has been configured.
+
+    Usage:
+
+        @koza.transform_record()
+        def transform_csv_row(koza: KozaTransform, record: dict[str, Any]):
+            output = MyOutputObject(
+                name=record["name"],
+                label=record["label"],
+            )
+
+            koza.write(output)
+
+    :param tag: The tag with which this hook should be associated.
+    """
+
+    def decorator(fn: Callable[[KozaTransform, Record], Iterable | None]):
         return KozaSerialTransformFunction(fn, tag)
 
     return decorator
@@ -116,6 +137,12 @@ class KozaDataBeginFunction(KozaTransformHook):
 
 
 def on_data_begin(tag: Tag = None):
+    """
+    Decorator to mark a function to be called before data is read in a transform.
+
+    :param tag: The tag with which this hook should be associated.
+    """
+
     def decorator(fn: Callable[[KozaTransform], None]):
         return KozaDataBeginFunction(fn, tag)
 
@@ -130,6 +157,12 @@ class KozaDataEndFunction(KozaTransformHook):
 
 
 def on_data_end(tag: Tag = None):
+    """
+    Decorator to mark a function to be called after data is read in a transform.
+
+    :param tag: The tag with which this hook should be associated.
+    """
+
     def decorator(fn: Callable[[KozaTransform], None]):
         return KozaDataEndFunction(fn, tag)
 

@@ -63,6 +63,13 @@ def load_transform(transform_module: ModuleType | None) -> dict[str | None, Koza
             for tag in tags:
                 getattr(by_tag[tag], fn_name).append(hook)
 
+    for tag, hooks in by_tag.items():
+        tag_str = "" if tag is None else f"[{tag}] "
+        for hook_type, hook_fns in asdict(hooks).items():
+            for hook_fn in hook_fns:
+                logger.debug(
+                    f"{tag_str}Found `{hook_type}` function `{transform_module.__name__}.{hook_fn.fn.__name__}`"
+                )
 
     return dict(by_tag)
 
@@ -98,16 +105,16 @@ class KozaRunner:
         hooks = self.hooks_by_tag.get(tag, None)
 
         if hooks is None or (not hooks.transform and not hooks.transform_record):
-            raise NoTransformException("Must define one of `transform` or `transform_record`")
+            raise NoTransformException("Must define one of `@koza.transform` or `@koza.transform_record`")
 
         if hooks.transform and hooks.transform_record:
-            raise ValueError("Can only define one of `transform` or `transform_record`")
+            raise ValueError("Can only define one of `@koza.transform` or `@koza.transform_record`")
 
         if not hooks.transform_record and len(hooks.transform) > 1:
-            raise ValueError("Can only define one `transform` function")
+            raise ValueError("Can only define one `@koza.transform` function")
 
-        if hooks.process_data and len(hooks.process_data) > 1:
-            raise ValueError("Can only define one `process_data` function")
+        if hooks.prepare_data and len(hooks.prepare_data) > 1:
+            raise ValueError("Can only define one `@koza.prepare_data` function")
 
         transform = KozaTransform(mappings=mappings, writer=self.writer, extra_fields=self.extra_transform_fields)
 
@@ -228,25 +235,6 @@ class KozaRunner:
             transform_module = importlib.import_module(module_name)
 
         hooks_by_tag = load_transform(transform_module)
-
-        # if len(transform_single_fns) > 1:
-        #     raise ValueError("Only mark one function with `@koza.transform`")
-
-        # if len(transform_serial_fns) > 1:
-        #     raise ValueError("Only mark one function with `@koza.transform_record`")
-
-        # if transform and transform_record:
-        #     raise ValueError("Use one of `@koza.transform` or `@koza.transform_record`, not both")
-
-        # if transform is None and transform_record is None:
-        #     raise NoTransformException(
-        #         "Must mark one function with either `@koza.transform_record` or `@koza.transform`"
-        #     )
-
-        # if transform:
-        #     logger.debug(f"Found transform function `{module_name}.{transform.fn.__name__}`")
-        # if transform_record:
-        #     logger.debug(f"Found transform record function `{module_name}.{transform_record.fn.__name__}`")
 
         sources_by_tag: dict[str | None, Iterable[Record]] = {
             reader.tag: iter(
