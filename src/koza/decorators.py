@@ -61,12 +61,34 @@ def prepare_data(tag: Tag = None):
 # @koza.transform()
 # Mark a function as being a single transform
 class KozaSingleTransformFunction(KozaTransformHook):
-    def __call__(self, koza: KozaTransform) -> Iterable | None:
-        return self.fn(koza)
+    def __call__(self, koza: KozaTransform, data: Iterable[Record]) -> Iterable | None:
+        return self.fn(koza, data)
 
 
 def transform(tag: Tag = None):
-    def decorator(fn: Callable[[KozaTransform], Iterable | None]):
+    """
+    Decorator to mark a transformation function.
+
+    A function marked with this hook will be run *once* for all input data for a
+    given tag. If your transform can be performed on records one at a time,
+    prefer to use `@koza.transform_record()`.
+
+    Usage:
+
+        @koza.transform()
+        def do_transform(koza: KozaTransform, data):
+            for record in data:
+                output = MyOutputObject(
+                    name=record["name"],
+                    label=record["label"],
+                )
+
+                koza.write(output)
+
+    :param tag: The tag with which this hook should be associated.
+    """
+
+    def decorator(fn: Callable[[KozaTransform, Iterable[Record]], Iterable | None]):
         return KozaSingleTransformFunction(fn, tag)
 
     return decorator

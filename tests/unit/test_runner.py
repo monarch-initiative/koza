@@ -28,8 +28,8 @@ def test_run_single():
     writer = MockWriter()
 
     @koza.transform()
-    def transform(koza: KozaTransform):
-        for record in koza.data:
+    def transform(koza: KozaTransform, data):
+        for record in data:
             koza.write(record)
 
     runner = KozaRunner(
@@ -162,8 +162,8 @@ def test_exactly_one_fn_required():
     writer = MockWriter()
 
     @koza.transform()
-    def transform(koza: KozaTransform):
-        for record in koza.data:
+    def transform(koza: KozaTransform, data):
+        for record in data:
             koza.write(record)
 
     @koza.transform_record()

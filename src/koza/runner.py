@@ -20,7 +20,7 @@ from koza.io.yaml_loader import UniqueIncludeLoader
 from koza.model.formats import OutputFormat
 from koza.model.koza import KozaConfig
 from koza.model.source import Source
-from koza.transform import KozaTransform, Mappings, Record, SerialTransform, SingleTransform
+from koza.transform import KozaTransform, Mappings, Record
 from koza.utils.exceptions import NoTransformException
 
 T = TypeVar("T", bound=decorators.KozaTransformHook)
@@ -63,17 +63,8 @@ def load_transform(transform_module: ModuleType | None) -> dict[str | None, Koza
             for tag in tags:
                 getattr(by_tag[tag], fn_name).append(hook)
 
+
     return dict(by_tag)
-
-
-def run_before_hooks(hooks: KozaTransformHooks, transform: KozaTransform):
-    for fn in hooks.on_data_begin:
-        fn(transform)
-
-
-def run_end_hooks(hooks: KozaTransformHooks, transform: KozaTransform):
-    for fn in hooks.on_data_end:
-        fn(transform)
 
 
 class KozaRunner:
@@ -118,43 +109,31 @@ class KozaRunner:
         if hooks.process_data and len(hooks.process_data) > 1:
             raise ValueError("Can only define one `process_data` function")
 
-        if hooks.process_data:
-            transform = SingleTransform(
-                _data=data,
-                mappings=mappings,
-                writer=self.writer,
-                extra_fields=self.extra_transform_fields,
-            )
-            data = hooks.process_data[0](transform)
+        transform = KozaTransform(mappings=mappings, writer=self.writer, extra_fields=self.extra_transform_fields)
+
+        if hooks.prepare_data:
+            data = hooks.prepare_data[0](transform, data)
+
+        for fn in hooks.on_data_begin:
+            fn(transform)
 
         if hooks.transform:
             logger.info("Running single transform")
             transform_fn = hooks.transform[0]
-            transform = SingleTransform(
-                _data=data,
-                mappings=mappings,
-                writer=self.writer,
-                extra_fields=self.extra_transform_fields,
-            )
-            run_before_hooks(hooks, transform)
-            result = transform_fn(transform)
+            result = transform_fn(transform, data)
             if result is not None:
                 self.writer.write(result)
-            run_end_hooks(hooks, transform)
+
         elif hooks.transform_record:
             logger.info("Running serial transform")
-            transform = SerialTransform(
-                mappings=mappings,
-                writer=self.writer,
-                extra_fields=self.extra_transform_fields,
-            )
-            run_before_hooks(hooks, transform)
             for item in data:
                 for transform_record_fn in hooks.transform_record:
                     result = transform_record_fn(transform, item)
                     if result is not None:
                         self.writer.write(result)
-            run_end_hooks(hooks, transform)
+
+        for fn in hooks.on_data_end:
+            fn(transform)
 
     def run(self):
         mappings = self.load_mappings()
