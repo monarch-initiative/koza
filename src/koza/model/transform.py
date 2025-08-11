@@ -7,7 +7,6 @@ from pydantic.dataclasses import dataclass
 from pydantic_core import ArgsKwargs
 
 from koza.model.config.pydantic_config import PYDANTIC_CONFIG
-from koza.model.filters import ColumnFilter
 
 
 class MapErrorEnum(str, Enum):
@@ -33,7 +32,6 @@ class TransformConfig:
 
     code: str | None = None
     module: str | None = None
-    filters: list[ColumnFilter] = field(default_factory=list)
     global_table: str | dict | None = None
     local_table: str | dict | None = None
     mappings: list[str] = field(default_factory=list)

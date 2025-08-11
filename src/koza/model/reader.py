@@ -7,10 +7,12 @@ from dataclasses import field
 from enum import Enum
 from typing import Annotated, Any, Literal
 
+from ordered_set import OrderedSet
 from pydantic import Discriminator, StrictInt, StrictStr, Tag
 from pydantic.dataclasses import dataclass
 
 from koza.model.config.pydantic_config import PYDANTIC_CONFIG
+from koza.model.filters import ColumnFilter
 from koza.model.formats import InputFormat
 
 __all__ = ("ReaderConfig",)
@@ -34,6 +36,7 @@ class HeaderMode(str, Enum):
 @dataclass(config=PYDANTIC_CONFIG, frozen=True)
 class BaseReaderConfig:
     files: list[str] = field(default_factory=list)
+    filters: list[ColumnFilter] = field(default_factory=list)
 
 
 @dataclass(config=PYDANTIC_CONFIG, frozen=True)
@@ -75,6 +78,19 @@ class CSVReaderConfig(BaseReaderConfig):
                 "index in which it appears in the file, or set this value to"
                 "'infer'"
             )
+
+        if self.columns is not None:
+            filtered_columns = OrderedSet([column_filter.column for column_filter in self.filters])
+            all_columns = OrderedSet(
+                [column if isinstance(column, str) else list(column.keys())[0] for column in self.columns]
+            )
+            extra_filtered_columns = filtered_columns - all_columns
+            if extra_filtered_columns:
+                quote = "'"
+                raise ValueError(
+                    "One or more filter columns not present in designated CSV columns:"
+                    f" {', '.join([f'{quote}{c}{quote}' for c in extra_filtered_columns])}"
+                )
 
 
 @dataclass(config=PYDANTIC_CONFIG, frozen=True)

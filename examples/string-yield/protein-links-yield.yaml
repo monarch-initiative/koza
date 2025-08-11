@@ -1,36 +1,18 @@
-name: 'custom-map-protein-links-detailed'
-
-metadata: !include 'metadata.yaml'
+name: 'protein-links-yield'
+metadata: !include './metadata.yaml'
 
 reader:
-  delimiter: ' '
-
+  format: csv
   files:
     - '../data/string.tsv'
     - '../data/string2.tsv'
-
-  columns:
-    - 'protein1'
-    - 'protein2'
-    - 'neighborhood'
-    - 'fusion'
-    - 'cooccurence'
-    - 'coexpression'
-    - 'experimental'
-    - 'database'
-    - 'textmining'
-    - 'combined_score' : 'int'
-
+  delimiter: ' '
+  columns: !include '../standards/string.yaml'
   filters:
     - inclusion: 'include'
       column: 'combined_score'
       filter_code: 'lt'
       value: 700
-
-transform:
-
-  mappings:
-    - '../maps/custom-entrez-2-string.yaml'
 
 writer:
   node_properties:

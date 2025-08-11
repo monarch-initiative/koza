@@ -6,8 +6,9 @@ Testing the biolink config dataclasses + pydandic
 import pytest
 from pydantic import TypeAdapter, ValidationError
 
+from koza.model.formats import OutputFormat
 from koza.model.koza import KozaConfig
-from koza.model.transform import TransformConfig
+from koza.model.reader import ReaderConfig
 
 
 @pytest.mark.parametrize(
@@ -43,7 +44,7 @@ def test_wrong_filter_type_raises_exception(inclusion, column, filter_code, valu
         ],
     }
     with pytest.raises(ValidationError) as e:
-        TypeAdapter(TransformConfig).validate_python(config)
+        TypeAdapter(ReaderConfig).validate_python(config)
 
     for error in e.value.errors():
         assert error["msg"].startswith("Input should be a")
@@ -68,7 +69,7 @@ def test_wrong_filter_code_raises_exception(inclusion, code):
         ],
     }
     with pytest.raises(ValidationError) as e:
-        TypeAdapter(TransformConfig).validate_python(config)
+        TypeAdapter(ReaderConfig).validate_python(config)
 
     assert e.value.error_count() == 1
     assert e.value.errors()[0]["msg"].startswith(
@@ -81,8 +82,6 @@ def test_filter_on_nonexistent_column():
         "name": "test_config",
         "reader": {
             "columns": ["a", "b", "c"],
-        },
-        "transform": {
             "filters": [
                 {
                     "column": "a",
@@ -113,3 +112,24 @@ def test_filter_on_nonexistent_column():
     assert e.value.errors()[0]["msg"].startswith(
         f"Value error, One or more filter columns not present in designated CSV columns: 'd', 'e'"
     )
+
+
+def test_tagged_readers():
+    config_dict = {
+        "name": "test_config",
+        "readers": {
+            "tag1": {
+                "format": "jsonl",
+            },
+            "tag2": {
+                "format": "csv",
+            },
+        },
+    }
+
+    config = TypeAdapter(KozaConfig).validate_python(config_dict)
+    readers = config.get_readers()
+    assert len(readers) == 2
+    assert readers[0].tag == "tag1"
+    assert readers[1].tag == "tag2"
+    assert readers[0].reader.format == OutputFormat.jsonl

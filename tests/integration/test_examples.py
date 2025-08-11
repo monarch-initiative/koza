@@ -15,6 +15,8 @@ from koza.runner import KozaRunner
     [
         ("string", "protein-links-detailed", OutputFormat.tsv),
         ("string", "protein-links-detailed", OutputFormat.jsonl),
+        ("string-yield", "protein-links-yield", OutputFormat.tsv),
+        ("string-yield", "protein-links-yield", OutputFormat.jsonl),
         ("string-declarative", "declarative-protein-links-detailed", OutputFormat.tsv),
         ("string-declarative", "declarative-protein-links-detailed", OutputFormat.jsonl),
         ("string-w-map", "map-protein-links-detailed", OutputFormat.tsv),

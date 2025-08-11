@@ -8,14 +8,14 @@ reader:
     - '../data/string2.tsv'
   delimiter: ' '
   columns: !include '../standards/string.yaml'
-
-transform:
-  code: 'protein-links-detailed.py'
   filters:
     - inclusion: 'include'
       column: 'combined_score'
       filter_code: 'lt'
       value: 700
+
+transform:
+  code: 'protein-links-detailed.py'
 
 writer:
   node_properties:

@@ -10,9 +10,10 @@ import koza
 def init(koza: koza.KozaTransform):
     koza.state["counter"] = 0
 
+
 @koza.transform()
-def string_transform(koza: koza.KozaTransform):
-    for row in koza.data:
+def string_transform(koza: koza.KozaTransform, data):
+    for row in data:
         protein_a = Protein(id="ENSEMBL:" + re.sub(r"\d+\.", "", row["protein1"]))
         protein_b = Protein(id="ENSEMBL:" + re.sub(r"\d+\.", "", row["protein2"]))
 
@@ -27,6 +28,7 @@ def string_transform(koza: koza.KozaTransform):
 
         koza.write(protein_a, protein_b, pairwise_gene_to_gene_interaction)
         koza.state["counter"] += 1
+
 
 @koza.on_data_end()
 def end(koza: koza.KozaTransform):

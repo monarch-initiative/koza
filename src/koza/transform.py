@@ -1,5 +1,3 @@
-from abc import ABC, abstractmethod
-from collections.abc import Iterator
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -15,16 +13,12 @@ Mappings = dict[str, dict[str, dict[str, str]]]
 
 
 @dataclass(kw_only=True)
-class KozaTransform(ABC):
+class KozaTransform:
     extra_fields: dict[str, Any]
     writer: KozaWriter
     mappings: Mappings
     on_map_failure: MapErrorEnum = MapErrorEnum.warning
     state: dict[Any, Any] = field(default_factory=dict)
-
-    @property
-    @abstractmethod
-    def data(self) -> Iterator[Record]: ...
 
     def write(self, *records: Any, writer: str | None = None) -> None:
         """Write a series of records to a writer.
@@ -91,7 +85,6 @@ class KozaTransform(ABC):
         logger.log(level, msg)
 
     @property
-    @abstractmethod
     def current_reader(self) -> str:
         """Returns the reader for the last row read.
 
@@ -101,27 +94,3 @@ class KozaTransform(ABC):
                 filename = koza.current_reader.filename
         """
         ...
-
-
-@dataclass(kw_only=True)
-class SingleTransform(KozaTransform):
-    _data: Iterator[Record]
-
-    @property
-    def data(self):
-        return self._data
-
-    @property
-    def current_reader(self):
-        raise NotImplementedError()
-
-
-@dataclass(kw_only=True)
-class SerialTransform(KozaTransform):
-    @property
-    def data(self):
-        raise NotImplementedError()
-
-    @property
-    def current_reader(self):
-        raise NotImplementedError()
