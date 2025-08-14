@@ -42,10 +42,10 @@ class KGXConverter:
 
     def convert_node(self, node) -> dict:
         if isinstance(node, BaseModel):
-            return dict(node)
+            return node.model_dump(exclude_unset=True)
         return asdict(node)
 
     def convert_association(self, association) -> dict:
         if isinstance(association, BaseModel):
-            return dict(association)
+            return association.model_dump(exclude_unset=True)
         return asdict(association)
