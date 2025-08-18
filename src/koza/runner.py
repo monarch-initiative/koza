@@ -18,6 +18,7 @@ from koza.io.writer.tsv_writer import TSVWriter
 from koza.io.writer.writer import KozaWriter
 from koza.io.yaml_loader import UniqueIncludeLoader
 from koza.model.formats import OutputFormat
+from koza.model.graphs import KnowledgeGraph
 from koza.model.koza import KozaConfig
 from koza.model.source import Source
 from koza.transform import KozaTransform, Mappings, Record
@@ -129,7 +130,20 @@ class KozaRunner:
             transform_fn = hooks.transform[0]
             result = transform_fn(transform, data)
             if result is not None:
-                self.writer.write(result)
+                # determine whether this transform function is returning KnowledgeGraphs by looking at the first result
+                returning_kgs = False
+                for r in result:
+                    if isinstance(r, KnowledgeGraph):
+                        returning_kgs = True
+                    break
+                if returning_kgs:
+                    # if KnowledgeGraphs iterate through them and write the nodes and edges for each
+                    for kg in result:
+                        self.writer.write_nodes(kg.nodes)
+                        self.writer.write_edges(kg.edges)
+                else:
+                    # otherwise rely on the writer to handle the entities appropriately
+                    self.writer.write(result)
 
         elif hooks.transform_record:
             logger.info("Running serial transform")
@@ -137,7 +151,11 @@ class KozaRunner:
                 for transform_record_fn in hooks.transform_record:
                     result = transform_record_fn(transform, item)
                     if result is not None:
-                        self.writer.write(result)
+                        if isinstance(result, KnowledgeGraph):
+                            self.writer.write_nodes(result.nodes)
+                            self.writer.write_edges(result.edges)
+                        else:
+                            self.writer.write(result)
 
         for fn in hooks.on_data_end:
             fn(transform)
