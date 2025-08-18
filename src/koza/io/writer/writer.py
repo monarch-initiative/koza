@@ -16,6 +16,14 @@ class KozaWriter(ABC):
         pass
 
     @abstractmethod
+    def write_nodes(self, nodes: Iterable):
+        pass
+
+    @abstractmethod
+    def write_edges(self, edges: Iterable):
+        pass
+
+    @abstractmethod
     def finalize(self):
         pass
 

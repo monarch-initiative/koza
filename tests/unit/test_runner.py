@@ -19,6 +19,12 @@ class MockWriter(KozaWriter):
     def write(self, entities):
         self.items += entities
 
+    def write_nodes(self, nodes):
+        self.items += nodes
+
+    def write_edges(self, edges):
+        self.items += edges
+
     def finalize(self):
         pass
 

@@ -49,17 +49,25 @@ class TSVWriter(KozaWriter):
     def write(self, entities: Iterable) -> None:
         """Write an entities object to separate node and edge .tsv files"""
 
-        nodes, edges = self.converter.convert(entities)
+        nodes, edges = self.converter.split_entities(entities)
 
         if nodes:
-            for node in nodes:
-                self.write_row(node, record_type="node")
+            self.write_nodes(nodes)
 
         if edges:
-            for edge in edges:
-                if self.sssom_config:
-                    edge = self.sssom_config.apply_mapping(edge)
-                self.write_row(edge, record_type="edge")
+            self.write_edges(edges)
+
+    def write_nodes(self, nodes: Iterable):
+        for node in nodes:
+            node = self.converter.convert_node(node)
+            self.write_row(node, record_type="node")
+
+    def write_edges(self, edges: Iterable):
+        for edge in edges:
+            edge = self.converter.convert_association(edge)
+            if self.sssom_config:
+                edge = self.sssom_config.apply_mapping(edge)
+            self.write_row(edge, record_type="edge")
 
     def write_row(self, record: dict, record_type: Literal["node", "edge"]) -> None:
         """Write a row to the underlying store.
