@@ -11,18 +11,19 @@ endif
 
 .DEFAULT_GOAL := all
 SHELL := bash
-RUN := poetry run
+RUN := uv run
 
 .PHONY: all
 all: install test clean
 
 .PHONY: install
 install: 
-	poetry install
+	uv venv --allow-existing
+	uv pip install -e .[dev]
 
 .PHONY: build
 build:
-	poetry build
+	uv build
 
 .PHONY: test
 test:
