@@ -1,10 +1,11 @@
 import importlib
 import sys
-from collections.abc import Callable, Iterator
-from dataclasses import asdict
+from collections import defaultdict
+from collections.abc import Iterable
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from types import ModuleType
-from typing import Any, TypeVar
+from typing import Any, TypeAlias, TypeVar, cast
 
 import yaml
 from loguru import logger
@@ -19,77 +20,133 @@ from koza.io.yaml_loader import UniqueIncludeLoader
 from koza.model.formats import OutputFormat
 from koza.model.koza import KozaConfig
 from koza.model.source import Source
-from koza.transform import KozaTransform, Mappings, Record, SerialTransform, SingleTransform
+from koza.transform import KozaTransform, Mappings, Record
 from koza.utils.exceptions import NoTransformException
 
-T = TypeVar("T")
+T = TypeVar("T", bound=decorators.KozaTransformHook)
+TaggedFunctions: TypeAlias = dict[str | None, list[T]]
 
 
 def get_instances(cls: type[T], from_list: list[Any]) -> list[T]:
-    ret: list[T] = []
-    for item in from_list:
-        if isinstance(item, cls):
-            ret.append(item)
-    return ret
+    return [x for x in from_list if isinstance(x, cls)]
+
+
+@dataclass
+class KozaTransformHooks:
+    prepare_data: list[decorators.KozaPrepareDataFunction] = field(default_factory=list)
+    transform: list[decorators.KozaSingleTransformFunction] = field(default_factory=list)
+    transform_record: list[decorators.KozaSerialTransformFunction] = field(default_factory=list)
+    on_data_begin: list[decorators.KozaDataBeginFunction] = field(default_factory=list)
+    on_data_end: list[decorators.KozaDataEndFunction] = field(default_factory=list)
+
+
+def load_transform(transform_module: ModuleType | None) -> dict[str | None, KozaTransformHooks]:
+    if transform_module is None:
+        return {}
+
+    module_contents = list(vars(transform_module).values())
+
+    hook_class_map: dict[str, type[decorators.KozaTransformHook]] = {
+        "prepare_data": decorators.KozaPrepareDataFunction,
+        "transform": decorators.KozaSingleTransformFunction,
+        "transform_record": decorators.KozaSerialTransformFunction,
+        "on_data_begin": decorators.KozaDataBeginFunction,
+        "on_data_end": decorators.KozaDataEndFunction,
+    }
+
+    by_tag: defaultdict[str | None, KozaTransformHooks] = defaultdict(KozaTransformHooks)
+
+    for fn_name, fn_class in hook_class_map.items():
+        hooks = get_instances(fn_class, module_contents)
+        for hook in hooks:
+            tags = hook.tag if isinstance(hook.tag, list) else [hook.tag]
+            for tag in tags:
+                getattr(by_tag[tag], fn_name).append(hook)
+
+    for tag, hooks in by_tag.items():
+        tag_str = "" if tag is None else f"[{tag}] "
+        for hook_type, hook_fns in asdict(hooks).items():
+            for hook_fn in hook_fns:
+                logger.debug(
+                    f"{tag_str}Found `{hook_type}` function `{transform_module.__name__}.{hook_fn.fn.__name__}`"
+                )
+
+    return dict(by_tag)
 
 
 class KozaRunner:
     def __init__(
         self,
-        data: Iterator[Record],
+        data: Iterable[Record] | dict[str | None, Iterable[Record]],
         writer: KozaWriter,
+        hooks: KozaTransformHooks | dict[str | None, KozaTransformHooks],
         base_directory: Path | None = None,
         mapping_filenames: list[str] | None = None,
         extra_transform_fields: dict[str, Any] | None = None,
-        transform_record: Callable[[KozaTransform, Record], None] | None = None,
-        transform: Callable[[KozaTransform], None] | None = None,
-        on_data_begin: Callable[[KozaTransform], None] | None = None,
-        on_data_end: Callable[[KozaTransform], None] | None = None,
     ):
-        self.data = data
+        if isinstance(data, dict):
+            # This cast is necessary because a dict with Records as keys is an
+            # Iterable[Record]. So... don't pass a dict with records as its keys.
+            self.data = cast(dict[str | None, Iterable[Record]], data)
+        else:
+            self.data: dict[str | None, Iterable[Record]] = {None: data}
         self.writer = writer
-        self.mapping_filenames = mapping_filenames or []
-        self.transform_record = transform_record
-        self.transform = transform
-        self.extra_transform_fields = extra_transform_fields or {}
         self.base_directory = base_directory
-        self.on_data_begin = on_data_begin
-        self.on_data_end = on_data_end
+        self.mapping_filenames = mapping_filenames or []
+        self.extra_transform_fields = extra_transform_fields or {}
+
+        if isinstance(hooks, dict):
+            self.hooks_by_tag = hooks
+        else:
+            self.hooks_by_tag: dict[str | None, KozaTransformHooks] = {None: hooks}
+
+    def run_for_tag(self, tag: str | None, mappings: Mappings):
+        data = self.data[tag]
+        hooks = self.hooks_by_tag.get(tag, None)
+
+        if hooks is None or (not hooks.transform and not hooks.transform_record):
+            raise NoTransformException("Must define one of `@koza.transform` or `@koza.transform_record`")
+
+        if hooks.transform and hooks.transform_record:
+            raise ValueError("Can only define one of `@koza.transform` or `@koza.transform_record`")
+
+        if not hooks.transform_record and len(hooks.transform) > 1:
+            raise ValueError("Can only define one `@koza.transform` function")
+
+        if hooks.prepare_data and len(hooks.prepare_data) > 1:
+            raise ValueError("Can only define one `@koza.prepare_data` function")
+
+        transform = KozaTransform(mappings=mappings, writer=self.writer, extra_fields=self.extra_transform_fields)
+
+        if hooks.prepare_data:
+            data = hooks.prepare_data[0](transform, data)
+
+        for fn in hooks.on_data_begin:
+            fn(transform)
+
+        if hooks.transform:
+            logger.info("Running single transform")
+            transform_fn = hooks.transform[0]
+            result = transform_fn(transform, data)
+            if result is not None:
+                self.writer.write(result)
+
+        elif hooks.transform_record:
+            logger.info("Running serial transform")
+            for item in data:
+                for transform_record_fn in hooks.transform_record:
+                    result = transform_record_fn(transform, item)
+                    if result is not None:
+                        self.writer.write(result)
+
+        for fn in hooks.on_data_end:
+            fn(transform)
 
     def run(self):
         mappings = self.load_mappings()
 
-        if callable(self.transform) and callable(self.transform_record):
-            raise ValueError("Can only define one of `transform` or `transform_record`")
-        elif callable(self.transform):
-            logger.info("Running single transform")
-            transform = SingleTransform(
-                _data=self.data,
-                mappings=mappings,
-                writer=self.writer,
-                extra_fields=self.extra_transform_fields,
-            )
-            if callable(self.on_data_begin):
-                self.on_data_begin(transform)
-
-            self.transform(transform)
-        elif callable(self.transform_record):
-            logger.info("Running serial transform")
-            transform = SerialTransform(
-                mappings=mappings,
-                writer=self.writer,
-                extra_fields=self.extra_transform_fields,
-            )
-            if callable(self.on_data_begin):
-                self.on_data_begin(transform)
-
-            for item in self.data:
-                self.transform_record(transform, item)
-        else:
-            raise NoTransformException("Must define one of `transform` or `transform_record`")
-
-        if callable(self.on_data_end):
-            self.on_data_end(transform)
+        for tag in self.data:
+            self.run_for_tag(tag, mappings)
 
         self.writer.finalize()
 
@@ -118,7 +175,7 @@ class KozaRunner:
                 data = map_runner.writer.result()
                 assert isinstance(data, list)
             except NoTransformException:
-                data = map_runner.data
+                data = map_runner.data[None]
 
             mapping_entry: dict[str, dict[str, str]] = {}
             key_column: str | None = map_runner.extra_transform_fields.get("key", None)
@@ -177,55 +234,19 @@ class KozaRunner:
             logger.debug(f"Loading module `{module_name}`")
             transform_module = importlib.import_module(module_name)
 
-        on_data_begin = None
-        on_data_end = None
+        hooks_by_tag = load_transform(transform_module)
 
-        if transform_module is not None:
-            module_contents = list(transform_module.__dict__.values())
-            transform_single_fns = get_instances(decorators.KozaSingleTransformFunction, module_contents)
-            transform_serial_fns = get_instances(decorators.KozaSerialTransformFunction, module_contents)
-            on_data_begin_fns = get_instances(decorators.KozaDataBeginFunction, module_contents)
-            on_data_end_fns = get_instances(decorators.KozaDataEndFunction, module_contents)
-
-            def _on_data_begin(koza: KozaTransform):
-                for fn in on_data_begin_fns:
-                    fn(koza)
-
-            def _on_data_end(koza: KozaTransform):
-                for fn in on_data_end_fns:
-                    fn(koza)
-
-            on_data_begin = _on_data_begin if on_data_begin_fns else None
-            on_data_end = _on_data_end if on_data_end_fns else None
-
-            if len(transform_single_fns) > 1:
-                raise ValueError("Only mark one function with `@koza.transform`")
-
-            if len(transform_serial_fns) > 1:
-                raise ValueError("Only mark one function with `@koza.transform_record`")
-
-            transform = transform_single_fns[0] if transform_single_fns else None
-            transform_record = transform_serial_fns[0] if transform_serial_fns else None
-
-            if transform and transform_record:
-                raise ValueError("Use one of `@koza.transform` or `@koza.transform_record`, not both")
-
-            if transform is None and transform_record is None:
-                raise NoTransformException(
-                    "Must mark one function with either `@koza.transform_record` or `@koza.transform`"
+        sources_by_tag: dict[str | None, Iterable[Record]] = {
+            reader.tag: iter(
+                Source(
+                    reader.reader,
+                    base_directory,
+                    row_limit=row_limit,
+                    show_progress=show_progress,
                 )
-
-            if transform:
-                logger.debug(f"Found transform function `{module_name}.{transform.fn.__name__}`")
-            if transform_record:
-                logger.debug(f"Found transform record function `{module_name}.{transform_record.fn.__name__}`")
-        else:
-            transform = None
-            transform_record = None
-            on_data_begin = None
-            on_data_end = None
-
-        source = Source(config, base_directory, row_limit=row_limit, show_progress=show_progress)
+            )
+            for reader in config.get_readers()
+        }
 
         writer: KozaWriter | None = None
 
@@ -240,15 +261,12 @@ class KozaRunner:
             raise ValueError("No writer defined")
 
         return cls(
-            data=iter(source),
+            data=sources_by_tag,
             writer=writer,
             base_directory=base_directory,
             mapping_filenames=config.transform.mappings,
             extra_transform_fields=config.transform.extra_fields,
-            transform=transform,
-            transform_record=transform_record,
-            on_data_begin=on_data_begin,
-            on_data_end=on_data_end,
+            hooks=hooks_by_tag,
         )
 
     @classmethod
@@ -258,6 +276,7 @@ class KozaRunner:
         output_dir: str = "",
         output_format: OutputFormat | None = None,
         row_limit: int = 0,
+        input_files: list[str] | dict[str, list[str]] | None = None,
         show_progress: bool = False,
         overrides: dict | None = None,
     ):
@@ -299,6 +318,15 @@ class KozaRunner:
             _overrides["transform"] = {
                 "code": str(transform_code_path),
             }
+        if input_files is not None:
+            if isinstance(input_files, list):
+                _overrides["reader"] = {"files": input_files}
+            elif config.readers:
+                _overrides["readers"] = {}
+                for reader in config.get_readers():
+                    if reader.tag in input_files:
+                        _overrides["readers"][reader.tag] = input_files[reader.tag]
+
         config_dict = merge(config_dict, _overrides, overrides or {})
         config = KozaConfig(**config_dict)
 

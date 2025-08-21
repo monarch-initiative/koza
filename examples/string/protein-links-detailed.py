@@ -7,8 +7,8 @@ import koza
 
 
 @koza.transform()
-def string_transform(koza: koza.KozaTransform):
-    for row in koza.data:
+def string_transform(koza: koza.KozaTransform, data):
+    for row in data:
         protein_a = Protein(id="ENSEMBL:" + re.sub(r"\d+\.", "", row["protein1"]))
         protein_b = Protein(id="ENSEMBL:" + re.sub(r"\d+\.", "", row["protein2"]))
 
