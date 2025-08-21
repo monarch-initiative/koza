@@ -19,7 +19,7 @@ class JSONLWriter(KozaWriter):
         self.sssom_config = config.sssom_config
 
         self.converter = KGXConverter()
-        # self.written_node_ids = set()
+        self.written_node_ids = set()
 
         os.makedirs(output_dir, exist_ok=True)
         self.nodeFH = open(f"{output_dir}/{source_name}_nodes.jsonl", "w")
@@ -38,15 +38,15 @@ class JSONLWriter(KozaWriter):
         if nodes:
             for node in nodes:
                 # if we already wrote a node with this id, skip it
-                # node_id = node.id
-                # if node_id in self.written_node_ids:
+                node_id = node.id
+                if node_id in self.written_node_ids:
                     # TODO: track when duplicate nodes were discarded (how many? only if they have properties?)
-                #    continue
+                    continue
 
                 node = self.converter.convert_node(node, exclude_none=True)
                 node_str = json.dumps(node, ensure_ascii=False)
                 self.nodeFH.write(node_str + "\n")
-                # self.written_node_ids.add(node_id)
+                self.written_node_ids.add(node_id)
 
     def write_edges(self, edges: Iterable, preconverted: bool = False):
         if edges:
