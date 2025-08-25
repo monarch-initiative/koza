@@ -8,3 +8,9 @@ from typing import Iterable
 class KnowledgeGraph:
     nodes: Iterable[NamedThing] | None = None
     edges: Iterable[Association] | None = None
+
+    def __post_init__(self):
+        if self.nodes is None:
+            self.nodes = []
+        if self.edges is None:
+            self.edges = []
