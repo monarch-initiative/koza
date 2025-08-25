@@ -3,6 +3,7 @@ import sys
 from collections import defaultdict
 from collections.abc import Iterable
 from dataclasses import asdict, dataclass, field
+from itertools import chain
 from pathlib import Path
 from types import ModuleType
 from typing import Any, TypeAlias, TypeVar, cast
@@ -130,20 +131,20 @@ class KozaRunner:
             transform_fn = hooks.transform[0]
             result = transform_fn(transform, data)
             if result is not None:
-                # determine whether this transform function is returning KnowledgeGraphs by looking at the first result
-                returning_kgs = False
-                for r in result:
-                    if isinstance(r, KnowledgeGraph):
-                        returning_kgs = True
-                    break
-                if returning_kgs:
-                    # if KnowledgeGraphs iterate through them and write the nodes and edges for each
-                    for kg in result:
+                # this looks weird, but it's just looking at the first result and checking if it's a KnowledgeGraph
+                # it uses this iterator approach so that it can handle generators as well as other iterables without
+                # consuming the whole generator
+                result_iterator = iter(result)
+                first_result = next(result_iterator)
+                results = chain([first_result], result_iterator) # add the first result back
+                if isinstance(first_result, KnowledgeGraph):
+                    for kg in results:
+                        # for results that are KnowledgeGraphs, write the nodes and edges explicitly
                         self.writer.write_nodes(kg.nodes)
                         self.writer.write_edges(kg.edges)
                 else:
-                    # otherwise rely on the writer to handle the entities appropriately
-                    self.writer.write(result)
+                    # otherwise rely on the writer to handle all the entities appropriately
+                    self.writer.write(results)
 
         elif hooks.transform_record:
             logger.info("Running serial transform")
