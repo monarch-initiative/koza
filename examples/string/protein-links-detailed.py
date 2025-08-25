@@ -2,6 +2,7 @@ import re
 import uuid
 
 from biolink_model.datamodel.pydanticmodel_v2 import PairwiseGeneToGeneInteraction, Protein
+from koza.model.graphs import KnowledgeGraph
 
 import koza
 
@@ -21,4 +22,4 @@ def string_transform(koza: koza.KozaTransform, data):
             agent_type="not_provided",
         )
 
-        koza.write(protein_a, protein_b, pairwise_gene_to_gene_interaction)
+        yield KnowledgeGraph(nodes=[protein_a, protein_b], edges=[pairwise_gene_to_gene_interaction])
