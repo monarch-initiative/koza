@@ -1,0 +1,2177 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://koza.monarchinitiative.org/Ingests/koza_config/">
+      
+      
+        <link rel="prev" href="../">
+      
+      
+        <link rel="next" href="../mapping/">
+      
+      
+      <link rel="icon" href="../../images/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
+    
+    
+      
+        <title>Koza Config - Koza Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.342714a4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,300i,400,400i,700,700i%7CSource+Sans+Pro+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Source Sans Pro";--md-code-font:"Source Sans Pro Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#koza-configuration-kozaconfig" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Koza Documentation" class="md-header__button md-logo" aria-label="Koza Documentation" data-md-component="logo">
+      
+  <img src="../../img/pupa.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Koza Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Koza Config
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 2c-1.82 0-3.53.5-5 1.35C8 5.08 10 8.3 10 12s-2 6.92-5 8.65C6.47 21.5 8.18 22 10 22a10 10 0 0 0 10-10A10 10 0 0 0 10 2"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/monarch-initiative/koza" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    monarch-initiative/koza
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Welcome
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+  Ingests
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../Usage/CLI/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  CLI
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../Usage/Module/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Module
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Koza Documentation" class="md-nav__button md-logo" aria-label="Koza Documentation" data-md-component="logo">
+      
+  <img src="../../img/pupa.png" alt="logo">
+
+    </a>
+    Koza Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/monarch-initiative/koza" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    monarch-initiative/koza
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Welcome
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Ingests
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Ingests
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Configuring an Ingest
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Koza Config
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Koza Config
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#basic-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      Basic Structure
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-configuration-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      Core Configuration Properties
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Core Configuration Properties">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#required-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      Required Properties
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      Optional Properties
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reader-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Reader Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reader Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#single-reader-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      Single Reader Example
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multiple-readers-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multiple Readers Example
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#base-reader-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      Base Reader Properties
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#csv-reader-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      CSV Reader Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CSV Reader Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#field-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      Field Types
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#header-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Header Modes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#column-definition-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Column Definition Examples
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#json-reader-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      JSON Reader Configuration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jsonl-reader-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      JSONL Reader Configuration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#yaml-reader-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      YAML Reader Configuration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#column-filters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Column Filters
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Column Filters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#filter-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      Filter Types
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Filter Types">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#comparison-filters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Comparison Filters
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#equality-filters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Equality Filters
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#list-filters" class="md-nav__link">
+    <span class="md-ellipsis">
+      List Filters
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filter-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Filter Codes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#transform-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Transform Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Transform Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#map-error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      Map Error Handling
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-transform-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example Transform Configuration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#writer-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Writer Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Writer Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#output-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      Output Formats
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-writer-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example Writer Configuration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sssom-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      SSSOM Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="SSSOM Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#match-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      Match Types
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metadata-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Metadata Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Metadata Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#inline-metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      Inline Metadata
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#external-metadata-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      External Metadata File
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#metadata-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      Metadata Properties
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#complete-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      Complete Example
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migration-from-sourceconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      Migration from SourceConfig
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mapping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Mapping
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../transform/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Transform Code
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Usage/CLI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CLI
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Usage/Module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#basic-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      Basic Structure
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-configuration-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      Core Configuration Properties
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Core Configuration Properties">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#required-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      Required Properties
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      Optional Properties
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reader-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Reader Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reader Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#single-reader-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      Single Reader Example
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multiple-readers-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multiple Readers Example
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#base-reader-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      Base Reader Properties
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#csv-reader-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      CSV Reader Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CSV Reader Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#field-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      Field Types
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#header-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Header Modes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#column-definition-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Column Definition Examples
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#json-reader-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      JSON Reader Configuration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jsonl-reader-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      JSONL Reader Configuration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#yaml-reader-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      YAML Reader Configuration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#column-filters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Column Filters
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Column Filters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#filter-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      Filter Types
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Filter Types">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#comparison-filters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Comparison Filters
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#equality-filters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Equality Filters
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#list-filters" class="md-nav__link">
+    <span class="md-ellipsis">
+      List Filters
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filter-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Filter Codes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#transform-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Transform Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Transform Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#map-error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      Map Error Handling
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-transform-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example Transform Configuration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#writer-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Writer Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Writer Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#output-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      Output Formats
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-writer-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example Writer Configuration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sssom-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      SSSOM Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="SSSOM Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#match-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      Match Types
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metadata-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Metadata Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Metadata Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#inline-metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      Inline Metadata
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#external-metadata-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      External Metadata File
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#metadata-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      Metadata Properties
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#complete-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      Complete Example
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migration-from-sourceconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      Migration from SourceConfig
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="koza-configuration-kozaconfig">Koza Configuration (KozaConfig)</h1>
+<p>This document describes the KozaConfig model introduced in Koza 2, which replaces the previous SourceConfig structure. The KozaConfig provides a comprehensive configuration system for data ingests with support for multiple readers, transforms, and writers.</p>
+<div class="admonition tip">
+<p class="admonition-title">Paths are relative to the directory from which you execute Koza.</p>
+</div>
+<h2 id="overview">Overview</h2>
+<p>KozaConfig is the main configuration class that defines how Koza processes your data. It consists of several main sections:</p>
+<ul>
+<li><strong>name</strong>: Unique identifier for your ingest</li>
+<li><strong>reader/readers</strong>: Configuration for input data sources  </li>
+<li><strong>transform</strong>: Configuration for data transformation logic</li>
+<li><strong>writer</strong>: Configuration for output format and properties</li>
+<li><strong>metadata</strong>: Optional metadata about the dataset</li>
+</ul>
+<h2 id="basic-structure">Basic Structure</h2>
+<div class="highlight"><pre><span></span><code><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;my-ingest&#39;</span>
+<span class="nt">reader</span><span class="p">:</span><span class="w"> </span><span class="c1"># OR readers: for multiple sources</span>
+<span class="w">  </span><span class="c1"># reader configuration</span>
+<span class="nt">transform</span><span class="p">:</span>
+<span class="w">  </span><span class="c1"># transformation configuration  </span>
+<span class="nt">writer</span><span class="p">:</span>
+<span class="w">  </span><span class="c1"># output configuration</span>
+<span class="nt">metadata</span><span class="p">:</span><span class="w"> </span><span class="c1"># optional</span>
+<span class="w">  </span><span class="c1"># metadata configuration</span>
+</code></pre></div>
+<h2 id="core-configuration-properties">Core Configuration Properties</h2>
+<h3 id="required-properties">Required Properties</h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code></td>
+<td>string</td>
+<td>Name of the data ingest, should be unique and descriptive</td>
+</tr>
+</tbody>
+</table>
+<h3 id="optional-properties">Optional Properties</h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reader</code></td>
+<td>ReaderConfig</td>
+<td>Single reader configuration (mutually exclusive with <code>readers</code>)</td>
+</tr>
+<tr>
+<td><code>readers</code></td>
+<td>dict[str, ReaderConfig]</td>
+<td>Named multiple readers (mutually exclusive with <code>reader</code>)</td>
+</tr>
+<tr>
+<td><code>transform</code></td>
+<td>TransformConfig</td>
+<td>Transform configuration (optional, uses defaults if not specified)</td>
+</tr>
+<tr>
+<td><code>writer</code></td>
+<td>WriterConfig</td>
+<td>Writer configuration (optional, uses defaults if not specified)</td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td>DatasetDescription | string</td>
+<td>Dataset metadata or path to metadata file</td>
+</tr>
+</tbody>
+</table>
+<h2 id="reader-configuration">Reader Configuration</h2>
+<p>Readers define how Koza processes input data files. You can use either a single <code>reader</code> or multiple named <code>readers</code>.</p>
+<h3 id="single-reader-example">Single Reader Example</h3>
+<div class="highlight"><pre><span></span><code><span class="nt">reader</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">format</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">csv</span>
+<span class="w">  </span><span class="nt">files</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;data/input.tsv&#39;</span>
+<span class="w">  </span><span class="nt">delimiter</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;\t&#39;</span>
+</code></pre></div>
+<h3 id="multiple-readers-example">Multiple Readers Example</h3>
+<div class="highlight"><pre><span></span><code><span class="nt">readers</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">main_data</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">format</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">csv</span>
+<span class="w">    </span><span class="nt">files</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;data/main.tsv&#39;</span>
+<span class="w">    </span><span class="nt">delimiter</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;\t&#39;</span>
+<span class="w">  </span><span class="nt">reference_data</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">format</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">json</span>
+<span class="w">    </span><span class="nt">files</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;data/reference.json&#39;</span>
+</code></pre></div>
+<h3 id="base-reader-properties">Base Reader Properties</h3>
+<p>All reader types support these common properties:</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>files</code></td>
+<td>list[string]</td>
+<td>List of input files to process</td>
+</tr>
+<tr>
+<td><code>filters</code></td>
+<td>list[ColumnFilter]</td>
+<td>List of filters to apply to data</td>
+</tr>
+</tbody>
+</table>
+<h3 id="csv-reader-configuration">CSV Reader Configuration</h3>
+<p>For CSV format files (<code>format: csv</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>format</code></td>
+<td>string</td>
+<td><code>csv</code></td>
+<td>Must be "csv"</td>
+</tr>
+<tr>
+<td><code>columns</code></td>
+<td>list[string | dict]</td>
+<td>None</td>
+<td>Column names or name/type mappings</td>
+</tr>
+<tr>
+<td><code>field_type_map</code></td>
+<td>dict[string, FieldType]</td>
+<td>None</td>
+<td>Mapping of column names to types</td>
+</tr>
+<tr>
+<td><code>delimiter</code></td>
+<td>string</td>
+<td><code>\t</code></td>
+<td>Field delimiter (supports "tab", "\t", or literal chars)</td>
+</tr>
+<tr>
+<td><code>header_delimiter</code></td>
+<td>string</td>
+<td>None</td>
+<td>Different delimiter for header row</td>
+</tr>
+<tr>
+<td><code>dialect</code></td>
+<td>string</td>
+<td><code>excel</code></td>
+<td>CSV dialect</td>
+</tr>
+<tr>
+<td><code>header_mode</code></td>
+<td>int | HeaderMode</td>
+<td><code>infer</code></td>
+<td>Header handling: int (0-based row), "infer", or "none"</td>
+</tr>
+<tr>
+<td><code>header_prefix</code></td>
+<td>string</td>
+<td>None</td>
+<td>Prefix for header processing</td>
+</tr>
+<tr>
+<td><code>skip_blank_lines</code></td>
+<td>bool</td>
+<td><code>true</code></td>
+<td>Whether to skip blank lines</td>
+</tr>
+<tr>
+<td><code>comment_char</code></td>
+<td>string</td>
+<td><code>#</code></td>
+<td>Character that indicates comments</td>
+</tr>
+</tbody>
+</table>
+<h4 id="field-types">Field Types</h4>
+<ul>
+<li><code>str</code> - String type (default)</li>
+<li><code>int</code> - Integer type  </li>
+<li><code>float</code> - Float type</li>
+</ul>
+<h4 id="header-modes">Header Modes</h4>
+<ul>
+<li><code>infer</code> - Automatically detect header row</li>
+<li><code>none</code> - No header row present</li>
+<li>Integer (0-based) - Specific header row index</li>
+</ul>
+<h4 id="column-definition-examples">Column Definition Examples</h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># Simple string columns</span>
+<span class="nt">columns</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;gene_id&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;symbol&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;score&#39;</span>
+
+<span class="c1"># Mixed types  </span>
+<span class="nt">columns</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;gene_id&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;symbol&#39;</span><span class="w"> </span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;score&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">&#39;int&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;p_value&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">&#39;float&#39;</span>
+</code></pre></div>
+<h3 id="json-reader-configuration">JSON Reader Configuration</h3>
+<p>For JSON format files (<code>format: json</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>format</code></td>
+<td>string</td>
+<td>Must be "json"</td>
+</tr>
+<tr>
+<td><code>required_properties</code></td>
+<td>list[string]</td>
+<td>Properties that must be present</td>
+</tr>
+<tr>
+<td><code>json_path</code></td>
+<td>list[string | int]</td>
+<td>Path to data within JSON structure</td>
+</tr>
+</tbody>
+</table>
+<h3 id="jsonl-reader-configuration">JSONL Reader Configuration</h3>
+<p>For JSON Lines format files (<code>format: jsonl</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>format</code></td>
+<td>string</td>
+<td>Must be "jsonl"</td>
+</tr>
+<tr>
+<td><code>required_properties</code></td>
+<td>list[string]</td>
+<td>Properties that must be present</td>
+</tr>
+</tbody>
+</table>
+<h3 id="yaml-reader-configuration">YAML Reader Configuration</h3>
+<p>For YAML format files (<code>format: yaml</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>format</code></td>
+<td>string</td>
+<td>Must be "yaml"</td>
+</tr>
+<tr>
+<td><code>required_properties</code></td>
+<td>list[string]</td>
+<td>Properties that must be present</td>
+</tr>
+<tr>
+<td><code>json_path</code></td>
+<td>list[string | int]</td>
+<td>Path to data within YAML structure</td>
+</tr>
+</tbody>
+</table>
+<h2 id="column-filters">Column Filters</h2>
+<p>Filters allow you to include or exclude rows based on column values.</p>
+<h3 id="filter-types">Filter Types</h3>
+<h4 id="comparison-filters">Comparison Filters</h4>
+<p>For numeric comparisons:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">filters</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">inclusion</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;include&#39;</span><span class="w">  </span><span class="c1"># or &#39;exclude&#39;</span>
+<span class="w">    </span><span class="nt">column</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;score&#39;</span>
+<span class="w">    </span><span class="nt">filter_code</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;gt&#39;</span><span class="w">     </span><span class="c1"># gt, ge, lt, le  </span>
+<span class="w">    </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">500</span>
+</code></pre></div>
+<h4 id="equality-filters">Equality Filters</h4>
+<p>For exact matches:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">filters</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">inclusion</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;include&#39;</span>
+<span class="w">    </span><span class="nt">column</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;status&#39;</span>
+<span class="w">    </span><span class="nt">filter_code</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;eq&#39;</span><span class="w">     </span><span class="c1"># eq, ne</span>
+<span class="w">    </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;active&#39;</span>
+</code></pre></div>
+<h4 id="list-filters">List Filters</h4>
+<p>For checking membership in lists:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">filters</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">inclusion</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;include&#39;</span>
+<span class="w">    </span><span class="nt">column</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;category&#39;</span>
+<span class="w">    </span><span class="nt">filter_code</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;in&#39;</span><span class="w">     </span><span class="c1"># in, in_exact</span>
+<span class="w">    </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;A&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;B&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;C&#39;</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<h3 id="filter-codes">Filter Codes</h3>
+<ul>
+<li><code>gt</code> - Greater than</li>
+<li><code>ge</code> - Greater than or equal  </li>
+<li><code>lt</code> - Less than</li>
+<li><code>le</code> - Less than or equal</li>
+<li><code>eq</code> - Equal to</li>
+<li><code>ne</code> - Not equal to</li>
+<li><code>in</code> - In list (case insensitive)</li>
+<li><code>in_exact</code> - In list (exact match)</li>
+</ul>
+<h2 id="transform-configuration">Transform Configuration</h2>
+<p>The transform section configures how data is processed and transformed.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>code</code></td>
+<td>string</td>
+<td>None</td>
+<td>Path to Python transform file</td>
+</tr>
+<tr>
+<td><code>module</code></td>
+<td>string</td>
+<td>None</td>
+<td>Python module to import</td>
+</tr>
+<tr>
+<td><code>global_table</code></td>
+<td>string | dict</td>
+<td>None</td>
+<td>Global translation table</td>
+</tr>
+<tr>
+<td><code>local_table</code></td>
+<td>string | dict</td>
+<td>None</td>
+<td>Local translation table</td>
+</tr>
+<tr>
+<td><code>mappings</code></td>
+<td>list[string]</td>
+<td><code>[]</code></td>
+<td>List of mapping files</td>
+</tr>
+<tr>
+<td><code>on_map_failure</code></td>
+<td>MapErrorEnum</td>
+<td><code>warning</code></td>
+<td>How to handle mapping failures</td>
+</tr>
+<tr>
+<td><code>extra_fields</code></td>
+<td>dict</td>
+<td><code>{}</code></td>
+<td>Additional custom fields</td>
+</tr>
+</tbody>
+</table>
+<h3 id="map-error-handling">Map Error Handling</h3>
+<ul>
+<li><code>warning</code> - Log warnings for mapping failures</li>
+<li><code>error</code> - Raise errors for mapping failures</li>
+</ul>
+<h3 id="example-transform-configuration">Example Transform Configuration</h3>
+<div class="highlight"><pre><span></span><code><span class="nt">transform</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">code</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;transform.py&#39;</span>
+<span class="w">  </span><span class="nt">global_table</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;tables/global_mappings.yaml&#39;</span>
+<span class="w">  </span><span class="nt">local_table</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;tables/local_mappings.yaml&#39;</span>
+<span class="w">  </span><span class="nt">mappings</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;mappings/gene_mappings.yaml&#39;</span>
+<span class="w">  </span><span class="nt">on_map_failure</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;warning&#39;</span>
+<span class="w">  </span><span class="nt">custom_param</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;value&#39;</span><span class="w">  </span><span class="c1"># Goes into extra_fields</span>
+</code></pre></div>
+<h2 id="writer-configuration">Writer Configuration</h2>
+<p>The writer section configures output format and properties.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>format</code></td>
+<td>OutputFormat</td>
+<td><code>tsv</code></td>
+<td>Output format</td>
+</tr>
+<tr>
+<td><code>sssom_config</code></td>
+<td>SSSOMConfig</td>
+<td>None</td>
+<td>SSSOM mapping configuration</td>
+</tr>
+<tr>
+<td><code>node_properties</code></td>
+<td>list[string]</td>
+<td>None</td>
+<td>Node properties to include</td>
+</tr>
+<tr>
+<td><code>edge_properties</code></td>
+<td>list[string]</td>
+<td>None</td>
+<td>Edge properties to include</td>
+</tr>
+<tr>
+<td><code>min_node_count</code></td>
+<td>int</td>
+<td>None</td>
+<td>Minimum nodes required</td>
+</tr>
+<tr>
+<td><code>min_edge_count</code></td>
+<td>int</td>
+<td>None</td>
+<td>Minimum edges required</td>
+</tr>
+</tbody>
+</table>
+<h3 id="output-formats">Output Formats</h3>
+<ul>
+<li><code>tsv</code> - Tab-separated values</li>
+<li><code>jsonl</code> - JSON Lines  </li>
+<li><code>kgx</code> - KGX format</li>
+<li><code>passthrough</code> - Pass data through unchanged</li>
+</ul>
+<h3 id="example-writer-configuration">Example Writer Configuration</h3>
+<div class="highlight"><pre><span></span><code><span class="nt">writer</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">format</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tsv</span>
+<span class="w">  </span><span class="nt">node_properties</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;id&#39;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;category&#39;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;name&#39;</span>
+<span class="w">  </span><span class="nt">edge_properties</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;id&#39;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;subject&#39;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;predicate&#39;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;object&#39;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;category&#39;</span>
+</code></pre></div>
+<h3 id="sssom-configuration">SSSOM Configuration</h3>
+<p>SSSOM (Simple Standard for Sharing Ontological Mappings) integration:</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>files</code></td>
+<td>list[string]</td>
+<td>SSSOM mapping files</td>
+</tr>
+<tr>
+<td><code>filter_prefixes</code></td>
+<td>list[string]</td>
+<td>Prefixes to filter by</td>
+</tr>
+<tr>
+<td><code>subject_target_prefixes</code></td>
+<td>list[string]</td>
+<td>Subject mapping prefixes</td>
+</tr>
+<tr>
+<td><code>object_target_prefixes</code></td>
+<td>list[string]</td>
+<td>Object mapping prefixes</td>
+</tr>
+<tr>
+<td><code>use_match</code></td>
+<td>list[Match]</td>
+<td>Match types to use</td>
+</tr>
+</tbody>
+</table>
+<h4 id="match-types">Match Types</h4>
+<ul>
+<li><code>exact</code> - Exact matches</li>
+<li><code>narrow</code> - Narrow matches  </li>
+<li><code>broad</code> - Broad matches</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="nt">writer</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">sssom_config</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">files</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;mappings/ontology_mappings.sssom.tsv&#39;</span>
+<span class="w">    </span><span class="nt">subject_target_prefixes</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;MONDO&#39;</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">object_target_prefixes</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;HP&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;GO&#39;</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">use_match</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;exact&#39;</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<h2 id="metadata-configuration">Metadata Configuration</h2>
+<p>Metadata can be defined inline or loaded from a separate file.</p>
+<h3 id="inline-metadata">Inline Metadata</h3>
+<div class="highlight"><pre><span></span><code><span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;My</span><span class="nv"> </span><span class="s">Data</span><span class="nv"> </span><span class="s">Source&#39;</span>
+<span class="w">  </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;Description</span><span class="nv"> </span><span class="s">of</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">data</span><span class="nv"> </span><span class="s">and</span><span class="nv"> </span><span class="s">processing&#39;</span>
+<span class="w">  </span><span class="nt">ingest_title</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;Source</span><span class="nv"> </span><span class="s">Database</span><span class="nv"> </span><span class="s">Name&#39;</span>
+<span class="w">  </span><span class="nt">ingest_url</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;https://source-database.org&#39;</span>
+<span class="w">  </span><span class="nt">provided_by</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;my_source_gene_disease&#39;</span>
+<span class="w">  </span><span class="nt">rights</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;https://source-database.org/license&#39;</span>
+</code></pre></div>
+<h3 id="external-metadata-file">External Metadata File</h3>
+<div class="highlight"><pre><span></span><code><span class="nt">metadata</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;./metadata.yaml&#39;</span>
+</code></pre></div>
+<h3 id="metadata-properties">Metadata Properties</h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code></td>
+<td>string</td>
+<td>Human-readable name of data source</td>
+</tr>
+<tr>
+<td><code>ingest_title</code></td>
+<td>string</td>
+<td>Title of data source (maps to biolink name)</td>
+</tr>
+<tr>
+<td><code>ingest_url</code></td>
+<td>string</td>
+<td>URL of data source (maps to biolink iri)</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>string</td>
+<td>Description of data/ingest process</td>
+</tr>
+<tr>
+<td><code>provided_by</code></td>
+<td>string</td>
+<td>Source identifier, format: <code>&lt;source&gt;_&lt;type&gt;</code></td>
+</tr>
+<tr>
+<td><code>rights</code></td>
+<td>string</td>
+<td>License/rights information URL</td>
+</tr>
+</tbody>
+</table>
+<h2 id="complete-example">Complete Example</h2>
+<p>Here's a comprehensive example showing all major configuration options:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;comprehensive-example&#39;</span>
+
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;Example</span><span class="nv"> </span><span class="s">Database&#39;</span>
+<span class="w">  </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;Comprehensive</span><span class="nv"> </span><span class="s">example</span><span class="nv"> </span><span class="s">of</span><span class="nv"> </span><span class="s">Koza</span><span class="nv"> </span><span class="s">configuration&#39;</span>
+<span class="w">  </span><span class="nt">ingest_title</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;Example</span><span class="nv"> </span><span class="s">DB&#39;</span>
+<span class="w">  </span><span class="nt">ingest_url</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;https://example-db.org&#39;</span>
+<span class="w">  </span><span class="nt">provided_by</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;example_gene_disease&#39;</span>
+<span class="w">  </span><span class="nt">rights</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;https://example-db.org/license&#39;</span>
+
+<span class="nt">reader</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">format</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">csv</span>
+<span class="w">  </span><span class="nt">files</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;data/genes.tsv&#39;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;data/diseases.tsv&#39;</span>
+<span class="w">  </span><span class="nt">delimiter</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;\t&#39;</span>
+<span class="w">  </span><span class="nt">columns</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;gene_id&#39;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;gene_symbol&#39;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;disease_id&#39;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;confidence&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">&#39;float&#39;</span>
+<span class="w">  </span><span class="nt">filters</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">inclusion</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;include&#39;</span>
+<span class="w">      </span><span class="nt">column</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;confidence&#39;</span>
+<span class="w">      </span><span class="nt">filter_code</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;ge&#39;</span>
+<span class="w">      </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.7</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">inclusion</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;exclude&#39;</span>
+<span class="w">      </span><span class="nt">column</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;gene_symbol&#39;</span>
+<span class="w">      </span><span class="nt">filter_code</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;eq&#39;</span>
+<span class="w">      </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;DEPRECATED&#39;</span>
+
+<span class="nt">transform</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">code</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;transform.py&#39;</span>
+<span class="w">  </span><span class="nt">global_table</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;tables/global_mappings.yaml&#39;</span>
+<span class="w">  </span><span class="nt">on_map_failure</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;warning&#39;</span>
+
+<span class="nt">writer</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">format</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tsv</span>
+<span class="w">  </span><span class="nt">node_properties</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;id&#39;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;category&#39;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;name&#39;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;provided_by&#39;</span>
+<span class="w">  </span><span class="nt">edge_properties</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;id&#39;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;subject&#39;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;predicate&#39;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;object&#39;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;category&#39;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;provided_by&#39;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;confidence&#39;</span>
+<span class="w">  </span><span class="nt">min_node_count</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span>
+<span class="w">  </span><span class="nt">min_edge_count</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
+</code></pre></div>
+<h2 id="migration-from-sourceconfig">Migration from SourceConfig</h2>
+<p>If you're migrating from the old SourceConfig format to KozaConfig:</p>
+<ol>
+<li><strong>Structure Changes</strong>: </li>
+<li>Top-level properties are now organized under <code>reader</code>, <code>transform</code>, and <code>writer</code> sections</li>
+<li><code>files</code> moves to <code>reader.files</code></li>
+<li>Transform-related properties move to <code>transform</code> section</li>
+<li>
+<p>Output properties move to <code>writer</code> section</p>
+</li>
+<li>
+<p><strong>Property Mapping</strong>:</p>
+</li>
+<li><code>transform_code</code> → <code>transform.code</code></li>
+<li><code>global_table</code> → <code>transform.global_table</code>  </li>
+<li><code>local_table</code> → <code>transform.local_table</code></li>
+<li><code>node_properties</code> → <code>writer.node_properties</code></li>
+<li>
+<p><code>edge_properties</code> → <code>writer.edge_properties</code></p>
+</li>
+<li>
+<p><strong>New Features</strong>:</p>
+</li>
+<li>Multiple readers support with <code>readers</code></li>
+<li>Enhanced filter system with more comparison operators</li>
+<li>SSSOM integration in writer</li>
+<li>Improved metadata handling</li>
+</ol>
+<hr />
+<p><strong>Next Steps: <a href="../transform/">Transform Code</a></strong></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        <div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://monarchinitiative.org" target="_blank" rel="noopener" title="monarchinitiative.org" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M575.8 255.5c0 18-15 32.1-32 32.1h-32l.7 160.2c0 2.7-.2 5.4-.5 8.1v16.2c0 22.1-17.9 40-40 40h-16c-1.1 0-2.2 0-3.3-.1-1.4.1-2.8.1-4.2.1L416 512h-24c-22.1 0-40-17.9-40-40v-88c0-17.7-14.3-32-32-32h-64c-17.7 0-32 14.3-32 32v88c0 22.1-17.9 40-40 40h-55.9c-1.5 0-3-.1-4.5-.2-1.2.1-2.4.2-3.6.2h-16c-22.1 0-40-17.9-40-40V360c0-.9 0-1.9.1-2.8v-69.7h-32c-18 0-32-14-32-32.1 0-9 3-17 10-24L266.4 8c7-7 15-8 22-8s15 2 21 7l255.4 224.5c8 7 12 15 11 24"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/monarch-initiative/" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M186.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M480 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.copy", "navigation.expand", "navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky"], "search": "../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.13a4f30d.min.js"></script>
+      
+    
+  </body>
+</html>
