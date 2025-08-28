@@ -9,7 +9,7 @@ nav:
   - Welcome: 'index.md'
   - Ingests: 
     - Configuring an Ingest: 'Ingests/index.md'
-    - Source Config: 'Ingests/source_config.md'
+    - Koza Config: 'Ingests/koza_config.md'
     - Mapping: 'Ingests/mapping.md'
     - Transform Code: 'Ingests/transform.md'
     - Testing: 'Ingests/testing.md'
@@ -53,7 +53,7 @@ plugins:
   - mkdocstrings:
       handlers:
         python:
-          import:
+          inventories:
           - https://docs.python.org/3/objects.inv
           - https://mkdocstrings.github.io/objects.inv
           - https://mkdocstrings.github.io/griffe/objects.inv
