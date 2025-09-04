@@ -43,7 +43,7 @@ class KGXConverter:
     @staticmethod
     def convert_node(node, exclude_none: bool = False) -> dict:
         if isinstance(node, BaseModel):
-            return node.model_dump(exclude_none=exclude_none)
+            return node.model_dump(mode='json', exclude_none=exclude_none)
         return asdict(node)
 
     @staticmethod
