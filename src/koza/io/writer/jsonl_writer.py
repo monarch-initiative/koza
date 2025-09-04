@@ -43,7 +43,7 @@ class JSONLWriter(KozaWriter):
                     # TODO: track when duplicate nodes were discarded (how many? only if they have properties?)
                     continue
 
-                node = self.converter.convert_node(node, exclude_none=True)
+                node = self.converter.convert_node(node, exclude_unset=True)
                 node_str = json.dumps(node, ensure_ascii=False)
                 self.nodeFH.write(node_str + "\n")
                 self.written_node_ids.add(node_id)
@@ -51,7 +51,7 @@ class JSONLWriter(KozaWriter):
     def write_edges(self, edges: Iterable, preconverted: bool = False):
         if edges:
             for edge in edges:
-                edge = self.converter.convert_association(edge, exclude_none=True)
+                edge = self.converter.convert_association(edge, exclude_unset=True)
                 if self.sssom_config:
                     edge = self.sssom_config.apply_mapping(edge)
                 edge_str = json.dumps(edge, ensure_ascii=False)

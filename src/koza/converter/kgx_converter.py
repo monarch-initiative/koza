@@ -41,13 +41,13 @@ class KGXConverter:
         return nodes, edges
 
     @staticmethod
-    def convert_node(node, exclude_none: bool = False) -> dict:
+    def convert_node(node, exclude_unset: bool = False) -> dict:
         if isinstance(node, BaseModel):
-            return node.model_dump(mode="json", exclude_none=exclude_none)
+            return node.model_dump(mode="json", exclude_unset=exclude_unset)
         return asdict(node)
 
     @staticmethod
-    def convert_association(association, exclude_none: bool = False) -> dict:
+    def convert_association(association, exclude_unset: bool = False) -> dict:
         if isinstance(association, BaseModel):
-            return association.model_dump(mode="json", exclude_none=exclude_none)
+            return association.model_dump(mode="json", exclude_unset=exclude_unset)
         return asdict(association)
