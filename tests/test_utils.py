@@ -9,8 +9,7 @@ from unittest.mock import patch, MagicMock
 import duckdb
 
 from koza.graph_operations.utils import (
-    GraphDatabase, print_operation_summary, _analyze_file_schema, 
-    _setup_database, create_final_tables
+    GraphDatabase, print_operation_summary, get_duckdb_read_statement, format_file_size
 )
 from koza.model.graph_operations import (
     DatabaseStats, OperationSummary, FileSpec, KGXFormat, KGXFileType, FileLoadResult
@@ -237,51 +236,86 @@ class TestGraphDatabase:
 
 
 class TestUtilityFunctions:
-    """Test utility functions."""
+    """Test standalone utility functions."""
     
-    def test_analyze_file_schema_tsv(self, sample_tsv_file):
-        """Test analyzing TSV file schema."""
-        schema = _analyze_file_schema(sample_tsv_file, KGXFormat.TSV)
+    def test_get_duckdb_read_statement_tsv(self, sample_tsv_file):
+        """Test DuckDB read statement generation for TSV files."""
+        file_spec = FileSpec(
+            path=sample_tsv_file,
+            format=KGXFormat.TSV,
+            file_type=KGXFileType.NODES
+        )
         
-        assert isinstance(schema, dict)
-        assert "columns" in schema
-        assert "sample_data" in schema
-        assert schema["columns"] == 4
-        assert len(schema["sample_data"]) > 0
+        statement = get_duckdb_read_statement(file_spec)
+        
+        assert "read_csv" in statement
+        assert "delim='\\t'" in statement
+        assert "header=true" in statement
+        assert str(sample_tsv_file) in statement
     
-    def test_analyze_file_schema_jsonl(self, sample_jsonl_file):
-        """Test analyzing JSONL file schema."""
-        schema = _analyze_file_schema(sample_jsonl_file, KGXFormat.JSONL)
+    def test_get_duckdb_read_statement_jsonl(self, sample_jsonl_file):
+        """Test DuckDB read statement generation for JSONL files."""
+        file_spec = FileSpec(
+            path=sample_jsonl_file,
+            format=KGXFormat.JSONL,
+            file_type=KGXFileType.NODES
+        )
         
-        assert isinstance(schema, dict)
-        assert "columns" in schema
-        assert "sample_data" in schema
-        assert schema["columns"] >= 3  # id, category, name
+        statement = get_duckdb_read_statement(file_spec)
+        
+        assert "read_json" in statement
+        assert "format='newline_delimited'" in statement
+        assert str(sample_jsonl_file) in statement
     
-    def test_analyze_file_schema_nonexistent(self, temp_dir):
-        """Test analyzing nonexistent file."""
-        nonexistent_file = temp_dir / "nonexistent.tsv"
+    def test_get_duckdb_read_statement_parquet(self, temp_dir):
+        """Test DuckDB read statement generation for Parquet files."""
+        parquet_file = temp_dir / "test.parquet"
+        parquet_file.touch()
         
-        schema = _analyze_file_schema(nonexistent_file, KGXFormat.TSV)
+        file_spec = FileSpec(
+            path=parquet_file,
+            format=KGXFormat.PARQUET,
+            file_type=KGXFileType.NODES
+        )
         
-        assert schema == {"columns": 0, "sample_data": []}
+        statement = get_duckdb_read_statement(file_spec)
+        
+        assert "read_parquet" in statement
+        assert str(parquet_file) in statement
     
-    def test_setup_database(self, temp_dir):
-        """Test database setup."""
-        db_path = temp_dir / "test.duckdb"
+    def test_get_duckdb_read_statement_unsupported(self, temp_dir):
+        """Test DuckDB read statement with unsupported format."""
+        test_file = temp_dir / "test.unsupported"
+        test_file.touch()
         
-        with GraphDatabase(db_path) as db:
-            _setup_database(db.conn)
-            
-            # Check that QC tables are created
-            tables = db.conn.execute("""
-                SELECT table_name FROM information_schema.tables 
-                WHERE table_name IN ('dangling_edges', 'duplicate_nodes', 'singleton_nodes', 'file_schemas')
-            """).fetchall()
-            
-            table_names = {row[0] for row in tables}
-            expected_tables = {'dangling_edges', 'duplicate_nodes', 'singleton_nodes', 'file_schemas'}
-            assert expected_tables.issubset(table_names)
+        # Test by directly passing an invalid format to the function
+        # Since FileSpec validation prevents invalid formats, we'll test the function directly
+        from unittest.mock import MagicMock
+        
+        mock_file_spec = MagicMock()
+        mock_file_spec.path = test_file
+        mock_file_spec.format = "unsupported_format"
+        
+        with pytest.raises(ValueError, match="Unsupported format"):
+            get_duckdb_read_statement(mock_file_spec)
+    
+    def test_format_file_size(self):
+        """Test file size formatting utility."""
+        # Test bytes
+        assert format_file_size(500) == "500.0 B"
+        
+        # Test KB
+        assert format_file_size(1536) == "1.5 KB"
+        
+        # Test MB
+        assert format_file_size(2621440) == "2.5 MB"
+        
+        # Test GB
+        assert format_file_size(3221225472) == "3.0 GB"
+        
+        # Test edge cases
+        assert format_file_size(0) == "0.0 B"
+        assert format_file_size(1) == "1.0 B"
     
     def test_print_operation_summary_success(self, capsys):
         """Test printing successful operation summary."""
@@ -352,110 +386,6 @@ class TestUtilityFunctions:
         assert "❌ Errors:" not in captured.out
 
 
-class TestCreateFinalTables:
-    """Test create_final_tables function."""
-    
-    def test_create_final_tables_nodes_only(self, temp_dir):
-        """Test creating final tables with nodes only."""
-        db_path = temp_dir / "test.duckdb"
-        
-        # Mock file load results
-        node_result = FileLoadResult(
-            file_spec=FileSpec(path=Path("test.tsv"), format=KGXFormat.TSV, file_type=KGXFileType.NODES),
-            records_loaded=2,
-            detected_format=KGXFormat.TSV,
-            load_time_seconds=0.1,
-            temp_table_name="temp_nodes_test"
-        )
-        
-        with GraphDatabase(db_path) as db:
-            # Create temp table
-            db.conn.execute("""
-                CREATE TABLE temp_nodes_test (id VARCHAR, category VARCHAR, name VARCHAR, source VARCHAR);
-                INSERT INTO temp_nodes_test VALUES 
-                    ('HGNC:123', 'biolink:Gene', 'gene1', 'test'),
-                    ('HGNC:456', 'biolink:Gene', 'gene2', 'test');
-            """)
-            
-            create_final_tables(db, [node_result], [])
-            
-            # Check nodes table was created
-            nodes_count = db.conn.execute("SELECT COUNT(*) FROM nodes").fetchone()[0]
-            assert nodes_count == 2
-            
-            # Check temp table was cleaned up
-            with pytest.raises(Exception):
-                db.conn.execute("SELECT * FROM temp_nodes_test")
-    
-    def test_create_final_tables_edges_only(self, temp_dir):
-        """Test creating final tables with edges only."""
-        db_path = temp_dir / "test.duckdb"
-        
-        # Mock file load results
-        edge_result = FileLoadResult(
-            file_spec=FileSpec(path=Path("test.tsv"), format=KGXFormat.TSV, file_type=KGXFileType.EDGES),
-            records_loaded=1,
-            detected_format=KGXFormat.TSV,
-            load_time_seconds=0.1,
-            temp_table_name="temp_edges_test"
-        )
-        
-        with GraphDatabase(db_path) as db:
-            # Create temp table
-            db.conn.execute("""
-                CREATE TABLE temp_edges_test (subject VARCHAR, predicate VARCHAR, object VARCHAR, source VARCHAR);
-                INSERT INTO temp_edges_test VALUES ('HGNC:123', 'biolink:related_to', 'HGNC:456', 'test');
-            """)
-            
-            create_final_tables(db, [], [edge_result])
-            
-            # Check edges table was created
-            edges_count = db.conn.execute("SELECT COUNT(*) FROM edges").fetchone()[0]
-            assert edges_count == 1
-    
-    def test_create_final_tables_both_nodes_and_edges(self, temp_dir):
-        """Test creating final tables with both nodes and edges."""
-        db_path = temp_dir / "test.duckdb"
-        
-        # Mock file load results
-        node_result = FileLoadResult(
-            file_spec=FileSpec(path=Path("nodes.tsv"), format=KGXFormat.TSV, file_type=KGXFileType.NODES),
-            records_loaded=2,
-            detected_format=KGXFormat.TSV,
-            load_time_seconds=0.1,
-            temp_table_name="temp_nodes_test"
-        )
-        
-        edge_result = FileLoadResult(
-            file_spec=FileSpec(path=Path("edges.tsv"), format=KGXFormat.TSV, file_type=KGXFileType.EDGES),
-            records_loaded=1,
-            detected_format=KGXFormat.TSV,
-            load_time_seconds=0.1,
-            temp_table_name="temp_edges_test"
-        )
-        
-        with GraphDatabase(db_path) as db:
-            # Create temp tables
-            db.conn.execute("""
-                CREATE TABLE temp_nodes_test (id VARCHAR, category VARCHAR, source VARCHAR);
-                INSERT INTO temp_nodes_test VALUES 
-                    ('HGNC:123', 'biolink:Gene', 'nodes'),
-                    ('HGNC:456', 'biolink:Gene', 'nodes');
-            """)
-            
-            db.conn.execute("""
-                CREATE TABLE temp_edges_test (subject VARCHAR, predicate VARCHAR, object VARCHAR, source VARCHAR);
-                INSERT INTO temp_edges_test VALUES ('HGNC:123', 'biolink:related_to', 'HGNC:456', 'edges');
-            """)
-            
-            create_final_tables(db, [node_result], [edge_result])
-            
-            # Check both tables were created
-            nodes_count = db.conn.execute("SELECT COUNT(*) FROM nodes").fetchone()[0]
-            edges_count = db.conn.execute("SELECT COUNT(*) FROM edges").fetchone()[0]
-            
-            assert nodes_count == 2
-            assert edges_count == 1
 
 
 if __name__ == "__main__":
