@@ -258,6 +258,9 @@ class MergeConfig(BaseModel):
     output_format: KGXFormat = KGXFormat.TSV
     export_final: bool = False  # Export final clean data to files
     export_directory: Optional[Path] = None
+    archive: bool = False  # Export as archive instead of loose files
+    compress: bool = False  # Compress archive as tar.gz
+    graph_name: Optional[str] = None  # Name for graph files in archive
     
     # General options
     quiet: bool = False
@@ -290,6 +293,13 @@ class MergeConfig(BaseModel):
         """If export is enabled, ensure export directory is provided"""
         if self.export_final and not self.export_directory:
             raise ValueError("Must provide export_directory when export_final=True")
+        return self
+    
+    @model_validator(mode='after')
+    def validate_archive_options(self):
+        """Validate archive and compress options"""
+        if self.compress and not self.archive:
+            raise ValueError("compress option requires archive option to be enabled")
         return self
 
 
@@ -328,3 +338,147 @@ class OperationSummary(BaseModel):
     total_time_seconds: float = 0.0
     warnings: List[str] = Field(default_factory=list)
     errors: List[str] = Field(default_factory=list)
+
+
+# Report Operation Models
+
+class QCSummary(BaseModel):
+    """Summary section of QC report."""
+    total_nodes: int
+    total_edges: int
+    dangling_edges: int = 0
+    duplicate_nodes: int = 0
+    singleton_nodes: int = 0
+
+
+class NodeSourceReport(BaseModel):
+    """Node analysis for a specific data source."""
+    name: str
+    total_number: int
+    categories: List[str] = Field(default_factory=list)
+    namespaces: List[str] = Field(default_factory=list)
+
+
+class PredicateReport(BaseModel):
+    """Predicate analysis within an edge source."""
+    uri: str
+    count: int
+
+
+class EdgeSourceReport(BaseModel):
+    """Edge analysis for a specific data source."""
+    name: str
+    total_number: int
+    predicates: List[PredicateReport] = Field(default_factory=list)
+    namespaces: List[str] = Field(default_factory=list)
+
+
+class QCReport(BaseModel):
+    """Complete QC report structure."""
+    summary: QCSummary
+    nodes: List[NodeSourceReport] = Field(default_factory=list)
+    edges: List[EdgeSourceReport] = Field(default_factory=list)
+
+
+class CategoryStats(BaseModel):
+    """Statistics for a node/edge category."""
+    count: int
+    provided_by: Dict[str, Dict[str, int]] = Field(default_factory=dict)
+
+
+class PredicateStats(BaseModel):
+    """Statistics for an edge predicate."""
+    count: int
+    provided_by: Dict[str, Dict[str, int]] = Field(default_factory=dict)
+
+
+class NodeStats(BaseModel):
+    """Comprehensive node statistics."""
+    total_nodes: int
+    count_by_category: Dict[str, CategoryStats] = Field(default_factory=dict)
+    count_by_id_prefixes: Dict[str, int] = Field(default_factory=dict)
+    node_categories: List[str] = Field(default_factory=list)
+    node_id_prefixes: List[str] = Field(default_factory=list)
+    provided_by: List[str] = Field(default_factory=list)
+
+
+class EdgeStats(BaseModel):
+    """Comprehensive edge statistics."""
+    total_edges: int
+    count_by_predicates: Dict[str, PredicateStats] = Field(default_factory=dict)
+    predicates: List[str] = Field(default_factory=list)
+    provided_by: List[str] = Field(default_factory=list)
+
+
+class GraphStatsReport(BaseModel):
+    """Complete graph statistics report structure."""
+    graph_name: str
+    node_stats: NodeStats
+    edge_stats: EdgeStats
+
+
+class TableSchema(BaseModel):
+    """Schema information for a database table."""
+    columns: List[Dict[str, str]] = Field(default_factory=list)  # [{"name": "id", "type": "VARCHAR"}]
+    column_count: int
+    record_count: int
+
+
+class BiolinkCompliance(BaseModel):
+    """Biolink model compliance analysis."""
+    status: str
+    message: str
+    compliance_percentage: Optional[float] = None
+    missing_fields: List[str] = Field(default_factory=list)
+    extension_fields: List[str] = Field(default_factory=list)
+
+
+class SchemaAnalysisReport(BaseModel):
+    """Complete schema analysis report structure."""
+    tables: Dict[str, TableSchema] = Field(default_factory=dict)
+    analysis: Dict[str, Any] = Field(default_factory=dict)
+    biolink_compliance: BiolinkCompliance
+
+
+class QCReportConfig(BaseModel):
+    """Configuration for QC report generation."""
+    database_path: Path
+    output_file: Optional[Path] = None
+    group_by: str = "provided_by"
+    quiet: bool = False
+
+
+class QCReportResult(BaseModel):
+    """Result from QC report generation."""
+    qc_report: QCReport
+    output_file: Optional[Path] = None
+    total_time_seconds: float = 0.0
+
+
+class GraphStatsConfig(BaseModel):
+    """Configuration for graph statistics report generation."""
+    database_path: Path
+    output_file: Optional[Path] = None
+    quiet: bool = False
+
+
+class GraphStatsResult(BaseModel):
+    """Result from graph statistics report generation."""
+    stats_report: GraphStatsReport
+    output_file: Optional[Path] = None
+    total_time_seconds: float = 0.0
+
+
+class SchemaReportConfig(BaseModel):
+    """Configuration for schema analysis report generation."""
+    database_path: Path
+    output_file: Optional[Path] = None
+    include_biolink_compliance: bool = True
+    quiet: bool = False
+
+
+class SchemaReportResult(BaseModel):
+    """Result from schema analysis report generation."""
+    schema_report: SchemaAnalysisReport
+    output_file: Optional[Path] = None
+    total_time_seconds: float = 0.0

@@ -316,6 +316,82 @@ class GraphDatabase:
         self.conn.execute(copy_sql)
         logger.info(f"Exported {table_name} to {output_path} ({format_type.value} format)")
     
+    def export_to_archive(
+        self, 
+        output_path: Path,
+        graph_name: str,
+        format: KGXFormat,
+        compress: bool = False
+    ) -> None:
+        """
+        Export database tables to tar or tar.gz archive with standardized filenames.
+        
+        Args:
+            output_path: Path for output archive file
+            graph_name: Name to use for files inside archive
+            format: Export format for the data files
+            compress: If True, create tar.gz; if False, create tar
+        """
+        import tempfile
+        import tarfile
+        
+        # Create temporary directory for intermediate files
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            
+            # Generate standardized filenames
+            nodes_filename, edges_filename = _generate_archive_filenames(graph_name, format)
+            nodes_temp_file = temp_path / nodes_filename
+            edges_temp_file = temp_path / edges_filename
+            
+            # Export database tables to temporary files
+            self.export_to_format("nodes", nodes_temp_file, format)
+            self.export_to_format("edges", edges_temp_file, format)
+            
+            # Create parent directories if needed
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            
+            # Create archive
+            mode = "w:gz" if compress else "w"
+            with tarfile.open(output_path, mode) as tar:
+                tar.add(nodes_temp_file, arcname=nodes_filename)
+                tar.add(edges_temp_file, arcname=edges_filename)
+            
+            logger.info(f"Exported database to {'compressed ' if compress else ''}archive {output_path}")
+    
+    def export_to_loose_files(
+        self,
+        output_directory: Path,
+        graph_name: str,
+        format: KGXFormat
+    ) -> tuple[Path, Path]:
+        """
+        Export database tables to individual files with standardized filenames.
+        
+        Args:
+            output_directory: Directory for output files
+            graph_name: Name to use for files
+            format: Export format for the data files
+            
+        Returns:
+            Tuple of (nodes_file_path, edges_file_path)
+        """
+        # Generate standardized filenames
+        nodes_filename, edges_filename = _generate_archive_filenames(graph_name, format)
+        nodes_file = output_directory / nodes_filename
+        edges_file = output_directory / edges_filename
+        
+        # Create output directory if needed
+        output_directory.mkdir(parents=True, exist_ok=True)
+        
+        # Export database tables
+        self.export_to_format("nodes", nodes_file, format)
+        self.export_to_format("edges", edges_file, format)
+        
+        logger.info(f"Exported database to loose files in {output_directory}")
+        
+        return nodes_file, edges_file
+    
     def close(self):
         """Close the database connection."""
         if self.conn:
@@ -326,6 +402,33 @@ class GraphDatabase:
     
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
+
+
+def _get_file_extension(format: KGXFormat) -> str:
+    """Get file extension for the given format."""
+    extension_map = {
+        KGXFormat.TSV: ".tsv",
+        KGXFormat.JSONL: ".jsonl",
+        KGXFormat.PARQUET: ".parquet"
+    }
+    return extension_map[format]
+
+
+def _generate_archive_filenames(graph_name: str, format: KGXFormat) -> tuple[str, str]:
+    """
+    Generate standardized filenames for archive export.
+    
+    Args:
+        graph_name: Base name for the graph
+        format: Export format
+        
+    Returns:
+        Tuple of (nodes_filename, edges_filename)
+    """
+    ext = _get_file_extension(format)
+    nodes_filename = f"{graph_name}_nodes{ext}"
+    edges_filename = f"{graph_name}_edges{ext}"
+    return nodes_filename, edges_filename
 
 
 def format_file_size(size_bytes: int) -> str:

@@ -164,28 +164,60 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
             config.export_directory.mkdir(parents=True, exist_ok=True)
             
             with GraphDatabase(database_path) as db:
-                # Export nodes if they exist
+                # Check if we have data to export
+                has_nodes = False
+                has_edges = False
                 try:
                     nodes_count = db.conn.execute("SELECT COUNT(*) FROM nodes").fetchone()[0]
-                    if nodes_count > 0:
-                        nodes_file = config.export_directory / f"merged_nodes.{config.output_format.value}"
-                        db.export_to_format("nodes", nodes_file, config.output_format)
-                        exported_files.append(nodes_file)
+                    has_nodes = nodes_count > 0
                 except Exception:
                     pass  # Table might not exist
                 
-                # Export edges if they exist
                 try:
                     edges_count = db.conn.execute("SELECT COUNT(*) FROM edges").fetchone()[0]
-                    if edges_count > 0:
-                        edges_file = config.export_directory / f"merged_edges.{config.output_format.value}"
-                        db.export_to_format("edges", edges_file, config.output_format)
-                        exported_files.append(edges_file)
+                    has_edges = edges_count > 0
                 except Exception:
                     pass  # Table might not exist
+                
+                if not has_nodes and not has_edges:
+                    if not config.quiet:
+                        print("⚠️  No data to export (no nodes or edges found)")
+                else:
+                    # Determine graph name
+                    export_graph_name = config.graph_name or "merged_graph"
+                    
+                    # Export based on archive option
+                    if config.archive:
+                        # Create archive filename
+                        archive_ext = ".tar.gz" if config.compress else ".tar"
+                        archive_file = config.export_directory / f"{export_graph_name}{archive_ext}"
+                        
+                        # Export to archive
+                        db.export_to_archive(
+                            output_path=archive_file,
+                            graph_name=export_graph_name,
+                            format=config.output_format,
+                            compress=config.compress
+                        )
+                        exported_files.append(archive_file)
+                        
+                        if not config.quiet:
+                            archive_type = "compressed archive" if config.compress else "archive"
+                            print(f"✓ Export completed: {archive_type} {archive_file}")
+                    else:
+                        # Export to loose files
+                        nodes_file, edges_file = db.export_to_loose_files(
+                            output_directory=config.export_directory,
+                            graph_name=export_graph_name,
+                            format=config.output_format
+                        )
+                        exported_files.extend([nodes_file, edges_file])
+                        
+                        if not config.quiet:
+                            print(f"✓ Export completed: {len(exported_files)} files exported")
             
-            if not config.quiet and exported_files:
-                print(f"✓ Export completed: {len(exported_files)} files exported")
+            if not exported_files and not config.quiet:
+                print("⚠️  No files exported")
         
         # Create pipeline summary
         total_time = time.time() - start_time

@@ -11,9 +11,16 @@ from loguru import logger
 from tqdm import tqdm
 
 from koza.model.formats import OutputFormat
-from koza.model.graph_operations import JoinConfig, SplitConfig, PruneConfig, AppendConfig, NormalizeConfig, MergeConfig, FileSpec, KGXFormat, KGXFileType
+from koza.model.graph_operations import (
+    JoinConfig, SplitConfig, PruneConfig, AppendConfig, NormalizeConfig, MergeConfig, 
+    FileSpec, KGXFormat, KGXFileType, QCReportConfig, GraphStatsConfig, SchemaReportConfig
+)
 from koza.runner import KozaRunner
-from koza.graph_operations import join_graphs, split_graph, prune_graph, append_graphs, normalize_graph, merge_graphs, prepare_file_specs_from_paths, prepare_mapping_file_specs_from_paths, prepare_merge_config_from_paths
+from koza.graph_operations import (
+    join_graphs, split_graph, prune_graph, append_graphs, normalize_graph, merge_graphs, 
+    prepare_file_specs_from_paths, prepare_mapping_file_specs_from_paths, prepare_merge_config_from_paths,
+    generate_qc_report, generate_graph_stats, generate_schema_report
+)
 
 typer_app = typer.Typer(
     no_args_is_help=True,
@@ -671,6 +678,18 @@ def merge(
         KGXFormat,
         typer.Option("--format", "-f", help="Output format for exported files")
     ] = KGXFormat.TSV,
+    archive: Annotated[
+        bool,
+        typer.Option("--archive", help="Export as archive (tar) instead of loose files")
+    ] = False,
+    compress: Annotated[
+        bool,
+        typer.Option("--compress", help="Compress archive as tar.gz (requires --archive)")
+    ] = False,
+    graph_name: Annotated[
+        Optional[str],
+        typer.Option("--graph-name", help="Name for graph files in archive (default: merged_graph)")
+    ] = None,
     skip_normalize: Annotated[
         bool,
         typer.Option("--skip-normalize", help="Skip normalization step")
@@ -796,6 +815,9 @@ def merge(
         if export_final and not export_directory:
             raise typer.BadParameter("Must specify --export-dir when using --export")
         
+        if compress and not archive:
+            raise typer.BadParameter("--compress requires --archive to be enabled")
+        
         # Prepare file specifications
         config = prepare_merge_config_from_paths(
             node_files=[Path(f) for f in all_node_files],
@@ -809,6 +831,9 @@ def merge(
             export_final=export_final,
             export_directory=Path(export_directory) if export_directory else None,
             output_format=output_format,
+            archive=archive,
+            compress=compress,
+            graph_name=graph_name,
             quiet=quiet,
             show_progress=show_progress
         )
@@ -828,6 +853,107 @@ def merge(
         
     except Exception as e:
         typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(1)
+
+
+# Report Commands
+
+@typer_app.command(name="report")
+def report_cmd(
+    report_type: Annotated[
+        str,
+        typer.Argument(help="Type of report to generate: qc, graph-stats, or schema")
+    ],
+    database: Annotated[
+        str,
+        typer.Option("--database", "-d", help="Path to DuckDB database file")
+    ],
+    output: Annotated[
+        Optional[str],
+        typer.Option("--output", "-o", help="Path to output report file (YAML format)")
+    ] = None,
+    quiet: Annotated[
+        bool,
+        typer.Option("--quiet", "-q", help="Suppress progress output")
+    ] = False,
+):
+    """
+    Generate comprehensive reports for KGX graph databases.
+    
+    Available report types:
+    
+    • qc: Quality control analysis by data source
+    
+    • graph-stats: Comprehensive graph statistics (similar to merged_graph_stats.yaml)
+    
+    • schema: Database schema analysis and biolink compliance
+    
+    Examples:
+    
+        # Generate QC report
+        koza report qc -d merged.duckdb -o qc_report.yaml
+        
+        # Generate graph statistics
+        koza report graph-stats -d merged.duckdb -o graph_stats.yaml
+        
+        # Generate schema report  
+        koza report schema -d merged.duckdb -o schema_report.yaml
+        
+        # Quick QC analysis (console output only)
+        koza report qc -d merged.duckdb
+    """
+    
+    try:
+        database_path = Path(database)
+        if not database_path.exists():
+            raise typer.BadParameter(f"Database file not found: {database}")
+        
+        output_path = Path(output) if output else None
+        
+        if report_type == "qc":
+            config = QCReportConfig(
+                database_path=database_path,
+                output_file=output_path,
+                quiet=quiet
+            )
+            result = generate_qc_report(config)
+            
+            if not quiet:
+                typer.echo("✓ QC report generated successfully")
+                if result.output_file:
+                    typer.echo(f"Report saved to: {result.output_file}")
+                    
+        elif report_type == "graph-stats":
+            config = GraphStatsConfig(
+                database_path=database_path,
+                output_file=output_path,
+                quiet=quiet
+            )
+            result = generate_graph_stats(config)
+            
+            if not quiet:
+                typer.echo("✓ Graph statistics report generated successfully")
+                if result.output_file:
+                    typer.echo(f"Report saved to: {result.output_file}")
+                    
+        elif report_type == "schema":
+            config = SchemaReportConfig(
+                database_path=database_path,
+                output_file=output_path,
+                quiet=quiet
+            )
+            result = generate_schema_report(config)
+            
+            if not quiet:
+                typer.echo("✓ Schema report generated successfully")
+                if result.output_file:
+                    typer.echo(f"Report saved to: {result.output_file}")
+                    
+        else:
+            raise typer.BadParameter(f"Unknown report type: {report_type}. Choose from: qc, graph-stats, schema")
+            
+    except Exception as e:
+        typer.echo(f"Error generating {report_type} report: {e}", err=True)
         raise typer.Exit(1)
 
 
