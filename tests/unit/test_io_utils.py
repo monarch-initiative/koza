@@ -11,8 +11,8 @@ https://github.com/monarch-initiative/dipper/blob/682560f/tests/test_udp.py#L85
 
 from pathlib import Path
 from tarfile import TarFile
+from unittest.mock import MagicMock, patch
 from zipfile import ZipFile
-from unittest.mock import patch, MagicMock
 
 import pytest
 
@@ -26,8 +26,8 @@ def test_404():
     mock_response = MagicMock()
     mock_response.status_code = 404
     mock_response.text = "Not Found"
-    
-    with patch('koza.io.utils.requests.get', return_value=mock_response):
+
+    with patch("koza.io.utils.requests.get", return_value=mock_response):
         with pytest.raises(ValueError, match="Remote file returned 404"):
             io_utils.open_resource("http://example.com/nonexistent")
 
