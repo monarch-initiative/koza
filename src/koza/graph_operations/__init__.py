@@ -13,6 +13,7 @@ from .normalize import normalize_graph, prepare_mapping_file_specs_from_paths
 from .merge import merge_graphs, prepare_merge_config_from_paths
 from .utils import GraphDatabase, print_operation_summary
 from .schema import generate_schema_report, write_schema_report_yaml, print_schema_summary
+from .report import generate_qc_report, generate_graph_stats, generate_schema_compliance_report
 
 __all__ = [
     "join_graphs", 
@@ -28,5 +29,8 @@ __all__ = [
     "print_operation_summary",
     "generate_schema_report",
     "write_schema_report_yaml", 
-    "print_schema_summary"
+    "print_schema_summary",
+    "generate_qc_report",
+    "generate_graph_stats",
+    "generate_schema_compliance_report"
 ]

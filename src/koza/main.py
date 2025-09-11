@@ -19,7 +19,7 @@ from koza.runner import KozaRunner
 from koza.graph_operations import (
     join_graphs, split_graph, prune_graph, append_graphs, normalize_graph, merge_graphs, 
     prepare_file_specs_from_paths, prepare_mapping_file_specs_from_paths, prepare_merge_config_from_paths,
-    generate_qc_report, generate_graph_stats, generate_schema_report
+    generate_qc_report, generate_graph_stats, generate_schema_compliance_report
 )
 
 typer_app = typer.Typer(
@@ -942,7 +942,7 @@ def report_cmd(
                 output_file=output_path,
                 quiet=quiet
             )
-            result = generate_schema_report(config)
+            result = generate_schema_compliance_report(config)
             
             if not quiet:
                 typer.echo("✓ Schema report generated successfully")

@@ -12,6 +12,7 @@ https://github.com/monarch-initiative/dipper/blob/682560f/tests/test_udp.py#L85
 from pathlib import Path
 from tarfile import TarFile
 from zipfile import ZipFile
+from unittest.mock import patch, MagicMock
 
 import pytest
 
@@ -20,9 +21,15 @@ from koza.io.utils import _sanitize_export_property
 
 
 def test_404():
-    resource = "http://httpstat.us/404"
-    with pytest.raises(ValueError):
-        io_utils.open_resource(resource)
+    """Test that open_resource raises ValueError for HTTP 404 responses."""
+    # Mock the requests.get call to return a 404 status
+    mock_response = MagicMock()
+    mock_response.status_code = 404
+    mock_response.text = "Not Found"
+    
+    with patch('koza.io.utils.requests.get', return_value=mock_response):
+        with pytest.raises(ValueError, match="Remote file returned 404"):
+            io_utils.open_resource("http://example.com/nonexistent")
 
 
 def test_http():

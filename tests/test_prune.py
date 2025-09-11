@@ -42,12 +42,11 @@ def database_with_clean_graph(temp_dir):
                 ('HGNC:456', 'biolink:causes', 'MONDO:001');
         """)
         
-        # Create empty QC tables
+        # Create empty QC tables (file_schemas is created automatically by GraphDatabase)
         db.conn.execute("""
             CREATE TABLE dangling_edges (subject VARCHAR, predicate VARCHAR, object VARCHAR);
             CREATE TABLE singleton_nodes (id VARCHAR, category VARCHAR, name VARCHAR);
             CREATE TABLE duplicate_nodes (id VARCHAR, category VARCHAR, name VARCHAR);
-            CREATE TABLE file_schemas (file_name VARCHAR, schema_info VARCHAR);
         """)
     
     return db_path
@@ -77,12 +76,11 @@ def database_with_dangling_edges(temp_dir):
                 ('MISSING:003', 'biolink:related_to', 'MISSING:004');  -- Both dangling
         """)
         
-        # Create empty QC tables
+        # Create empty QC tables (file_schemas is created automatically by GraphDatabase)
         db.conn.execute("""
             CREATE TABLE dangling_edges (subject VARCHAR, predicate VARCHAR, object VARCHAR);
             CREATE TABLE singleton_nodes (id VARCHAR, category VARCHAR, name VARCHAR);
             CREATE TABLE duplicate_nodes (id VARCHAR, category VARCHAR, name VARCHAR);
-            CREATE TABLE file_schemas (file_name VARCHAR, schema_info VARCHAR);
         """)
     
     return db_path
@@ -112,12 +110,11 @@ def database_with_singletons(temp_dir):
                 ('HGNC:456', 'biolink:causes', 'MONDO:001');
         """)
         
-        # Create empty QC tables
+        # Create empty QC tables (file_schemas is created automatically by GraphDatabase)
         db.conn.execute("""
             CREATE TABLE dangling_edges (subject VARCHAR, predicate VARCHAR, object VARCHAR);
             CREATE TABLE singleton_nodes (id VARCHAR, category VARCHAR, name VARCHAR);
             CREATE TABLE duplicate_nodes (id VARCHAR, category VARCHAR, name VARCHAR);
-            CREATE TABLE file_schemas (file_name VARCHAR, schema_info VARCHAR);
         """)
     
     return db_path
@@ -162,7 +159,6 @@ def database_with_edges_having_original_columns(temp_dir):
             );
             CREATE TABLE singleton_nodes (id VARCHAR, category VARCHAR, name VARCHAR);
             CREATE TABLE duplicate_nodes (id VARCHAR, category VARCHAR, name VARCHAR);
-            CREATE TABLE file_schemas (file_name VARCHAR, schema_info VARCHAR);
         """)
     
     return db_path
@@ -300,14 +296,13 @@ class TestPruneOperation:
         db_path = temp_dir / "empty.duckdb"
         
         with GraphDatabase(db_path) as db:
-            # Create empty tables
+            # Create empty tables (file_schemas is created automatically by GraphDatabase)
             db.conn.execute("""
                 CREATE TABLE nodes (id VARCHAR, category VARCHAR, name VARCHAR);
                 CREATE TABLE edges (subject VARCHAR, predicate VARCHAR, object VARCHAR);
                 CREATE TABLE dangling_edges (subject VARCHAR, predicate VARCHAR, object VARCHAR);
                 CREATE TABLE singleton_nodes (id VARCHAR, category VARCHAR, name VARCHAR);
                 CREATE TABLE duplicate_nodes (id VARCHAR, category VARCHAR, name VARCHAR);
-                CREATE TABLE file_schemas (file_name VARCHAR, schema_info VARCHAR);
             """)
         
         config = PruneConfig(
@@ -352,8 +347,7 @@ class TestPruneOperation:
                 CREATE TABLE dangling_edges (subject VARCHAR, predicate VARCHAR, object VARCHAR, source VARCHAR);
                 CREATE TABLE singleton_nodes (id VARCHAR, category VARCHAR, name VARCHAR);
                 CREATE TABLE duplicate_nodes (id VARCHAR, category VARCHAR, name VARCHAR);
-                CREATE TABLE file_schemas (file_name VARCHAR, schema_info VARCHAR);
-            """)
+                """)
         
         config = PruneConfig(
             database_path=db_path,
@@ -404,16 +398,14 @@ class TestPruneConfigValidation:
             )
     
     def test_config_validation_singleton_options(self, database_with_clean_graph):
-        """Test singleton option validation."""
-        # Both True should be valid (handled in implementation)
-        config = PruneConfig(
-            database_path=database_with_clean_graph,
-            keep_singletons=True,
-            remove_singletons=True
-        )
-        
-        assert config.keep_singletons is True
-        assert config.remove_singletons is True
+        """Test singleton option validation - should reject conflicting options."""
+        # Both True should be invalid (conflicting options)
+        with pytest.raises(ValueError, match="Cannot both keep and remove singletons"):
+            config = PruneConfig(
+                database_path=database_with_clean_graph,
+                keep_singletons=True,
+                remove_singletons=True
+            )
         
         # Both False should be valid (default behavior)
         config = PruneConfig(
@@ -477,8 +469,7 @@ class TestPruneEdgeCases:
                 CREATE TABLE dangling_edges (subject VARCHAR, predicate VARCHAR, object VARCHAR);
                 CREATE TABLE singleton_nodes (id VARCHAR, category VARCHAR);
                 CREATE TABLE duplicate_nodes (id VARCHAR, category VARCHAR);
-                CREATE TABLE file_schemas (file_name VARCHAR, schema_info VARCHAR);
-            """)
+                """)
         
         config = PruneConfig(
             database_path=db_path,
@@ -526,8 +517,7 @@ class TestPruneEdgeCases:
                 CREATE TABLE dangling_edges (subject VARCHAR, predicate VARCHAR, object VARCHAR);
                 CREATE TABLE singleton_nodes (id VARCHAR, category VARCHAR);
                 CREATE TABLE duplicate_nodes (id VARCHAR, category VARCHAR);
-                CREATE TABLE file_schemas (file_name VARCHAR, schema_info VARCHAR);
-            """)
+                """)
         
         config = PruneConfig(
             database_path=db_path,

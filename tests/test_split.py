@@ -132,7 +132,7 @@ class TestSplitOperation:
         
         assert isinstance(result, SplitResult)
         # Should have one file per unique category-source combination
-        assert len(result.output_files) == 5  # Each node has unique category-source
+        assert len(result.output_files) == 3  # 3 unique category-source combinations
         assert result.total_records_split == 5
     
     def test_split_with_format_conversion_to_jsonl(self, sample_nodes_file, temp_dir):

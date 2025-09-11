@@ -50,6 +50,9 @@ def split_graph(config: SplitConfig) -> SplitResult:
             if file_result.errors:
                 raise Exception(f"Failed to load input file: {file_result.errors[0]}")
             
+            # Create final table from loaded data
+            db.create_final_tables([file_result])
+            
             # Get distinct values for split fields
             fields_str = ", ".join(config.split_fields)
             table_name = config.input_file.file_type.value
@@ -58,19 +61,19 @@ def split_graph(config: SplitConfig) -> SplitResult:
             split_values_raw = db.conn.execute(distinct_query).fetchall()
             
             # Convert to list of dictionaries
-            split_values = [
+            split_values_raw_dicts = [
                 dict(zip(config.split_fields, values, strict=False)) 
                 for values in split_values_raw
             ]
             
             if not config.quiet:
-                print(f"Found {len(split_values)} unique combinations to split on")
+                print(f"Found {len(split_values_raw_dicts)} unique combinations to split on")
             
             # Generate output files for each combination
             if config.show_progress:
-                progress = tqdm(split_values, desc="Splitting files", unit="file")
+                progress = tqdm(split_values_raw_dicts, desc="Splitting files", unit="file")
             else:
-                progress = split_values
+                progress = split_values_raw_dicts
             
             total_records_split = 0
             
@@ -93,6 +96,8 @@ def split_graph(config: SplitConfig) -> SplitResult:
                 for field, value in values_dict.items():
                     if value is not None:
                         where_conditions.append(f"{field} = '{value}'")
+                    else:
+                        where_conditions.append(f"{field} IS NULL")
                 
                 where_clause = " AND ".join(where_conditions)
                 
@@ -115,12 +120,18 @@ def split_graph(config: SplitConfig) -> SplitResult:
         
         total_time = time.time() - start_time
         
+        # Convert None values to empty strings for Pydantic validation
+        split_values_for_result = []
+        for values_dict in split_values_raw_dicts:
+            converted_dict = {k: str(v) if v is not None else "" for k, v in values_dict.items()}
+            split_values_for_result.append(converted_dict)
+        
         # Create result
         result = SplitResult(
             input_file=config.input_file,
             output_files=output_files,
             total_records_split=total_records_split,
-            split_values=split_values,
+            split_values=split_values_for_result,
             total_time_seconds=total_time
         )
         

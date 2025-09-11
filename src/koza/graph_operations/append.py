@@ -114,7 +114,10 @@ def append_graphs(config: AppendConfig) -> AppendResult:
             # Print schema report if available
             if result.schema_report:
                 print_schema_summary(result.schema_report)
-                write_schema_report_yaml(result.schema_report, result.database_path, "append")
+        
+        # Write schema report file if requested (regardless of quiet mode)
+        if result.schema_report:
+            write_schema_report_yaml(result.schema_report, result.database_path, "append")
         
         return result
         
@@ -303,52 +306,92 @@ def _deduplicate_tables(db: GraphDatabase, config: AppendConfig) -> int:
     
     # Deduplicate nodes by ID (keep first occurrence)
     try:
-        node_dupe_query = """
-        CREATE TEMP TABLE nodes_deduped AS
-        SELECT DISTINCT ON (id) * FROM nodes
-        ORDER BY id
-        """
-        db.conn.execute(node_dupe_query)
+        # Check if nodes table exists
+        nodes_exists = False
+        try:
+            db.conn.execute("SELECT COUNT(*) FROM nodes LIMIT 1")
+            nodes_exists = True
+        except Exception:
+            nodes_exists = False
         
-        # Get counts
-        original_count = db.conn.execute("SELECT COUNT(*) FROM nodes").fetchone()[0]
-        deduped_count = db.conn.execute("SELECT COUNT(*) FROM nodes_deduped").fetchone()[0]
-        node_dupes = original_count - deduped_count
-        
-        if node_dupes > 0:
-            # Replace original table
-            db.conn.execute("DROP TABLE nodes")
-            db.conn.execute("ALTER TABLE nodes_deduped RENAME TO nodes")
-            duplicates_removed += node_dupes
-            logger.info(f"Removed {node_dupes} duplicate nodes")
+        if nodes_exists:
+            node_dupe_query = """
+            CREATE TEMP TABLE nodes_deduped AS
+            SELECT DISTINCT ON (id) * FROM nodes
+            ORDER BY id
+            """
+            db.conn.execute(node_dupe_query)
+            
+            # Get counts
+            original_count = db.conn.execute("SELECT COUNT(*) FROM nodes").fetchone()[0]
+            deduped_count = db.conn.execute("SELECT COUNT(*) FROM nodes_deduped").fetchone()[0]
+            node_dupes = original_count - deduped_count
+            
+            if node_dupes > 0:
+                # Replace original table
+                db.conn.execute("DROP TABLE nodes")
+                db.conn.execute("ALTER TABLE nodes_deduped RENAME TO nodes")
+                duplicates_removed += node_dupes
+                logger.info(f"Removed {node_dupes} duplicate nodes")
+            else:
+                db.conn.execute("DROP TABLE nodes_deduped")
         else:
-            db.conn.execute("DROP TABLE nodes_deduped")
+            logger.debug("No nodes table found, skipping node deduplication")
         
     except Exception as e:
         logger.warning(f"Node deduplication failed: {e}")
     
-    # Deduplicate edges by ID (keep first occurrence)
+    # Deduplicate edges (only if edges table exists and has appropriate columns)
     try:
-        edge_dupe_query = """
-        CREATE TEMP TABLE edges_deduped AS
-        SELECT DISTINCT ON (id) * FROM edges
-        ORDER BY id
-        """
-        db.conn.execute(edge_dupe_query)
+        # Check if edges table exists
+        edges_exists = db.conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='edges'").fetchone()
+        if not edges_exists:
+            # Try DuckDB syntax
+            try:
+                db.conn.execute("SELECT COUNT(*) FROM edges LIMIT 1")
+                edges_exists = True
+            except Exception:
+                edges_exists = False
         
-        # Get counts
-        original_count = db.conn.execute("SELECT COUNT(*) FROM edges").fetchone()[0]
-        deduped_count = db.conn.execute("SELECT COUNT(*) FROM edges_deduped").fetchone()[0]
-        edge_dupes = original_count - deduped_count
-        
-        if edge_dupes > 0:
-            # Replace original table
-            db.conn.execute("DROP TABLE edges")
-            db.conn.execute("ALTER TABLE edges_deduped RENAME TO edges")
-            duplicates_removed += edge_dupes
-            logger.info(f"Removed {edge_dupes} duplicate edges")
+        if edges_exists:
+            # Check if edges table has an id column
+            try:
+                db.conn.execute("SELECT id FROM edges LIMIT 1")
+                has_id_column = True
+            except Exception:
+                has_id_column = False
+            
+            if has_id_column:
+                edge_dupe_query = """
+                CREATE TEMP TABLE edges_deduped AS
+                SELECT DISTINCT ON (id) * FROM edges
+                ORDER BY id
+                """
+            else:
+                # If no id column, deduplicate on subject, predicate, object
+                edge_dupe_query = """
+                CREATE TEMP TABLE edges_deduped AS
+                SELECT DISTINCT ON (subject, predicate, object) * FROM edges
+                ORDER BY subject, predicate, object
+                """
+            
+            db.conn.execute(edge_dupe_query)
+            
+            # Get counts
+            original_count = db.conn.execute("SELECT COUNT(*) FROM edges").fetchone()[0]
+            deduped_count = db.conn.execute("SELECT COUNT(*) FROM edges_deduped").fetchone()[0]
+            edge_dupes = original_count - deduped_count
+            
+            if edge_dupes > 0:
+                # Replace original table
+                db.conn.execute("DROP TABLE edges")
+                db.conn.execute("ALTER TABLE edges_deduped RENAME TO edges")
+                duplicates_removed += edge_dupes
+                logger.info(f"Removed {edge_dupes} duplicate edges")
+            else:
+                db.conn.execute("DROP TABLE edges_deduped")
         else:
-            db.conn.execute("DROP TABLE edges_deduped")
+            logger.debug("No edges table found, skipping edge deduplication")
             
     except Exception as e:
         logger.warning(f"Edge deduplication failed: {e}")

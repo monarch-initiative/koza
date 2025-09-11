@@ -94,6 +94,10 @@ def join_graphs(config: JoinConfig) -> JoinResult:
         if not config.quiet:
             _print_join_summary(result)
         
+        # Write schema report file if requested (regardless of quiet mode)
+        if result.schema_report and result.database_path:
+            write_schema_report_yaml(result.schema_report, result.database_path, "join")
+        
         return result
         
     except Exception as e:
@@ -147,10 +151,6 @@ def _print_join_summary(result: JoinResult):
     # Show schema analysis if available
     if result.schema_report:
         print_schema_summary(result.schema_report)
-        
-        # Write YAML report if database path is available
-        if result.database_path:
-            write_schema_report_yaml(result.schema_report, result.database_path, "join")
     
     # Show any errors
     error_files = [f for f in result.files_loaded if f.errors]
@@ -164,32 +164,63 @@ def _print_join_summary(result: JoinResult):
 def prepare_file_specs_from_paths(node_paths: List[str], edge_paths: List[str]) -> tuple[List[FileSpec], List[FileSpec]]:
     """
     Convert file paths to FileSpec objects with auto-detection.
+    Supports glob patterns.
     
     Args:
-        node_paths: List of node file paths
-        edge_paths: List of edge file paths
+        node_paths: List of node file paths (can include glob patterns)
+        edge_paths: List of edge file paths (can include glob patterns)
         
     Returns:
         Tuple of (node_file_specs, edge_file_specs)
     """
+    import glob
+    
     node_specs = []
     for path_str in node_paths:
-        path = Path(path_str)
-        spec = FileSpec(
-            path=path,
-            file_type=KGXFileType.NODES,
-            source_name=path.stem  # Use filename as source name
-        )
-        node_specs.append(spec)
+        # Check if this is a glob pattern
+        if '*' in path_str or '?' in path_str:
+            # Expand glob pattern
+            expanded_paths = glob.glob(path_str)
+            for expanded_path in sorted(expanded_paths):
+                path = Path(expanded_path)
+                spec = FileSpec(
+                    path=path,
+                    file_type=KGXFileType.NODES,
+                    source_name=path.stem  # Use filename as source name
+                )
+                node_specs.append(spec)
+        else:
+            # Regular path
+            path = Path(path_str)
+            spec = FileSpec(
+                path=path,
+                file_type=KGXFileType.NODES,
+                source_name=path.stem  # Use filename as source name
+            )
+            node_specs.append(spec)
     
     edge_specs = []
     for path_str in edge_paths:
-        path = Path(path_str)
-        spec = FileSpec(
-            path=path,
-            file_type=KGXFileType.EDGES,
-            source_name=path.stem  # Use filename as source name
-        )
-        edge_specs.append(spec)
+        # Check if this is a glob pattern
+        if '*' in path_str or '?' in path_str:
+            # Expand glob pattern
+            expanded_paths = glob.glob(path_str)
+            for expanded_path in sorted(expanded_paths):
+                path = Path(expanded_path)
+                spec = FileSpec(
+                    path=path,
+                    file_type=KGXFileType.EDGES,
+                    source_name=path.stem  # Use filename as source name
+                )
+                edge_specs.append(spec)
+        else:
+            # Regular path
+            path = Path(path_str)
+            spec = FileSpec(
+                path=path,
+                file_type=KGXFileType.EDGES,
+                source_name=path.stem  # Use filename as source name
+            )
+            edge_specs.append(spec)
     
     return node_specs, edge_specs

@@ -345,7 +345,16 @@ class TestIntegrationWithExistingFunctionality:
         """Test that archive export uses existing export_to_format internally."""
         output_file = temp_dir / "test_export.tar"
         
-        with patch.object(GraphDatabase, 'export_to_format') as mock_export:
+        def mock_export_side_effect(table_name, output_path, format_type):
+            """Mock that creates actual temp files for the archive to use."""
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            # Create a simple test file
+            if table_name == "nodes":
+                output_path.write_text("id\tcategory\tname\nHGNC:123\tbiolink:Gene\tgene1\n")
+            elif table_name == "edges":
+                output_path.write_text("subject\tpredicate\tobject\nHGNC:123\tbiolink:related_to\tMONDO:001\n")
+        
+        with patch.object(GraphDatabase, 'export_to_format', side_effect=mock_export_side_effect) as mock_export:
             with GraphDatabase(sample_database) as db:
                 db.export_to_archive(
                     output_path=output_file,
@@ -362,6 +371,9 @@ class TestIntegrationWithExistingFunctionality:
             table_names = [args[0] for args in call_args]
             assert "nodes" in table_names
             assert "edges" in table_names
+            
+        # Verify the archive was actually created
+        assert output_file.exists()
 
 
 if __name__ == "__main__":

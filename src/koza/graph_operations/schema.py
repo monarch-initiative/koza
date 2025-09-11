@@ -93,15 +93,13 @@ def print_schema_summary(schema_report: Dict[str, Any]) -> None:
         if "files" in schema_report:
             files = schema_report["files"]
             
-            # Group by column count to show schema variations
+            # Group by column count to show schema variations (regardless of table type)
             column_counts = {}
             for file_info in files:
                 count = file_info["column_count"]
-                table_type = file_info["table_type"]
-                key = f"{table_type}_{count}"
-                if key not in column_counts:
-                    column_counts[key] = []
-                column_counts[key].append(file_info["filename"])
+                if count not in column_counts:
+                    column_counts[count] = []
+                column_counts[count].append((file_info["filename"], file_info["table_type"]))
             
             # Show schema variations
             variations = len(column_counts)
@@ -110,12 +108,11 @@ def print_schema_summary(schema_report: Dict[str, Any]) -> None:
                 
                 # Show examples of different schemas
                 shown = 0
-                for key, filenames in column_counts.items():
+                for col_count, file_entries in column_counts.items():
                     if shown >= 3:  # Limit to 3 examples
                         break
-                    table_type, col_count = key.split("_")
-                    example_file = Path(filenames[0]).name
-                    print(f"      • {col_count} columns: {example_file} (+{len(filenames)-1} more)")
+                    example_file = Path(file_entries[0][0]).name  # filename from tuple
+                    print(f"      • {col_count} columns: {example_file} (+{len(file_entries)-1} more)")
                     shown += 1
                     
                 if len(column_counts) > 3:

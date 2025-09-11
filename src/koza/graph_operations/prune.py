@@ -93,12 +93,44 @@ def _handle_dangling_edges(db: GraphDatabase, config: PruneConfig) -> tuple[int,
     Returns:
         Tuple of (edges_moved, edges_by_source, missing_nodes_by_source)
     """
+    # Check if edges table exists
+    try:
+        db.conn.execute("SELECT COUNT(*) FROM edges LIMIT 1")
+        edges_exists = True
+    except Exception:
+        edges_exists = False
+    
+    if not edges_exists:
+        if not config.quiet:
+            print("✅ No edges table found - no dangling edges to process")
+        return 0, {}, {}
+    
+    # Check if file_source or source column exists in edges table
+    has_file_source = False
+    has_source = False
+    try:
+        db.conn.execute("SELECT file_source FROM edges LIMIT 1")
+        has_file_source = True
+    except Exception:
+        try:
+            db.conn.execute("SELECT source FROM edges LIMIT 1")
+            has_source = True
+        except Exception:
+            pass
+    
     # Find dangling edges - edges where subject or object doesn't exist in nodes table
-    dangling_query = """
+    if has_file_source:
+        source_column = "COALESCE(e.file_source, 'unknown')"
+    elif has_source:
+        source_column = "COALESCE(e.source, 'unknown')"
+    else:
+        source_column = "'unknown'"
+        
+    dangling_query = f"""
     SELECT e.*, 
            CASE WHEN n1.id IS NULL THEN e.subject ELSE NULL END as missing_subject,
            CASE WHEN n2.id IS NULL THEN e.object ELSE NULL END as missing_object,
-           COALESCE(e.file_source, 'unknown') as source
+           {source_column} as source
     FROM edges e
     LEFT JOIN nodes n1 ON e.subject = n1.id
     LEFT JOIN nodes n2 ON e.object = n2.id
@@ -189,15 +221,32 @@ def _handle_singleton_nodes(db: GraphDatabase, config: PruneConfig) -> tuple[int
     Returns:
         Tuple of (nodes_moved, nodes_kept)
     """
-    # Find singleton nodes - nodes that don't appear as subject or object in any edge
-    singleton_query = """
-    SELECT n.* FROM nodes n
-    LEFT JOIN edges e1 ON n.id = e1.subject
-    LEFT JOIN edges e2 ON n.id = e2.object
-    WHERE e1.subject IS NULL AND e2.object IS NULL
-    """
+    # Check if edges table exists
+    try:
+        db.conn.execute("SELECT COUNT(*) FROM edges LIMIT 1")
+        edges_exists = True
+    except Exception:
+        edges_exists = False
     
-    singleton_nodes = db.conn.execute(singleton_query).fetchall()
+    if not edges_exists:
+        # If no edges table, all nodes are singletons
+        try:
+            singleton_nodes = db.conn.execute("SELECT * FROM nodes").fetchall()
+        except Exception:
+            # No nodes table either
+            if not config.quiet:
+                print("✅ No nodes table found - no singleton nodes to process")
+            return 0, 0
+    else:
+        # Find singleton nodes - nodes that don't appear as subject or object in any edge
+        singleton_query = """
+        SELECT n.* FROM nodes n
+        LEFT JOIN edges e1 ON n.id = e1.subject
+        LEFT JOIN edges e2 ON n.id = e2.object
+        WHERE e1.subject IS NULL AND e2.object IS NULL
+        """
+        
+        singleton_nodes = db.conn.execute(singleton_query).fetchall()
     singleton_count = len(singleton_nodes)
     
     if singleton_count == 0:
