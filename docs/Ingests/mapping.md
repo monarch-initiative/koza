@@ -17,8 +17,8 @@ sssom_config:
   files:
     - './path/to/shared_mappings.sssom.tsv'
   filter_prefixes:
-    - 'DOID'        # Only consider DOID IDs from source data
-    - 'OMIM'        # Only consider OMIM IDs from source data
+    - 'DOID'        # Only use SSSOM rows with DOID subjects/objects, only map DOID IDs from source
+    - 'OMIM'        # Only use SSSOM rows with OMIM subjects/objects, only map OMIM IDs from source
   field_mappings:
     subject:
       target_prefixes: ['MONDO', 'HP']    # Map TO these prefixes
@@ -34,12 +34,18 @@ sssom_config:
 
 You can specify different SSSOM files for different fields, allowing for specialized mappings:
 
+**Understanding filter_prefixes vs target_prefixes:**
+- `filter_prefixes`: Controls which SSSOM file content to use and which source IDs to consider
+- `target_prefixes`: Controls what prefixes to map TO for each field
+
+Example: If your SSSOM file contains mappings like `DOID:123 → MONDO:456`, `HP:789 → MONDO:999`, `OMIM:111 → CHEBI:222`
+
 ```yaml
 sssom_config:
   # Optional global files applied to all fields
   files:
     - './shared_mappings.sssom.tsv'
-  filter_prefixes: ['PREFIX1', 'PREFIX2']
+  filter_prefixes: ['DOID', 'HP']  # Only use DOID/HP rows from SSSOM, ignore OMIM→CHEBI
   field_mappings:
     subject:
       files: ['./subject_specific.sssom.tsv']  # Additional files for this field
@@ -101,8 +107,11 @@ sssom_config:
   - **target_prefixes**: List of prefixes to map TO for this field
   - **preserve_original**: Boolean - whether to preserve the original value
   - **original_field_name**: (Optional) Custom name for the preservation field
-- **filter_prefixes**: List of prefixes to include FROM source data for mapping (acts as inclusion filter - only IDs with these prefixes will be considered for mapping; if empty, all prefixes are considered)
-  - Example: `filter_prefixes: ['DOID', 'MONDO']` means only `DOID:123` and `MONDO:456` IDs will be mapped, but `HP:789` will be ignored
+- **filter_prefixes**: List of prefixes to filter SSSOM file content and source data for mapping (dual-level inclusion filter)
+  - **SSSOM content filtering**: Only keeps rows from SSSOM files where subject_id or object_id match these prefixes
+  - **Source data filtering**: Only considers source data IDs with these prefixes for mapping
+  - Example: If SSSOM contains `DOID→MONDO`, `HP→MONDO`, `OMIM→CHEBI` and `filter_prefixes: ['DOID', 'HP']`, then only the first two mappings are used and only `DOID:123`/`HP:456` IDs from source data will be mapped
+  - If empty, all SSSOM content and source prefixes are considered
 - **use_match**: Match types to use (currently only 'exact' is supported)
 
 #### Validation Rules
