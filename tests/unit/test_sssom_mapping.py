@@ -1,3 +1,4 @@
+from pathlib import Path
 from koza.model.config.sssom_config import SSSOMConfig, FieldMapping
 
 sssom_files = ["tests/resources/sssom/testmapping.sssom.tsv", "tests/resources/sssom/testmapping2.sssom.tsv"]
@@ -307,3 +308,72 @@ def test_new_api_backward_compatibility():
 
     assert mapped["subject"] == "B:987"
     assert mapped["original_subject"] == "A:123"
+
+
+
+def test_file_path_resolution():
+    """Test that SSSOM file paths are resolved relative to base_directory."""
+    # Create a config with relative paths and base_directory
+    base_dir = Path("/some/config/dir")
+
+    # This will fail validation since files dont exist, so we need to mock file validation
+    # For now, just test the path resolution logic directly
+    sssom_config = SSSOMConfig.__new__(SSSOMConfig)  # Create without calling __init__
+    sssom_config.files = ["../data/mappings.sssom.tsv"]  # Relative path
+    sssom_config.field_mappings = {
+        "subject": FieldMapping(
+            files=["./subject_mappings.sssom.tsv"],  # Relative path
+            target_prefixes=["B"],
+            preserve_original=True
+        )
+    }
+    sssom_config.base_directory = base_dir
+    sssom_config.filter_prefixes = []
+    sssom_config.field_target_mappings = {}
+    sssom_config.subject_target_prefixes = []
+    sssom_config.object_target_prefixes = []
+    sssom_config.use_match = []
+
+    # Call only the path resolution method
+    sssom_config._resolve_file_paths()
+
+    # Check that paths were resolved correctly
+    expected_global = base_dir / "../data/mappings.sssom.tsv"
+    expected_field = base_dir / "./subject_mappings.sssom.tsv"
+
+    assert len(sssom_config.files) == 1
+    assert sssom_config.files[0] == expected_global
+
+    assert len(sssom_config.field_mappings["subject"].files) == 1
+    assert sssom_config.field_mappings["subject"].files[0] == expected_field
+
+
+def test_absolute_paths_unchanged():
+    """Test that absolute SSSOM file paths are not modified."""
+    base_dir = Path("/some/config/dir")
+    absolute_path = Path("/absolute/path/mappings.sssom.tsv")
+
+    # Create without calling __init__ to avoid file validation
+    sssom_config = SSSOMConfig.__new__(SSSOMConfig)
+    sssom_config.files = [str(absolute_path)]
+    sssom_config.field_mappings = {
+        "subject": FieldMapping(
+            files=[str(absolute_path)],
+            target_prefixes=["B"],
+            preserve_original=True
+        )
+    }
+    sssom_config.base_directory = base_dir
+    sssom_config.filter_prefixes = []
+    sssom_config.field_target_mappings = {}
+    sssom_config.subject_target_prefixes = []
+    sssom_config.object_target_prefixes = []
+    sssom_config.use_match = []
+
+    # Call only the path resolution method
+    sssom_config._resolve_file_paths()
+
+    # Absolute paths should remain unchanged
+    assert sssom_config.files[0] == absolute_path
+    assert sssom_config.field_mappings["subject"].files[0] == absolute_path
+

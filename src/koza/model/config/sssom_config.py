@@ -46,6 +46,7 @@ class SSSOMConfig:
     :param subject_target_prefixes: (DEPRECATED) Prefixes to use for subject mapping - use field_mappings instead
     :param object_target_prefixes: (DEPRECATED) Prefixes to use for object mapping - use field_mappings instead
     :param use_match: Match types to use
+    :param base_directory: Base directory for resolving relative file paths
     """
 
     files: Sequence[str | Path] = field(default_factory=list)
@@ -55,6 +56,7 @@ class SSSOMConfig:
     subject_target_prefixes: list[str] = field(default_factory=list)  # DEPRECATED
     object_target_prefixes: list[str] = field(default_factory=list)   # DEPRECATED
     use_match: list[Match] = field(default_factory=list)
+    base_directory: Path | None = field(default=None)
 
     predicates = {
         "exact": ["skos:exactMatch"],
@@ -65,6 +67,9 @@ class SSSOMConfig:
     def __post_init__(self):
         if not self.use_match:
             self.use_match = [Match.exact]
+
+        # Resolve relative file paths before processing
+        self._resolve_file_paths()
 
         # Handle backward compatibility - migrate deprecated configurations to new structure
         self._migrate_deprecated_config()
@@ -79,6 +84,30 @@ class SSSOMConfig:
         self.df = self._merge_and_filter_sssom()
         logger.debug("Building SSSOM Lookup Table...")
         self.lookup_table = self._build_sssom_lookup_table()  # use_match=self.use_match)
+
+    def _resolve_file_paths(self):
+        """Resolve relative file paths using base_directory, similar to Source._open_files()."""
+        if self.base_directory is None:
+            return  # No base directory provided, use paths as-is
+
+        # Resolve global files
+        resolved_files = []
+        for file in self.files:
+            file_path = Path(file)
+            if not file_path.is_absolute():
+                file_path = self.base_directory / file_path
+            resolved_files.append(file_path)
+        self.files = resolved_files
+
+        # Resolve field-specific files
+        for field_mapping in self.field_mappings.values():
+            resolved_field_files = []
+            for file in field_mapping.files:
+                file_path = Path(file)
+                if not file_path.is_absolute():
+                    file_path = self.base_directory / file_path
+                resolved_field_files.append(file_path)
+            field_mapping.files = resolved_field_files
 
     def _migrate_deprecated_config(self):
         """Migrate deprecated configuration options to new structure."""
