@@ -17,14 +17,14 @@ sssom_config:
   files:
     - './path/to/shared_mappings.sssom.tsv'
   filter_prefixes:
-    - 'SOMEPREFIX'
-    - 'OTHERPREFIX'
+    - 'DOID'        # Only consider DOID IDs from source data
+    - 'OMIM'        # Only consider OMIM IDs from source data
   field_mappings:
     subject:
-      target_prefixes: ['MONDO', 'HP']
+      target_prefixes: ['MONDO', 'HP']    # Map TO these prefixes
       preserve_original: true
     object:
-      target_prefixes: ['CHEBI']
+      target_prefixes: ['CHEBI']          # Map TO this prefix
       preserve_original: false
   use_match:
     - 'exact'
@@ -101,7 +101,8 @@ sssom_config:
   - **target_prefixes**: List of prefixes to map TO for this field
   - **preserve_original**: Boolean - whether to preserve the original value
   - **original_field_name**: (Optional) Custom name for the preservation field
-- **filter_prefixes**: Prefixes to filter SSSOM mappings by
+- **filter_prefixes**: List of prefixes to include FROM source data for mapping (acts as inclusion filter - only IDs with these prefixes will be considered for mapping; if empty, all prefixes are considered)
+  - Example: `filter_prefixes: ['DOID', 'MONDO']` means only `DOID:123` and `MONDO:456` IDs will be mapped, but `HP:789` will be ignored
 - **use_match**: Match types to use (currently only 'exact' is supported)
 
 #### Validation Rules
