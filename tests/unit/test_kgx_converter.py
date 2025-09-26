@@ -82,8 +82,7 @@ def test_exclude_none(id, symbol, synonym, xref):
     """
     gene = Gene(id=id, symbol=symbol, synonym=synonym, xref=xref)
 
-    (nodes, edges) = KGXConverter().convert([gene])
-    output = nodes[0]
+    output = KGXConverter().convert_node(gene)
 
     assert output["id"] == "MGI:1917258" or output["id"] == "RGD:620474"
 
