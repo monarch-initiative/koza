@@ -15,21 +15,21 @@ class KGXConverter:
     https://github.com/biolink/kgx/blob/master/specification/kgx-format.md
 
     """
-    @staticmethod
-    def split_entities(entities: Iterable) -> tuple[list, list]:
+
+    def convert(self, entities: Iterable) -> tuple[list, list]:
         nodes = []
         edges = []
 
         for entity in entities:
             # if entity has subject + object + predicate, treat as edge
             if all(hasattr(entity, attr) for attr in ["subject", "object", "predicate"]):
-                edges.append(entity)
+                edges.append(self.convert_association(entity))
 
             # if entity has id and name, but not subject/object/predicate, treat as node
             elif all(hasattr(entity, attr) for attr in ["id", "name"]) and not all(
                 hasattr(entity, attr) for attr in ["subject", "object", "predicate"]
             ):
-                nodes.append(entity)
+                nodes.append(self.convert_node(entity))
 
             # otherwise, not a valid entity
             else:
@@ -40,14 +40,12 @@ class KGXConverter:
 
         return nodes, edges
 
-    @staticmethod
-    def convert_node(node, exclude_unset: bool = False) -> dict:
+    def convert_node(self, node) -> dict:
         if isinstance(node, BaseModel):
-            return node.model_dump(mode="json", exclude_unset=exclude_unset)
+            return node.model_dump(mode='json', exclude_none=True)
         return asdict(node)
 
-    @staticmethod
-    def convert_association(association, exclude_unset: bool = False) -> dict:
+    def convert_association(self, association) -> dict:
         if isinstance(association, BaseModel):
-            return association.model_dump(mode="json", exclude_unset=exclude_unset)
+            return association.model_dump(mode='json', exclude_none=True)
         return asdict(association)
