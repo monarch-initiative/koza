@@ -296,6 +296,7 @@ class KozaRunner:
         output_format: OutputFormat | None = None,
         row_limit: int = 0,
         input_files: list[str] | dict[str, list[str]] | None = None,
+        input_file_directory: str | None = None,
         show_progress: bool = False,
         overrides: dict | None = None,
     ):
@@ -345,6 +346,37 @@ class KozaRunner:
                 for reader in config.get_readers():
                     if reader.tag in input_files:
                         _overrides["readers"][reader.tag] = input_files[reader.tag]
+        # if an input_file_directory is provided prepend it to all the input file values
+        if input_file_directory is not None:
+            if config.reader:
+                # if only one reader
+                for tagged_reader in config.get_readers():
+                    if "reader" not in _overrides:
+                        _overrides["reader"] = {}
+                    if "files" in _overrides["reader"]:
+                        # if files were already overridden start with those
+                        files_to_alter = _overrides["reader"]["files"]
+                    else:
+                        # otherwise take the files from the config
+                        files_to_alter = tagged_reader.reader.files
+
+                    # prepend the input_file_directory to all the files
+                    _overrides["reader"]["files"] = [str(Path(input_file_directory) / file) for file in files_to_alter]
+            elif config.readers:
+                # multiple readers
+                if "readers" not in _overrides:
+                    _overrides["readers"] = {}
+                for tagged_reader in config.get_readers():
+                    if tagged_reader.tag not in _overrides["readers"]:
+                        _overrides["readers"][tagged_reader.tag] = {}
+                    if "files" in _overrides["readers"][tagged_reader.tag]:
+                        files_to_alter = _overrides["readers"][tagged_reader.tag]["files"]
+                    else:
+                        files_to_alter = tagged_reader.reader.files
+                    _overrides["readers"][tagged_reader.tag]["files"] = [str(Path(input_file_directory) / file)
+                                                                         for file in files_to_alter]
+            else:
+                raise ValueError("Input file directory was provided but no readers were defined.")
 
         config_dict = merge(config_dict, _overrides, overrides or {})
         config = KozaConfig(**config_dict)
