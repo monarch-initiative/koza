@@ -21,7 +21,7 @@ class KozaTransform:
     on_map_failure: MapErrorEnum = MapErrorEnum.warning
     state: dict[Any, Any] = field(default_factory=dict)
     transform_metadata: dict[str, Any] = field(default_factory=dict)
-    input_files_dir: Path
+    input_files_dir: Path | None = None
 
     def write(self, *records: Any, writer: str | None = None) -> None:
         """Write a series of records to a writer.
