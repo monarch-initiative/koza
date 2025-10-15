@@ -83,6 +83,7 @@ class KozaRunner:
         writer: KozaWriter,
         hooks: KozaTransformHooks | dict[str | None, KozaTransformHooks],
         base_directory: Path | None = None,
+        input_files_dir: Path | None = None,
         mapping_filenames: list[str] | None = None,
         extra_transform_fields: dict[str, Any] | None = None,
     ):
@@ -94,8 +95,10 @@ class KozaRunner:
             self.data: dict[str | None, Iterable[Record]] = {None: data}
         self.writer = writer
         self.base_directory = base_directory
+        self.input_files_dir = input_files_dir
         self.mapping_filenames = mapping_filenames or []
         self.extra_transform_fields = extra_transform_fields or {}
+        self.transform_metadata: dict[str, Any] = {}
 
         if isinstance(hooks, dict):
             self.hooks_by_tag = hooks
@@ -118,7 +121,10 @@ class KozaRunner:
         if hooks.prepare_data and len(hooks.prepare_data) > 1:
             raise ValueError("Can only define one `@koza.prepare_data` function")
 
-        transform = KozaTransform(mappings=mappings, writer=self.writer, extra_fields=self.extra_transform_fields)
+        transform = KozaTransform(mappings=mappings,
+                                  writer=self.writer,
+                                  input_files_dir=self.input_files_dir,
+                                  extra_fields=self.extra_transform_fields)
 
         if hooks.prepare_data:
             data = hooks.prepare_data[0](transform, data)
@@ -160,6 +166,8 @@ class KozaRunner:
 
         for fn in hooks.on_data_end:
             fn(transform)
+
+        self.transform_metadata.update(transform.transform_metadata)
 
     def run(self):
         mappings = self.load_mappings()
@@ -231,6 +239,7 @@ class KozaRunner:
         config: KozaConfig,
         base_directory: Path,
         output_dir: str = "",
+        input_files_dir: str = "",
         row_limit: int = 0,
         show_progress: bool = False,
     ):
@@ -283,6 +292,7 @@ class KozaRunner:
             data=sources_by_tag,
             writer=writer,
             base_directory=base_directory,
+            input_files_dir=Path(input_files_dir) if input_files_dir else None,
             mapping_filenames=config.transform.mappings,
             extra_transform_fields=config.transform.extra_fields,
             hooks=hooks_by_tag,
@@ -296,7 +306,7 @@ class KozaRunner:
         output_format: OutputFormat | None = None,
         row_limit: int = 0,
         input_files: list[str] | dict[str, list[str]] | None = None,
-        input_file_directory: str | None = None,
+        input_files_dir: str | None = None,
         show_progress: bool = False,
         overrides: dict | None = None,
     ):
@@ -346,8 +356,8 @@ class KozaRunner:
                 for reader in config.get_readers():
                     if reader.tag in input_files:
                         _overrides["readers"][reader.tag] = input_files[reader.tag]
-        # if an input_file_directory is provided prepend it to all the input file values
-        if input_file_directory is not None:
+        # if an input_files_dir is provided prepend it to all the input file values
+        if input_files_dir is not None:
             if config.reader:
                 # if only one reader
                 for tagged_reader in config.get_readers():
@@ -360,8 +370,8 @@ class KozaRunner:
                         # otherwise take the files from the config
                         files_to_alter = tagged_reader.reader.files
 
-                    # prepend the input_file_directory to all the files
-                    _overrides["reader"]["files"] = [str(Path(input_file_directory) / file) for file in files_to_alter]
+                    # prepend the input_files_dir to all the files
+                    _overrides["reader"]["files"] = [str(Path(input_files_dir) / file) for file in files_to_alter]
             elif config.readers:
                 # multiple readers
                 if "readers" not in _overrides:
@@ -373,7 +383,7 @@ class KozaRunner:
                         files_to_alter = _overrides["readers"][tagged_reader.tag]["files"]
                     else:
                         files_to_alter = tagged_reader.reader.files
-                    _overrides["readers"][tagged_reader.tag]["files"] = [str(Path(input_file_directory) / file)
+                    _overrides["readers"][tagged_reader.tag]["files"] = [str(Path(input_files_dir) / file)
                                                                          for file in files_to_alter]
             else:
                 raise ValueError("Input file directory was provided but no readers were defined.")
@@ -385,6 +395,7 @@ class KozaRunner:
             config,
             base_directory=config_path.parent,
             output_dir=output_dir,
+            input_files_dir=input_files_dir,
             row_limit=row_limit,
             show_progress=show_progress,
         )

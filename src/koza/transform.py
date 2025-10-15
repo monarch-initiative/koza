@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Any
+from pathlib import Path
 
 from loguru import logger
 from typing_extensions import assert_never
@@ -19,6 +20,8 @@ class KozaTransform:
     mappings: Mappings
     on_map_failure: MapErrorEnum = MapErrorEnum.warning
     state: dict[Any, Any] = field(default_factory=dict)
+    transform_metadata: dict[str, Any] = field(default_factory=dict)
+    input_files_dir: Path
 
     def write(self, *records: Any, writer: str | None = None) -> None:
         """Write a series of records to a writer.
