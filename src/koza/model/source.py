@@ -47,42 +47,87 @@ class Source:
         self._opened: list[ZipFile | TarFile | TextIO] = []
 
     def _open_files(self):
-        for file in self.reader_config.files:
-            file_path = Path(file)
-            if not file_path.is_absolute():
-                file_path = self.base_directory / file_path
-            opened_resource = open_resource(file_path)
+        # Handle file_archive separately from regular files
+        # If file_archive is specified, open it and filter files from it
+        # Otherwise, open files directly
+        if self.reader_config.file_archive:
+            archive_path = Path(self.reader_config.file_archive)
+            if not archive_path.is_absolute():
+                archive_path = self.base_directory / archive_path
+
+            opened_resource = open_resource(archive_path)
             if isinstance(opened_resource, tuple):
                 archive, resources = opened_resource
                 self._opened.append(archive)
-            else:
-                resources = [opened_resource]
 
-            for resource in resources:
-                self._opened.append(resource.reader)
-                if self.reader_config.format == InputFormat.csv:
-                    self._readers.append(
-                        CSVReader(
-                            resource.reader,
-                            config=self.reader_config,
+                # Filter resources if files list is provided
+                for resource in resources:
+                    # If files list is specified, only process matching files
+                    if self.reader_config.files and resource.name not in self.reader_config.files:
+                        continue
+
+                    self._opened.append(resource.reader)
+                    if self.reader_config.format == InputFormat.csv:
+                        self._readers.append(
+                            CSVReader(
+                                resource.reader,
+                                config=self.reader_config,
+                            )
                         )
-                    )
-                elif self.reader_config.format == InputFormat.jsonl:
-                    self._readers.append(
-                        JSONLReader(
-                            resource.reader,
-                            config=self.reader_config,
+                    elif self.reader_config.format == InputFormat.jsonl:
+                        self._readers.append(
+                            JSONLReader(
+                                resource.reader,
+                                config=self.reader_config,
+                            )
                         )
-                    )
-                elif self.reader_config.format == InputFormat.json or self.reader_config.format == InputFormat.yaml:
-                    self._readers.append(
-                        JSONReader(
-                            resource.reader,
-                            config=self.reader_config,
+                    elif self.reader_config.format == InputFormat.json or self.reader_config.format == InputFormat.yaml:
+                        self._readers.append(
+                            JSONReader(
+                                resource.reader,
+                                config=self.reader_config,
+                            )
                         )
-                    )
+                    else:
+                        raise ValueError(f"File type {self.reader_config.format} not supported")
+        else:
+            # Process regular files
+            for file in self.reader_config.files:
+                file_path = Path(file)
+                if not file_path.is_absolute():
+                    file_path = self.base_directory / file_path
+                opened_resource = open_resource(file_path)
+                if isinstance(opened_resource, tuple):
+                    archive, resources = opened_resource
+                    self._opened.append(archive)
                 else:
-                    raise ValueError(f"File type {self.reader_config.format} not supported")
+                    resources = [opened_resource]
+
+                for resource in resources:
+                    self._opened.append(resource.reader)
+                    if self.reader_config.format == InputFormat.csv:
+                        self._readers.append(
+                            CSVReader(
+                                resource.reader,
+                                config=self.reader_config,
+                            )
+                        )
+                    elif self.reader_config.format == InputFormat.jsonl:
+                        self._readers.append(
+                            JSONLReader(
+                                resource.reader,
+                                config=self.reader_config,
+                            )
+                        )
+                    elif self.reader_config.format == InputFormat.json or self.reader_config.format == InputFormat.yaml:
+                        self._readers.append(
+                            JSONReader(
+                                resource.reader,
+                                config=self.reader_config,
+                            )
+                        )
+                    else:
+                        raise ValueError(f"File type {self.reader_config.format} not supported")
 
     def __iter__(self):
         self._open_files()
