@@ -50,6 +50,6 @@ def test_same_named_modules_in_sequence():
     runner2.run()  # This will fail with KeyError if module is cached
 
     # Verify source_b produced output
-    assert os.path.exists(f"{output_dir}/module_cache_test_source_b_nodes.tsv")
+    assert (output_dir / "module_cache_test_source_b_nodes.tsv").exists()
 
     # Both ingests should have completed successfully without KeyError
