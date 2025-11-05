@@ -1,4 +1,5 @@
 import importlib
+import importlib.util
 import sys
 from collections import defaultdict
 from collections.abc import Iterable
@@ -250,17 +251,25 @@ class KozaRunner:
             transform_code_path = Path(config.transform.code)
             if not transform_code_path.is_absolute():
                 transform_code_path = base_directory / transform_code_path
-            parent_path = transform_code_path.absolute().parent
             module_name = transform_code_path.stem
-            logger.debug(f"Adding `{parent_path}` to system path to load transform module")
-            sys.path.append(str(parent_path))
-            # FIXME: Remove this from sys.path
+
+            # Load module from specific file path without touching sys.modules
+            # This avoids both sys.path pollution and the risk of overwriting
+            # built-in modules if someone names their transform sys.py, os.py, etc.
+            logger.debug(f"Loading module `{module_name}` from `{transform_code_path}`")
+
+            spec = importlib.util.spec_from_file_location(module_name, transform_code_path)
+            if spec and spec.loader:
+                transform_module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(transform_module)
+            else:
+                raise ValueError(f"Could not load module from {transform_code_path}")
         elif config.transform.module:
             module_name = config.transform.module
-
-        if module_name:
             logger.debug(f"Loading module `{module_name}`")
             transform_module = importlib.import_module(module_name)
+        else:
+            transform_module = None
 
         hooks_by_tag = load_transform(transform_module)
 
