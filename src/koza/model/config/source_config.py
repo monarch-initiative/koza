@@ -64,7 +64,7 @@ class _DeprecatedSourceConfig:
     global_table: str (optional) - path to a global table file
     local_table: str (optional) - path to a local table file
     max_edge_count: int (optional) - maximum number of edges allowed to write output
-    max_node_count: int (optional) - minimum number of nodes required to write output
+    max_node_count: int (optional) - maximum number of nodes allowed to write output
     """
 
     name: str
