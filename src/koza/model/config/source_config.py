@@ -63,7 +63,7 @@ class _DeprecatedSourceConfig:
     transform_mode: TransformMode (optional) - how to process the transform file
     global_table: str (optional) - path to a global table file
     local_table: str (optional) - path to a local table file
-    max_edge_count: int (optional) - minimum number of edges required to write output
+    max_edge_count: int (optional) - maximum number of edges allowed to write output
     max_node_count: int (optional) - minimum number of nodes required to write output
     """
 
