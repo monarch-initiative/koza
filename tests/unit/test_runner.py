@@ -224,7 +224,7 @@ def test_override_input_file_directory():
     config_file = (Path(__file__).parent / "../../examples/string/protein-links-detailed.yaml").resolve()
     config, runner = KozaRunner.from_config_file(
         str(config_file),
-        input_file_directory="/override_input_dir/"
+        input_files_dir="/override_input_dir/"
     )
     readers = config.get_readers()
     assert readers[0].reader.files == ["/override_input_dir/../data/string.tsv",
@@ -240,7 +240,7 @@ def test_override_input_files_and_directory():
             "foo.tsv",
             "bar.tsv",
         ],
-        input_file_directory="/override_input_dir/"
+        input_files_dir="/override_input_dir/"
     )
     readers = config.get_readers()
     assert readers[0].reader.files == ["/override_input_dir/foo.tsv",
