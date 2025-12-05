@@ -133,3 +133,20 @@ def test_tagged_readers():
     assert readers[0].tag == "tag1"
     assert readers[1].tag == "tag2"
     assert readers[0].reader.format == OutputFormat.jsonl
+
+
+def test_file_archive_in_new_config():
+    """Test that file_archive is supported in the new config format"""
+    config_dict = {
+        "name": "test_config",
+        "reader": {
+            "format": "csv",
+            "files": ["file1.csv"],
+            "file_archive": "archive.tar.gz",
+        },
+    }
+
+    config = TypeAdapter(KozaConfig).validate_python(config_dict)
+    assert config.reader is not None
+    assert config.reader.file_archive == "archive.tar.gz"
+    assert "file1.csv" in config.reader.files

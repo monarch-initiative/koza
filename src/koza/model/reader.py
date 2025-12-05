@@ -36,6 +36,7 @@ class HeaderMode(str, Enum):
 @dataclass(config=PYDANTIC_CONFIG, frozen=True)
 class BaseReaderConfig:
     files: list[str] = field(default_factory=list)
+    file_archive: str | None = None
     filters: list[ColumnFilter] = field(default_factory=list)
 
 

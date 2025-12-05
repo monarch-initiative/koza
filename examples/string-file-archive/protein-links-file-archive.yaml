@@ -1,0 +1,31 @@
+name: 'protein-links-file-archive'
+metadata: !include './metadata.yaml'
+
+reader:
+  format: csv
+  file_archive: '../../tests/resources/source-files/string.tar.gz'
+  delimiter: ' '
+  columns: !include '../standards/string.yaml'
+  filters:
+    - inclusion: 'include'
+      column: 'combined_score'
+      filter_code: 'lt'
+      value: 700
+
+transform:
+  code: 'protein-links-file-archive.py'
+
+writer:
+  node_properties:
+    - 'id'
+    - 'category'
+    - 'provided_by'
+
+  edge_properties:
+    - 'id'
+    - 'subject'
+    - 'predicate'
+    - 'object'
+    - 'category'
+    - 'relation'
+    - 'provided_by'
