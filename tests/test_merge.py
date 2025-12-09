@@ -78,6 +78,7 @@ def mock_prune_result():
         dangling_edges_by_source={},
         missing_nodes_by_source={},
         total_time_seconds=0.2,
+        success=True,
     )
 
 
@@ -516,7 +517,7 @@ class TestMergeOperationErrorHandling:
             # Verify warnings about normalization failure
             assert result.success is True  # Overall success despite normalize failure
             assert len(result.warnings) > 0
-            assert "Normalization failed" in result.warnings[0]
+            assert "Deduplication failed but pipeline continued" in result.warnings[0]
             assert result.normalize_result.success is False
 
 
