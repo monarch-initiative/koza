@@ -75,12 +75,13 @@ class GraphDatabase:
 
         logger.info("Database schema initialized (main tables created dynamically)")
 
-    def load_file(self, file_spec: FileSpec) -> FileLoadResult:
+    def load_file(self, file_spec: FileSpec, generate_provided_by: bool = True) -> FileLoadResult:
         """
         Load a KGX file into a temporary table for schema analysis.
 
         Args:
             file_spec: FileSpec describing the file to load
+            generate_provided_by: If True, add provided_by column from filename (like cat-merge)
 
         Returns:
             FileLoadResult with load statistics
@@ -98,18 +99,20 @@ class GraphDatabase:
             safe_filename = file_spec.path.stem.replace("-", "_").replace(".", "_")
             temp_table_name = f"temp_{file_spec.file_type.value}_{safe_filename}_{id(file_spec)}"
 
-            # Load into temp table with source tracking
-            if file_spec.source_name:
-                create_sql = f"""
-                    CREATE TEMP TABLE {temp_table_name} AS
-                    SELECT *, '{file_spec.source_name}' as file_source 
-                    FROM {read_stmt}
-                """
-            else:
-                create_sql = f"""
-                    CREATE TEMP TABLE {temp_table_name} AS
-                    SELECT * FROM {read_stmt}
-                """
+            # Build column additions
+            source_name = file_spec.source_name or file_spec.path.stem
+            extra_columns = []
+            extra_columns.append(f"'{source_name}' as file_source")
+            if generate_provided_by:
+                extra_columns.append(f"'{source_name}' as provided_by")
+
+            # Load into temp table with source tracking and optional provided_by
+            extra_cols_str = ", " + ", ".join(extra_columns) if extra_columns else ""
+            create_sql = f"""
+                CREATE TEMP TABLE {temp_table_name} AS
+                SELECT *{extra_cols_str}
+                FROM {read_stmt}
+            """
 
             # Execute table creation
             self.conn.execute(create_sql)

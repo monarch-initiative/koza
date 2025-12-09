@@ -40,7 +40,7 @@ def join_graphs(config: JoinConfig) -> JoinResult:
                 if config.show_progress:
                     node_progress.set_description(f"Loading {file_spec.path.name}")
 
-                result = db.load_file(file_spec)
+                result = db.load_file(file_spec, generate_provided_by=config.generate_provided_by)
                 files_loaded.append(result)
 
                 if not config.quiet and not config.show_progress:
@@ -59,7 +59,7 @@ def join_graphs(config: JoinConfig) -> JoinResult:
                 if config.show_progress:
                     edge_progress.set_description(f"Loading {file_spec.path.name}")
 
-                result = db.load_file(file_spec)
+                result = db.load_file(file_spec, generate_provided_by=config.generate_provided_by)
                 files_loaded.append(result)
 
                 if not config.quiet and not config.show_progress:

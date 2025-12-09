@@ -9,6 +9,7 @@ from pathlib import Path
 from loguru import logger
 
 from koza.model.graph_operations import (
+    DeduplicateConfig,
     JoinConfig,
     MergeConfig,
     MergeResult,
@@ -17,6 +18,7 @@ from koza.model.graph_operations import (
     PruneConfig,
 )
 
+from .deduplicate import deduplicate_graph
 from .join import join_graphs
 from .normalize import normalize_graph
 from .prune import prune_graph
@@ -44,6 +46,7 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
 
     # Individual operation results
     join_result = None
+    deduplicate_result = None
     normalize_result = None
     prune_result = None
 
@@ -61,9 +64,14 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
     try:
         if not config.quiet:
             print("🔄 Starting merge pipeline...")
-            print(
-                f"📊 Pipeline: join → {'normalize → ' if not config.skip_normalize else ''}{'prune' if not config.skip_prune else ''}"
-            )
+            pipeline_steps = ["join"]
+            if not config.skip_deduplicate:
+                pipeline_steps.append("deduplicate")
+            if not config.skip_normalize:
+                pipeline_steps.append("normalize")
+            if not config.skip_prune:
+                pipeline_steps.append("prune")
+            print(f"📊 Pipeline: {' → '.join(pipeline_steps)}")
             if using_temp_db:
                 print(f"💾 Using temporary database: {database_path}")
             else:
@@ -80,6 +88,7 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
             schema_reporting=config.schema_reporting,
             quiet=config.quiet,
             show_progress=config.show_progress,
+            generate_provided_by=config.generate_provided_by,
         )
 
         join_result = join_graphs(join_config)
@@ -99,10 +108,41 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
             edges_count = join_result.final_stats.edges
             print(f"✓ Join completed: {files_count} files → {nodes_count:,} nodes, {edges_count:,} edges")
 
-        # Step 2: Normalize - Apply SSSOM mappings (if not skipped)
+        # Step 2: Deduplicate - Remove duplicate nodes/edges (if not skipped)
+        if not config.skip_deduplicate:
+            if not config.quiet:
+                print("\n🔧 Step 2: Deduplicate - Removing duplicate nodes/edges...")
+
+            deduplicate_config = DeduplicateConfig(
+                database_path=database_path,
+                deduplicate_nodes=True,
+                deduplicate_edges=True,
+                quiet=config.quiet,
+                show_progress=config.show_progress,
+            )
+
+            deduplicate_result = deduplicate_graph(deduplicate_config)
+
+            if not deduplicate_result.success:
+                warnings.append("Deduplication failed but pipeline continued")
+                if deduplicate_result.errors:
+                    errors.extend(deduplicate_result.errors)
+            else:
+                operations_completed.append("deduplicate")
+
+                if not config.quiet:
+                    nodes_removed = deduplicate_result.duplicate_nodes_removed
+                    edges_removed = deduplicate_result.duplicate_edges_removed
+                    print(f"✓ Deduplicate completed: {nodes_removed:,} duplicate nodes, {edges_removed:,} duplicate edges removed")
+        else:
+            operations_skipped.append("deduplicate")
+            if not config.quiet:
+                print("\n⏭️  Step 2: Deduplicate - Skipped")
+
+        # Step 3: Normalize - Apply SSSOM mappings (if not skipped)
         if not config.skip_normalize:
             if not config.quiet:
-                print("\n🔄 Step 2: Normalize - Applying SSSOM mappings...")
+                print("\n🔄 Step 3: Normalize - Applying SSSOM mappings...")
 
             normalize_config = NormalizeConfig(
                 database_path=database_path,
@@ -129,12 +169,12 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
         else:
             operations_skipped.append("normalize")
             if not config.quiet:
-                print("\n⏭️  Step 2: Normalize - Skipped")
+                print("\n⏭️  Step 3: Normalize - Skipped")
 
-        # Step 3: Prune - Remove dangling edges and handle singletons (if not skipped)
+        # Step 4: Prune - Remove dangling edges and handle singletons (if not skipped)
         if not config.skip_prune:
             if not config.quiet:
-                print("\n🧹 Step 3: Prune - Cleaning graph structure...")
+                print("\n🧹 Step 4: Prune - Cleaning graph structure...")
 
             prune_config = PruneConfig(
                 database_path=database_path,
@@ -160,17 +200,17 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
         else:
             operations_skipped.append("prune")
             if not config.quiet:
-                print("\n⏭️  Step 3: Prune - Skipped")
+                print("\n⏭️  Step 4: Prune - Skipped")
 
         # Get final database statistics
         with GraphDatabase(database_path) as db:
             final_stats = db.get_stats()
 
-        # Step 4: Export final data (if requested)
+        # Step 5: Export final data (if requested)
         exported_files = []
         if config.export_final and config.export_directory:
             if not config.quiet:
-                print(f"\n📤 Step 4: Export - Exporting to {config.export_directory}...")
+                print(f"\n📤 Step 5: Export - Exporting to {config.export_directory}...")
 
             config.export_directory.mkdir(parents=True, exist_ok=True)
 
@@ -262,6 +302,7 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
         return MergeResult(
             success=True,
             join_result=join_result,
+            deduplicate_result=deduplicate_result,
             normalize_result=normalize_result,
             prune_result=prune_result,
             operations_completed=operations_completed,
@@ -306,6 +347,7 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
         return MergeResult(
             success=False,
             join_result=join_result,
+            deduplicate_result=deduplicate_result,
             normalize_result=normalize_result,
             prune_result=prune_result,
             operations_completed=operations_completed,
