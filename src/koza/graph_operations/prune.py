@@ -31,7 +31,7 @@ def prune_graph(config: PruneConfig) -> PruneResult:
         with GraphDatabase(config.database_path) as db:
             # Step 1: Identify and move dangling edges
             if not config.quiet:
-                print("🔍 Analyzing graph integrity...")
+                print("Handling dangling edges.")
 
             dangling_edges_moved, dangling_by_source, missing_by_source = _handle_dangling_edges(db, config)
 
@@ -57,6 +57,7 @@ def prune_graph(config: PruneConfig) -> PruneResult:
             dangling_edges_by_source=dangling_by_source,
             missing_nodes_by_source=missing_by_source,
             total_time_seconds=total_time,
+            success=True
         )
 
         # Print summary if not quiet
@@ -98,7 +99,7 @@ def _handle_dangling_edges(db: GraphDatabase, config: PruneConfig) -> tuple[int,
 
     if not edges_exists:
         if not config.quiet:
-            print("✅ No edges table found - no dangling edges to process")
+            print("No edges table found - no dangling edges to process")
         return 0, {}, {}
 
     # Check if file_source or source column exists in edges table
@@ -137,15 +138,16 @@ def _handle_dangling_edges(db: GraphDatabase, config: PruneConfig) -> tuple[int,
 
     if not dangling_edges:
         if not config.quiet:
-            print("✅ No dangling edges found")
+            print("No dangling edges found")
         return 0, {}, {}
 
     dangling_count = len(dangling_edges)
 
     if not config.quiet:
-        print(f"🔧 Found {dangling_count} dangling edges, moving to dangling_edges table...")
+        print(f"Found {dangling_count} dangling edges, moving to dangling_edges table...")
 
     # Analyze dangling edges by source
+    #TODO turn these into defaultdicts.
     dangling_by_source = {}
     missing_by_source = {}
 
@@ -158,6 +160,7 @@ def _handle_dangling_edges(db: GraphDatabase, config: PruneConfig) -> tuple[int,
         dangling_by_source[source] += 1
 
         # Track missing nodes
+        #TODO, confirm this code actually works as expected. Turns the indexed edge tuples into variables.
         if edge[-3]:  # missing_subject
             missing_by_source[source].add(edge[-3])
         if edge[-2]:  # missing_object
@@ -231,7 +234,7 @@ def _handle_singleton_nodes(db: GraphDatabase, config: PruneConfig) -> tuple[int
         except Exception:
             # No nodes table either
             if not config.quiet:
-                print("✅ No nodes table found - no singleton nodes to process")
+                print("No nodes table found - no singleton nodes to process")
             return 0, 0
     else:
         # Find singleton nodes - nodes that don't appear as subject or object in any edge
@@ -247,17 +250,17 @@ def _handle_singleton_nodes(db: GraphDatabase, config: PruneConfig) -> tuple[int
 
     if singleton_count == 0:
         if not config.quiet:
-            print("✅ No singleton nodes found")
+            print("No singleton nodes found")
         return 0, 0
 
     if config.keep_singletons:
         if not config.quiet:
-            print(f"✅ Keeping {singleton_count} singleton nodes (--keep-singletons)")
+            print(f"Keeping {singleton_count} singleton nodes (--keep-singletons)")
         return 0, singleton_count
 
     elif config.remove_singletons:
         if not config.quiet:
-            print(f"🔧 Moving {singleton_count} singleton nodes to singleton_nodes table...")
+            print(f"Moving {singleton_count} singleton nodes to singleton_nodes table...")
 
         # Get node table structure
         node_columns_result = db.conn.execute("DESCRIBE nodes").fetchall()
@@ -266,6 +269,7 @@ def _handle_singleton_nodes(db: GraphDatabase, config: PruneConfig) -> tuple[int
 
         # Insert singleton nodes into singleton_nodes table
         columns_with_prefix = ", ".join([f"n.{col}" for col in node_columns])
+        #TODO: Verify this query works. It might need to be "WHERE e1.object IS NULL AND e2.subject IS NULL".
         insert_query = f"""
         INSERT INTO singleton_nodes ({columns_str})
         SELECT {columns_with_prefix} FROM nodes n
@@ -289,14 +293,14 @@ def _handle_singleton_nodes(db: GraphDatabase, config: PruneConfig) -> tuple[int
 
         db.conn.execute(delete_query)
 
-        logger.info(f"Moved {singleton_count} singleton nodes to singleton_nodes table")
+        logger.info(f"Moved {singleton_count} singleton nodes to singleton_nodes table.")
 
         return singleton_count, 0
 
     else:
         # Default behavior: keep singletons
         if not config.quiet:
-            print(f"✅ Keeping {singleton_count} singleton nodes (default behavior)")
+            print(f"Keeping {singleton_count} singleton nodes (default behavior).")
         return 0, singleton_count
 
 
@@ -316,32 +320,27 @@ def _handle_small_components(db: GraphDatabase, config: PruneConfig):
 
 def _print_prune_summary(result: PruneResult):
     """Print formatted prune summary."""
-    print(f"✓ Graph pruned successfully")
+    print(f"Graph pruned successfully")
 
-    if result.dangling_edges_moved > 0:
-        print(f"  🔧 {result.dangling_edges_moved} dangling edges moved to dangling_edges table")
+    print(f"{result.dangling_edges_moved} dangling edges moved to dangling_edges table.")
 
-    if result.singleton_nodes_moved > 0:
-        print(f"  🔧 {result.singleton_nodes_moved} singleton nodes moved to singleton_nodes table")
-    elif result.singleton_nodes_kept > 0:
-        print(f"  ✅ {result.singleton_nodes_kept} singleton nodes preserved")
+    print(f"{result.singleton_nodes_moved} singleton nodes moved to singleton_nodes table.")
+    print(f"{result.singleton_nodes_kept} singleton nodes preserved.")
 
-    print(f"  📈 Final graph:")
+    print(f"   Final graph:")
     print(f"    - Nodes: {result.final_stats.nodes:,}")
     print(f"    - Edges: {result.final_stats.edges:,}")
 
-    if result.final_stats.dangling_edges > 0:
-        print(f"    - Dangling edges archived: {result.final_stats.dangling_edges:,}")
-    if result.final_stats.singleton_nodes > 0:
-        print(f"    - Singleton nodes archived: {result.final_stats.singleton_nodes:,}")
+    print(f"    - Dangling edges archived: {result.final_stats.dangling_edges:,}")
+    print(f"    - Singleton nodes archived: {result.final_stats.singleton_nodes:,}")
 
     print(f"    - Database: {result.database_path} ({result.final_stats.database_size_mb:.1f} MB)")
 
     # Show dangling edges breakdown by source
     if result.dangling_edges_by_source:
-        print(f"  📊 Dangling edges by source:")
+        print(f" Dangling edges by source:")
         for source, count in sorted(result.dangling_edges_by_source.items()):
             missing_nodes = result.missing_nodes_by_source.get(source, 0)
             print(f"    - {source}: {count} edges (missing {missing_nodes} nodes)")
 
-    print(f"  ⏱️  Total time: {result.total_time_seconds:.2f}s")
+    print(f"⏱ Total time taken to prune: {result.total_time_seconds:.2f}s")

@@ -67,7 +67,7 @@ def generate_qc_report(config: QCReportConfig) -> QCReportResult:
 
         with GraphDatabase(config.database_path) as db:
             if not config.quiet:
-                print(f"📊 Generating QC report for {config.database_path.name}...")
+                print(f"Generating QC report for {config.database_path.name}...")
 
             # Generate the QC report using existing functionality
             qc_report = _create_qc_report(db, group_by=config.group_by)
@@ -91,7 +91,7 @@ def generate_qc_report(config: QCReportConfig) -> QCReportResult:
         logger.error(f"QC report generation failed: {e}")
 
         if not config.quiet:
-            print(f"❌ QC report generation failed: {e}")
+            print(f"QC report generation failed: {e}")
 
         raise
 
@@ -114,7 +114,7 @@ def generate_graph_stats(config: GraphStatsConfig) -> GraphStatsResult:
 
         with GraphDatabase(config.database_path) as db:
             if not config.quiet:
-                print(f"📈 Generating graph statistics for {config.database_path.name}...")
+                print(f" Generating graph statistics for {config.database_path.name}...")
 
             # Generate comprehensive graph statistics
             stats_report = _create_graph_stats_report(db)
@@ -140,7 +140,7 @@ def generate_graph_stats(config: GraphStatsConfig) -> GraphStatsResult:
         logger.error(f"Graph statistics generation failed: {e}")
 
         if not config.quiet:
-            print(f"❌ Graph statistics generation failed: {e}")
+            print(f" Graph statistics generation failed: {e}")
 
         raise
 
@@ -163,7 +163,7 @@ def generate_schema_compliance_report(config: SchemaReportConfig) -> SchemaRepor
 
         with GraphDatabase(config.database_path) as db:
             if not config.quiet:
-                print(f"📋 Generating schema report for {config.database_path.name}...")
+                print(f" Generating schema report for {config.database_path.name}...")
 
             # Generate schema analysis report
             schema_report = _create_schema_analysis_report(db)
@@ -189,7 +189,7 @@ def generate_schema_compliance_report(config: SchemaReportConfig) -> SchemaRepor
         logger.error(f"Schema report generation failed: {e}")
 
         if not config.quiet:
-            print(f"❌ Schema report generation failed: {e}")
+            print(f" Schema report generation failed: {e}")
 
         raise
 

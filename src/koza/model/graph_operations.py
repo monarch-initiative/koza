@@ -178,6 +178,7 @@ class PruneResult(BaseModel):
     dangling_edges_by_source: dict[str, int] = Field(default_factory=dict)
     missing_nodes_by_source: dict[str, int] = Field(default_factory=dict)
     total_time_seconds: float
+    success: bool
 
 
 class AppendConfig(BaseModel):
@@ -301,6 +302,7 @@ class MergeConfig(BaseModel):
     skip_normalize: bool = False  # Skip normalization step
     skip_prune: bool = False  # Skip pruning step
     generate_provided_by: bool = True  # Add provided_by column from filename (like cat-merge)
+    warn_on_error: bool = True # If there is an error for a non-critical pipeline step, append a warning and continue the merge.
 
     # Prune-specific options
     keep_singletons: bool = True

@@ -63,7 +63,7 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
 
     try:
         if not config.quiet:
-            print("🔄 Starting merge pipeline...")
+            print("Starting merge pipeline...")
             pipeline_steps = ["join"]
             if not config.skip_deduplicate:
                 pipeline_steps.append("deduplicate")
@@ -71,15 +71,15 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
                 pipeline_steps.append("normalize")
             if not config.skip_prune:
                 pipeline_steps.append("prune")
-            print(f"📊 Pipeline: {' → '.join(pipeline_steps)}")
+            print(f"Pipeline: {' → '.join(pipeline_steps)}")
             if using_temp_db:
-                print(f"💾 Using temporary database: {database_path}")
+                print(f"Using temporary database: {database_path}")
             else:
-                print(f"💾 Output database: {database_path}")
+                print(f"Output database: {database_path}")
 
         # Step 1: Join - Load all input files
         if not config.quiet:
-            print("\n📥 Step 1: Join - Loading input files...")
+            print("Step 1: Join - Loading input files...")
 
         join_config = JoinConfig(
             node_files=config.node_files,
@@ -106,12 +106,12 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
             files_count = len(join_result.files_loaded)
             nodes_count = join_result.final_stats.nodes
             edges_count = join_result.final_stats.edges
-            print(f"✓ Join completed: {files_count} files → {nodes_count:,} nodes, {edges_count:,} edges")
+            print(f"Join completed: {files_count:,} files | {nodes_count:,} nodes | {edges_count:,} edges")
 
         # Step 2: Deduplicate - Remove duplicate nodes/edges (if not skipped)
         if not config.skip_deduplicate:
             if not config.quiet:
-                print("\n🔧 Step 2: Deduplicate - Removing duplicate nodes/edges...")
+                print("Step 2: Deduplicate - Removing duplicate nodes/edges...")
 
             deduplicate_config = DeduplicateConfig(
                 database_path=database_path,
@@ -123,26 +123,27 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
 
             deduplicate_result = deduplicate_graph(deduplicate_config)
 
-            if not deduplicate_result.success:
+            if deduplicate_result.success:
+                operations_completed.append("deduplicate")
+                if not config.quiet:
+                    nodes_removed = deduplicate_result.duplicate_nodes_removed
+                    edges_removed = deduplicate_result.duplicate_edges_removed
+                    print(f"Deduplicate completed: {nodes_removed:,} duplicate nodes, {edges_removed:,} duplicate edges removed")
+            elif config.warn_on_error:
                 warnings.append("Deduplication failed but pipeline continued")
                 if deduplicate_result.errors:
                     errors.extend(deduplicate_result.errors)
             else:
-                operations_completed.append("deduplicate")
-
-                if not config.quiet:
-                    nodes_removed = deduplicate_result.duplicate_nodes_removed
-                    edges_removed = deduplicate_result.duplicate_edges_removed
-                    print(f"✓ Deduplicate completed: {nodes_removed:,} duplicate nodes, {edges_removed:,} duplicate edges removed")
+                raise ValueError("Deduplication step failed. Aborting pipeline.")
         else:
             operations_skipped.append("deduplicate")
             if not config.quiet:
-                print("\n⏭️  Step 2: Deduplicate - Skipped")
+                print("Step 2: Deduplicate - Skipped")
 
         # Step 3: Normalize - Apply SSSOM mappings (if not skipped)
         if not config.skip_normalize:
             if not config.quiet:
-                print("\n🔄 Step 3: Normalize - Applying SSSOM mappings...")
+                print("Step 3: Normalize - Applying SSSOM mappings...")
 
             normalize_config = NormalizeConfig(
                 database_path=database_path,
@@ -153,28 +154,30 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
 
             normalize_result = normalize_graph(normalize_config)
 
-            if not normalize_result.success:
-                warnings.append("Normalization failed but pipeline continued")
-                if normalize_result.errors:
-                    errors.extend(normalize_result.errors)
-            else:
+            if normalize_result.success:
                 operations_completed.append("normalize")
-
                 if not config.quiet:
                     mappings_count = len(normalize_result.mappings_loaded)
                     normalized_count = normalize_result.edges_normalized
                     print(
-                        f"✓ Normalize completed: {mappings_count} mapping files → {normalized_count:,} edge references normalized"
+                        f"Normalize completed: {mappings_count:,} mapping files | {normalized_count:,} edge references normalized"
                     )
+            elif config.warn_on_error:
+                warnings.append("Normalization failed but pipeline continued")
+                if normalize_result.errors:
+                    errors.extend(normalize_result.errors)
+            else:
+                raise ValueError("Normalization step failed. Aborting pipeline.")
+
         else:
             operations_skipped.append("normalize")
             if not config.quiet:
-                print("\n⏭️  Step 3: Normalize - Skipped")
+                print("Step 3: Normalize - Skipped")
 
         # Step 4: Prune - Remove dangling edges and handle singletons (if not skipped)
         if not config.skip_prune:
             if not config.quiet:
-                print("\n🧹 Step 4: Prune - Cleaning graph structure...")
+                print("Step 4: Prune - Cleaning graph structure...")
 
             prune_config = PruneConfig(
                 database_path=database_path,
@@ -186,21 +189,21 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
 
             prune_result = prune_graph(prune_config)
 
-            if not prune_result:
-                warnings.append("Pruning failed but pipeline continued")
-            else:
+            if prune_result.success:
                 operations_completed.append("prune")
-
                 if not config.quiet:
                     dangling_count = prune_result.dangling_edges_moved
                     singleton_count = prune_result.singleton_nodes_moved
-                    print(
-                        f"✓ Prune completed: {dangling_count:,} dangling edges moved, {singleton_count:,} singleton nodes handled"
-                    )
+                    print(f"Prune completed: {dangling_count:,} dangling edges moved | {singleton_count:,} singleton nodes handled")
+            elif config.warn_on_error:
+                warnings.append("Pruning failed but pipeline continued")
+            else:
+                raise ValueError("Prune step failed. Aborting pipeline.")
+             
         else:
             operations_skipped.append("prune")
             if not config.quiet:
-                print("\n⏭️  Step 4: Prune - Skipped")
+                print("Step 4: Prune - Skipped")
 
         # Get final database statistics
         with GraphDatabase(database_path) as db:
@@ -210,7 +213,7 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
         exported_files = []
         if config.export_final and config.export_directory:
             if not config.quiet:
-                print(f"\n📤 Step 5: Export - Exporting to {config.export_directory}...")
+                print(f"Step 5: Export - Exporting to {config.export_directory}...")
 
             config.export_directory.mkdir(parents=True, exist_ok=True)
 
@@ -222,13 +225,16 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
                     nodes_count = db.conn.execute("SELECT COUNT(*) FROM nodes").fetchone()[0]
                     has_nodes = nodes_count > 0
                 except Exception:
-                    pass  # Table might not exist
+                    print("Error occured trying to query Node table.")
+                    raise  # Table might not exist
 
+                #TODO: See if we should if this table doesn't exist.
                 try:
                     edges_count = db.conn.execute("SELECT COUNT(*) FROM edges").fetchone()[0]
                     has_edges = edges_count > 0
                 except Exception:
-                    pass  # Table might not exist
+                    print("Error occured trying to query Edge table.")
+                    raise  # Table might not exist
 
                 if not has_nodes and not has_edges:
                     if not config.quiet:
@@ -254,7 +260,7 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
 
                         if not config.quiet:
                             archive_type = "compressed archive" if config.compress else "archive"
-                            print(f"✓ Export completed: {archive_type} {archive_file}")
+                            print(f"Export completed: {archive_type} {archive_file}")
                     else:
                         # Export to loose files
                         nodes_file, edges_file = db.export_to_loose_files(
@@ -265,10 +271,10 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
                         exported_files.extend([nodes_file, edges_file])
 
                         if not config.quiet:
-                            print(f"✓ Export completed: {len(exported_files)} files exported")
+                            print(f"Export completed: {len(exported_files)} files exported")
 
             if not exported_files and not config.quiet:
-                print("⚠️  No files exported")
+                print("Warning - No files exported.")
 
         # Create pipeline summary
         total_time = time.time() - start_time
@@ -288,7 +294,7 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
         )
 
         if not config.quiet:
-            print(f"\n🎉 Merge pipeline completed successfully!")
+            print(f"Merge pipeline completed successfully!")
             print_operation_summary(summary)
 
         # Clean up temporary database if used
