@@ -90,6 +90,7 @@ class JoinConfig(GraphOperationConfig):
     output_database: Path | None = None
     schema_reporting: bool = True
     preserve_duplicates: bool = False
+    generate_provided_by: bool = True  # Add provided_by column from filename (like cat-merge)
 
     @model_validator(mode="after")
     def set_database_path_from_output_database(self):
@@ -255,6 +256,38 @@ class NormalizeResult(BaseModel):
     warnings: list[str] = Field(default_factory=list)
 
 
+class DeduplicateConfig(BaseModel):
+    """Configuration for deduplicate operation"""
+
+    database_path: Path
+    deduplicate_nodes: bool = True
+    deduplicate_edges: bool = True
+    quiet: bool = False
+    show_progress: bool = True
+
+    @field_validator("database_path")
+    @classmethod
+    def validate_database_exists(cls, v: Path) -> Path:
+        if not v.exists():
+            raise ValueError(f"Database file not found: {v}")
+        return v
+
+
+class DeduplicateResult(BaseModel):
+    """Result of deduplicate operation"""
+
+    success: bool
+    duplicate_nodes_found: int = 0
+    duplicate_nodes_removed: int = 0  # Rows removed from nodes table
+    duplicate_edges_found: int = 0
+    duplicate_edges_removed: int = 0  # Rows removed from edges table
+    final_stats: DatabaseStats | None = None
+    total_time_seconds: float
+    summary: "OperationSummary"
+    errors: list[str] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+
+
 class MergeConfig(BaseModel):
     """Configuration for merge operation - composite pipeline"""
 
@@ -264,8 +297,10 @@ class MergeConfig(BaseModel):
     mapping_files: list[FileSpec] = Field(default_factory=list)
 
     # Pipeline options
+    skip_deduplicate: bool = False  # Skip deduplication step
     skip_normalize: bool = False  # Skip normalization step
     skip_prune: bool = False  # Skip pruning step
+    generate_provided_by: bool = True  # Add provided_by column from filename (like cat-merge)
 
     # Prune-specific options
     keep_singletons: bool = True
@@ -328,6 +363,7 @@ class MergeResult(BaseModel):
 
     # Individual operation results
     join_result: Optional["JoinResult"] = None
+    deduplicate_result: Optional["DeduplicateResult"] = None
     normalize_result: Optional["NormalizeResult"] = None
     prune_result: Optional["PruneResult"] = None
 
@@ -521,4 +557,172 @@ class SchemaReportResult(BaseModel):
 
     schema_report: SchemaAnalysisReport
     output_file: Path | None = None
+    total_time_seconds: float = 0.0
+
+
+# Tabular Report Models
+
+
+class TabularReportFormat(str, Enum):
+    """Supported formats for tabular reports."""
+
+    TSV = "tsv"
+    PARQUET = "parquet"
+    JSONL = "jsonl"
+    # XLSX = "xlsx"  # stretch goal
+
+
+class NodeReportConfig(BaseModel):
+    """Configuration for tabular node report generation."""
+
+    # Input: either database_path OR node_file (load into in-memory db)
+    database_path: Path | None = None
+    node_file: "FileSpec | None" = None
+
+    # Output
+    output_file: Path | None = None
+    output_format: TabularReportFormat = TabularReportFormat.TSV
+
+    # Categorical columns to group by (default set + extensible)
+    categorical_columns: list[str] = Field(
+        default_factory=lambda: ["namespace", "category", "in_taxon", "provided_by"]
+    )
+
+    quiet: bool = False
+
+    @model_validator(mode="after")
+    def validate_input_provided(self):
+        """Ensure at least one input source is provided."""
+        if self.database_path is None and self.node_file is None:
+            raise ValueError("Must provide either database_path or node_file")
+        return self
+
+
+class EdgeReportConfig(BaseModel):
+    """Configuration for tabular edge report generation."""
+
+    # Input: either database_path OR node_file + edge_file
+    database_path: Path | None = None
+    node_file: "FileSpec | None" = None
+    edge_file: "FileSpec | None" = None
+
+    # Output
+    output_file: Path | None = None
+    output_format: TabularReportFormat = TabularReportFormat.TSV
+
+    # Default categorical columns for edges
+    categorical_columns: list[str] = Field(
+        default_factory=lambda: [
+            "subject_category",
+            "subject_namespace",
+            "predicate",
+            "object_category",
+            "object_namespace",
+            "primary_knowledge_source",
+            "aggregator_knowledge_source",
+            "knowledge_level",
+            "agent_type",
+            "provided_by",
+        ]
+    )
+
+    quiet: bool = False
+
+    @model_validator(mode="after")
+    def validate_input_provided(self):
+        """Ensure at least one input source is provided."""
+        if self.database_path is None and self.edge_file is None:
+            raise ValueError("Must provide either database_path or edge_file")
+        return self
+
+
+class NodeExamplesConfig(BaseModel):
+    """Configuration for node examples generation."""
+
+    # Input: either database_path OR node_file
+    database_path: Path | None = None
+    node_file: "FileSpec | None" = None
+
+    # Output
+    output_file: Path | None = None
+    output_format: TabularReportFormat = TabularReportFormat.TSV
+
+    # How many examples per type
+    sample_size: int = 5
+
+    # Which column defines the "type" for grouping examples
+    type_column: str = "category"
+
+    quiet: bool = False
+
+    @model_validator(mode="after")
+    def validate_input_provided(self):
+        """Ensure at least one input source is provided."""
+        if self.database_path is None and self.node_file is None:
+            raise ValueError("Must provide either database_path or node_file")
+        return self
+
+
+class EdgeExamplesConfig(BaseModel):
+    """Configuration for edge examples generation."""
+
+    # Input: either database_path OR node_file + edge_file
+    database_path: Path | None = None
+    node_file: "FileSpec | None" = None
+    edge_file: "FileSpec | None" = None
+
+    # Output
+    output_file: Path | None = None
+    output_format: TabularReportFormat = TabularReportFormat.TSV
+
+    # How many examples per type
+    sample_size: int = 5
+
+    # Which columns define the "type" for grouping examples
+    # Default: subject_category, predicate, object_category
+    type_columns: list[str] = Field(
+        default_factory=lambda: ["subject_category", "predicate", "object_category"]
+    )
+
+    quiet: bool = False
+
+    @model_validator(mode="after")
+    def validate_input_provided(self):
+        """Ensure at least one input source is provided."""
+        if self.database_path is None and self.edge_file is None:
+            raise ValueError("Must provide either database_path or edge_file")
+        return self
+
+
+class NodeReportResult(BaseModel):
+    """Result from node report generation."""
+
+    output_file: Path | None = None
+    total_rows: int = 0
+    total_time_seconds: float = 0.0
+
+
+class EdgeReportResult(BaseModel):
+    """Result from edge report generation."""
+
+    output_file: Path | None = None
+    total_rows: int = 0
+    total_time_seconds: float = 0.0
+
+
+class NodeExamplesResult(BaseModel):
+    """Result from node examples generation."""
+
+    output_file: Path | None = None
+    types_sampled: int = 0
+    total_examples: int = 0
+    total_time_seconds: float = 0.0
+
+
+class EdgeExamplesResult(BaseModel):
+    """Result from edge examples generation."""
+
+    output_file: Path | None = None
+    types_sampled: int = 0
+    total_examples: int = 0
     total_time_seconds: float = 0.0

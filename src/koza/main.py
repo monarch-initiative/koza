@@ -12,7 +12,11 @@ from tqdm import tqdm
 
 from koza.graph_operations import (
     append_graphs,
+    generate_edge_examples,
+    generate_edge_report,
     generate_graph_stats,
+    generate_node_examples,
+    generate_node_report,
     generate_qc_report,
     generate_schema_compliance_report,
     join_graphs,
@@ -27,15 +31,20 @@ from koza.graph_operations import (
 from koza.model.formats import OutputFormat
 from koza.model.graph_operations import (
     AppendConfig,
+    EdgeExamplesConfig,
+    EdgeReportConfig,
     FileSpec,
     GraphStatsConfig,
     JoinConfig,
     KGXFormat,
+    NodeExamplesConfig,
+    NodeReportConfig,
     NormalizeConfig,
     PruneConfig,
     QCReportConfig,
     SchemaReportConfig,
     SplitConfig,
+    TabularReportFormat,
 )
 from koza.runner import KozaRunner
 
@@ -845,6 +854,325 @@ def report_cmd(
 
     except Exception as e:
         typer.echo(f"Error generating {report_type} report: {e}", err=True)
+        raise typer.Exit(1)
+
+
+# Tabular Report Commands
+
+
+@typer_app.command(name="node-report")
+def node_report_cmd(
+    database: Annotated[
+        str | None, typer.Option("--database", "-d", help="Path to DuckDB database file")
+    ] = None,
+    node_file: Annotated[
+        str | None, typer.Option("--file", "-f", help="Path to node file (TSV, JSONL, or Parquet)")
+    ] = None,
+    output: Annotated[str, typer.Option("--output", "-o", help="Path to output report file")] = None,
+    format: Annotated[
+        TabularReportFormat, typer.Option("--format", help="Output format")
+    ] = TabularReportFormat.TSV,
+    columns: Annotated[
+        list[str] | None,
+        typer.Option("--column", "-c", help="Categorical columns to group by (can specify multiple)"),
+    ] = None,
+    quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress progress output")] = False,
+):
+    """
+    Generate tabular node report with GROUP BY ALL categorical columns.
+
+    Outputs count of nodes grouped by categorical columns (namespace, category, etc.).
+
+    Examples:
+
+        # From database
+        koza node-report -d merged.duckdb -o node_report.tsv
+
+        # From file
+        koza node-report -f nodes.tsv -o node_report.parquet --format parquet
+
+        # Custom columns
+        koza node-report -d merged.duckdb -o report.tsv -c namespace -c category -c provided_by
+    """
+    try:
+        if not database and not node_file:
+            raise typer.BadParameter("Must specify either --database or --file")
+
+        # Build config
+        config_kwargs = {
+            "output_file": Path(output) if output else None,
+            "output_format": format,
+            "quiet": quiet,
+        }
+
+        if database:
+            db_path = Path(database)
+            if not db_path.exists():
+                raise typer.BadParameter(f"Database file not found: {database}")
+            config_kwargs["database_path"] = db_path
+        else:
+            file_path = Path(node_file)
+            if not file_path.exists():
+                raise typer.BadParameter(f"Node file not found: {node_file}")
+            config_kwargs["node_file"] = FileSpec(path=file_path)
+
+        if columns:
+            config_kwargs["categorical_columns"] = columns
+
+        config = NodeReportConfig(**config_kwargs)
+        result = generate_node_report(config)
+
+        if not quiet:
+            typer.echo("✓ Node report generated successfully")
+            if result.output_file:
+                typer.echo(f"Report saved to: {result.output_file}")
+
+    except Exception as e:
+        typer.echo(f"Error generating node report: {e}", err=True)
+        raise typer.Exit(1)
+
+
+@typer_app.command(name="edge-report")
+def edge_report_cmd(
+    database: Annotated[
+        str | None, typer.Option("--database", "-d", help="Path to DuckDB database file")
+    ] = None,
+    node_file: Annotated[
+        str | None, typer.Option("--nodes", "-n", help="Path to node file (for denormalization)")
+    ] = None,
+    edge_file: Annotated[
+        str | None, typer.Option("--edges", "-e", help="Path to edge file (TSV, JSONL, or Parquet)")
+    ] = None,
+    output: Annotated[str, typer.Option("--output", "-o", help="Path to output report file")] = None,
+    format: Annotated[
+        TabularReportFormat, typer.Option("--format", help="Output format")
+    ] = TabularReportFormat.TSV,
+    columns: Annotated[
+        list[str] | None,
+        typer.Option("--column", "-c", help="Categorical columns to group by (can specify multiple)"),
+    ] = None,
+    quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress progress output")] = False,
+):
+    """
+    Generate tabular edge report with denormalized node info.
+
+    Joins edges to nodes to get subject_category, object_category, etc., then
+    outputs count of edges grouped by categorical columns.
+
+    Examples:
+
+        # From database
+        koza edge-report -d merged.duckdb -o edge_report.tsv
+
+        # From files
+        koza edge-report -n nodes.tsv -e edges.tsv -o edge_report.parquet --format parquet
+
+        # Custom columns
+        koza edge-report -d merged.duckdb -o report.tsv \\
+            -c subject_category -c predicate -c object_category -c primary_knowledge_source
+    """
+    try:
+        if not database and not edge_file:
+            raise typer.BadParameter("Must specify either --database or --edges")
+
+        # Build config
+        config_kwargs = {
+            "output_file": Path(output) if output else None,
+            "output_format": format,
+            "quiet": quiet,
+        }
+
+        if database:
+            db_path = Path(database)
+            if not db_path.exists():
+                raise typer.BadParameter(f"Database file not found: {database}")
+            config_kwargs["database_path"] = db_path
+        else:
+            if edge_file:
+                edge_path = Path(edge_file)
+                if not edge_path.exists():
+                    raise typer.BadParameter(f"Edge file not found: {edge_file}")
+                config_kwargs["edge_file"] = FileSpec(path=edge_path)
+
+            if node_file:
+                node_path = Path(node_file)
+                if not node_path.exists():
+                    raise typer.BadParameter(f"Node file not found: {node_file}")
+                config_kwargs["node_file"] = FileSpec(path=node_path)
+
+        if columns:
+            config_kwargs["categorical_columns"] = columns
+
+        config = EdgeReportConfig(**config_kwargs)
+        result = generate_edge_report(config)
+
+        if not quiet:
+            typer.echo("✓ Edge report generated successfully")
+            if result.output_file:
+                typer.echo(f"Report saved to: {result.output_file}")
+
+    except Exception as e:
+        typer.echo(f"Error generating edge report: {e}", err=True)
+        raise typer.Exit(1)
+
+
+@typer_app.command(name="node-examples")
+def node_examples_cmd(
+    database: Annotated[
+        str | None, typer.Option("--database", "-d", help="Path to DuckDB database file")
+    ] = None,
+    node_file: Annotated[
+        str | None, typer.Option("--file", "-f", help="Path to node file (TSV, JSONL, or Parquet)")
+    ] = None,
+    output: Annotated[str, typer.Option("--output", "-o", help="Path to output examples file")] = None,
+    format: Annotated[
+        TabularReportFormat, typer.Option("--format", help="Output format")
+    ] = TabularReportFormat.TSV,
+    sample_size: Annotated[
+        int, typer.Option("--sample-size", "-n", help="Number of examples per type")
+    ] = 5,
+    type_column: Annotated[
+        str, typer.Option("--type-column", "-t", help="Column to partition examples by")
+    ] = "category",
+    quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress progress output")] = False,
+):
+    """
+    Generate sample rows per node type.
+
+    Samples N example rows for each distinct value in the type column (default: category).
+
+    Examples:
+
+        # From database (5 examples per category)
+        koza node-examples -d merged.duckdb -o node_examples.tsv
+
+        # From file with 10 examples per type
+        koza node-examples -f nodes.tsv -o examples.tsv -n 10
+
+        # Group by different column
+        koza node-examples -d merged.duckdb -o examples.tsv -t provided_by
+    """
+    try:
+        if not database and not node_file:
+            raise typer.BadParameter("Must specify either --database or --file")
+
+        # Build config
+        config_kwargs = {
+            "output_file": Path(output) if output else None,
+            "output_format": format,
+            "sample_size": sample_size,
+            "type_column": type_column,
+            "quiet": quiet,
+        }
+
+        if database:
+            db_path = Path(database)
+            if not db_path.exists():
+                raise typer.BadParameter(f"Database file not found: {database}")
+            config_kwargs["database_path"] = db_path
+        else:
+            file_path = Path(node_file)
+            if not file_path.exists():
+                raise typer.BadParameter(f"Node file not found: {node_file}")
+            config_kwargs["node_file"] = FileSpec(path=file_path)
+
+        config = NodeExamplesConfig(**config_kwargs)
+        result = generate_node_examples(config)
+
+        if not quiet:
+            typer.echo("✓ Node examples generated successfully")
+            if result.output_file:
+                typer.echo(f"Examples saved to: {result.output_file}")
+
+    except Exception as e:
+        typer.echo(f"Error generating node examples: {e}", err=True)
+        raise typer.Exit(1)
+
+
+@typer_app.command(name="edge-examples")
+def edge_examples_cmd(
+    database: Annotated[
+        str | None, typer.Option("--database", "-d", help="Path to DuckDB database file")
+    ] = None,
+    node_file: Annotated[
+        str | None, typer.Option("--nodes", "-n", help="Path to node file (for denormalization)")
+    ] = None,
+    edge_file: Annotated[
+        str | None, typer.Option("--edges", "-e", help="Path to edge file (TSV, JSONL, or Parquet)")
+    ] = None,
+    output: Annotated[str, typer.Option("--output", "-o", help="Path to output examples file")] = None,
+    format: Annotated[
+        TabularReportFormat, typer.Option("--format", help="Output format")
+    ] = TabularReportFormat.TSV,
+    sample_size: Annotated[
+        int, typer.Option("--sample-size", "-s", help="Number of examples per type")
+    ] = 5,
+    type_columns: Annotated[
+        list[str] | None,
+        typer.Option("--type-column", "-t", help="Columns to partition examples by (can specify multiple)"),
+    ] = None,
+    quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress progress output")] = False,
+):
+    """
+    Generate sample rows per edge type.
+
+    Samples N example rows for each distinct combination of type columns
+    (default: subject_category, predicate, object_category).
+
+    Examples:
+
+        # From database (5 examples per edge type)
+        koza edge-examples -d merged.duckdb -o edge_examples.tsv
+
+        # From files with 10 examples
+        koza edge-examples -n nodes.tsv -e edges.tsv -o examples.tsv -s 10
+
+        # Custom type columns
+        koza edge-examples -d merged.duckdb -o examples.tsv -t predicate -t primary_knowledge_source
+    """
+    try:
+        if not database and not edge_file:
+            raise typer.BadParameter("Must specify either --database or --edges")
+
+        # Build config
+        config_kwargs = {
+            "output_file": Path(output) if output else None,
+            "output_format": format,
+            "sample_size": sample_size,
+            "quiet": quiet,
+        }
+
+        if type_columns:
+            config_kwargs["type_columns"] = type_columns
+
+        if database:
+            db_path = Path(database)
+            if not db_path.exists():
+                raise typer.BadParameter(f"Database file not found: {database}")
+            config_kwargs["database_path"] = db_path
+        else:
+            if edge_file:
+                edge_path = Path(edge_file)
+                if not edge_path.exists():
+                    raise typer.BadParameter(f"Edge file not found: {edge_file}")
+                config_kwargs["edge_file"] = FileSpec(path=edge_path)
+
+            if node_file:
+                node_path = Path(node_file)
+                if not node_path.exists():
+                    raise typer.BadParameter(f"Node file not found: {node_file}")
+                config_kwargs["node_file"] = FileSpec(path=node_path)
+
+        config = EdgeExamplesConfig(**config_kwargs)
+        result = generate_edge_examples(config)
+
+        if not quiet:
+            typer.echo("✓ Edge examples generated successfully")
+            if result.output_file:
+                typer.echo(f"Examples saved to: {result.output_file}")
+
+    except Exception as e:
+        typer.echo(f"Error generating edge examples: {e}", err=True)
         raise typer.Exit(1)
 
 

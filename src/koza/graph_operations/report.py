@@ -15,11 +15,22 @@ from loguru import logger
 from koza.model.graph_operations import (
     BiolinkCompliance,
     CategoryStats,
+    EdgeExamplesConfig,
+    EdgeExamplesResult,
+    EdgeReportConfig,
+    EdgeReportResult,
     EdgeSourceReport,
     EdgeStats,
+    FileSpec,
     GraphStatsConfig,
     GraphStatsReport,
     GraphStatsResult,
+    KGXFileType,
+    KGXFormat,
+    NodeExamplesConfig,
+    NodeExamplesResult,
+    NodeReportConfig,
+    NodeReportResult,
     NodeSourceReport,
     NodeStats,
     PredicateReport,
@@ -32,6 +43,7 @@ from koza.model.graph_operations import (
     SchemaReportConfig,
     SchemaReportResult,
     TableSchema,
+    TabularReportFormat,
 )
 
 from .utils import GraphDatabase
@@ -58,7 +70,7 @@ def generate_qc_report(config: QCReportConfig) -> QCReportResult:
                 print(f"📊 Generating QC report for {config.database_path.name}...")
 
             # Generate the QC report using existing functionality
-            qc_report = _create_qc_report(db)
+            qc_report = _create_qc_report(db, group_by=config.group_by)
 
             # Write to output file if specified
             if config.output_file:
@@ -182,7 +194,7 @@ def generate_schema_compliance_report(config: SchemaReportConfig) -> SchemaRepor
         raise
 
 
-def _create_qc_report(db: GraphDatabase) -> QCReport:
+def _create_qc_report(db: GraphDatabase, group_by: str = "provided_by") -> QCReport:
     """Create QC report using DuckDB queries."""
 
     # Get basic counts
@@ -215,11 +227,11 @@ def _create_qc_report(db: GraphDatabase) -> QCReport:
         logger.error(f"Failed to get basic counts: {e}")
         raise Exception(f"Failed to analyze database: {e}")
 
-    # Get nodes report by provided_by
-    nodes_by_source = _get_nodes_qc_report(db)
+    # Get nodes report by group_by column
+    nodes_by_source = _get_nodes_qc_report(db, group_by=group_by)
 
-    # Get edges report by provided_by
-    edges_by_source = _get_edges_qc_report(db)
+    # Get edges report by group_by column
+    edges_by_source = _get_edges_qc_report(db, group_by=group_by)
 
     # Create summary
     summary = QCSummary(
@@ -233,27 +245,37 @@ def _create_qc_report(db: GraphDatabase) -> QCReport:
     return QCReport(summary=summary, nodes=nodes_by_source, edges=edges_by_source)
 
 
-def _get_nodes_qc_report(db: GraphDatabase) -> list[NodeSourceReport]:
+def _get_nodes_qc_report(db: GraphDatabase, group_by: str = "provided_by") -> list[NodeSourceReport]:
     """Create nodes section of QC report."""
 
+    # Validate the group_by column exists
     try:
-        # Get provided_by sources
-        sources = db.conn.execute("SELECT DISTINCT provided_by FROM nodes ORDER BY provided_by").fetchall()
+        db.conn.execute(f"SELECT {group_by} FROM nodes LIMIT 1").fetchone()
+        source_column = group_by
     except Exception:
-        logger.warning("No provided_by column found in nodes table")
+        logger.warning(f"Column {group_by} not found in nodes table")
+        return []
+
+    try:
+        # Get sources
+        sources = db.conn.execute(f"SELECT DISTINCT {source_column} FROM nodes ORDER BY {source_column}").fetchall()
+    except Exception:
+        logger.warning(f"Failed to get {source_column} sources from nodes table")
         return []
 
     nodes_report = []
     for (source,) in sources:
+        if source is None:
+            continue  # Skip NULL sources
         try:
             # Get stats for this source
             source_stats = db.conn.execute(
-                """
-                SELECT 
+                f"""
+                SELECT
                     COUNT(*) as total,
                     COUNT(DISTINCT category) as category_count
-                FROM nodes 
-                WHERE provided_by = ?
+                FROM nodes
+                WHERE {source_column} = ?
             """,
                 [source],
             ).fetchone()
@@ -262,16 +284,16 @@ def _get_nodes_qc_report(db: GraphDatabase) -> list[NodeSourceReport]:
 
             # Get categories for this source
             categories = db.conn.execute(
-                """
-                SELECT 
-                    CASE 
+                f"""
+                SELECT
+                    CASE
                         WHEN category IS NULL THEN 'unknown'
                         WHEN typeof(category) = 'VARCHAR[]' THEN array_to_string(category, '|')
                         ELSE CAST(category AS VARCHAR)
                     END as category,
                     COUNT(*) as count
-                FROM nodes 
-                WHERE provided_by = ?
+                FROM nodes
+                WHERE {source_column} = ?
                 GROUP BY category
                 ORDER BY category
             """,
@@ -280,12 +302,12 @@ def _get_nodes_qc_report(db: GraphDatabase) -> list[NodeSourceReport]:
 
             # Get namespaces for this source
             namespaces = db.conn.execute(
-                """
-                SELECT 
+                f"""
+                SELECT
                     split_part(id, ':', 1) as namespace,
-                    COUNT(*) as count  
+                    COUNT(*) as count
                 FROM nodes
-                WHERE provided_by = ?
+                WHERE {source_column} = ?
                 GROUP BY split_part(id, ':', 1)
                 ORDER BY namespace
             """,
@@ -308,27 +330,51 @@ def _get_nodes_qc_report(db: GraphDatabase) -> list[NodeSourceReport]:
     return nodes_report
 
 
-def _get_edges_qc_report(db: GraphDatabase) -> list[EdgeSourceReport]:
+def _get_edges_qc_report(db: GraphDatabase, group_by: str = "provided_by") -> list[EdgeSourceReport]:
     """Create edges section of QC report."""
 
+    # Determine which column to use for source grouping
+    # If group_by is specified and exists, use it; otherwise fall back
+    source_column = None
+
+    # First try the specified group_by column
     try:
-        # Get provided_by sources
-        sources = db.conn.execute("SELECT DISTINCT provided_by FROM edges ORDER BY provided_by").fetchall()
+        db.conn.execute(f"SELECT {group_by} FROM edges LIMIT 1").fetchone()
+        source_column = group_by
     except Exception:
-        logger.warning("No provided_by column found in edges table")
+        # Fall back to provided_by or primary_knowledge_source
+        for col in ["provided_by", "primary_knowledge_source"]:
+            try:
+                db.conn.execute(f"SELECT {col} FROM edges LIMIT 1").fetchone()
+                source_column = col
+                break
+            except Exception:
+                continue
+
+    if source_column is None:
+        logger.warning("No grouping column found in edges table")
+        return []
+
+    try:
+        # Get sources
+        sources = db.conn.execute(f"SELECT DISTINCT {source_column} FROM edges ORDER BY {source_column}").fetchall()
+    except Exception as e:
+        logger.warning(f"Failed to get edge sources: {e}")
         return []
 
     edges_report = []
     for (source,) in sources:
+        if source is None:
+            continue  # Skip NULL sources
         try:
             # Get basic stats for this source
             source_stats = db.conn.execute(
-                """
-                SELECT 
+                f"""
+                SELECT
                     COUNT(*) as total,
                     COUNT(DISTINCT predicate) as predicate_count
-                FROM edges 
-                WHERE provided_by = ?
+                FROM edges
+                WHERE {source_column} = ?
             """,
                 [source],
             ).fetchone()
@@ -337,12 +383,12 @@ def _get_edges_qc_report(db: GraphDatabase) -> list[EdgeSourceReport]:
 
             # Get predicates for this source
             predicates = db.conn.execute(
-                """
-                SELECT 
+                f"""
+                SELECT
                     COALESCE(predicate, 'unknown') as predicate,
                     COUNT(*) as count
-                FROM edges 
-                WHERE provided_by = ?
+                FROM edges
+                WHERE {source_column} = ?
                 GROUP BY predicate
                 ORDER BY predicate
             """,
@@ -351,18 +397,18 @@ def _get_edges_qc_report(db: GraphDatabase) -> list[EdgeSourceReport]:
 
             # Get subject/object namespaces
             namespaces = db.conn.execute(
-                """
+                f"""
                 SELECT namespace, SUM(count) as count FROM (
-                    SELECT split_part(subject, ':', 1) as namespace, COUNT(*) as count 
-                    FROM edges 
-                    WHERE provided_by = ?
+                    SELECT split_part(subject, ':', 1) as namespace, COUNT(*) as count
+                    FROM edges
+                    WHERE {source_column} = ?
                     GROUP BY split_part(subject, ':', 1)
                     UNION ALL
-                    SELECT split_part(object, ':', 1) as namespace, COUNT(*) as count 
-                    FROM edges 
-                    WHERE provided_by = ?
+                    SELECT split_part(object, ':', 1) as namespace, COUNT(*) as count
+                    FROM edges
+                    WHERE {source_column} = ?
                     GROUP BY split_part(object, ':', 1)
-                ) 
+                )
                 GROUP BY namespace
                 ORDER BY namespace
             """,
@@ -435,6 +481,7 @@ def _generate_node_stats(db: GraphDatabase, total_nodes: int) -> NodeStats:
         provided_by_sources = db.conn.execute("""
             SELECT DISTINCT provided_by
             FROM nodes
+            WHERE provided_by IS NOT NULL
             ORDER BY provided_by
         """).fetchall()
     except:
@@ -449,7 +496,7 @@ def _generate_node_stats(db: GraphDatabase, total_nodes: int) -> NodeStats:
                 """
                 SELECT provided_by, COUNT(*) as count
                 FROM nodes
-                WHERE CASE 
+                WHERE CASE
                     WHEN category IS NULL THEN 'unknown'
                     WHEN typeof(category) = 'VARCHAR[]' THEN array_to_string(category, '|')
                     ELSE CAST(category AS VARCHAR)
@@ -460,7 +507,8 @@ def _generate_node_stats(db: GraphDatabase, total_nodes: int) -> NodeStats:
                 [category],
             ).fetchall()
 
-            provided_by_dict = {pb: {"count": c} for pb, c in provided_by_breakdown}
+            # Filter out NULL provided_by values
+            provided_by_dict = {pb: {"count": c} for pb, c in provided_by_breakdown if pb is not None}
             count_by_category[category] = CategoryStats(count=count, provided_by=provided_by_dict)
         except:
             # No provided_by column
@@ -475,7 +523,7 @@ def _generate_node_stats(db: GraphDatabase, total_nodes: int) -> NodeStats:
         count_by_id_prefixes=count_by_id_prefixes,
         node_categories=[cat for cat, _ in category_counts],
         node_id_prefixes=[prefix for prefix, _ in id_prefix_counts],
-        provided_by=[pb[0] for pb in provided_by_sources] if provided_by_sources else [],
+        provided_by=[pb[0] for pb in provided_by_sources if pb[0] is not None],
     )
 
 
@@ -484,7 +532,7 @@ def _generate_edge_stats(db: GraphDatabase, total_edges: int) -> EdgeStats:
 
     # Get all predicates
     predicate_counts = db.conn.execute("""
-        SELECT 
+        SELECT
             COALESCE(predicate, 'unknown') as predicate,
             COUNT(*) as count
         FROM edges
@@ -492,43 +540,60 @@ def _generate_edge_stats(db: GraphDatabase, total_edges: int) -> EdgeStats:
         ORDER BY predicate
     """).fetchall()
 
-    # Get all provided_by sources
-    try:
-        provided_by_sources = db.conn.execute("""
-            SELECT DISTINCT provided_by
-            FROM edges
-            ORDER BY provided_by
-        """).fetchall()
-    except:
-        provided_by_sources = []
+    # Determine which column to use for source grouping
+    # Try provided_by first, then fall back to primary_knowledge_source
+    source_column = None
+    for col in ["provided_by", "primary_knowledge_source"]:
+        try:
+            db.conn.execute(f"SELECT {col} FROM edges LIMIT 1").fetchone()
+            source_column = col
+            break
+        except Exception:
+            continue
+
+    # Get all sources
+    provided_by_sources = []
+    if source_column:
+        try:
+            provided_by_sources = db.conn.execute(f"""
+                SELECT DISTINCT {source_column}
+                FROM edges
+                WHERE {source_column} IS NOT NULL
+                ORDER BY {source_column}
+            """).fetchall()
+        except:
+            provided_by_sources = []
 
     # Build count_by_predicates structure
     count_by_predicates = {}
     for predicate, count in predicate_counts:
-        # Get provided_by breakdown for this predicate if column exists
-        try:
-            provided_by_breakdown = db.conn.execute(
-                """
-                SELECT provided_by, COUNT(*) as count
-                FROM edges
-                WHERE COALESCE(predicate, 'unknown') = ?
-                GROUP BY provided_by
-                ORDER BY provided_by
-            """,
-                [predicate],
-            ).fetchall()
+        # Get source breakdown for this predicate if column exists
+        if source_column:
+            try:
+                provided_by_breakdown = db.conn.execute(
+                    f"""
+                    SELECT {source_column}, COUNT(*) as count
+                    FROM edges
+                    WHERE COALESCE(predicate, 'unknown') = ?
+                    GROUP BY {source_column}
+                    ORDER BY {source_column}
+                """,
+                    [predicate],
+                ).fetchall()
 
-            provided_by_dict = {pb: {"count": c} for pb, c in provided_by_breakdown}
-            count_by_predicates[predicate] = PredicateStats(count=count, provided_by=provided_by_dict)
-        except:
-            # No provided_by column
+                # Filter out NULL values
+                provided_by_dict = {pb: {"count": c} for pb, c in provided_by_breakdown if pb is not None}
+                count_by_predicates[predicate] = PredicateStats(count=count, provided_by=provided_by_dict)
+            except:
+                count_by_predicates[predicate] = PredicateStats(count=count)
+        else:
             count_by_predicates[predicate] = PredicateStats(count=count)
 
     return EdgeStats(
         total_edges=total_edges,
         count_by_predicates=count_by_predicates,
         predicates=[pred for pred, _ in predicate_counts],
-        provided_by=[pb[0] for pb in provided_by_sources] if provided_by_sources else [],
+        provided_by=[pb[0] for pb in provided_by_sources if pb[0] is not None],
     )
 
 
@@ -646,3 +711,430 @@ def _print_schema_summary(schema_report: SchemaAnalysisReport, total_time: float
         print(f"    - {table_name}: {columns} columns, {records:,} records")
 
     print(f"  ⏱️  Total time: {total_time:.2f}s")
+
+
+# Tabular Report Functions
+
+
+def _ensure_denormalized_edges_view(db: GraphDatabase) -> str:
+    """
+    Check if denormalized_edges exists; if not, create a temp view.
+
+    Returns the table/view name to use.
+    """
+    # Check if denormalized_edges table exists
+    tables = db.conn.execute(
+        "SELECT table_name FROM information_schema.tables WHERE table_name = 'denormalized_edges'"
+    ).fetchall()
+
+    if tables:
+        return "denormalized_edges"
+
+    # Create temp view joining edges to nodes twice
+    db.conn.execute("""
+        CREATE OR REPLACE TEMP VIEW denormalized_edges AS
+        SELECT
+            e.*,
+            sn.category AS subject_category,
+            sn.in_taxon AS subject_taxon,
+            split_part(e.subject, ':', 1) AS subject_namespace,
+            on_.category AS object_category,
+            on_.in_taxon AS object_taxon,
+            split_part(e.object, ':', 1) AS object_namespace
+        FROM edges e
+        LEFT JOIN nodes sn ON e.subject = sn.id
+        LEFT JOIN nodes on_ ON e.object = on_.id
+    """)
+    return "denormalized_edges"
+
+
+def _export_query_result(
+    db: GraphDatabase, query: str, output_path: Path, format: TabularReportFormat
+) -> int:
+    """
+    Export query result to specified format.
+
+    Returns the number of rows exported.
+    """
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if format == TabularReportFormat.TSV:
+        db.conn.execute(f"COPY ({query}) TO '{output_path}' (HEADER, DELIMITER '\\t')")
+    elif format == TabularReportFormat.PARQUET:
+        db.conn.execute(f"COPY ({query}) TO '{output_path}' (FORMAT PARQUET)")
+    elif format == TabularReportFormat.JSONL:
+        db.conn.execute(f"COPY ({query}) TO '{output_path}' (FORMAT JSON)")
+    else:
+        raise ValueError(f"Unsupported format: {format}")
+
+    # Get row count
+    count_result = db.conn.execute(f"SELECT COUNT(*) FROM ({query})").fetchone()
+    return count_result[0] if count_result else 0
+
+
+def _get_available_columns(db: GraphDatabase, table_name: str) -> set[str]:
+    """Get the set of column names available in a table."""
+    try:
+        columns = db.conn.execute(
+            f"SELECT column_name FROM information_schema.columns WHERE table_name = '{table_name}'"
+        ).fetchall()
+        return {col[0] for col in columns}
+    except Exception:
+        return set()
+
+
+def _load_files_to_database(
+    db: GraphDatabase,
+    node_file: FileSpec | None = None,
+    edge_file: FileSpec | None = None,
+) -> None:
+    """Load node and/or edge files into the database."""
+    from .utils import get_duckdb_read_statement
+
+    if node_file:
+        read_stmt = get_duckdb_read_statement(node_file)
+        db.conn.execute(f"CREATE OR REPLACE TABLE nodes AS SELECT * FROM {read_stmt}")
+        logger.info(f"Loaded nodes from {node_file.path}")
+
+    if edge_file:
+        read_stmt = get_duckdb_read_statement(edge_file)
+        db.conn.execute(f"CREATE OR REPLACE TABLE edges AS SELECT * FROM {read_stmt}")
+        logger.info(f"Loaded edges from {edge_file.path}")
+
+
+def generate_node_report(config: NodeReportConfig) -> NodeReportResult:
+    """
+    Generate tabular node report: GROUP BY ALL categorical columns + count.
+
+    Handles both database input and direct file input (loads into in-memory db).
+
+    Args:
+        config: NodeReportConfig with input and output parameters
+
+    Returns:
+        NodeReportResult with generation statistics
+    """
+    start_time = time.time()
+
+    try:
+        # Determine if we're using existing database or loading from file
+        if config.database_path:
+            db = GraphDatabase(config.database_path)
+        else:
+            # Load file into in-memory database
+            db = GraphDatabase(None)
+            _load_files_to_database(db, node_file=config.node_file)
+
+        with db:
+            if not config.quiet:
+                print(f"📊 Generating node report...")
+
+            # Get available columns
+            available_cols = _get_available_columns(db, "nodes")
+
+            # Build SELECT clause with requested columns
+            select_parts = []
+            for col in config.categorical_columns:
+                if col == "namespace":
+                    # Special handling: extract namespace from id
+                    select_parts.append("split_part(id, ':', 1) AS namespace")
+                elif col in available_cols:
+                    select_parts.append(col)
+                else:
+                    logger.warning(f"Column '{col}' not found in nodes table, skipping")
+
+            if not select_parts:
+                raise ValueError("No valid columns found for report")
+
+            # Build query
+            select_clause = ", ".join(select_parts)
+            query = f"SELECT {select_clause}, count(*) as count FROM nodes GROUP BY ALL ORDER BY count DESC"
+
+            # Export to file
+            if config.output_file:
+                total_rows = _export_query_result(db, query, config.output_file, config.output_format)
+
+                if not config.quiet:
+                    print(f"✓ Node report written to {config.output_file}")
+                    print(f"  - {total_rows:,} rows")
+            else:
+                # Just count if no output file
+                total_rows = db.conn.execute(f"SELECT COUNT(*) FROM ({query})").fetchone()[0]
+
+            total_time = time.time() - start_time
+
+            if not config.quiet:
+                print(f"  ⏱️  Total time: {total_time:.2f}s")
+
+            return NodeReportResult(
+                output_file=config.output_file,
+                total_rows=total_rows,
+                total_time_seconds=total_time,
+            )
+
+    except Exception as e:
+        total_time = time.time() - start_time
+        logger.error(f"Node report generation failed: {e}")
+
+        if not config.quiet:
+            print(f"❌ Node report generation failed: {e}")
+
+        raise
+
+
+def generate_edge_report(config: EdgeReportConfig) -> EdgeReportResult:
+    """
+    Generate tabular edge report with denormalized node info.
+
+    Creates denormalized_edges view if needed, then generates report with:
+    SELECT categorical_cols..., count(*) FROM denormalized_edges GROUP BY ALL
+
+    Args:
+        config: EdgeReportConfig with input and output parameters
+
+    Returns:
+        EdgeReportResult with generation statistics
+    """
+    start_time = time.time()
+
+    try:
+        # Determine if we're using existing database or loading from files
+        if config.database_path:
+            db = GraphDatabase(config.database_path)
+        else:
+            # Load files into in-memory database
+            db = GraphDatabase(None)
+            _load_files_to_database(db, node_file=config.node_file, edge_file=config.edge_file)
+
+        with db:
+            if not config.quiet:
+                print(f"📊 Generating edge report...")
+
+            # Ensure denormalized edges view exists
+            denorm_table = _ensure_denormalized_edges_view(db)
+
+            # Get available columns from denormalized view
+            available_cols = _get_available_columns(db, denorm_table)
+
+            # Build SELECT clause with requested columns
+            select_parts = []
+            for col in config.categorical_columns:
+                if col in available_cols:
+                    select_parts.append(col)
+                else:
+                    logger.warning(f"Column '{col}' not found in {denorm_table}, skipping")
+
+            if not select_parts:
+                raise ValueError("No valid columns found for report")
+
+            # Build query
+            select_clause = ", ".join(select_parts)
+            query = f"SELECT {select_clause}, count(*) as count FROM {denorm_table} GROUP BY ALL ORDER BY count DESC"
+
+            # Export to file
+            if config.output_file:
+                total_rows = _export_query_result(db, query, config.output_file, config.output_format)
+
+                if not config.quiet:
+                    print(f"✓ Edge report written to {config.output_file}")
+                    print(f"  - {total_rows:,} rows")
+            else:
+                # Just count if no output file
+                total_rows = db.conn.execute(f"SELECT COUNT(*) FROM ({query})").fetchone()[0]
+
+            total_time = time.time() - start_time
+
+            if not config.quiet:
+                print(f"  ⏱️  Total time: {total_time:.2f}s")
+
+            return EdgeReportResult(
+                output_file=config.output_file,
+                total_rows=total_rows,
+                total_time_seconds=total_time,
+            )
+
+    except Exception as e:
+        total_time = time.time() - start_time
+        logger.error(f"Edge report generation failed: {e}")
+
+        if not config.quiet:
+            print(f"❌ Edge report generation failed: {e}")
+
+        raise
+
+
+def generate_node_examples(config: NodeExamplesConfig) -> NodeExamplesResult:
+    """
+    Generate N sample rows per node type (category).
+
+    Uses DuckDB window function to sample N examples per type:
+    SELECT * FROM (
+        SELECT *, ROW_NUMBER() OVER (PARTITION BY category ORDER BY id) as rn
+        FROM nodes
+    ) WHERE rn <= N
+
+    Args:
+        config: NodeExamplesConfig with input and output parameters
+
+    Returns:
+        NodeExamplesResult with generation statistics
+    """
+    start_time = time.time()
+
+    try:
+        # Determine if we're using existing database or loading from file
+        if config.database_path:
+            db = GraphDatabase(config.database_path)
+        else:
+            # Load file into in-memory database
+            db = GraphDatabase(None)
+            _load_files_to_database(db, node_file=config.node_file)
+
+        with db:
+            if not config.quiet:
+                print(f"📊 Generating node examples ({config.sample_size} per type)...")
+
+            # Verify type column exists
+            available_cols = _get_available_columns(db, "nodes")
+            if config.type_column not in available_cols:
+                raise ValueError(f"Type column '{config.type_column}' not found in nodes table")
+
+            # Build query using window function
+            query = f"""
+                SELECT * EXCLUDE (rn) FROM (
+                    SELECT *, ROW_NUMBER() OVER (PARTITION BY {config.type_column} ORDER BY id) as rn
+                    FROM nodes
+                ) WHERE rn <= {config.sample_size}
+                ORDER BY {config.type_column}, id
+            """
+
+            # Get stats
+            types_count = db.conn.execute(
+                f"SELECT COUNT(DISTINCT {config.type_column}) FROM nodes"
+            ).fetchone()[0]
+
+            # Export to file
+            if config.output_file:
+                total_examples = _export_query_result(db, query, config.output_file, config.output_format)
+
+                if not config.quiet:
+                    print(f"✓ Node examples written to {config.output_file}")
+                    print(f"  - {types_count:,} types sampled")
+                    print(f"  - {total_examples:,} total examples")
+            else:
+                total_examples = db.conn.execute(f"SELECT COUNT(*) FROM ({query})").fetchone()[0]
+
+            total_time = time.time() - start_time
+
+            if not config.quiet:
+                print(f"  ⏱️  Total time: {total_time:.2f}s")
+
+            return NodeExamplesResult(
+                output_file=config.output_file,
+                types_sampled=types_count,
+                total_examples=total_examples,
+                total_time_seconds=total_time,
+            )
+
+    except Exception as e:
+        total_time = time.time() - start_time
+        logger.error(f"Node examples generation failed: {e}")
+
+        if not config.quiet:
+            print(f"❌ Node examples generation failed: {e}")
+
+        raise
+
+
+def generate_edge_examples(config: EdgeExamplesConfig) -> EdgeExamplesResult:
+    """
+    Generate N sample rows per edge type (subject_category, predicate, object_category).
+
+    Uses denormalized view + window function for sampling.
+
+    Args:
+        config: EdgeExamplesConfig with input and output parameters
+
+    Returns:
+        EdgeExamplesResult with generation statistics
+    """
+    start_time = time.time()
+
+    try:
+        # Determine if we're using existing database or loading from files
+        if config.database_path:
+            db = GraphDatabase(config.database_path)
+        else:
+            # Load files into in-memory database
+            db = GraphDatabase(None)
+            _load_files_to_database(db, node_file=config.node_file, edge_file=config.edge_file)
+
+        with db:
+            if not config.quiet:
+                print(f"📊 Generating edge examples ({config.sample_size} per type)...")
+
+            # Ensure denormalized edges view exists
+            denorm_table = _ensure_denormalized_edges_view(db)
+
+            # Get available columns
+            available_cols = _get_available_columns(db, denorm_table)
+
+            # Verify type columns exist
+            valid_type_cols = []
+            for col in config.type_columns:
+                if col in available_cols:
+                    valid_type_cols.append(col)
+                else:
+                    logger.warning(f"Type column '{col}' not found in {denorm_table}, skipping")
+
+            if not valid_type_cols:
+                raise ValueError("No valid type columns found for edge examples")
+
+            # Build partition clause
+            partition_clause = ", ".join(valid_type_cols)
+
+            # Build query using window function
+            query = f"""
+                SELECT * EXCLUDE (rn) FROM (
+                    SELECT *, ROW_NUMBER() OVER (PARTITION BY {partition_clause} ORDER BY subject, object) as rn
+                    FROM {denorm_table}
+                ) WHERE rn <= {config.sample_size}
+                ORDER BY {partition_clause}, subject, object
+            """
+
+            # Get stats
+            types_count = db.conn.execute(
+                f"SELECT COUNT(*) FROM (SELECT DISTINCT {partition_clause} FROM {denorm_table})"
+            ).fetchone()[0]
+
+            # Export to file
+            if config.output_file:
+                total_examples = _export_query_result(db, query, config.output_file, config.output_format)
+
+                if not config.quiet:
+                    print(f"✓ Edge examples written to {config.output_file}")
+                    print(f"  - {types_count:,} types sampled")
+                    print(f"  - {total_examples:,} total examples")
+            else:
+                total_examples = db.conn.execute(f"SELECT COUNT(*) FROM ({query})").fetchone()[0]
+
+            total_time = time.time() - start_time
+
+            if not config.quiet:
+                print(f"  ⏱️  Total time: {total_time:.2f}s")
+
+            return EdgeExamplesResult(
+                output_file=config.output_file,
+                types_sampled=types_count,
+                total_examples=total_examples,
+                total_time_seconds=total_time,
+            )
+
+    except Exception as e:
+        total_time = time.time() - start_time
+        logger.error(f"Edge examples generation failed: {e}")
+
+        if not config.quiet:
+            print(f"❌ Edge examples generation failed: {e}")
+
+        raise
