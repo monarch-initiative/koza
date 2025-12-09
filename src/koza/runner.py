@@ -4,6 +4,7 @@ import sys
 from collections import defaultdict
 from collections.abc import Iterable
 from dataclasses import asdict, dataclass, field
+from itertools import chain
 from pathlib import Path
 from types import ModuleType
 from typing import Any, TypeAlias, TypeVar, cast
@@ -19,6 +20,7 @@ from koza.io.writer.tsv_writer import TSVWriter
 from koza.io.writer.writer import KozaWriter
 from koza.io.yaml_loader import UniqueIncludeLoader
 from koza.model.formats import OutputFormat
+from koza.model.graphs import KnowledgeGraph
 from koza.model.koza import KozaConfig
 from koza.model.source import Source
 from koza.transform import KozaTransform, Mappings, Record
@@ -82,6 +84,7 @@ class KozaRunner:
         writer: KozaWriter,
         hooks: KozaTransformHooks | dict[str | None, KozaTransformHooks],
         base_directory: Path | None = None,
+        input_files_dir: Path | None = None,
         mapping_filenames: list[str] | None = None,
         extra_transform_fields: dict[str, Any] | None = None,
     ):
@@ -93,8 +96,10 @@ class KozaRunner:
             self.data: dict[str | None, Iterable[Record]] = {None: data}
         self.writer = writer
         self.base_directory = base_directory
+        self.input_files_dir = input_files_dir
         self.mapping_filenames = mapping_filenames or []
         self.extra_transform_fields = extra_transform_fields or {}
+        self.transform_metadata: dict[str, Any] = {}
 
         if isinstance(hooks, dict):
             self.hooks_by_tag = hooks
@@ -117,7 +122,10 @@ class KozaRunner:
         if hooks.prepare_data and len(hooks.prepare_data) > 1:
             raise ValueError("Can only define one `@koza.prepare_data` function")
 
-        transform = KozaTransform(mappings=mappings, writer=self.writer, extra_fields=self.extra_transform_fields)
+        transform = KozaTransform(mappings=mappings,
+                                  writer=self.writer,
+                                  input_files_dir=self.input_files_dir,
+                                  extra_fields=self.extra_transform_fields)
 
         if hooks.prepare_data:
             data = hooks.prepare_data[0](transform, data)
@@ -130,7 +138,20 @@ class KozaRunner:
             transform_fn = hooks.transform[0]
             result = transform_fn(transform, data)
             if result is not None:
-                self.writer.write(result)
+                # this looks weird, but it's just looking at the first result and checking if it's a KnowledgeGraph
+                # it uses this iterator approach so that it can handle generators as well as other iterables without
+                # consuming the whole generator
+                result_iterator = iter(result)
+                first_result = next(result_iterator)
+                results = chain([first_result], result_iterator) # add the first result back
+                if isinstance(first_result, KnowledgeGraph):
+                    for kg in results:
+                        # for results that are KnowledgeGraphs, write the nodes and edges explicitly
+                        self.writer.write_nodes(kg.nodes)
+                        self.writer.write_edges(kg.edges)
+                else:
+                    # otherwise rely on the writer to handle all the entities appropriately
+                    self.writer.write(results)
 
         elif hooks.transform_record:
             logger.info("Running serial transform")
@@ -138,10 +159,16 @@ class KozaRunner:
                 for transform_record_fn in hooks.transform_record:
                     result = transform_record_fn(transform, item)
                     if result is not None:
-                        self.writer.write(result)
+                        if isinstance(result, KnowledgeGraph):
+                            self.writer.write_nodes(result.nodes)
+                            self.writer.write_edges(result.edges)
+                        else:
+                            self.writer.write(result)
 
         for fn in hooks.on_data_end:
             fn(transform)
+
+        self.transform_metadata.update(transform.transform_metadata)
 
     def run(self):
         mappings = self.load_mappings()
@@ -213,6 +240,7 @@ class KozaRunner:
         config: KozaConfig,
         base_directory: Path,
         output_dir: str = "",
+        input_files_dir: str = "",
         row_limit: int = 0,
         show_progress: bool = False,
     ):
@@ -273,6 +301,7 @@ class KozaRunner:
             data=sources_by_tag,
             writer=writer,
             base_directory=base_directory,
+            input_files_dir=Path(input_files_dir) if input_files_dir else None,
             mapping_filenames=config.transform.mappings,
             extra_transform_fields=config.transform.extra_fields,
             hooks=hooks_by_tag,
@@ -286,6 +315,7 @@ class KozaRunner:
         output_format: OutputFormat | None = None,
         row_limit: int = 0,
         input_files: list[str] | dict[str, list[str]] | None = None,
+        input_files_dir: str | None = None,
         show_progress: bool = False,
         overrides: dict | None = None,
     ):
@@ -335,6 +365,37 @@ class KozaRunner:
                 for reader in config.get_readers():
                     if reader.tag in input_files:
                         _overrides["readers"][reader.tag] = input_files[reader.tag]
+        # if an input_files_dir is provided prepend it to all the input file values
+        if input_files_dir is not None:
+            if config.reader:
+                # if only one reader
+                for tagged_reader in config.get_readers():
+                    if "reader" not in _overrides:
+                        _overrides["reader"] = {}
+                    if "files" in _overrides["reader"]:
+                        # if files were already overridden start with those
+                        files_to_alter = _overrides["reader"]["files"]
+                    else:
+                        # otherwise take the files from the config
+                        files_to_alter = tagged_reader.reader.files
+
+                    # prepend the input_files_dir to all the files
+                    _overrides["reader"]["files"] = [str(Path(input_files_dir) / file) for file in files_to_alter]
+            elif config.readers:
+                # multiple readers
+                if "readers" not in _overrides:
+                    _overrides["readers"] = {}
+                for tagged_reader in config.get_readers():
+                    if tagged_reader.tag not in _overrides["readers"]:
+                        _overrides["readers"][tagged_reader.tag] = {}
+                    if "files" in _overrides["readers"][tagged_reader.tag]:
+                        files_to_alter = _overrides["readers"][tagged_reader.tag]["files"]
+                    else:
+                        files_to_alter = tagged_reader.reader.files
+                    _overrides["readers"][tagged_reader.tag]["files"] = [str(Path(input_files_dir) / file)
+                                                                         for file in files_to_alter]
+            else:
+                raise ValueError("Input file directory was provided but no readers were defined.")
 
         config_dict = merge(config_dict, _overrides, overrides or {})
         config = KozaConfig(**config_dict)
@@ -343,6 +404,7 @@ class KozaRunner:
             config,
             base_directory=config_path.parent,
             output_dir=output_dir,
+            input_files_dir=input_files_dir,
             row_limit=row_limit,
             show_progress=show_progress,
         )

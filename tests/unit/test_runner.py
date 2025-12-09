@@ -19,6 +19,12 @@ class MockWriter(KozaWriter):
     def write(self, entities):
         self.items += entities
 
+    def write_nodes(self, nodes):
+        self.items += nodes
+
+    def write_edges(self, edges):
+        self.items += edges
+
     def finalize(self):
         pass
 
@@ -211,4 +217,32 @@ def test_override_input_files():
     )
     readers = config.get_readers()
     assert readers[0].reader.files == ["foo.tsv", "bar.tsv"]
+    assert readers[0].reader.format == InputFormat.csv
+
+
+def test_override_input_file_directory():
+    config_file = (Path(__file__).parent / "../../examples/string/protein-links-detailed.yaml").resolve()
+    config, runner = KozaRunner.from_config_file(
+        str(config_file),
+        input_files_dir="/override_input_dir/"
+    )
+    readers = config.get_readers()
+    assert readers[0].reader.files == ["/override_input_dir/../data/string.tsv",
+                                       "/override_input_dir/../data/string2.tsv"]
+    assert readers[0].reader.format == InputFormat.csv
+
+
+def test_override_input_files_and_directory():
+    config_file = (Path(__file__).parent / "../../examples/string/protein-links-detailed.yaml").resolve()
+    config, runner = KozaRunner.from_config_file(
+        str(config_file),
+        input_files=[
+            "foo.tsv",
+            "bar.tsv",
+        ],
+        input_files_dir="/override_input_dir/"
+    )
+    readers = config.get_readers()
+    assert readers[0].reader.files == ["/override_input_dir/foo.tsv",
+                                       "/override_input_dir/bar.tsv"]
     assert readers[0].reader.format == InputFormat.csv
