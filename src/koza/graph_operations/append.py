@@ -35,7 +35,7 @@ def append_graphs(config: AppendConfig) -> AppendResult:
         # Connect to existing database
         with GraphDatabase(config.database_path) as db:
             if not config.quiet:
-                print(f"📂 Appending to existing database: {config.database_path}")
+                print(f" Appending to existing database: {config.database_path}")
 
             # Get initial schema before appending
             initial_node_schema = _get_table_schema(db, "nodes")
@@ -45,14 +45,14 @@ def append_graphs(config: AppendConfig) -> AppendResult:
             # Load node files
             if config.node_files:
                 if not config.quiet:
-                    print(f"📄 Loading {len(config.node_files)} node files...")
+                    print(f" Loading {len(config.node_files)} node files...")
 
                 files_loaded.extend(_append_files(db, config.node_files, "nodes", config, initial_node_schema))
 
             # Load edge files
             if config.edge_files:
                 if not config.quiet:
-                    print(f"🔗 Loading {len(config.edge_files)} edge files...")
+                    print(f" Loading {len(config.edge_files)} edge files...")
 
                 files_loaded.extend(_append_files(db, config.edge_files, "edges", config, initial_edge_schema))
 
@@ -71,7 +71,7 @@ def append_graphs(config: AppendConfig) -> AppendResult:
             duplicates_handled = 0
             if config.deduplicate:
                 if not config.quiet:
-                    print("🔄 Performing deduplication...")
+                    print(" Performing deduplication...")
                 duplicates_handled = _deduplicate_tables(db, config)
 
             # Generate schema report if requested

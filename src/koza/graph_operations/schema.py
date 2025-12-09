@@ -74,10 +74,10 @@ def print_schema_summary(schema_report: dict[str, Any]) -> None:
     """
     try:
         if "error" in schema_report:
-            print(f"  ⚠️  Schema analysis failed: {schema_report['error']}")
+            print(f"  Schema analysis failed: {schema_report['error']}")
             return
 
-        print(f"  📋 Schema Analysis:")
+        print(f"  Schema Analysis:")
 
         # Summary by table type
         if "summary" in schema_report:
@@ -119,7 +119,7 @@ def print_schema_summary(schema_report: dict[str, Any]) -> None:
 
     except Exception as e:
         logger.error(f"Failed to print schema summary: {e}")
-        print(f"  ⚠️  Schema summary failed: {e}")
+        print(f"   Schema summary failed: {e}")
 
 
 def analyze_biolink_compliance(schema_report: dict[str, Any]) -> dict[str, Any]:

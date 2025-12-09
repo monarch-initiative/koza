@@ -238,7 +238,7 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
 
                 if not has_nodes and not has_edges:
                     if not config.quiet:
-                        print("⚠️  No data to export (no nodes or edges found)")
+                        print("  No data to export (no nodes or edges found)")
                 else:
                     # Determine graph name
                     export_graph_name = config.graph_name or "merged_graph"
