@@ -104,7 +104,7 @@ def open_resource(
         return zip_fh, generator()
 
     elif is_tarfile(resource):
-        tar_fh = tarfile.open(resource, mode="r|*")
+        tar_fh = tarfile.open(resource, mode="r:*")
 
         def generator():
             for tarinfo in tar_fh:

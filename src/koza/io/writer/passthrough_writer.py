@@ -11,6 +11,14 @@ class PassthroughWriter(KozaWriter):
         for item in entities:
             self.data.append(item)
 
+    def write_nodes(self, nodes: Iterable):
+        for node in nodes:
+            self.data.append(node)
+
+    def write_edges(self, edges: Iterable):
+        for edge in edges:
+            self.data.append(edge)
+
     def finalize(self):
         pass
 

@@ -2,14 +2,8 @@ import re
 import uuid
 
 from biolink_model.datamodel.pydanticmodel_v2 import PairwiseGeneToGeneInteraction, Protein
-from koza.model.graphs import KnowledgeGraph
 
 import koza
-
-
-@koza.on_data_begin()
-def init(koza: koza.KozaTransform):
-    koza.state["counter"] = 0
 
 
 @koza.transform()
@@ -26,10 +20,5 @@ def string_transform(koza: koza.KozaTransform, data):
             knowledge_level="not_provided",
             agent_type="not_provided",
         )
-        koza.state["counter"] += 1
-        yield KnowledgeGraph(nodes=[protein_a, protein_b], edges=[pairwise_gene_to_gene_interaction])
 
-
-@koza.on_data_end()
-def end(koza: koza.KozaTransform):
-    koza.log(f"Total records: {koza.state['counter']}")
+        koza.write(protein_a, protein_b, pairwise_gene_to_gene_interaction)

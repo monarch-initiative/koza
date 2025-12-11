@@ -19,27 +19,53 @@ class JSONLWriter(KozaWriter):
         self.sssom_config = config.sssom_config
 
         self.converter = KGXConverter()
+        self.written_node_ids = set()
 
         os.makedirs(output_dir, exist_ok=True)
-        if config.node_properties:
-            self.nodeFH = open(f"{output_dir}/{source_name}_nodes.jsonl", "w")
-        if config.edge_properties:
-            self.edgeFH = open(f"{output_dir}/{source_name}_edges.jsonl", "w")
+
+    def _ensure_node_file_handle(self):
+        """Create node file handle if it doesn't exist"""
+        if not hasattr(self, "nodeFH"):
+            self.nodeFH = open(f"{self.output_dir}/{self.source_name}_nodes.jsonl", "w")
+
+    def _ensure_edge_file_handle(self):
+        """Create edge file handle if it doesn't exist"""
+        if not hasattr(self, "edgeFH"):
+            self.edgeFH = open(f"{self.output_dir}/{self.source_name}_edges.jsonl", "w")
 
     def write(self, entities: Iterable):
-        (nodes, edges) = self.converter.convert(entities)
+        (nodes, edges) = self.converter.split_entities(entities)
 
         if nodes:
-            for n in nodes:
-                node = json.dumps(n, ensure_ascii=False)
-                self.nodeFH.write(node + "\n")
+            self.write_nodes(nodes)
 
         if edges:
-            for e in edges:
+            self.write_edges(edges)
+
+    def write_nodes(self, nodes: Iterable):
+        if nodes:
+            self._ensure_node_file_handle()
+            for node in nodes:
+                # if we already wrote a node with this id, skip it
+                node_id = node.id
+                if node_id in self.written_node_ids:
+                    # TODO: track when duplicate nodes were discarded (how many? only if they have properties?)
+                    continue
+
+                node = self.converter.convert_node(node)
+                node_str = json.dumps(node, ensure_ascii=False)
+                self.nodeFH.write(node_str + "\n")
+                self.written_node_ids.add(node_id)
+
+    def write_edges(self, edges: Iterable, preconverted: bool = False):
+        if edges:
+            self._ensure_edge_file_handle()
+            for edge in edges:
+                edge = self.converter.convert_association(edge)
                 if self.sssom_config:
-                    e = self.sssom_config.apply_mapping(e)
-                edge = json.dumps(e, ensure_ascii=False)
-                self.edgeFH.write(edge + "\n")
+                    edge = self.sssom_config.apply_mapping(edge)
+                edge_str = json.dumps(edge, ensure_ascii=False)
+                self.edgeFH.write(edge_str + "\n")
 
     def finalize(self):
         if hasattr(self, "nodeFH"):

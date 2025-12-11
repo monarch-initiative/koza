@@ -1,0 +1,16 @@
+name: 'module_cache_test_source_a'
+
+reader:
+  files:
+    - 'data.tsv'
+  format: 'csv'
+  delimiter: '\t'
+  header_mode: 0
+
+writer:
+  format: 'tsv'
+  node_properties:
+    - 'id'
+    - 'category'
+    - 'in_taxon'
+    - 'provided_by'

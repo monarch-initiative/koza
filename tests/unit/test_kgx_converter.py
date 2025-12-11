@@ -13,8 +13,7 @@ def test_gene_conversion():
     )
 
     kgx_converter: KGXConverter = KGXConverter()
-    (nodes, edges) = kgx_converter.convert([fgf8a])
-    output = nodes[0]
+    output = kgx_converter.convert_node(fgf8a)
 
     assert output["id"] == "ZFIN:ZDB-GENE-990415-72"
     assert output["symbol"] == "fgf8a"
@@ -37,9 +36,10 @@ def test_association_conversion():
         agent_type="not_provided",
     )
 
-    (_, edges) = KGXConverter().convert([fgf8a, pax2a, association])
+    kgx_converter: KGXConverter = KGXConverter()
+    (_, edges) = kgx_converter.split_entities([fgf8a, pax2a, association])
 
-    output = edges[0]
+    output = kgx_converter.convert_association(edges[0])
     assert output["subject"] == "ZFIN:ZDB-GENE-990415-72"
     assert output["object"] == "ZFIN:ZDB-GENE-990415-8"
     # TODO figure out how/where to handle this conversion
@@ -55,17 +55,44 @@ def test_association_conversion():
 )
 def test_keys_uniformity(id, symbol, synonym, xref):
     """
-    Connfirm that the result of the conversion has all of the same fields, even if some aren't used
+    Connfirm that the result of the conversion has the same fields, even if some are empty lists
     """
     gene = Gene(id=id, symbol=symbol, synonym=synonym, xref=xref)
 
-    (nodes, edges) = KGXConverter().convert([gene])
-    output = nodes[0]
+    output = KGXConverter().convert_node(gene)
 
     assert "category" in output.keys()
     assert "id" in output.keys()
     assert "symbol" in output.keys()
     assert "synonym" in output.keys()
     assert "xref" in output.keys()
-    assert "description" in output.keys()
-    # assert 'source' in output.keys() ----> Did we remove this?
+    assert "description" not in output.keys()
+
+
+@pytest.mark.parametrize(
+    "id, symbol, synonym, xref",
+    [
+        ("MGI:1917258", None, None, []),
+        ("RGD:620474", "", [], ["ENSEMBL:ENSRNOG00000002607", "NCBI_Gene:140586"]),
+    ],
+)
+def test_exclude_none(id, symbol, synonym, xref):
+    """
+    Connfirm that the result of the conversion has the same fields, even if some are empty lists
+    """
+    gene = Gene(id=id, symbol=symbol, synonym=synonym, xref=xref)
+
+    output = KGXConverter().convert_node(gene)
+
+    assert output["id"] == "MGI:1917258" or output["id"] == "RGD:620474"
+
+    if output["id"] == "MGI:1917258":
+        assert "symbol" not in output.keys()
+        assert "synonym" not in output.keys()
+    elif output["id"] == "RGD:620474":
+        assert "symbol" in output.keys()
+        assert "synonym" in output.keys()
+
+    assert "category" in output.keys()
+    assert "id" in output.keys()
+    assert "description" not in output.keys()

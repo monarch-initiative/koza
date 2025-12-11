@@ -1,1 +1,1 @@
-::: src.koza.runner
+::: src.koza
