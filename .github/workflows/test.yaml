@@ -33,17 +33,17 @@ jobs:
       #----------------------------------------------
       #          install & configure poetry
       #----------------------------------------------
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
 
       #----------------------------------------------
       #    install your root project, if required
       #----------------------------------------------
       - name: Install library
-        run: poetry install --with dev --no-interaction
+        run: make install
 
       #----------------------------------------------
       #              run pytest
       #----------------------------------------------
       - name: Run tests
-        run: poetry run pytest tests
+        run: make test
