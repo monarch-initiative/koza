@@ -6,7 +6,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Optional
 
-from pydantic import BaseModel, Field, field_validator, model_validator, validator
+from pydantic import BaseModel, ValidationInfo, Field, field_validator, model_validator, validator
 
 
 class KGXFormat(str, Enum):
@@ -32,11 +32,12 @@ class FileSpec(BaseModel):
     file_type: KGXFileType | None = None
     source_name: str | None = None
 
-    @validator("format", pre=True, always=True)
-    def detect_format(cls, v, values):
+    @field_validator("format", mode="before")
+    @classmethod
+    def detect_format(cls, format_value, info:ValidationInfo):
         """Auto-detect format from file extension if not provided"""
-        if v is None and "path" in values:
-            path = Path(values["path"])
+        if format_value is None and "path" in info.data:
+            path = Path(info.data["path"])
             # Handle compressed files
             if path.suffix in [".gz", ".bz2", ".xz"]:
                 path = path.with_suffix("")
@@ -48,18 +49,19 @@ class FileSpec(BaseModel):
                 return KGXFormat.JSONL
             elif suffix == ".parquet":
                 return KGXFormat.PARQUET
-        return v
+        return format_value
 
-    @validator("file_type", pre=True, always=True)
-    def detect_file_type(cls, v, values):
+    @field_validator("file_type", mode="before")
+    @classmethod
+    def detect_file_type(cls, file_type_value, info:ValidationInfo):
         """Auto-detect file type from filename if not provided"""
-        if v is None and "path" in values:
-            filename = Path(values["path"]).name.lower()
+        if file_type_value is None and "path" in info.data:
+            filename = Path(info.data["path"]).name.lower()
             if "_nodes." in filename or filename.startswith("nodes."):
                 return KGXFileType.NODES
             elif "_edges." in filename or filename.startswith("edges."):
                 return KGXFileType.EDGES
-        return v
+        return file_type_value
 
 
 class DatabaseStats(BaseModel):
@@ -179,6 +181,7 @@ class PruneResult(BaseModel):
     missing_nodes_by_source: dict[str, int] = Field(default_factory=dict)
     total_time_seconds: float
     success: bool
+    errors: list[str] = Field(default_factory=list)
 
 
 class AppendConfig(BaseModel):
@@ -302,7 +305,7 @@ class MergeConfig(BaseModel):
     skip_normalize: bool = False  # Skip normalization step
     skip_prune: bool = False  # Skip pruning step
     generate_provided_by: bool = True  # Add provided_by column from filename (like cat-merge)
-    warn_on_error: bool = True # If there is an error for a non-critical pipeline step, append a warning and continue the merge.
+    continue_on_pipeline_step_error: bool = True # If there is an error for a non-critical pipeline step, append a warning and continue the merge.
 
     # Prune-specific options
     keep_singletons: bool = True
