@@ -1,4 +1,39 @@
-# Note that Poetry is required, see https://python-poetry.org/docs/#installation
+### Help ###
+
+define HELP
+╭───────────────────────────────────────────────────────────╮
+  Makefile for upheno_cross_species_ingest			    
+│ ───────────────────────────────────────────────────────── │
+│ Usage:                                                    │
+│     make <target>                                         │
+│                                                           │
+│ Targets:                                                  │
+│     help                Print this help message           │
+│                                                           │
+│     all                 Install everything and test       │
+│     fresh               Clean and install everything      │
+│     clean               Clean up build artifacts          │
+│     clobber             Clean up generated files          │
+│                                                           │
+│     install             Poetry install package            │
+│     download            Download data                     │
+│     run                 Run the transform                 │
+│                                                           │
+│     docs                Generate documentation            │
+│                                                           │
+│     test                Run all tests                     │
+│                                                           │
+│     lint                Lint all code                     │
+│     format              Format all code                   │
+╰───────────────────────────────────────────────────────────╯
+endef
+export HELP
+
+.PHONY: help
+help:
+	@printf "$${HELP}"
+
+# Note that uv is required, see https://docs.astral.sh/uv/
 
 MAKEFLAGS += --warn-undefined-variables
 MAKEFLAGS += --no-builtin-rules
@@ -11,18 +46,21 @@ endif
 
 .DEFAULT_GOAL := all
 SHELL := bash
-RUN := poetry run
+RUN := uv run
+ROOTDIR = $(shell pwd)
+VERSION = $(shell uv -C src/koza -s) #TODO: test this command.
+
 
 .PHONY: all
 all: install test clean
 
 .PHONY: install
 install: 
-	poetry install
+	uv sync
 
 .PHONY: build
 build:
-	poetry build
+	uv build
 
 .PHONY: test
 test:
