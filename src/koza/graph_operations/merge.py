@@ -60,7 +60,9 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
         database_path = Path(temp_db.name)
         temp_db.close()
         using_temp_db = True
+    #TODO: Test db for Duckdb.
 
+    #TODO: break this try block out into a seperate _merge_graph function which can better handle the raising of errors instead of handling all of them.
     try:
         if not config.quiet:
             print("Starting merge pipeline...")
@@ -76,6 +78,7 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
                 print(f"Using temporary database: {database_path}")
             else:
                 print(f"Output database: {database_path}")
+        # Step 0: Confirm output database works.
 
         # Step 1: Join - Load all input files
         if not config.quiet:
@@ -129,11 +132,12 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
                     nodes_removed = deduplicate_result.duplicate_nodes_removed
                     edges_removed = deduplicate_result.duplicate_edges_removed
                     print(f"Deduplicate completed: {nodes_removed:,} duplicate nodes, {edges_removed:,} duplicate edges removed")
-            elif config.warn_on_error:
+            elif config.continue_on_pipeline_step_error:
                 warnings.append("Deduplication failed but pipeline continued")
                 if deduplicate_result.errors:
                     errors.extend(deduplicate_result.errors)
             else:
+                errors.append("Deduplication step failed. Aborting pipeline.")
                 raise ValueError("Deduplication step failed. Aborting pipeline.")
         else:
             operations_skipped.append("deduplicate")
@@ -162,11 +166,13 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
                     print(
                         f"Normalize completed: {mappings_count:,} mapping files | {normalized_count:,} edge references normalized"
                     )
-            elif config.warn_on_error:
+            elif config.continue_on_pipeline_step_error:
                 warnings.append("Normalization failed but pipeline continued")
                 if normalize_result.errors:
                     errors.extend(normalize_result.errors)
             else:
+                if normalize_result.errors:
+                    errors.extend(normalize_result.errors)
                 raise ValueError("Normalization step failed. Aborting pipeline.")
 
         else:
@@ -195,9 +201,12 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
                     dangling_count = prune_result.dangling_edges_moved
                     singleton_count = prune_result.singleton_nodes_moved
                     print(f"Prune completed: {dangling_count:,} dangling edges moved | {singleton_count:,} singleton nodes handled")
-            elif config.warn_on_error:
+            elif config.continue_on_pipeline_step_error:
                 warnings.append("Pruning failed but pipeline continued")
+                if prune_result.errors:
+                    errors.extend(prune_result.errors)
             else:
+                errors.append("Prune step failed. Aborting pipeline.")
                 raise ValueError("Prune step failed. Aborting pipeline.")
              
         else:
@@ -347,9 +356,8 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
         )
 
         if not config.quiet:
-            print(f"\n❌ Merge pipeline failed!")
+            print(f"Merge pipeline failed!")
             print_operation_summary(summary)
-
         return MergeResult(
             success=False,
             join_result=join_result,

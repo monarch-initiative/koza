@@ -7,7 +7,9 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
+import duckdb
 
+from koza.graph_operations.utils import GraphDatabase
 from koza.graph_operations import merge_graphs, prepare_merge_config_from_paths
 from koza.model.graph_operations import (
     DatabaseStats,
@@ -16,8 +18,9 @@ from koza.model.graph_operations import (
     KGXFileType,
     KGXFormat,
     MergeConfig,
-    NormalizeResult,
     OperationSummary,
+    NormalizeResult,
+    DeduplicateResult,
     PruneResult,
 )
 
@@ -65,6 +68,25 @@ def mock_normalize_result():
         summary=OperationSummary(operation="normalize", success=True, message="Test", total_time_seconds=0.5),
     )
 
+@pytest.fixture
+def mock_deduplicate_result():
+    """Create mock normalize result."""
+    return DeduplicateResult(
+        success=True,
+        duplicate_nodes_found=5,
+        duplicate_nodes_removed=5,
+        duplicate_edges_found=20,
+        duplicate_edges_removed=20,
+        final_stats=DatabaseStats(nodes=95, edges=180),
+        total_time_seconds=0.5,
+        summary=OperationSummary(operation="deduplicate", success=True, message="Test", total_time_seconds=0.5),
+        errors=[],
+        warnings=[],
+    )
+
+
+
+
 
 @pytest.fixture
 def mock_prune_result():
@@ -87,17 +109,20 @@ class TestMergeOperationOrchestration:
 
     @patch("koza.graph_operations.merge.join_graphs")
     @patch("koza.graph_operations.merge.normalize_graph")
+    @patch("koza.graph_operations.merge.deduplicate_graph")
     @patch("koza.graph_operations.merge.prune_graph")
     @patch("koza.graph_operations.merge.GraphDatabase")
     def test_full_pipeline_all_operations(
         self,
         mock_graph_db,
         mock_prune,
+        mock_deduplicate,
         mock_normalize,
         mock_join,
         sample_file_specs,
         mock_join_result,
         mock_normalize_result,
+        mock_deduplicate_result,
         mock_prune_result,
     ):
         """Test full pipeline with all operations enabled."""
@@ -107,6 +132,7 @@ class TestMergeOperationOrchestration:
         mock_join.return_value = mock_join_result
         mock_normalize.return_value = mock_normalize_result
         mock_prune.return_value = mock_prune_result
+        mock_deduplicate.return_value = mock_deduplicate_result
 
         # Mock database
         mock_db = MagicMock()
@@ -125,23 +151,27 @@ class TestMergeOperationOrchestration:
                 output_database=output_db,
                 skip_normalize=False,
                 skip_prune=False,
+                skip_deduplicate=False,
                 quiet=True,
             )
 
             result = merge_graphs(config)
 
             # Verify all operations were called
-            assert mock_join.called
-            assert mock_normalize.called
-            assert mock_prune.called
+            assert mock_join.called_exactly_once
+            assert mock_normalize.called_exactly_once
+            assert mock_deduplicate.called_exactly_once
+            assert mock_prune.called_exactly_once
 
             # Verify result structure
             assert result.success is True
             assert result.join_result == mock_join_result
             assert result.normalize_result == mock_normalize_result
             assert result.prune_result == mock_prune_result
-            assert set(result.operations_completed) == {"join", "normalize", "prune"}
+            assert set(result.operations_completed) == {"join", "deduplicate", "normalize", "prune"}
             assert len(result.operations_skipped) == 0
+            assert len(result.warnings) == 0
+            assert len(result.errors) == 0
 
     @patch("koza.graph_operations.merge.join_graphs")
     @patch("koza.graph_operations.merge.normalize_graph")
@@ -461,6 +491,76 @@ class TestMergeOperationErrorHandling:
     @patch("koza.graph_operations.merge.normalize_graph")
     @patch("koza.graph_operations.merge.prune_graph")
     @patch("koza.graph_operations.merge.GraphDatabase")
+    def test_normalize_failure_can_stop_pipeline(
+        self,
+        mock_graph_db,
+        mock_prune,
+        mock_normalize,
+        mock_join,
+        sample_file_specs,
+        mock_join_result,
+        mock_prune_result,
+    ):
+        """Test that normalize failure continues to prune with warnings."""
+        node_specs, edge_specs, mapping_specs = sample_file_specs
+
+        # Setup mocks - normalize fails but returns failed result
+        mock_join.return_value = mock_join_result
+        mock_normalize.return_value = NormalizeResult(
+            success=False,
+            mappings_loaded=[],
+            edges_normalized=0,
+            final_stats=None,
+            total_time_seconds=0.1,
+            summary=OperationSummary(
+                operation="normalize", success=False, message="Normalize failed", total_time_seconds=0.1
+            ),
+            errors=["SAMPLE NORMALIZE RESULT ERROR"],
+        )
+        mock_prune.return_value = mock_prune_result
+
+        # Mock database
+        mock_db = MagicMock()
+        mock_db.get_stats.return_value = DatabaseStats(nodes=95, edges=190)
+        mock_graph_db.return_value.__enter__.return_value = mock_db
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_db = Path(temp_dir) / "test.duckdb"
+            # Create the database file to simulate successful join
+            #tmp = GraphDatabase(output_db)
+            #tmp.__init__()
+            #output_db.touch()
+            con = duckdb.connect(output_db)
+            con.close()
+
+            config = MergeConfig(
+                node_files=node_specs,
+                edge_files=edge_specs,
+                mapping_files=mapping_specs,
+                output_database=output_db,
+                quiet=True,
+                continue_on_pipeline_step_error=False, #THIS IS WHAT MAKES IT FAIL.
+                handle_errors_silently=True,
+            )
+
+            caught_exception = None
+            result = None
+            try:
+                result = merge_graphs(config)
+            except Exception as e:
+                caught_exception = e
+
+            assert result.success is False
+            assert caught_exception is None #Because "handle_errors_silently" is True, no Exceptions should be raised.
+            assert "Merge pipeline failed: Normalization step failed. Aborting pipeline." in result.errors
+            assert "SAMPLE NORMALIZE RESULT ERROR" in result.errors
+            assert result.summary.message == "Merge pipeline failed: Normalization step failed. Aborting pipeline."
+#            exit()
+
+    @patch("koza.graph_operations.merge.join_graphs")
+    @patch("koza.graph_operations.merge.normalize_graph")
+    @patch("koza.graph_operations.merge.prune_graph")
+    @patch("koza.graph_operations.merge.GraphDatabase")
     def test_normalize_failure_continues_to_prune(
         self,
         mock_graph_db,
@@ -485,7 +585,7 @@ class TestMergeOperationErrorHandling:
             summary=OperationSummary(
                 operation="normalize", success=False, message="Normalize failed", total_time_seconds=0.1
             ),
-            errors=["Normalize failed"],
+            errors=["SAMPLE NORMALIZE RESULT ERROR"],
         )
         mock_prune.return_value = mock_prune_result
 
@@ -496,6 +596,8 @@ class TestMergeOperationErrorHandling:
 
         with tempfile.TemporaryDirectory() as temp_dir:
             output_db = Path(temp_dir) / "test.duckdb"
+            conn = duckdb.connect(output_db)
+            conn.close()
             # Create the database file to simulate successful join
             output_db.touch()
 
@@ -505,6 +607,7 @@ class TestMergeOperationErrorHandling:
                 mapping_files=mapping_specs,
                 output_database=output_db,
                 quiet=True,
+                continue_on_pipeline_step_error=True, #THIS IS WHAT MAKES IT KEEP RUNNING EVEN IF NORMALIZATION FAILS.
             )
 
             result = merge_graphs(config)
@@ -513,11 +616,11 @@ class TestMergeOperationErrorHandling:
             assert mock_join.called
             assert mock_normalize.called
             assert mock_prune.called
-
             # Verify warnings about normalization failure
             assert result.success is True  # Overall success despite normalize failure
             assert len(result.warnings) > 0
-            assert "Deduplication failed but pipeline continued" in result.warnings[0]
+            assert "Deduplication failed but pipeline continued" not in result.warnings
+            assert "Normalization failed but pipeline continued" in result.warnings
             assert result.normalize_result.success is False
 
 
