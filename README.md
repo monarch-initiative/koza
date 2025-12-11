@@ -1,4 +1,4 @@
-# Koza - a data transformation framework  
+# Koza - Knowledge Graph Transformation and Operations Toolkit
 
 [![Pyversions](https://img.shields.io/pypi/pyversions/koza.svg)](https://pypi.python.org/pypi/koza)
 [![PyPi](https://img.shields.io/pypi/v/koza.svg)](https://pypi.python.org/pypi/koza)
@@ -6,17 +6,29 @@
 
 ![pupa](docs/img/pupa.png)  
 
-[**Documentation**](https://koza.monarchinitiative.org/  )
+[**Documentation**](https://koza.monarchinitiative.org/)
 
 _Disclaimer_: Koza is in beta - we are looking for testers!
 
 ## Overview
-  - Transform csv, json, yaml, jsonl, and xml and converting them to a target csv, json, or jsonl format based on your dataclass model.  
-  - Koza also can output data in the [KGX format](https://github.com/biolink/kgx/blob/master/specification/kgx-format.md#kgx-format-as-tsv)
-  - Write data transforms in semi-declarative Python
-  - Configure source files, expected columns/json properties and path filters, field filters, and metadata in yaml
-  - Create or import mapping files to be used in ingests (eg id mapping, type mappings)
-  - Create and use translation tables to map between source and target vocabularies
+
+Koza is a Python library and CLI tool for transforming biomedical data and performing graph operations on Knowledge Graph Exchange (KGX) files. It provides two main capabilities:
+
+### 📊 **Graph Operations** (New!)
+Powerful DuckDB-based operations for KGX knowledge graphs:
+- **Join** multiple KGX files with schema harmonization
+- **Split** files by field values with format conversion  
+- **Prune** dangling edges and handle singleton nodes
+- **Append** new data to existing databases with schema evolution
+- **Multi-format support** for TSV, JSONL, and Parquet files
+
+### 🔄 **Data Transformation** (Core)
+Transform biomedical data sources into KGX format:
+- Transform csv, json, yaml, jsonl, and xml to target formats
+- Output in [KGX format](https://github.com/biolink/kgx/blob/master/specification/kgx-format.md#kgx-format-as-tsv)
+- Write data transforms in semi-declarative Python
+- Configure source files, columns/properties, and metadata in YAML
+- Create mapping files and translation tables between vocabularies
 
 ## Installation
 Koza is available on PyPi and can be installed via pip/pipx:
@@ -26,12 +38,29 @@ Koza is available on PyPi and can be installed via pip/pipx:
 
 ## Usage
 
+### Quick Start with Graph Operations
+
+Koza's graph operations work seamlessly across multiple KGX formats (TSV, JSONL, Parquet):
+
+```bash
+# Join multiple KGX files into a unified database
+koza join --nodes genes.tsv pathways.jsonl --edges interactions.parquet --output merged_graph.duckdb
+
+# Prune dangling edges and handle singleton nodes
+koza prune --database merged_graph.duckdb --keep-singletons
+
+# Append new data to existing database with schema evolution
+koza append --database merged_graph.duckdb --nodes new_genes.tsv --edges new_interactions.jsonl
+
+# Split database by source with format conversion
+koza split --database merged_graph.duckdb --split-on provided_by --output-format parquet
+```
 
 **NOTE: As of version 0.2.0, there is a new method for getting your ingest's `KozaApp` instance. Please see the [updated documentation](https://koza.monarchinitiative.org/Usage/configuring_ingests/#transform-code) for details.**
 
-See the [Koza documentation](https://koza.monarchinitiative.org/) for usage information
+See the [Koza documentation](https://koza.monarchinitiative.org/) for complete usage information
 
-### Try the Examples
+### Examples
 
 #### Validate
 
@@ -82,3 +111,63 @@ koza transform \
   │   └── some_translation_table.yaml
   └── ...
   ```
+
+#### Graph Operations
+
+Create and manipulate knowledge graphs from existing KGX files:
+
+```bash
+# Join heterogeneous KGX files with automatic schema harmonization
+koza join \
+  --nodes genes.tsv proteins.jsonl pathways.parquet \
+  --edges gene_protein.tsv protein_pathway.jsonl \
+  --output unified_graph.duckdb \
+  --schema-report
+
+# Clean up graph integrity issues
+koza prune \
+  --database unified_graph.duckdb \
+  --keep-singletons \
+  --dry-run  # Preview changes before applying
+
+# Incrementally add new data with schema evolution
+koza append \
+  --database unified_graph.duckdb \
+  --nodes new_genes.tsv updated_pathways.jsonl \
+  --deduplicate \
+  --show-progress
+
+# Export subsets with format conversion
+koza split \
+  --database unified_graph.duckdb \
+  --split-on provided_by \
+  --output-format parquet \
+  --output-dir ./split_graphs
+```
+
+## Key Features
+
+### 🔧 **Multi-Format Support**
+- Native support for TSV, JSONL, and Parquet KGX files
+- Automatic format detection and conversion
+- Mixed-format operations in single commands
+
+### 🛡️ **Schema Flexibility**
+- Automatic schema harmonization across heterogeneous files
+- Schema evolution with backward compatibility  
+- Comprehensive schema reporting and validation
+
+### ⚡ **High Performance**
+- DuckDB-powered operations for fast bulk processing
+- Memory-efficient handling of large knowledge graphs
+- Parallel processing and streaming where possible
+
+### 🔍 **Rich CLI Experience**
+- Progress indicators for long-running operations
+- Detailed statistics and operation summaries
+- Dry-run modes for safe operation preview
+
+### 🧹 **Data Integrity**
+- Dangling edge detection and preservation
+- Duplicate detection and removal strategies
+- Non-destructive operations with data archiving

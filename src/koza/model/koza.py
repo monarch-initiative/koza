@@ -30,6 +30,7 @@ class DatasetDescription:
     # license: Optional[str] = None     # Possibly redundant, same as rights
     rights: str | None = None  # License information for the data source
 
+
 @dataclass(frozen=True)
 class TaggedReaderConfig:
     tag: str | None
