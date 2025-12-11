@@ -38,6 +38,5 @@ jobs:
         run: |
           uv lock --check
 
-
       - name: Run tests
         run: make test

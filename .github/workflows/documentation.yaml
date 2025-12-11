@@ -30,13 +30,13 @@ jobs:
           enable-cache: true
           version: ${{ env.UV_VERSION }}
 
+      - name: Install library
+        run: |
+          make install
+
       - name: Verify lockfile is up-to-date
         run: |
           uv lock --check
-
-      - name: Install library
-        run: |
-          uv sync --extra dev
 
       - name: Build Documentation
         run: make docs
