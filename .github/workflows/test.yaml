@@ -31,15 +31,13 @@ jobs:
           version: ${{ env.UV_VERSION }}
           python-version: ${{ matrix.python-version }}
 
+      - name: Install library
+        run: make install
+
       - name: Verify lockfile is up-to-date
         run: |
           uv lock --check
 
-      #----------------------------------------------
-      #    install your root project, if required
-      #----------------------------------------------
-      - name: Install library
-        run: make install
 
       - name: Run tests
         run: make test
