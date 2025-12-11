@@ -126,7 +126,7 @@ def database_with_duplicate_edges(temp_dir):
 
 
 @pytest.fixture
-def database_with_both_duplicates(temp_dir):
+def database_with_duplicates_nodes_and_edges(temp_dir):
     """Create a database with duplicate nodes and edges."""
     db_path = temp_dir / "dup_both.duckdb"
 
@@ -311,10 +311,10 @@ class TestDeduplicateOperation:
             assert ids.count("edge1") == 1
             assert ids.count("edge2") == 1
 
-    def test_deduplicate_both_nodes_and_edges_by_id(self, database_with_both_duplicates):
+    def test_deduplicate_both_nodes_and_edges_by_id(self, database_with_duplicates_nodes_and_edges):
         """Test deduplicating both nodes and edges by their respective IDs."""
         config = DeduplicateConfig(
-            database_path=database_with_both_duplicates,
+            database_path=database_with_duplicates_nodes_and_edges,
             deduplicate_nodes=True,
             deduplicate_edges=True,
             quiet=True,
@@ -332,10 +332,10 @@ class TestDeduplicateOperation:
         assert result.final_stats.nodes == 3
         assert result.final_stats.edges == 2
 
-    def test_deduplicate_nodes_only(self, database_with_both_duplicates):
+    def test_deduplicate_nodes_only(self, database_with_duplicates_nodes_and_edges):
         """Test deduplicating only nodes, leaving edges untouched."""
         config = DeduplicateConfig(
-            database_path=database_with_both_duplicates,
+            database_path=database_with_duplicates_nodes_and_edges,
             deduplicate_nodes=True,
             deduplicate_edges=False,
             quiet=True,
@@ -353,10 +353,10 @@ class TestDeduplicateOperation:
         assert result.final_stats.nodes == 3
         assert result.final_stats.edges == 3  # Edges untouched (still has duplicates)
 
-    def test_deduplicate_edges_only(self, database_with_both_duplicates):
+    def test_deduplicate_edges_only(self, database_with_duplicates_nodes_and_edges):
         """Test deduplicating only edges, leaving nodes untouched."""
         config = DeduplicateConfig(
-            database_path=database_with_both_duplicates,
+            database_path=database_with_duplicates_nodes_and_edges,
             deduplicate_nodes=False,
             deduplicate_edges=True,
             quiet=True,
@@ -669,10 +669,10 @@ class TestDeduplicateEdgeCases:
         assert result.duplicate_nodes_removed == 1
         assert result.final_stats.nodes == 2  # Only 2 unique nodes
 
-    def test_deduplicate_result_summary(self, database_with_both_duplicates):
+    def test_deduplicate_result_summary(self, database_with_duplicates_nodes_and_edges):
         """Test that result summary is correctly populated."""
         config = DeduplicateConfig(
-            database_path=database_with_both_duplicates,
+            database_path=database_with_duplicates_nodes_and_edges,
             deduplicate_nodes=True,
             deduplicate_edges=True,
             quiet=True,

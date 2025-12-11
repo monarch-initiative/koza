@@ -57,7 +57,8 @@ def prune_graph(config: PruneConfig) -> PruneResult:
             dangling_edges_by_source=dangling_by_source,
             missing_nodes_by_source=missing_by_source,
             total_time_seconds=total_time,
-            success=True
+            success=True,
+            errors = [] #TODO: Add some error handling to the intermediate steps.
         )
 
         # Print summary if not quiet

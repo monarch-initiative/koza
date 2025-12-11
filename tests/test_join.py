@@ -19,7 +19,7 @@ def temp_dir():
 
 
 @pytest.fixture
-def sample_nodes_file(temp_dir):
+def sample_nodes_tsv_file(temp_dir):
     """Create a sample nodes TSV file."""
     nodes_content = """id	category	name
 HGNC:123	biolink:Gene	gene1
@@ -32,7 +32,7 @@ MONDO:001	biolink:Disease	disease1
 
 
 @pytest.fixture
-def sample_edges_file(temp_dir):
+def sample_edges_tsv_file(temp_dir):
     """Create a sample edges TSV file."""
     edges_content = """subject	predicate	object	category
 HGNC:123	biolink:related_to	MONDO:001	biolink:Association
@@ -44,7 +44,7 @@ HGNC:456	biolink:causes	MONDO:001	biolink:Association
 
 
 @pytest.fixture
-def sample_jsonl_file(temp_dir):
+def sample_nodes_jsonl_file(temp_dir):
     """Create a sample nodes JSONL file."""
     jsonl_content = """{"id": "CHEBI:123", "category": "biolink:ChemicalEntity", "name": "chemical1"}
 {"id": "CHEBI:456", "category": "biolink:ChemicalEntity", "name": "chemical2"}
@@ -53,16 +53,21 @@ def sample_jsonl_file(temp_dir):
     jsonl_file.write_text(jsonl_content)
     return jsonl_file
 
+#TODO: Create edge_jsonl. Incorporate it into testing.
+#@pytest.fixture
+#def sample_edges_jsonl_file(temp_dir):
+#    return jsonl_file
+
 
 class TestJoinOperation:
     """Test join operation functionality."""
 
-    def test_join_single_nodes_file(self, sample_nodes_file, temp_dir):
+    def test_join_single_nodes_file(self, sample_nodes_tsv_file, temp_dir):
         """Test joining a single nodes file."""
         output_db = temp_dir / "output.duckdb"
 
         config = JoinConfig(
-            node_files=[FileSpec(path=sample_nodes_file, format=KGXFormat.TSV, file_type=KGXFileType.NODES)],
+            node_files=[FileSpec(path=sample_nodes_tsv_file, format=KGXFormat.TSV, file_type=KGXFileType.NODES)],
             edge_files=[],
             output_database=output_db,
             quiet=True,
@@ -79,13 +84,13 @@ class TestJoinOperation:
         assert result.final_stats.edges == 0
         assert output_db.exists()
 
-    def test_join_nodes_and_edges(self, sample_nodes_file, sample_edges_file, temp_dir):
+    def test_join_nodes_and_edges(self, sample_nodes_tsv_file, sample_edges_tsv_file, temp_dir):
         """Test joining both nodes and edges files."""
         output_db = temp_dir / "output.duckdb"
 
         config = JoinConfig(
-            node_files=[FileSpec(path=sample_nodes_file, format=KGXFormat.TSV, file_type=KGXFileType.NODES)],
-            edge_files=[FileSpec(path=sample_edges_file, format=KGXFormat.TSV, file_type=KGXFileType.EDGES)],
+            node_files=[FileSpec(path=sample_nodes_tsv_file, format=KGXFormat.TSV, file_type=KGXFileType.NODES)],
+            edge_files=[FileSpec(path=sample_edges_tsv_file, format=KGXFormat.TSV, file_type=KGXFileType.EDGES)],
             output_database=output_db,
             quiet=True,
             show_progress=False,
@@ -100,14 +105,14 @@ class TestJoinOperation:
         assert result.final_stats.edges == 2
         assert output_db.exists()
 
-    def test_join_multiple_formats(self, sample_nodes_file, sample_jsonl_file, temp_dir):
+    def test_join_multiple_formats(self, sample_nodes_tsv_file, sample_nodes_jsonl_file, temp_dir):
         """Test joining files of different formats."""
         output_db = temp_dir / "output.duckdb"
 
         config = JoinConfig(
             node_files=[
-                FileSpec(path=sample_nodes_file, format=KGXFormat.TSV, file_type=KGXFileType.NODES),
-                FileSpec(path=sample_jsonl_file, format=KGXFormat.JSONL, file_type=KGXFileType.NODES),
+                FileSpec(path=sample_nodes_tsv_file, format=KGXFormat.TSV, file_type=KGXFileType.NODES),
+                FileSpec(path=sample_nodes_jsonl_file, format=KGXFormat.JSONL, file_type=KGXFileType.NODES),
             ],
             edge_files=[],
             output_database=output_db,
@@ -124,10 +129,10 @@ class TestJoinOperation:
         assert result.final_stats.nodes == 5
         assert result.final_stats.edges == 0
 
-    def test_join_in_memory_database(self, sample_nodes_file):
+    def test_join_in_memory_database(self, sample_nodes_tsv_file):
         """Test joining with in-memory database (no output file)."""
         config = JoinConfig(
-            node_files=[FileSpec(path=sample_nodes_file, format=KGXFormat.TSV, file_type=KGXFileType.NODES)],
+            node_files=[FileSpec(path=sample_nodes_tsv_file, format=KGXFormat.TSV, file_type=KGXFileType.NODES)],
             edge_files=[],
             output_database=None,  # In-memory
             quiet=True,
@@ -142,13 +147,13 @@ class TestJoinOperation:
         assert result.final_stats.nodes == 3
         assert result.database_path is None  # In-memory
 
-    def test_join_with_schema_reporting(self, sample_nodes_file, sample_edges_file, temp_dir):
+    def test_join_with_schema_reporting(self, sample_nodes_tsv_file, sample_edges_tsv_file, temp_dir):
         """Test join operation with schema reporting enabled."""
         output_db = temp_dir / "output.duckdb"
 
         config = JoinConfig(
-            node_files=[FileSpec(path=sample_nodes_file, format=KGXFormat.TSV, file_type=KGXFileType.NODES)],
-            edge_files=[FileSpec(path=sample_edges_file, format=KGXFormat.TSV, file_type=KGXFileType.EDGES)],
+            node_files=[FileSpec(path=sample_nodes_tsv_file, format=KGXFormat.TSV, file_type=KGXFileType.NODES)],
+            edge_files=[FileSpec(path=sample_edges_tsv_file, format=KGXFormat.TSV, file_type=KGXFileType.EDGES)],
             output_database=output_db,
             quiet=True,
             show_progress=False,
@@ -230,22 +235,22 @@ class TestJoinConfigValidation:
 
 class TestPrepareFileSpecsFromPaths:
     """Test prepare_file_specs_from_paths helper function."""
-
-    def test_prepare_specs_from_file_paths(self, sample_nodes_file, sample_edges_file):
+    #TODO: Make code which tests 2 sets of node and edge files.
+    def test_prepare_specs_from_file_paths(self, sample_nodes_tsv_file, sample_edges_tsv_file):
         """Test preparing file specs from file paths."""
-        node_paths = [str(sample_nodes_file)]
-        edge_paths = [str(sample_edges_file)]
+        node_paths = [str(sample_nodes_tsv_file)]
+        edge_paths = [str(sample_edges_tsv_file)]
 
         node_specs, edge_specs = prepare_file_specs_from_paths(node_paths, edge_paths)
 
         assert len(node_specs) == 1
         assert len(edge_specs) == 1
 
-        assert node_specs[0].path == sample_nodes_file
+        assert node_specs[0].path == sample_nodes_tsv_file
         assert node_specs[0].format == KGXFormat.TSV
         assert node_specs[0].file_type == KGXFileType.NODES
 
-        assert edge_specs[0].path == sample_edges_file
+        assert edge_specs[0].path == sample_edges_tsv_file
         assert edge_specs[0].format == KGXFormat.TSV
         assert edge_specs[0].file_type == KGXFileType.EDGES
 
