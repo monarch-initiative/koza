@@ -27,6 +27,7 @@ all: install test clean ## Install, test, and clean
 install:  ## Install development environment
 	uv venv --allow-existing
 	uv pip install -e .[dev]
+	uv lock
 
 .PHONY: build
 build:  ## Build the package
