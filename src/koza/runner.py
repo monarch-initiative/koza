@@ -394,8 +394,6 @@ class KozaRunner:
                         files_to_alter = tagged_reader.reader.files
                     _overrides["readers"][tagged_reader.tag]["files"] = [str(Path(input_files_dir) / file)
                                                                          for file in files_to_alter]
-            else:
-                raise ValueError("Input file directory was provided but no readers were defined.")
 
         config_dict = merge(config_dict, _overrides, overrides or {})
         config = KozaConfig(**config_dict)

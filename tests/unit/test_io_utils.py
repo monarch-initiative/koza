@@ -33,7 +33,7 @@ def test_404():
 
 
 def test_http():
-    resource = "https://github.com/monarch-initiative/koza/blob/8a3bab998958ecbd406c6a150cbd5c009f3f2510/tests/resources/source-files/string.tsv?raw=true"
+    resource = "https://github.com/monarch-initiative/koza/blob/8a3bab998958ecbd406c6a150cbd5c009f3f2510/tests/resources/source-files/string.tsv"
     resource = io_utils.open_resource(resource)
     assert not isinstance(resource, tuple)
 
