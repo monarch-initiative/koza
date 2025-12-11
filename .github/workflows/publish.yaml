@@ -27,9 +27,7 @@ jobs:
           uv lock --check
 
       - name: Build
-        run: |
-          uv version $(git describe --tags --abbrev=0)
-          uv build
+        run: make build
 
       - name: Publish to PyPi
         if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'

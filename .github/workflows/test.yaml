@@ -35,9 +35,11 @@ jobs:
         run: |
           uv lock --check
 
+      #----------------------------------------------
+      #    install your root project, if required
+      #----------------------------------------------
       - name: Install library
-        run: |
-          uv sync --extra dev
+        run: make install
 
       - name: Run tests
-        run: uv run pytest
+        run: make test
