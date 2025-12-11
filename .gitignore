@@ -135,3 +135,7 @@ dmypy.json
 
 # IDE
 .idea
+protein-links-detailed_edges.tsv
+protein-links-detailed_nodes.tsv
+uv.lock
+uv.lock
