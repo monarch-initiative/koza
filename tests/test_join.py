@@ -53,10 +53,15 @@ def sample_nodes_jsonl_file(temp_dir):
     jsonl_file.write_text(jsonl_content)
     return jsonl_file
 
-#TODO: Create edge_jsonl. Incorporate it into testing.
-#@pytest.fixture
-#def sample_edges_jsonl_file(temp_dir):
-#    return jsonl_file
+@pytest.fixture
+def sample_edges_jsonl_file(temp_dir):
+    """Create a sample nodes JSONL file."""
+    jsonl_content = """{"subject": "HGNC:123", "predicate": "biolink:related_to", "object": "MONDO:001", "category": "biolink:Association"}
+{"subject": "HGNC:456", "predicate": "biolink:causes", "object": "MONDO:001", "category": "biolink:Association"}
+"""
+    jsonl_file = temp_dir / "edges.jsonl"
+    jsonl_file.write_text(jsonl_content)
+    return jsonl_file
 
 
 class TestJoinOperation:
@@ -233,6 +238,46 @@ class TestJoinConfigValidation:
         assert config.database_path is None
 
 
+class TestFileSpec:
+    """Test FileSpec can properly generate values for 'format', and 'file_type' when not provided"""
+    def test_file_spec_generate_from_partial_info(self, sample_nodes_tsv_file, sample_edges_tsv_file, sample_nodes_jsonl_file, sample_edges_jsonl_file):
+        node_tsv_spec = FileSpec(
+            path=str(sample_nodes_tsv_file),
+            source_name=Path(sample_nodes_tsv_file).stem
+        )
+        node_jsonl_spec = FileSpec(
+            path=str(sample_nodes_jsonl_file),
+            source_name=Path(sample_nodes_jsonl_file).stem
+        )
+        edge_tsv_spec = FileSpec(
+            path=str(sample_edges_tsv_file),
+            source_name=Path(sample_edges_tsv_file).stem
+        )
+        edge_jsonl_spec = FileSpec(
+            path=str(sample_edges_jsonl_file),
+            source_name=Path(sample_edges_jsonl_file).stem
+        )        
+
+        assert str(node_tsv_spec.path) == str(sample_nodes_tsv_file)
+        assert node_tsv_spec.source_name == Path(sample_nodes_tsv_file).stem
+        assert node_tsv_spec.file_type == KGXFileType.NODES
+        assert node_tsv_spec.format == KGXFormat.TSV
+
+        assert str(node_jsonl_spec.path) == str(sample_nodes_jsonl_file)
+        assert node_jsonl_spec.source_name == Path(sample_nodes_jsonl_file).stem
+        assert node_jsonl_spec.file_type == KGXFileType.NODES
+        assert node_jsonl_spec.format == KGXFormat.JSONL
+
+        assert str(edge_tsv_spec.path) == str(sample_edges_tsv_file)
+        assert edge_tsv_spec.source_name == Path(sample_edges_tsv_file).stem
+        assert edge_tsv_spec.file_type == KGXFileType.EDGES
+        assert edge_tsv_spec.format == KGXFormat.TSV
+
+        assert str(edge_jsonl_spec.path) == str(sample_edges_jsonl_file)
+        assert edge_jsonl_spec.source_name == Path(sample_edges_jsonl_file).stem
+        assert edge_jsonl_spec.file_type == KGXFileType.EDGES
+        assert edge_jsonl_spec.format == KGXFormat.JSONL
+
 class TestPrepareFileSpecsFromPaths:
     """Test prepare_file_specs_from_paths helper function."""
     #TODO: Make code which tests 2 sets of node and edge files.
@@ -246,11 +291,17 @@ class TestPrepareFileSpecsFromPaths:
         assert len(node_specs) == 1
         assert len(edge_specs) == 1
 
+        assert type(node_specs[0]) == FileSpec
+        assert type(edge_specs[0]) == FileSpec
+        print("XKCD00")
+
         assert node_specs[0].path == sample_nodes_tsv_file
+        assert node_specs[0].source_name == Path(sample_nodes_tsv_file).stem
         assert node_specs[0].format == KGXFormat.TSV
         assert node_specs[0].file_type == KGXFileType.NODES
 
         assert edge_specs[0].path == sample_edges_tsv_file
+        assert edge_specs[0].source_name == Path(sample_edges_tsv_file).stem
         assert edge_specs[0].format == KGXFormat.TSV
         assert edge_specs[0].file_type == KGXFileType.EDGES
 
