@@ -6,7 +6,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Optional
 
-from pydantic import BaseModel, ValidationInfo, Field, field_validator, model_validator, validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class KGXFormat(str, Enum):
@@ -32,36 +32,37 @@ class FileSpec(BaseModel):
     file_type: KGXFileType | None = None
     source_name: str | None = None
 
-    @field_validator("format", mode="before")
-    @classmethod
-    def detect_format(cls, format_value, info:ValidationInfo):
-        """Auto-detect format from file extension if not provided"""
-        if format_value is None and "path" in info.data:
-            path = Path(info.data["path"])
+    @model_validator(mode="after")
+    def detect_format_and_file_type(self):
+        """Auto-detect format and file_type from path if not provided.
+
+        Uses model_validator(mode='after') to ensure path is fully validated
+        and available as a Path object before detection runs.
+        """
+        # Detect format from file extension
+        if self.format is None:
+            path = self.path
             # Handle compressed files
             if path.suffix in [".gz", ".bz2", ".xz"]:
                 path = path.with_suffix("")
 
             suffix = path.suffix.lower()
             if suffix in [".tsv", ".txt"]:
-                return KGXFormat.TSV
+                self.format = KGXFormat.TSV
             elif suffix in [".jsonl", ".json"]:
-                return KGXFormat.JSONL
+                self.format = KGXFormat.JSONL
             elif suffix == ".parquet":
-                return KGXFormat.PARQUET
-        return format_value
+                self.format = KGXFormat.PARQUET
 
-    @field_validator("file_type", mode="before")
-    @classmethod
-    def detect_file_type(cls, file_type_value, info:ValidationInfo):
-        """Auto-detect file type from filename if not provided"""
-        if file_type_value is None and "path" in info.data:
-            filename = Path(info.data["path"]).name.lower()
+        # Detect file_type from filename
+        if self.file_type is None:
+            filename = self.path.name.lower()
             if "_nodes." in filename or filename.startswith("nodes."):
-                return KGXFileType.NODES
+                self.file_type = KGXFileType.NODES
             elif "_edges." in filename or filename.startswith("edges."):
-                return KGXFileType.EDGES
-        return file_type_value
+                self.file_type = KGXFileType.EDGES
+
+        return self
 
 
 class DatabaseStats(BaseModel):
@@ -445,6 +446,9 @@ class QCReport(BaseModel):
     summary: QCSummary
     nodes: list[NodeSourceReport] = Field(default_factory=list)
     edges: list[EdgeSourceReport] = Field(default_factory=list)
+    dangling_edges: list[EdgeSourceReport] = Field(default_factory=list)
+    duplicate_nodes: list[NodeSourceReport] = Field(default_factory=list)
+    duplicate_edges: list[EdgeSourceReport] = Field(default_factory=list)
 
 
 class CategoryStats(BaseModel):
