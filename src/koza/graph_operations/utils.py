@@ -18,12 +18,13 @@ from koza.model.graph_operations import (
 )
 
 
-def get_duckdb_read_statement(file_spec: FileSpec) -> str:
+def get_duckdb_read_statement(file_spec: FileSpec, sample_size: int | None = None) -> str:
     """
     Generate DuckDB read statement for the given file spec.
 
     Args:
         file_spec: FileSpec with path and format information
+        sample_size: Optional sample size for JSONL schema inference (-1 for full scan)
 
     Returns:
         DuckDB read statement string
@@ -34,6 +35,8 @@ def get_duckdb_read_statement(file_spec: FileSpec) -> str:
     if format_type == KGXFormat.TSV:
         return f"read_csv('{file_path_str}', delim='\\t', header=true, all_varchar=true)"
     elif format_type == KGXFormat.JSONL:
+        if sample_size is not None:
+            return f"read_json('{file_path_str}', format='newline_delimited', sample_size={sample_size})"
         return f"read_json('{file_path_str}', format='newline_delimited')"
     elif format_type == KGXFormat.PARQUET:
         return f"read_parquet('{file_path_str}')"
@@ -115,7 +118,29 @@ class GraphDatabase:
             """
 
             # Execute table creation
-            self.conn.execute(create_sql)
+            try:
+                self.conn.execute(create_sql)
+            except duckdb.InvalidInputException as e:
+                error_msg = str(e)
+                # Catch specific JSONL schema inference failure:
+                # "Invalid Input Error: JSON transform error ... has unknown key ..."
+                if (
+                    "unknown key" in error_msg
+                    and "JSON transform error" in error_msg
+                    and file_spec.format == KGXFormat.JSONL
+                ):
+                    logger.warning(
+                        f"Schema inference failed for {file_spec.path}, retrying with full scan..."
+                    )
+                    read_stmt = get_duckdb_read_statement(file_spec, sample_size=-1)
+                    create_sql = f"""
+                        CREATE TEMP TABLE {temp_table_name} AS
+                        SELECT *{extra_cols_str}
+                        FROM {read_stmt}
+                    """
+                    self.conn.execute(create_sql)
+                else:
+                    raise
 
             # Get record count
             count_result = self.conn.execute(f"SELECT COUNT(*) FROM {temp_table_name}").fetchone()
