@@ -35,9 +35,10 @@ def get_duckdb_read_statement(file_spec: FileSpec, sample_size: int | None = Non
     if format_type == KGXFormat.TSV:
         return f"read_csv('{file_path_str}', delim='\\t', header=true, all_varchar=true)"
     elif format_type == KGXFormat.JSONL:
+        # convert_strings_to_integers=false prevents DuckDB from inferring UUID-like strings as INT128
         if sample_size is not None:
-            return f"read_json('{file_path_str}', format='newline_delimited', sample_size={sample_size})"
-        return f"read_json('{file_path_str}', format='newline_delimited')"
+            return f"read_json('{file_path_str}', format='newline_delimited', convert_strings_to_integers=false, sample_size={sample_size})"
+        return f"read_json('{file_path_str}', format='newline_delimited', convert_strings_to_integers=false)"
     elif format_type == KGXFormat.PARQUET:
         return f"read_parquet('{file_path_str}')"
     else:
