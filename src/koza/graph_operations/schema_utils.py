@@ -38,7 +38,6 @@ class SchemaParser:
     def is_field_multivalued(self, field_name: str) -> bool:
         """
         Check if a field is defined as multivalued in the schema.
-        Uses induced_slot to get the base slot definition.
 
         Args:
             field_name: Field/slot name to check
@@ -49,13 +48,21 @@ class SchemaParser:
         if not self.schema_view:
             return False
 
-        try:
-            # Use induced_slot to get the complete slot definition
-            slot = self.schema_view.induced_slot(field_name)
-            return slot.multivalued if slot else False
-        except Exception:
-            # If slot doesn't exist or other error, assume not multivalued
-            return False
+        # Biolink uses spaces in slot names, convert underscores
+        slot_name = field_name.replace("_", " ")
+
+        # Try induced_slot with different class contexts
+        # (association for edge properties, named thing for node properties)
+        for class_name in ["association", "named thing"]:
+            try:
+                slot = self.schema_view.induced_slot(slot_name, class_name)
+                if slot:
+                    return slot.multivalued
+            except Exception:
+                continue
+
+        # If not found in any class context, assume not multivalued
+        return False
 
     def get_multivalued_fields_from_list(self, field_names: list[str]) -> Set[str]:
         """
@@ -70,10 +77,15 @@ class SchemaParser:
         return {field for field in field_names if self.is_field_multivalued(field)}
 
 
-# Known multivalued fields for KGX format (fallback when schema unavailable)
-KGX_MULTIVALUED_FIELDS: Set[str] = {
-    # Node properties
+# Fields that should be treated as single-valued regardless of schema definition
+# (e.g., category is multivalued in biolink but we treat it as single-valued)
+FORCE_SINGLE_VALUED_FIELDS: Set[str] = {
     "category",
+}
+
+# Fallback multivalued fields for KGX format (used only when schema unavailable)
+KGX_MULTIVALUED_FIELDS_FALLBACK: Set[str] = {
+    # Node properties
     "type",
     "xref",
     "synonym",
@@ -86,7 +98,6 @@ KGX_MULTIVALUED_FIELDS: Set[str] = {
     "qualifiers",
     "knowledge_source",
     "aggregator_knowledge_source",
-    "primary_knowledge_source",
     "supporting_data_source",
     "has_evidence",
     "supporting_studies",
@@ -133,13 +144,17 @@ def is_field_multivalued(field_name: str, schema_path: Optional[str] = None) -> 
     Returns:
         True if field is multivalued, False otherwise
     """
-    # First check the fallback list (fast path for known fields)
-    if field_name in KGX_MULTIVALUED_FIELDS:
-        return True
+    # Check if field is forced to be single-valued
+    if field_name in FORCE_SINGLE_VALUED_FIELDS:
+        return False
 
-    # Then check the schema if available
+    # Try to get from schema first
     parser = get_schema_parser(schema_path)
-    return parser.is_field_multivalued(field_name)
+    if parser.schema_view:
+        return parser.is_field_multivalued(field_name)
+
+    # Fall back to hardcoded list only if schema unavailable
+    return field_name in KGX_MULTIVALUED_FIELDS_FALLBACK
 
 
 def get_multivalued_columns(column_names: list[str], schema_path: Optional[str] = None) -> Set[str]:
