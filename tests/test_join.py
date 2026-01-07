@@ -383,6 +383,149 @@ HGNC:456	biolink:Gene
         assert result.final_stats.nodes == 0
 
 
+class TestMultivaluedFieldHandling:
+    """Test multivalued field transformation during join."""
+
+    def test_pipe_delimited_category_becomes_array(self, temp_dir):
+        """Test that pipe-delimited category values become arrays."""
+        nodes_content = """id\tcategory\tname
+HGNC:123\tbiolink:Gene|biolink:NamedThing\tgene1
+HGNC:456\tbiolink:Gene\tgene2
+"""
+        nodes_file = temp_dir / "test_nodes.tsv"
+        nodes_file.write_text(nodes_content)
+
+        output_db = temp_dir / "output.duckdb"
+
+        config = JoinConfig(
+            node_files=[FileSpec(path=nodes_file, format=KGXFormat.TSV, file_type=KGXFileType.NODES)],
+            edge_files=[],
+            output_database=output_db,
+            quiet=True,
+            show_progress=False,
+            schema_reporting=False,
+        )
+
+        result = join_graphs(config)
+
+        assert result is not None
+
+        import duckdb
+
+        conn = duckdb.connect(str(output_db))
+
+        # Check that category column is now VARCHAR[]
+        schema = conn.execute("DESCRIBE nodes").fetchall()
+        category_type = next(row[1] for row in schema if row[0] == "category")
+        assert "[]" in category_type  # Should be VARCHAR[]
+
+        # Check actual values
+        results = conn.execute("SELECT id, category FROM nodes ORDER BY id").fetchall()
+        assert results[0][1] == ["biolink:Gene", "biolink:NamedThing"]  # Pipe-delimited became array
+        assert results[1][1] == ["biolink:Gene"]  # Single value also became array
+        conn.close()
+
+    def test_has_evidence_multivalued(self, temp_dir):
+        """Test that has_evidence (a known multivalued field) is transformed."""
+        edges_content = """id\tsubject\tpredicate\tobject\thas_evidence
+edge1\tHGNC:123\tbiolink:related_to\tMONDO:001\tECO:0000269|ECO:0000314
+edge2\tHGNC:456\tbiolink:causes\tMONDO:001\tECO:0000501
+"""
+        edges_file = temp_dir / "test_edges.tsv"
+        edges_file.write_text(edges_content)
+
+        output_db = temp_dir / "output.duckdb"
+
+        config = JoinConfig(
+            node_files=[],
+            edge_files=[FileSpec(path=edges_file, format=KGXFormat.TSV, file_type=KGXFileType.EDGES)],
+            output_database=output_db,
+            quiet=True,
+            show_progress=False,
+            schema_reporting=False,
+        )
+
+        result = join_graphs(config)
+
+        assert result is not None
+
+        import duckdb
+
+        conn = duckdb.connect(str(output_db))
+
+        # Check that has_evidence is now an array
+        results = conn.execute("SELECT id, has_evidence FROM edges ORDER BY id").fetchall()
+        assert results[0][1] == ["ECO:0000269", "ECO:0000314"]
+        assert results[1][1] == ["ECO:0000501"]
+        conn.close()
+
+    def test_non_multivalued_fields_unchanged(self, temp_dir):
+        """Test that non-multivalued fields remain as VARCHAR."""
+        nodes_content = """id\tname\tdescription
+HGNC:123\tgene1\tA gene with pipes|in|description
+"""
+        nodes_file = temp_dir / "test_nodes.tsv"
+        nodes_file.write_text(nodes_content)
+
+        output_db = temp_dir / "output.duckdb"
+
+        config = JoinConfig(
+            node_files=[FileSpec(path=nodes_file, format=KGXFormat.TSV, file_type=KGXFileType.NODES)],
+            edge_files=[],
+            output_database=output_db,
+            quiet=True,
+            show_progress=False,
+            schema_reporting=False,
+        )
+
+        result = join_graphs(config)
+
+        import duckdb
+
+        conn = duckdb.connect(str(output_db))
+
+        # name and description should remain VARCHAR (not arrays)
+        schema = conn.execute("DESCRIBE nodes").fetchall()
+        schema_dict = {row[0]: row[1] for row in schema}
+        assert schema_dict["name"] == "VARCHAR"
+        assert schema_dict["description"] == "VARCHAR"
+
+        # Pipes in description should be preserved as literal string
+        results = conn.execute("SELECT description FROM nodes").fetchall()
+        assert results[0][0] == "A gene with pipes|in|description"
+        conn.close()
+
+    def test_empty_multivalued_field_becomes_null(self, temp_dir):
+        """Test that empty multivalued fields become NULL, not empty arrays."""
+        nodes_content = """id\tcategory\tsynonym
+HGNC:123\tbiolink:Gene\talias1|alias2
+HGNC:456\tbiolink:Gene\t
+"""
+        nodes_file = temp_dir / "test_nodes.tsv"
+        nodes_file.write_text(nodes_content)
+
+        output_db = temp_dir / "output.duckdb"
+
+        config = JoinConfig(
+            node_files=[FileSpec(path=nodes_file, format=KGXFormat.TSV, file_type=KGXFileType.NODES)],
+            edge_files=[],
+            output_database=output_db,
+            quiet=True,
+            show_progress=False,
+            schema_reporting=False,
+        )
+
+        result = join_graphs(config)
+
+        import duckdb
+
+        conn = duckdb.connect(str(output_db))
+        results = conn.execute("SELECT id, synonym FROM nodes ORDER BY id").fetchall()
+        assert results[0][1] == ["alias1", "alias2"]
+        assert results[1][1] is None  # Empty becomes NULL
+        conn.close()
+
+
 class TestProvidedByHandling:
     """Test provided_by column handling during join."""
 
@@ -457,13 +600,14 @@ HGNC:456\tbiolink:Gene\tgene2\tinfores:mgi
         assert result.final_stats.nodes == 2
 
         # Query the database to verify provided_by was preserved
+        # Note: provided_by is multivalued in Biolink, so values become arrays
         import duckdb
 
         conn = duckdb.connect(str(output_db))
-        # Should have the original provided_by values
+        # Should have the original provided_by values (as arrays since it's multivalued)
         provided_by_values = conn.execute("SELECT provided_by FROM nodes ORDER BY id").fetchall()
-        assert provided_by_values[0][0] == "infores:hgnc"
-        assert provided_by_values[1][0] == "infores:mgi"
+        assert provided_by_values[0][0] == ["infores:hgnc"]
+        assert provided_by_values[1][0] == ["infores:mgi"]
         conn.close()
 
     def test_merge_files_with_and_without_provided_by(self, temp_dir):
