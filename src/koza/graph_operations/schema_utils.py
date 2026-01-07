@@ -78,10 +78,11 @@ class SchemaParser:
 
 
 # Fields that should be treated as single-valued regardless of schema definition
-# (e.g., category and in_taxon are multivalued in biolink but we treat them as single-valued)
+# (e.g., category, in_taxon, and type are multivalued in biolink but we treat them as single-valued)
 FORCE_SINGLE_VALUED_FIELDS: Set[str] = {
     "category",
     "in_taxon",
+    "type",
 }
 
 # Fallback multivalued fields for KGX format (used only when schema unavailable)
