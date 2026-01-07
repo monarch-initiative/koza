@@ -32,33 +32,36 @@ class FileSpec(BaseModel):
     format: KGXFormat | None = Field(default=None,validate_default=True)
     file_type: KGXFileType | None = Field(default=None,validate_default=True)
 
-    @model_validator(mode="after")
-    def detect_format_and_file_type(self):
+    @field_validator("format",mode="before")
+    def generate_format(cls, format_value :KGXFormat|None, info:ValidationInfo) -> KGXFormat:
         """Auto-detect format and file_type from path if not provided.
 
         Uses model_validator(mode='after') to ensure path is fully validated
         and available as a Path object before detection runs.
         """
         # Detect format from file extension
-        if self.format is None:
-            path = self.path
+        if format_value is None:
+            path = info.data["path"]
             # Handle compressed files
             if path.suffix.lower() in [".gz", ".bz2", ".xz"]:
                 path = path.with_suffix("")
 
             suffix = path.suffix.lower()
             if suffix in [".tsv", ".txt"]:
-                self.format = KGXFormat.TSV
+                return KGXFormat.TSV
             elif suffix in [".jsonl", ".json"]:
-                self.format = KGXFormat.JSONL
+                return KGXFormat.JSONL
             elif suffix == ".parquet":
-                self.format = KGXFormat.PARQUET
+                return KGXFormat.PARQUET
+        else: return format_value
 
+    @field_validator("file_type",mode="before")
+    def generate_file_type(cls, file_type_value :KGXFileType|None, info:ValidationInfo) -> KGXFileType:    
         # Detect file_type from filename
-        if self.file_type is None:
-            filename = self.path.name.lower()
+        if file_type_value is None:
+            filename = Path(info.data["path"]).name.lower()
             if "_nodes." in filename or filename.startswith("nodes."):
-                self.file_type = KGXFileType.NODES
+                return KGXFileType.NODES
             elif "_edges." in filename or filename.startswith("edges."):
                 return KGXFileType.EDGES
         return file_type_value
