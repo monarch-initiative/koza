@@ -239,23 +239,19 @@ class TestJoinConfigValidation:
 
 
 class TestFileSpec:
-    """Test FileSpec can properly generate values for 'format', and 'file_type' when not provided"""
+    """Test FileSpec can properly generate values for 'format', 'source_name', and 'file_type' when not provided"""
     def test_file_spec_generate_from_partial_info(self, sample_nodes_tsv_file, sample_edges_tsv_file, sample_nodes_jsonl_file, sample_edges_jsonl_file):
         node_tsv_spec = FileSpec(
             path=str(sample_nodes_tsv_file),
-            source_name=Path(sample_nodes_tsv_file).stem
         )
         node_jsonl_spec = FileSpec(
             path=str(sample_nodes_jsonl_file),
-            source_name=Path(sample_nodes_jsonl_file).stem
         )
         edge_tsv_spec = FileSpec(
             path=str(sample_edges_tsv_file),
-            source_name=Path(sample_edges_tsv_file).stem
         )
         edge_jsonl_spec = FileSpec(
             path=str(sample_edges_jsonl_file),
-            source_name=Path(sample_edges_jsonl_file).stem
         )        
 
         assert str(node_tsv_spec.path) == str(sample_nodes_tsv_file)
@@ -293,7 +289,6 @@ class TestPrepareFileSpecsFromPaths:
 
         assert type(node_specs[0]) == FileSpec
         assert type(edge_specs[0]) == FileSpec
-        print("XKCD00")
 
         assert node_specs[0].path == sample_nodes_tsv_file
         assert node_specs[0].source_name == Path(sample_nodes_tsv_file).stem

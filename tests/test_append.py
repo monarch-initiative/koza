@@ -422,18 +422,19 @@ HGNC:456	biolink:Gene
         config = AppendConfig(
             database_path=existing_database,
             node_files=[
-                FileSpec(path=nodes_file1, format=KGXFormat.TSV, file_type=KGXFileType.NODES),
-                FileSpec(path=nodes_file2, format=KGXFormat.TSV, file_type=KGXFileType.NODES),
+                FileSpec(path=nodes_file1, source_name="test1", format=KGXFormat.TSV, file_type=KGXFileType.NODES),
+                FileSpec(path=nodes_file2, source_name="test2", format=KGXFormat.TSV, file_type=KGXFileType.NODES),
             ],
             edge_files=[],
             deduplicate=False,
-            quiet=True,
+            quiet=False,#TODO; turn back to True
             show_progress=False,
             schema_reporting=False,
         )
 
         result = append_graphs(config)
 
+        assert len(config.node_files) == 2
         assert result is not None
         assert len(result.files_loaded) == 2
         assert result.records_added == 2  # 1 from each file

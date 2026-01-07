@@ -28,9 +28,9 @@ class FileSpec(BaseModel):
     """Specification for a KGX file"""
 
     path: Path
-    format: KGXFormat | None = None
-    file_type: KGXFileType | None = None
-    source_name: str | None = None
+    source_name: str | None = Field(default=None,validate_default=True)
+    format: KGXFormat | None = Field(default=None,validate_default=True)
+    file_type: KGXFileType | None = Field(default=None,validate_default=True)
 
     @field_validator("format", mode="before")
     @classmethod
@@ -39,7 +39,7 @@ class FileSpec(BaseModel):
         if format_value is None and "path" in info.data:
             path = Path(info.data["path"])
             # Handle compressed files
-            if path.suffix in [".gz", ".bz2", ".xz"]:
+            if path.suffix.lower() in [".gz", ".bz2", ".xz"]:
                 path = path.with_suffix("")
 
             suffix = path.suffix.lower()
@@ -62,7 +62,15 @@ class FileSpec(BaseModel):
             elif "_edges." in filename or filename.startswith("edges."):
                 return KGXFileType.EDGES
         return file_type_value
-
+    
+    @field_validator("source_name", mode="before")
+    @classmethod
+    def generate_source_name(cls, source_name_value, info:ValidationInfo):
+        """Auto-generate source_name from file path if not provided"""
+        """The default is the parent directory of the file path."""
+        if source_name_value is None and "path" in info.data:
+            return Path(info.data["path"]).stem
+        return source_name_value
 
 class DatabaseStats(BaseModel):
     """Database statistics model"""

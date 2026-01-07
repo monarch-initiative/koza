@@ -232,9 +232,13 @@ def _append_single_file(
             new_columns = set(file_columns.keys()) - set(existing_schema.keys())
             for col_name in new_columns:
                 col_type = file_columns[col_name]
-                alter_sql = f"ALTER TABLE {table_type} ADD COLUMN {col_name} {col_type}"
-                db.conn.execute(alter_sql)
-                logger.info(f"Added new column {col_name} ({col_type}) to {table_type} table")
+                #Checks if the name of the column is somewhere in the set of columns.
+                #This is fairly likely to happen if you have multiple tables which all share the same incorrect schema.
+                col_already_in_db = col_name in set(db.conn.execute(f"PRAGMA table_info ('{table_type}')").fetchdf()["name"])
+                if(not col_already_in_db):
+                    alter_sql = f"ALTER TABLE {table_type} ADD COLUMN {col_name} {col_type}"
+                    db.conn.execute(alter_sql)
+                    logger.info(f"Added new column {col_name} ({col_type}) to {table_type} table")
 
         # Insert data from temp table to main table using UNION ALL BY NAME for schema compatibility
         # This handles cases where temp table has different columns than main table
