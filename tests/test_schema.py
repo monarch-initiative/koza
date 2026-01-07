@@ -176,7 +176,7 @@ class TestPrintSchemaSummary:
         print_schema_summary(sample_schema_report)
 
         captured = capsys.readouterr()
-        assert " Schema Analysis:" in captured.out
+        assert "Schema Analysis:" in captured.out
         assert "Nodes: 2 files, 5 unique columns" in captured.out
         assert "Edges: 1 files, 4 unique columns" in captured.out
         assert "Schema variations: 2 different column structures detected" in captured.out
@@ -222,7 +222,7 @@ class TestPrintSchemaSummary:
         print_schema_summary(error_report)
 
         captured = capsys.readouterr()
-        assert "  Schema analysis failed: Failed to analyze schema: No data found" in captured.out
+        assert "Schema analysis failed: Failed to analyze schema: No data found" in captured.out
 
     def test_print_schema_summary_missing_summary(self, capsys):
         """Test printing schema summary with missing summary section."""
@@ -231,7 +231,7 @@ class TestPrintSchemaSummary:
         print_schema_summary(incomplete_report)
 
         captured = capsys.readouterr()
-        assert " Schema Analysis:" in captured.out
+        assert "Schema Analysis:" in captured.out
 
     def test_print_schema_summary_exception_handling(self, capsys):
         """Test handling exceptions during schema summary printing."""
@@ -241,7 +241,7 @@ class TestPrintSchemaSummary:
         print_schema_summary(invalid_report)
 
         captured = capsys.readouterr()
-        assert "  Schema summary failed:" in captured.out
+        assert "Schema summary failed:" in captured.out
 
 
 class TestAnalyzeBiolinkCompliance:

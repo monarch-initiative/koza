@@ -52,10 +52,41 @@ def split_graph(config: SplitConfig) -> SplitResult:
             db.create_final_tables([file_result])
 
             # Get distinct values for split fields
-            fields_str = ", ".join(config.split_fields)
             table_name = config.input_file.file_type.value
 
-            distinct_query = f"SELECT DISTINCT {fields_str} FROM {table_name}"
+            # Check which fields are array types (for multivalued field handling)
+            array_fields = set()
+            schema_result = db.conn.execute(f"DESCRIBE {table_name}").fetchall()
+            for col_name, col_type, *_ in schema_result:
+                if col_name in config.split_fields and "[]" in col_type:
+                    array_fields.add(col_name)
+
+            # Build query for distinct values, using UNNEST for array fields
+            if array_fields:
+                # For array fields, we need to unnest to get individual values
+                # Also handle NULL arrays separately since UNNEST(NULL) returns nothing
+                select_parts = []
+                for field in config.split_fields:
+                    if field in array_fields:
+                        select_parts.append(f"UNNEST({field}) as {field}")
+                    else:
+                        select_parts.append(field)
+                fields_str = ", ".join(select_parts)
+
+                # Get non-NULL values via UNNEST
+                non_null_query = f"SELECT DISTINCT {fields_str} FROM {table_name} WHERE {list(array_fields)[0]} IS NOT NULL"
+
+                # Also get NULL values if any exist (for single array field case)
+                if len(config.split_fields) == 1 and len(array_fields) == 1:
+                    field = config.split_fields[0]
+                    null_check = f"SELECT DISTINCT NULL as {field} FROM {table_name} WHERE {field} IS NULL"
+                    distinct_query = f"{non_null_query} UNION {null_check}"
+                else:
+                    distinct_query = non_null_query
+            else:
+                fields_str = ", ".join(config.split_fields)
+                distinct_query = f"SELECT DISTINCT {fields_str} FROM {table_name}"
+
             split_values_raw = db.conn.execute(distinct_query).fetchall()
 
             # Convert to list of dictionaries
@@ -85,11 +116,17 @@ def split_graph(config: SplitConfig) -> SplitResult:
                 if config.show_progress:
                     progress.set_description(f"Creating {filename}")
 
-                # Build WHERE clause
+                # Build WHERE clause (use list_contains for array fields)
                 where_conditions = []
                 for field, value in values_dict.items():
                     if value is not None:
-                        where_conditions.append(f"{field} = '{value}'")
+                        # Escape single quotes in the value
+                        escaped_value = str(value).replace("'", "''")
+                        if field in array_fields:
+                            # For array fields, check if the array contains the value
+                            where_conditions.append(f"list_contains({field}, '{escaped_value}')")
+                        else:
+                            where_conditions.append(f"{field} = '{escaped_value}'")
                     else:
                         where_conditions.append(f"{field} IS NULL")
 

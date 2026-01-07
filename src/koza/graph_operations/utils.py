@@ -16,14 +16,52 @@ from koza.model.graph_operations import (
     KGXFormat,
     OperationSummary,
 )
+from koza.graph_operations.schema_utils import get_multivalued_columns
 
 
-def get_duckdb_read_statement(file_spec: FileSpec) -> str:
+def _generate_multivalued_select(
+    conn: duckdb.DuckDBPyConnection,
+    temp_table: str,
+    multivalued_columns: set[str],
+) -> str:
+    """
+    Generate a SELECT statement that transforms pipe-delimited multivalued fields into arrays.
+
+    Args:
+        conn: DuckDB connection
+        temp_table: Name of temporary table to read from
+        multivalued_columns: Set of column names that should be converted to arrays
+
+    Returns:
+        SQL SELECT statement with appropriate column transformations
+    """
+    # Get column names from the temporary table
+    columns_result = conn.execute(f"DESCRIBE {temp_table}").fetchall()
+
+    # Build SELECT clause with conditional column transformation
+    select_parts = []
+    for col_name, col_type, *_ in columns_result:
+        if col_name in multivalued_columns and col_type == "VARCHAR":
+            # Split pipe-delimited values into arrays, handle empty/null values
+            select_parts.append(f"""
+                CASE
+                    WHEN "{col_name}" IS NULL OR trim("{col_name}") = '' THEN NULL
+                    ELSE list_filter(string_split(trim("{col_name}"), '|'), x -> trim(x) != '')
+                END as "{col_name}" """.strip())
+        else:
+            # Keep as-is
+            select_parts.append(f'"{col_name}"')
+
+    return ", ".join(select_parts)
+
+
+def get_duckdb_read_statement(file_spec: FileSpec, sample_size: int | None = None) -> str:
     """
     Generate DuckDB read statement for the given file spec.
 
     Args:
         file_spec: FileSpec with path and format information
+        sample_size: Optional sample size for JSONL schema inference (-1 for full scan)
 
     Returns:
         DuckDB read statement string
@@ -34,7 +72,10 @@ def get_duckdb_read_statement(file_spec: FileSpec) -> str:
     if format_type == KGXFormat.TSV:
         return f"read_csv('{file_path_str}', delim='\\t', header=true, all_varchar=true)"
     elif format_type == KGXFormat.JSONL:
-        return f"read_json('{file_path_str}', format='newline_delimited')"
+        # convert_strings_to_integers=false prevents DuckDB from inferring UUID-like strings as INT128
+        if sample_size is not None:
+            return f"read_json('{file_path_str}', format='newline_delimited', convert_strings_to_integers=false, sample_size={sample_size})"
+        return f"read_json('{file_path_str}', format='newline_delimited', convert_strings_to_integers=false)"
     elif format_type == KGXFormat.PARQUET:
         return f"read_parquet('{file_path_str}')"
     else:
@@ -81,7 +122,8 @@ class GraphDatabase:
 
         Args:
             file_spec: FileSpec describing the file to load
-            generate_provided_by: If True, add provided_by column from filename (like cat-merge)
+            generate_provided_by: If True, add provided_by column from filename (like cat-merge).
+                                  Any existing provided_by column in the input file will be replaced.
 
         Returns:
             FileLoadResult with load statistics
@@ -106,16 +148,70 @@ class GraphDatabase:
             if generate_provided_by:
                 extra_columns.append(f"'{source_name}' as provided_by")
 
+            # Check if input file has a provided_by column that we need to exclude
+            # (to avoid duplicate column names when we add our own)
+            exclude_clause = ""
+            if generate_provided_by:
+                try:
+                    schema_result = self.conn.execute(f"DESCRIBE SELECT * FROM {read_stmt}").fetchall()
+                    input_columns = {row[0] for row in schema_result}
+                    if "provided_by" in input_columns:
+                        exclude_clause = " EXCLUDE (provided_by)"
+                        logger.debug(f"Excluding existing 'provided_by' column from {file_spec.path}")
+                except Exception as e:
+                    logger.debug(f"Could not detect schema for {file_spec.path}: {e}")
+
             # Load into temp table with source tracking and optional provided_by
             extra_cols_str = ", " + ", ".join(extra_columns) if extra_columns else ""
             create_sql = f"""
                 CREATE TEMP TABLE {temp_table_name} AS
-                SELECT *{extra_cols_str}
+                SELECT *{exclude_clause}{extra_cols_str}
                 FROM {read_stmt}
             """
 
             # Execute table creation
-            self.conn.execute(create_sql)
+            try:
+                self.conn.execute(create_sql)
+            except duckdb.InvalidInputException as e:
+                error_msg = str(e)
+                # Catch specific JSONL schema inference failure:
+                # "Invalid Input Error: JSON transform error ... has unknown key ..."
+                if (
+                    "unknown key" in error_msg
+                    and "JSON transform error" in error_msg
+                    and file_spec.format == KGXFormat.JSONL
+                ):
+                    logger.warning(
+                        f"Schema inference failed for {file_spec.path}, retrying with full scan..."
+                    )
+                    read_stmt = get_duckdb_read_statement(file_spec, sample_size=-1)
+
+                    # Re-check for provided_by column with full scan
+                    exclude_clause = ""
+                    if generate_provided_by:
+                        try:
+                            schema_result = self.conn.execute(f"DESCRIBE SELECT * FROM {read_stmt}").fetchall()
+                            input_columns = {row[0] for row in schema_result}
+                            if "provided_by" in input_columns:
+                                exclude_clause = " EXCLUDE (provided_by)"
+                        except Exception:
+                            pass
+
+                    create_sql = f"""
+                        CREATE TEMP TABLE {temp_table_name} AS
+                        SELECT *{exclude_clause}{extra_cols_str}
+                        FROM {read_stmt}
+                    """
+                    self.conn.execute(create_sql)
+                else:
+                    raise
+
+            # Transform pipe-delimited multivalued fields to arrays
+            # Skip file_source and provided_by (when generated) since we add them as literals
+            skip_columns = {"file_source"}
+            if generate_provided_by:
+                skip_columns.add("provided_by")
+            self._transform_multivalued_columns(temp_table_name, skip_columns=skip_columns)
 
             # Get record count
             count_result = self.conn.execute(f"SELECT COUNT(*) FROM {temp_table_name}").fetchone()
@@ -153,6 +249,45 @@ class GraphDatabase:
                 load_time_seconds=load_time,
                 errors=errors,
             )
+
+    def _transform_multivalued_columns(self, temp_table_name: str, skip_columns: set[str] | None = None):
+        """
+        Transform pipe-delimited VARCHAR columns to VARCHAR[] arrays for known multivalued fields.
+
+        Args:
+            temp_table_name: Name of the temporary table to transform
+            skip_columns: Set of column names to skip (e.g., columns we added as literals)
+        """
+        skip_columns = skip_columns or set()
+
+        try:
+            # Get column names from the temp table
+            describe_result = self.conn.execute(f"DESCRIBE {temp_table_name}").fetchall()
+            column_names = [row[0] for row in describe_result if row[0] not in skip_columns]
+
+            # Identify which columns are multivalued
+            multivalued_cols = get_multivalued_columns(column_names)
+
+            if not multivalued_cols:
+                return
+
+            # Generate SELECT with transformations
+            select_sql = _generate_multivalued_select(self.conn, temp_table_name, multivalued_cols)
+
+            # Recreate the table with transformed columns
+            self.conn.execute(f"""
+                CREATE OR REPLACE TEMP TABLE {temp_table_name} AS
+                SELECT {select_sql}
+                FROM {temp_table_name}
+            """)
+
+            logger.debug(
+                f"Transformed {len(multivalued_cols)} multivalued columns in {temp_table_name}: "
+                f"{', '.join(sorted(multivalued_cols))}"
+            )
+
+        except Exception as e:
+            logger.warning(f"Failed to transform multivalued columns in {temp_table_name}: {e}")
 
     def _analyze_file_schema(self, file_spec: FileSpec, temp_table_name: str):
         """Analyze and store schema information for a loaded file."""

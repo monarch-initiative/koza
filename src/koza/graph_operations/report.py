@@ -233,6 +233,15 @@ def _create_qc_report(db: GraphDatabase, group_by: str = "provided_by") -> QCRep
     # Get edges report by group_by column
     edges_by_source = _get_edges_qc_report(db, group_by=group_by)
 
+    # Get dangling edges report by group_by column
+    dangling_edges_by_source = _get_dangling_edges_qc_report(db, group_by=group_by)
+
+    # Get duplicate nodes report by group_by column
+    duplicate_nodes_by_source = _get_duplicate_nodes_qc_report(db, group_by=group_by)
+
+    # Get duplicate edges report by group_by column
+    duplicate_edges_by_source = _get_duplicate_edges_qc_report(db, group_by=group_by)
+
     # Create summary
     summary = QCSummary(
         total_nodes=total_nodes,
@@ -242,7 +251,14 @@ def _create_qc_report(db: GraphDatabase, group_by: str = "provided_by") -> QCRep
         singleton_nodes=singleton_nodes,
     )
 
-    return QCReport(summary=summary, nodes=nodes_by_source, edges=edges_by_source)
+    return QCReport(
+        summary=summary,
+        nodes=nodes_by_source,
+        edges=edges_by_source,
+        dangling_edges=dangling_edges_by_source,
+        duplicate_nodes=duplicate_nodes_by_source,
+        duplicate_edges=duplicate_edges_by_source,
+    )
 
 
 def _get_nodes_qc_report(db: GraphDatabase, group_by: str = "provided_by") -> list[NodeSourceReport]:
@@ -428,6 +444,304 @@ def _get_edges_qc_report(db: GraphDatabase, group_by: str = "provided_by") -> li
             continue
 
     return edges_report
+
+
+def _get_dangling_edges_qc_report(db: GraphDatabase, group_by: str = "provided_by") -> list[EdgeSourceReport]:
+    """Create dangling edges section of QC report, grouped by source."""
+
+    # Check if dangling_edges table exists
+    try:
+        db.conn.execute("SELECT COUNT(*) FROM dangling_edges").fetchone()
+    except Exception:
+        return []  # Table doesn't exist
+
+    # Determine which column to use for source grouping
+    source_column = None
+
+    # First try the specified group_by column
+    try:
+        db.conn.execute(f"SELECT {group_by} FROM dangling_edges LIMIT 1").fetchone()
+        source_column = group_by
+    except Exception:
+        # Fall back to provided_by or primary_knowledge_source
+        for col in ["provided_by", "primary_knowledge_source"]:
+            try:
+                db.conn.execute(f"SELECT {col} FROM dangling_edges LIMIT 1").fetchone()
+                source_column = col
+                break
+            except Exception:
+                continue
+
+    if source_column is None:
+        logger.warning("No grouping column found in dangling_edges table")
+        return []
+
+    try:
+        # Get sources
+        sources = db.conn.execute(
+            f"SELECT DISTINCT {source_column} FROM dangling_edges ORDER BY {source_column}"
+        ).fetchall()
+    except Exception as e:
+        logger.warning(f"Failed to get dangling_edges sources: {e}")
+        return []
+
+    dangling_report = []
+    for (source,) in sources:
+        if source is None:
+            continue  # Skip NULL sources
+        try:
+            # Get basic stats for this source
+            source_stats = db.conn.execute(
+                f"""
+                SELECT
+                    COUNT(*) as total,
+                    COUNT(DISTINCT predicate) as predicate_count
+                FROM dangling_edges
+                WHERE {source_column} = ?
+            """,
+                [source],
+            ).fetchone()
+
+            total, predicate_count = source_stats
+
+            # Get predicates for this source
+            predicates = db.conn.execute(
+                f"""
+                SELECT
+                    COALESCE(predicate, 'unknown') as predicate,
+                    COUNT(*) as count
+                FROM dangling_edges
+                WHERE {source_column} = ?
+                GROUP BY predicate
+                ORDER BY predicate
+            """,
+                [source],
+            ).fetchall()
+
+            # Get subject/object namespaces
+            namespaces = db.conn.execute(
+                f"""
+                SELECT namespace, SUM(count) as count FROM (
+                    SELECT split_part(subject, ':', 1) as namespace, COUNT(*) as count
+                    FROM dangling_edges
+                    WHERE {source_column} = ?
+                    GROUP BY split_part(subject, ':', 1)
+                    UNION ALL
+                    SELECT split_part(object, ':', 1) as namespace, COUNT(*) as count
+                    FROM dangling_edges
+                    WHERE {source_column} = ?
+                    GROUP BY split_part(object, ':', 1)
+                )
+                GROUP BY namespace
+                ORDER BY namespace
+            """,
+                [source, source],
+            ).fetchall()
+
+            predicate_reports = [PredicateReport(uri=pred, count=count) for pred, count in predicates]
+
+            edge_report = EdgeSourceReport(
+                name=source, total_number=total, predicates=predicate_reports, namespaces=[ns for ns, _ in namespaces]
+            )
+
+            dangling_report.append(edge_report)
+
+        except Exception as e:
+            logger.error(f"Failed to analyze dangling_edges for source {source}: {e}")
+            continue
+
+    return dangling_report
+
+
+def _get_duplicate_nodes_qc_report(db: GraphDatabase, group_by: str = "provided_by") -> list[NodeSourceReport]:
+    """Create duplicate nodes section of QC report, grouped by source."""
+
+    # Check if duplicate_nodes table exists
+    try:
+        db.conn.execute("SELECT COUNT(*) FROM duplicate_nodes").fetchone()
+    except Exception:
+        return []  # Table doesn't exist
+
+    # Determine which column to use for source grouping
+    source_column = None
+
+    try:
+        db.conn.execute(f"SELECT {group_by} FROM duplicate_nodes LIMIT 1").fetchone()
+        source_column = group_by
+    except Exception:
+        # Fall back to provided_by
+        try:
+            db.conn.execute("SELECT provided_by FROM duplicate_nodes LIMIT 1").fetchone()
+            source_column = "provided_by"
+        except Exception:
+            pass
+
+    if source_column is None:
+        logger.warning("No grouping column found in duplicate_nodes table")
+        return []
+
+    try:
+        sources = db.conn.execute(
+            f"SELECT DISTINCT {source_column} FROM duplicate_nodes ORDER BY {source_column}"
+        ).fetchall()
+    except Exception as e:
+        logger.warning(f"Failed to get duplicate_nodes sources: {e}")
+        return []
+
+    duplicate_nodes_report = []
+    for (source,) in sources:
+        if source is None:
+            continue
+        try:
+            total = db.conn.execute(
+                f"SELECT COUNT(*) FROM duplicate_nodes WHERE {source_column} = ?", [source]
+            ).fetchone()[0]
+
+            categories = db.conn.execute(
+                f"""
+                SELECT
+                    CASE
+                        WHEN category IS NULL THEN 'unknown'
+                        WHEN typeof(category) = 'VARCHAR[]' THEN array_to_string(category, '|')
+                        ELSE CAST(category AS VARCHAR)
+                    END as category,
+                    COUNT(*) as count
+                FROM duplicate_nodes
+                WHERE {source_column} = ?
+                GROUP BY category
+                ORDER BY category
+            """,
+                [source],
+            ).fetchall()
+
+            namespaces = db.conn.execute(
+                f"""
+                SELECT
+                    split_part(id, ':', 1) as namespace,
+                    COUNT(*) as count
+                FROM duplicate_nodes
+                WHERE {source_column} = ?
+                GROUP BY split_part(id, ':', 1)
+                ORDER BY namespace
+            """,
+                [source],
+            ).fetchall()
+
+            node_report = NodeSourceReport(
+                name=source,
+                total_number=total,
+                categories=[cat for cat, _ in categories],
+                namespaces=[ns for ns, _ in namespaces],
+            )
+
+            duplicate_nodes_report.append(node_report)
+
+        except Exception as e:
+            logger.error(f"Failed to analyze duplicate_nodes for source {source}: {e}")
+            continue
+
+    return duplicate_nodes_report
+
+
+def _get_duplicate_edges_qc_report(db: GraphDatabase, group_by: str = "provided_by") -> list[EdgeSourceReport]:
+    """Create duplicate edges section of QC report, grouped by source."""
+
+    # Check if duplicate_edges table exists
+    try:
+        db.conn.execute("SELECT COUNT(*) FROM duplicate_edges").fetchone()
+    except Exception:
+        return []  # Table doesn't exist
+
+    # Determine which column to use for source grouping
+    source_column = None
+
+    try:
+        db.conn.execute(f"SELECT {group_by} FROM duplicate_edges LIMIT 1").fetchone()
+        source_column = group_by
+    except Exception:
+        for col in ["provided_by", "primary_knowledge_source"]:
+            try:
+                db.conn.execute(f"SELECT {col} FROM duplicate_edges LIMIT 1").fetchone()
+                source_column = col
+                break
+            except Exception:
+                continue
+
+    if source_column is None:
+        logger.warning("No grouping column found in duplicate_edges table")
+        return []
+
+    try:
+        sources = db.conn.execute(
+            f"SELECT DISTINCT {source_column} FROM duplicate_edges ORDER BY {source_column}"
+        ).fetchall()
+    except Exception as e:
+        logger.warning(f"Failed to get duplicate_edges sources: {e}")
+        return []
+
+    duplicate_edges_report = []
+    for (source,) in sources:
+        if source is None:
+            continue
+        try:
+            source_stats = db.conn.execute(
+                f"""
+                SELECT
+                    COUNT(*) as total,
+                    COUNT(DISTINCT predicate) as predicate_count
+                FROM duplicate_edges
+                WHERE {source_column} = ?
+            """,
+                [source],
+            ).fetchone()
+
+            total, predicate_count = source_stats
+
+            predicates = db.conn.execute(
+                f"""
+                SELECT
+                    COALESCE(predicate, 'unknown') as predicate,
+                    COUNT(*) as count
+                FROM duplicate_edges
+                WHERE {source_column} = ?
+                GROUP BY predicate
+                ORDER BY predicate
+            """,
+                [source],
+            ).fetchall()
+
+            namespaces = db.conn.execute(
+                f"""
+                SELECT namespace, SUM(count) as count FROM (
+                    SELECT split_part(subject, ':', 1) as namespace, COUNT(*) as count
+                    FROM duplicate_edges
+                    WHERE {source_column} = ?
+                    GROUP BY split_part(subject, ':', 1)
+                    UNION ALL
+                    SELECT split_part(object, ':', 1) as namespace, COUNT(*) as count
+                    FROM duplicate_edges
+                    WHERE {source_column} = ?
+                    GROUP BY split_part(object, ':', 1)
+                )
+                GROUP BY namespace
+                ORDER BY namespace
+            """,
+                [source, source],
+            ).fetchall()
+
+            predicate_reports = [PredicateReport(uri=pred, count=count) for pred, count in predicates]
+
+            edge_report = EdgeSourceReport(
+                name=source, total_number=total, predicates=predicate_reports, namespaces=[ns for ns, _ in namespaces]
+            )
+
+            duplicate_edges_report.append(edge_report)
+
+        except Exception as e:
+            logger.error(f"Failed to analyze duplicate_edges for source {source}: {e}")
+            continue
+
+    return duplicate_edges_report
 
 
 def _create_graph_stats_report(db: GraphDatabase) -> GraphStatsReport:
