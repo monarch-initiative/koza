@@ -85,7 +85,8 @@ class GraphDatabase:
 
         Args:
             file_spec: FileSpec describing the file to load
-            generate_provided_by: If True, add provided_by column from filename (like cat-merge)
+            generate_provided_by: If True, add provided_by column from filename (like cat-merge).
+                                  Any existing provided_by column in the input file will be replaced.
 
         Returns:
             FileLoadResult with load statistics
@@ -110,11 +111,24 @@ class GraphDatabase:
             if generate_provided_by:
                 extra_columns.append(f"'{source_name}' as provided_by")
 
+            # Check if input file has a provided_by column that we need to exclude
+            # (to avoid duplicate column names when we add our own)
+            exclude_clause = ""
+            if generate_provided_by:
+                try:
+                    schema_result = self.conn.execute(f"DESCRIBE SELECT * FROM {read_stmt}").fetchall()
+                    input_columns = {row[0] for row in schema_result}
+                    if "provided_by" in input_columns:
+                        exclude_clause = " EXCLUDE (provided_by)"
+                        logger.debug(f"Excluding existing 'provided_by' column from {file_spec.path}")
+                except Exception as e:
+                    logger.debug(f"Could not detect schema for {file_spec.path}: {e}")
+
             # Load into temp table with source tracking and optional provided_by
             extra_cols_str = ", " + ", ".join(extra_columns) if extra_columns else ""
             create_sql = f"""
                 CREATE TEMP TABLE {temp_table_name} AS
-                SELECT *{extra_cols_str}
+                SELECT *{exclude_clause}{extra_cols_str}
                 FROM {read_stmt}
             """
 
@@ -134,9 +148,21 @@ class GraphDatabase:
                         f"Schema inference failed for {file_spec.path}, retrying with full scan..."
                     )
                     read_stmt = get_duckdb_read_statement(file_spec, sample_size=-1)
+
+                    # Re-check for provided_by column with full scan
+                    exclude_clause = ""
+                    if generate_provided_by:
+                        try:
+                            schema_result = self.conn.execute(f"DESCRIBE SELECT * FROM {read_stmt}").fetchall()
+                            input_columns = {row[0] for row in schema_result}
+                            if "provided_by" in input_columns:
+                                exclude_clause = " EXCLUDE (provided_by)"
+                        except Exception:
+                            pass
+
                     create_sql = f"""
                         CREATE TEMP TABLE {temp_table_name} AS
-                        SELECT *{extra_cols_str}
+                        SELECT *{exclude_clause}{extra_cols_str}
                         FROM {read_stmt}
                     """
                     self.conn.execute(create_sql)

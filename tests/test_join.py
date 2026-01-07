@@ -383,5 +383,182 @@ HGNC:456	biolink:Gene
         assert result.final_stats.nodes == 0
 
 
+class TestProvidedByHandling:
+    """Test provided_by column handling during join."""
+
+    def test_existing_provided_by_replaced_by_default(self, temp_dir):
+        """Test that existing provided_by column is replaced when generate_provided_by=True (default)."""
+        # Create a nodes file with an existing provided_by column
+        nodes_content = """id\tcategory\tname\tprovided_by
+HGNC:123\tbiolink:Gene\tgene1\tinfores:hgnc
+HGNC:456\tbiolink:Gene\tgene2\tinfores:hgnc
+"""
+        nodes_file = temp_dir / "hgnc_nodes.tsv"
+        nodes_file.write_text(nodes_content)
+
+        output_db = temp_dir / "output.duckdb"
+
+        config = JoinConfig(
+            node_files=[FileSpec(path=nodes_file, format=KGXFormat.TSV, file_type=KGXFileType.NODES)],
+            edge_files=[],
+            output_database=output_db,
+            quiet=True,
+            show_progress=False,
+            schema_reporting=False,
+            generate_provided_by=True,  # Default behavior
+        )
+
+        result = join_graphs(config)
+
+        assert result is not None
+        assert result.final_stats.nodes == 2
+
+        # Query the database to verify provided_by was replaced
+        import duckdb
+
+        conn = duckdb.connect(str(output_db))
+        # Should have exactly one provided_by column (not provided_by_1)
+        schema = conn.execute("DESCRIBE nodes").fetchall()
+        column_names = [row[0] for row in schema]
+        assert "provided_by" in column_names
+        assert "provided_by_1" not in column_names
+
+        # The provided_by values should be the filename-based value, not the original
+        provided_by_values = conn.execute("SELECT DISTINCT provided_by FROM nodes").fetchall()
+        assert len(provided_by_values) == 1
+        assert provided_by_values[0][0] == "hgnc_nodes"  # filename stem
+        conn.close()
+
+    def test_existing_provided_by_preserved_when_generate_false(self, temp_dir):
+        """Test that existing provided_by column is preserved when generate_provided_by=False."""
+        # Create a nodes file with an existing provided_by column
+        nodes_content = """id\tcategory\tname\tprovided_by
+HGNC:123\tbiolink:Gene\tgene1\tinfores:hgnc
+HGNC:456\tbiolink:Gene\tgene2\tinfores:mgi
+"""
+        nodes_file = temp_dir / "mixed_nodes.tsv"
+        nodes_file.write_text(nodes_content)
+
+        output_db = temp_dir / "output.duckdb"
+
+        config = JoinConfig(
+            node_files=[FileSpec(path=nodes_file, format=KGXFormat.TSV, file_type=KGXFileType.NODES)],
+            edge_files=[],
+            output_database=output_db,
+            quiet=True,
+            show_progress=False,
+            schema_reporting=False,
+            generate_provided_by=False,  # Preserve original
+        )
+
+        result = join_graphs(config)
+
+        assert result is not None
+        assert result.final_stats.nodes == 2
+
+        # Query the database to verify provided_by was preserved
+        import duckdb
+
+        conn = duckdb.connect(str(output_db))
+        # Should have the original provided_by values
+        provided_by_values = conn.execute("SELECT provided_by FROM nodes ORDER BY id").fetchall()
+        assert provided_by_values[0][0] == "infores:hgnc"
+        assert provided_by_values[1][0] == "infores:mgi"
+        conn.close()
+
+    def test_merge_files_with_and_without_provided_by(self, temp_dir):
+        """Test merging files where some have provided_by and some don't."""
+        # File with provided_by
+        nodes_with_pb = """id\tcategory\tname\tprovided_by
+HGNC:123\tbiolink:Gene\tgene1\tinfores:hgnc
+"""
+        file_with_pb = temp_dir / "with_pb_nodes.tsv"
+        file_with_pb.write_text(nodes_with_pb)
+
+        # File without provided_by
+        nodes_without_pb = """id\tcategory\tname
+MONDO:001\tbiolink:Disease\tdisease1
+"""
+        file_without_pb = temp_dir / "without_pb_nodes.tsv"
+        file_without_pb.write_text(nodes_without_pb)
+
+        output_db = temp_dir / "output.duckdb"
+
+        config = JoinConfig(
+            node_files=[
+                FileSpec(path=file_with_pb, format=KGXFormat.TSV, file_type=KGXFileType.NODES),
+                FileSpec(path=file_without_pb, format=KGXFormat.TSV, file_type=KGXFileType.NODES),
+            ],
+            edge_files=[],
+            output_database=output_db,
+            quiet=True,
+            show_progress=False,
+            schema_reporting=False,
+            generate_provided_by=True,
+        )
+
+        result = join_graphs(config)
+
+        assert result is not None
+        assert result.final_stats.nodes == 2
+
+        # Query the database to verify no duplicate columns
+        import duckdb
+
+        conn = duckdb.connect(str(output_db))
+        schema = conn.execute("DESCRIBE nodes").fetchall()
+        column_names = [row[0] for row in schema]
+        assert "provided_by" in column_names
+        assert "provided_by_1" not in column_names
+
+        # Each row should have its filename as provided_by
+        results = conn.execute("SELECT id, provided_by FROM nodes ORDER BY id").fetchall()
+        # Check that both rows have their respective file source as provided_by
+        provided_by_map = {row[0]: row[1] for row in results}
+        assert provided_by_map["HGNC:123"] == "with_pb_nodes"
+        assert provided_by_map["MONDO:001"] == "without_pb_nodes"
+        conn.close()
+
+    def test_jsonl_with_existing_provided_by(self, temp_dir):
+        """Test that existing provided_by is replaced in JSONL files too."""
+        jsonl_content = """{"id": "CHEBI:123", "category": "biolink:ChemicalEntity", "name": "chemical1", "provided_by": "infores:chebi"}
+{"id": "CHEBI:456", "category": "biolink:ChemicalEntity", "name": "chemical2", "provided_by": "infores:chebi"}
+"""
+        jsonl_file = temp_dir / "chebi_nodes.jsonl"
+        jsonl_file.write_text(jsonl_content)
+
+        output_db = temp_dir / "output.duckdb"
+
+        config = JoinConfig(
+            node_files=[FileSpec(path=jsonl_file, format=KGXFormat.JSONL, file_type=KGXFileType.NODES)],
+            edge_files=[],
+            output_database=output_db,
+            quiet=True,
+            show_progress=False,
+            schema_reporting=False,
+            generate_provided_by=True,
+        )
+
+        result = join_graphs(config)
+
+        assert result is not None
+        assert result.final_stats.nodes == 2
+
+        # Query the database to verify provided_by was replaced
+        import duckdb
+
+        conn = duckdb.connect(str(output_db))
+        schema = conn.execute("DESCRIBE nodes").fetchall()
+        column_names = [row[0] for row in schema]
+        assert "provided_by" in column_names
+        assert "provided_by_1" not in column_names
+
+        # The provided_by values should be the filename-based value
+        provided_by_values = conn.execute("SELECT DISTINCT provided_by FROM nodes").fetchall()
+        assert len(provided_by_values) == 1
+        assert provided_by_values[0][0] == "chebi_nodes"
+        conn.close()
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
