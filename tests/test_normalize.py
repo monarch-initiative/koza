@@ -264,5 +264,121 @@ NCBIGene:12345	skos:exactMatch	FB:FBgn0000001	semapv:UnspecifiedMatching
         assert mapping_data[0] == ("NCBIGene:12345", "FB:FBgn0000001")
 
 
+def test_normalize_with_one_to_many_mappings(temp_dir):
+    """
+    Test that one-to-many mappings (one object_id to multiple subject_ids)
+    are deduplicated to prevent duplicate edge creation.
+
+    This tests the fix for the bug where SSSOM mappings with one-to-many
+    relationships would cause the normalization JOIN to create duplicate
+    edges with the same UUID but different subject/object values.
+    """
+    # Create SSSOM file with one-to-many mappings
+    # ENSEMBL:ENSCAFG00845030039 maps to BOTH NCBIGene:610515 and NCBIGene:610525
+    sssom_content = """# curie_map:
+#   NCBIGene: http://identifiers.org/ncbigene/
+#   ENSEMBL: http://identifiers.org/ensembl/
+#   skos: http://www.w3.org/2004/02/skos/core#
+#   semapv: https://w3id.org/semapv/vocab/
+subject_id	predicate_id	object_id	mapping_justification
+NCBIGene:610515	skos:exactMatch	ENSEMBL:ENSCAFG00845030039	semapv:UnspecifiedMatching
+NCBIGene:610525	skos:exactMatch	ENSEMBL:ENSCAFG00845030039	semapv:UnspecifiedMatching
+NCBIGene:12345	skos:exactMatch	HGNC:10450	semapv:UnspecifiedMatching
+"""
+    sssom_file = temp_dir / "one_to_many.sssom.tsv"
+    sssom_file.write_text(sssom_content)
+
+    # Create edges file with edges that will be normalized
+    edges_content = """id	subject	predicate	object	category
+uuid:00daf16d-4d30-11f0-8992-7c1e52c375cf	HGNC:10450	biolink:orthologous_to	ENSEMBL:ENSCAFG00845030039	biolink:GeneToGeneHomologyAssociation
+uuid:11111111-1111-1111-1111-111111111111	TEST:001	biolink:related_to	TEST:002	biolink:Association
+uuid:22222222-2222-2222-2222-222222222222	HGNC:10450	biolink:interacts_with	TEST:003	biolink:Association
+"""
+    edges_file = temp_dir / "edges.tsv"
+    edges_file.write_text(edges_content)
+
+    # Create database with edges
+    db_file = temp_dir / "test_one_to_many.duckdb"
+    with GraphDatabase(db_file) as db:
+        db.conn.execute(f"""
+            CREATE TABLE edges AS
+            SELECT * FROM read_csv('{edges_file}', delim='\t', header=true, all_varchar=true)
+        """)
+
+    # Get original edge count
+    with GraphDatabase(db_file) as db:
+        original_edge_count = db.conn.execute("SELECT COUNT(*) FROM edges").fetchone()[0]
+
+    # Run normalization
+    mapping_specs = prepare_mapping_file_specs_from_paths([sssom_file])
+    config = NormalizeConfig(
+        database_path=db_file,
+        mapping_files=mapping_specs,
+        quiet=True,
+        show_progress=False
+    )
+
+    result = normalize_graph(config)
+
+    # Verify success
+    assert result.success is True
+
+    # Verify warning about duplicate mappings was generated
+    assert len(result.warnings) == 1
+    assert "duplicate mappings" in result.warnings[0].lower()
+
+    # Verify edge count remains the same (no duplicates created)
+    with GraphDatabase(db_file) as db:
+        final_edge_count = db.conn.execute("SELECT COUNT(*) FROM edges").fetchone()[0]
+
+        # Edge count should be exactly the same as before normalization
+        assert final_edge_count == original_edge_count, (
+            f"Edge count changed from {original_edge_count} to {final_edge_count}. "
+            "One-to-many mappings should not create duplicate edges."
+        )
+
+        # Verify no duplicate edge IDs exist
+        duplicate_ids = db.conn.execute("""
+            SELECT id, COUNT(*) as cnt
+            FROM edges
+            GROUP BY id
+            HAVING COUNT(*) > 1
+        """).fetchall()
+
+        assert len(duplicate_ids) == 0, (
+            f"Found {len(duplicate_ids)} duplicate edge IDs. "
+            f"Duplicate IDs: {[row[0] for row in duplicate_ids]}"
+        )
+
+        # Verify mappings table was deduplicated
+        mappings_count = db.conn.execute("SELECT COUNT(*) FROM mappings").fetchone()[0]
+        unique_object_ids = db.conn.execute(
+            "SELECT COUNT(DISTINCT object_id) FROM mappings"
+        ).fetchone()[0]
+
+        # Should have exactly one mapping per object_id
+        assert mappings_count == unique_object_ids, (
+            f"Mappings table has {mappings_count} rows but only {unique_object_ids} unique object_ids. "
+            "Mappings should be deduplicated by object_id."
+        )
+
+        # Verify the edge was normalized (object should be changed to one of the NCBIGene IDs)
+        normalized_edge = db.conn.execute("""
+            SELECT subject, object, original_object
+            FROM edges
+            WHERE id = 'uuid:00daf16d-4d30-11f0-8992-7c1e52c375cf'
+        """).fetchone()
+
+        assert normalized_edge is not None
+        # Object should be normalized to one of the NCBIGene IDs
+        assert normalized_edge[1].startswith("NCBIGene:"), (
+            f"Object should be normalized to NCBIGene:* but got {normalized_edge[1]}"
+        )
+        # Original object should be preserved
+        assert normalized_edge[2] == "ENSEMBL:ENSCAFG00845030039", (
+            f"Original object should be preserved but got {normalized_edge[2]}"
+        )
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

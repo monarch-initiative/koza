@@ -72,12 +72,22 @@ def normalize_graph(config: NormalizeConfig) -> NormalizeResult:
                             f"({result.detected_format.value} format)"
                         )
 
-                # Create final mappings table
-                _create_mappings_table(db, mappings_loaded)
+                # Create final mappings table (deduplicates by object_id)
+                duplicate_mappings = _create_mappings_table(db, mappings_loaded)
+
+                if duplicate_mappings > 0:
+                    warning_msg = (
+                        f"Found {duplicate_mappings} duplicate mappings "
+                        f"(one object_id mapped to multiple subject_ids). "
+                        f"Keeping only one mapping per object_id to prevent edge duplication."
+                    )
+                    warnings.append(warning_msg)
+                    if not config.quiet:
+                        print(f"⚠️  {warning_msg}")
 
                 if not config.quiet:
                     mappings_count = db.conn.execute("SELECT COUNT(*) FROM mappings").fetchone()[0]
-                    print(f"✓ Loaded {mappings_count:,} total mappings")
+                    print(f"✓ Loaded {mappings_count:,} unique mappings")
 
             # Apply normalization to edges table if it exists
             edges_normalized = 0
@@ -226,8 +236,18 @@ def _load_sssom_file(db: GraphDatabase, file_spec: FileSpec) -> FileLoadResult:
         )
 
 
-def _create_mappings_table(db: GraphDatabase, mapping_results: list[FileLoadResult]):
-    """Create final mappings table from temp tables."""
+def _create_mappings_table(db: GraphDatabase, mapping_results: list[FileLoadResult]) -> int:
+    """
+    Create final mappings table from temp tables, deduplicating by object_id.
+
+    SSSOM mappings can have one-to-many relationships (one object_id mapping to
+    multiple subject_id values). This would cause the normalization JOIN to create
+    duplicate edges with the same UUID. To prevent this, we deduplicate mappings
+    by object_id, keeping only one mapping per object_id.
+
+    Returns:
+        Number of duplicate mappings that were removed
+    """
     # Get temp tables that loaded successfully
     mapping_tables = []
     for result in mapping_results:
@@ -239,9 +259,31 @@ def _create_mappings_table(db: GraphDatabase, mapping_results: list[FileLoadResu
 
     # Create mappings table using UNION ALL BY NAME
     union_stmt = " UNION ALL BY NAME ".join([f"SELECT * FROM {table}" for table in mapping_tables])
-    db.conn.execute(f"CREATE OR REPLACE TABLE mappings AS {union_stmt}")
+    db.conn.execute(f"CREATE OR REPLACE TABLE mappings_raw AS {union_stmt}")
 
-    logger.info(f"Created mappings table from {len(mapping_tables)} temp tables")
+    # Count total and unique mappings
+    total_count = db.conn.execute("SELECT COUNT(*) FROM mappings_raw").fetchone()[0]
+    unique_count = db.conn.execute("SELECT COUNT(DISTINCT object_id) FROM mappings_raw").fetchone()[0]
+    duplicate_count = total_count - unique_count
+
+    if duplicate_count > 0:
+        logger.warning(
+            f"Found {duplicate_count} duplicate mappings (one object_id mapped to multiple subject_ids). "
+            f"Keeping only one mapping per object_id to prevent edge duplication."
+        )
+
+    # Deduplicate by object_id, keeping the first mapping encountered
+    # This is consistent with how duplicate nodes/edges are handled elsewhere
+    db.conn.execute("""
+        CREATE OR REPLACE TABLE mappings AS
+        SELECT * EXCLUDE (rn) FROM (
+            SELECT *, ROW_NUMBER() OVER (PARTITION BY object_id ORDER BY mapping_source, subject_id) as rn
+            FROM mappings_raw
+        ) WHERE rn = 1
+    """)
+
+    # Clean up raw table
+    db.conn.execute("DROP TABLE mappings_raw")
 
     # Clean up temp tables
     for result in mapping_results:
@@ -251,6 +293,10 @@ def _create_mappings_table(db: GraphDatabase, mapping_results: list[FileLoadResu
                 logger.debug(f"Cleaned up temp table {result.temp_table_name}")
             except Exception as e:
                 logger.warning(f"Failed to clean up temp table {result.temp_table_name}: {e}")
+
+    logger.info(f"Created mappings table from {len(mapping_tables)} temp tables ({unique_count} unique mappings)")
+
+    return duplicate_count
 
 
 def _normalize_edges_table(db: GraphDatabase, config: NormalizeConfig) -> int:
