@@ -65,7 +65,7 @@ def generate_qc_report(config: QCReportConfig) -> QCReportResult:
         if not config.database_path.exists():
             raise FileNotFoundError(f"Database not found: {config.database_path}")
 
-        with GraphDatabase(config.database_path) as db:
+        with GraphDatabase(config.database_path, read_only=True) as db:
             if not config.quiet:
                 print(f"Generating QC report for {config.database_path.name}...")
 
@@ -112,7 +112,7 @@ def generate_graph_stats(config: GraphStatsConfig) -> GraphStatsResult:
         if not config.database_path.exists():
             raise FileNotFoundError(f"Database not found: {config.database_path}")
 
-        with GraphDatabase(config.database_path) as db:
+        with GraphDatabase(config.database_path, read_only=True) as db:
             if not config.quiet:
                 print(f" Generating graph statistics for {config.database_path.name}...")
 
@@ -161,7 +161,7 @@ def generate_schema_compliance_report(config: SchemaReportConfig) -> SchemaRepor
         if not config.database_path.exists():
             raise FileNotFoundError(f"Database not found: {config.database_path}")
 
-        with GraphDatabase(config.database_path) as db:
+        with GraphDatabase(config.database_path, read_only=True) as db:
             if not config.quiet:
                 print(f" Generating schema report for {config.database_path.name}...")
 
@@ -1133,7 +1133,7 @@ def generate_node_report(config: NodeReportConfig) -> NodeReportResult:
     try:
         # Determine if we're using existing database or loading from file
         if config.database_path:
-            db = GraphDatabase(config.database_path)
+            db = GraphDatabase(config.database_path, read_only=True)
         else:
             # Load file into in-memory database
             db = GraphDatabase(None)
@@ -1214,7 +1214,7 @@ def generate_edge_report(config: EdgeReportConfig) -> EdgeReportResult:
     try:
         # Determine if we're using existing database or loading from files
         if config.database_path:
-            db = GraphDatabase(config.database_path)
+            db = GraphDatabase(config.database_path, read_only=True)
         else:
             # Load files into in-memory database
             db = GraphDatabase(None)
@@ -1298,7 +1298,7 @@ def generate_node_examples(config: NodeExamplesConfig) -> NodeExamplesResult:
     try:
         # Determine if we're using existing database or loading from file
         if config.database_path:
-            db = GraphDatabase(config.database_path)
+            db = GraphDatabase(config.database_path, read_only=True)
         else:
             # Load file into in-memory database
             db = GraphDatabase(None)
@@ -1377,7 +1377,7 @@ def generate_edge_examples(config: EdgeExamplesConfig) -> EdgeExamplesResult:
     try:
         # Determine if we're using existing database or loading from files
         if config.database_path:
-            db = GraphDatabase(config.database_path)
+            db = GraphDatabase(config.database_path, read_only=True)
         else:
             # Load files into in-memory database
             db = GraphDatabase(None)

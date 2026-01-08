@@ -87,16 +87,20 @@ class GraphDatabase:
     DuckDB connection manager for graph operations using Pydantic models.
     """
 
-    def __init__(self, db_path: Path | None = None):
+    def __init__(self, db_path: Path | None = None, read_only: bool = False):
         """
         Initialize GraphDatabase.
 
         Args:
             db_path: Path to persistent database file. If None, uses in-memory database.
+            read_only: If True, open database in read-only mode. This allows multiple
+                      concurrent readers and is required for parallel read operations.
         """
         self.db_path = db_path
-        self.conn = duckdb.connect(str(db_path) if db_path else ":memory:")
-        self._setup_database()
+        self.read_only = read_only
+        self.conn = duckdb.connect(str(db_path) if db_path else ":memory:", read_only=read_only)
+        if not read_only:
+            self._setup_database()
 
     def _setup_database(self):
         """Setup initial database - QC tables only, main tables created dynamically."""
