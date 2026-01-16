@@ -12,6 +12,17 @@ Koza graph operations provide powerful tools for manipulating, analyzing, and tr
 - **[split](#split)** - Extract subsets with format conversion
 - **[prune](#prune)** - Clean graph integrity issues
 - **[append](#append)** - Incrementally add data with schema evolution
+- **[merge](#merge)** - Complete pipeline: join → deduplicate → normalize → prune
+- **[normalize](#normalize)** - Apply SSSOM mappings to normalize identifiers
+- **[deduplicate](#deduplicate)** - Remove duplicate nodes and edges
+
+### Reporting Operations
+
+- **[report](#reporting-operations)** - Generate QC, graph stats, or schema reports
+- **[node-report](#node-report)** - Detailed node analysis by category/source
+- **[edge-report](#edge-report)** - Detailed edge analysis by predicate/source
+- **[node-examples](#node-examples)** - Extract example nodes by category
+- **[edge-examples](#edge-examples)** - Extract example edges by predicate
 
 ### Key Principles
 
@@ -109,6 +120,14 @@ koza split \
   --output-dir ./filtered_split
 ```
 
+### Multivalued Field Handling
+
+When splitting on array-type fields (e.g., `category`, `provided_by`), split automatically handles expansion:
+
+- **Single-valued fields**: Direct matching on field value
+- **Array fields**: Uses `UNNEST()` to expand arrays, creating one output file per unique value
+- **Records appear in multiple outputs**: If a node has `category: ['biolink:Gene', 'biolink:NamedThing']`, it will appear in both split files
+
 ### Output
 
 Creates separate files for each unique value in the split field:
@@ -126,16 +145,6 @@ The `prune` operation cleans up graph integrity issues by handling dangling edge
 koza prune \
   --database graph.duckdb \
   --keep-singletons
-```
-
-### Preview Changes
-
-```bash
-# Dry run to preview what would be pruned
-koza prune \
-  --database graph.duckdb \
-  --dry-run \
-  --remove-singletons
 ```
 
 ### Singleton Node Strategies
@@ -235,6 +244,279 @@ Example CLI output:
     - Edges: 298,567 → 300,567 (+2,000)
     - Database: graph.duckdb (4.8 MB)
   ⏱️  Total time: 8.2s
+```
+
+## Merge Operation
+
+The `merge` operation is a composite pipeline that orchestrates multiple operations in sequence: **join → deduplicate → normalize → prune**. This is the recommended way to create a complete, clean knowledge graph from multiple sources.
+
+### Basic Usage
+
+```bash
+# Complete merge pipeline with all steps
+koza merge \
+  --nodes *.nodes.* \
+  --edges *.edges.* \
+  --mappings mappings/*.sssom.tsv \
+  --output merged_graph.duckdb
+```
+
+### Pipeline Steps
+
+1. **Join**: Loads all input node and edge files into a unified database
+2. **Deduplicate**: Removes duplicate nodes/edges by ID (keeps first occurrence)
+3. **Normalize**: Applies SSSOM mappings to normalize identifiers
+4. **Prune**: Removes dangling edges and handles singleton nodes
+
+### Skipping Steps
+
+```bash
+# Skip normalization (no SSSOM mappings)
+koza merge \
+  --nodes *.nodes.* \
+  --edges *.edges.* \
+  --output graph.duckdb \
+  --skip-normalize
+
+# Skip both normalization and pruning
+koza merge \
+  --nodes *.nodes.* \
+  --edges *.edges.* \
+  --output graph.duckdb \
+  --skip-normalize \
+  --skip-prune
+
+# Skip deduplication
+koza merge \
+  --nodes *.nodes.* \
+  --edges *.edges.* \
+  --output graph.duckdb \
+  --skip-deduplicate
+```
+
+### Export Options
+
+```bash
+# Merge and export to files
+koza merge \
+  --nodes *.nodes.* \
+  --edges *.edges.* \
+  --output graph.duckdb \
+  --export \
+  --export-dir ./output \
+  --graph-name my_graph \
+  --output-format parquet
+
+# Create compressed archive
+koza merge \
+  --nodes *.nodes.* \
+  --edges *.edges.* \
+  --output graph.duckdb \
+  --export \
+  --export-dir ./output \
+  --archive \
+  --compress
+```
+
+### Output
+
+Example CLI output:
+```
+Starting merge pipeline...
+Pipeline: join → deduplicate → normalize → prune
+Output database: merged_graph.duckdb
+Step 1: Join - Loading input files...
+Join completed: 6 files | 125,340 nodes | 298,567 edges
+Step 2: Deduplicate - Removing duplicate nodes/edges...
+Deduplicate completed: 45 duplicate nodes, 123 duplicate edges removed
+Step 3: Normalize - Applying SSSOM mappings...
+Normalize completed: 3 mapping files | 15,234 edge references normalized
+Step 4: Prune - Cleaning graph structure...
+Prune completed: 156 dangling edges moved | 23 singleton nodes handled
+Merge pipeline completed successfully!
+```
+
+## Normalize Operation
+
+The `normalize` operation applies SSSOM (Simple Standard for Sharing Ontological Mappings) files to normalize node identifiers in edge references.
+
+### Basic Usage
+
+```bash
+# Apply SSSOM mappings to existing database
+koza normalize \
+  --database graph.duckdb \
+  --mappings mappings/mondo.sssom.tsv mappings/hp.sssom.tsv
+```
+
+### Using a Mappings Directory
+
+```bash
+# Load all SSSOM files from a directory
+koza normalize \
+  --database graph.duckdb \
+  --mappings-dir ./mappings
+```
+
+### How It Works
+
+1. **Load SSSOM files**: Reads mapping files with `#` comment handling for YAML headers
+2. **Create mappings table**: Deduplicates by `object_id` (one mapping per ID to prevent edge duplication)
+3. **Normalize edges**: Rewrites `subject` and `object` columns using the mappings
+4. **Preserve originals**: Stores original values in `original_subject` and `original_object` columns
+
+### SSSOM File Format
+
+Standard SSSOM TSV format with optional YAML header:
+
+```tsv
+#curie_map:
+#  MONDO: http://purl.obolibrary.org/obo/MONDO_
+#  OMIM: https://omim.org/entry/
+subject_id	predicate_id	object_id	mapping_justification
+MONDO:0005148	skos:exactMatch	OMIM:222100	semapv:ManualMappingCuration
+```
+
+### Duplicate Mapping Handling
+
+When one `object_id` maps to multiple `subject_id` values:
+- Only the first mapping is kept (ordered by source file, then subject_id)
+- A warning is issued with the count of duplicate mappings removed
+- This prevents edge duplication during normalization
+
+### Output
+
+```
+✓ Loaded 45,678 unique mappings
+⚠️  Found 234 duplicate mappings (one object_id mapped to multiple subject_ids). Keeping only one mapping per object_id.
+✓ Normalized 12,345 edge subject/object references
+```
+
+## Deduplicate Operation
+
+The `deduplicate` operation removes duplicate nodes and edges from a graph database, keeping the first occurrence of each ID.
+
+### How It Works
+
+1. **Identify duplicates**: Finds nodes/edges with the same ID appearing multiple times
+2. **Archive duplicates**: Moves ALL duplicate rows to `duplicate_nodes` / `duplicate_edges` tables
+3. **Keep first**: Retains only the first occurrence (ordered by `file_source` or `provided_by`)
+
+### When to Use
+
+Deduplication is automatically included in the `merge` pipeline. Use standalone deduplication when:
+- You've appended data without deduplication
+- You need to clean up an existing database
+- You want finer control over the deduplication process
+
+### Archive Tables
+
+After deduplication, you can inspect removed duplicates:
+
+```sql
+-- View duplicate nodes
+SELECT * FROM duplicate_nodes LIMIT 10;
+
+-- Count duplicates by source
+SELECT file_source, COUNT(*) FROM duplicate_edges GROUP BY file_source;
+```
+
+**Note**: The deduplicate operation is not exposed as a standalone CLI command but is available programmatically and as part of the `merge` pipeline.
+
+## Reporting Operations
+
+Koza provides comprehensive reporting capabilities for analyzing graph databases.
+
+### QC Report
+
+Generate quality control reports with node/edge statistics grouped by source:
+
+```bash
+koza report qc \
+  --database graph.duckdb \
+  --output qc_report.yaml
+```
+
+### Graph Statistics
+
+Generate comprehensive graph statistics:
+
+```bash
+koza report graph-stats \
+  --database graph.duckdb \
+  --output graph_stats.yaml
+```
+
+### Schema Report
+
+Analyze table schemas and column coverage:
+
+```bash
+koza report schema \
+  --database graph.duckdb \
+  --output schema_report.yaml
+```
+
+## Node Report
+
+Generate detailed node analysis reports with category and source breakdowns:
+
+```bash
+# From database
+koza node-report \
+  --database graph.duckdb \
+  --output node_report.tsv
+
+# From file directly
+koza node-report \
+  --file nodes.tsv \
+  --output node_report.tsv \
+  --format tsv
+```
+
+### Output Formats
+
+- **TSV**: Tab-separated values (default)
+- **CSV**: Comma-separated values
+- **JSON**: JSON format
+
+## Edge Report
+
+Generate detailed edge analysis reports with predicate and source breakdowns:
+
+```bash
+# From database
+koza edge-report \
+  --database graph.duckdb \
+  --output edge_report.tsv
+
+# With node denormalization (adds subject/object names)
+koza edge-report \
+  --database graph.duckdb \
+  --nodes nodes.tsv \
+  --output edge_report.tsv
+```
+
+## Node Examples
+
+Extract example nodes for each category:
+
+```bash
+koza node-examples \
+  --database graph.duckdb \
+  --output examples/ \
+  --limit 10
+```
+
+## Edge Examples
+
+Extract example edges for each predicate:
+
+```bash
+koza edge-examples \
+  --database graph.duckdb \
+  --output examples/ \
+  --limit 10
 ```
 
 ## Schema Reporting
@@ -344,9 +626,10 @@ koza split \
 
 1. **Use compressed files** (`.gz`) to reduce I/O time
 2. **Enable progress bars** (`--show-progress`) for long operations
-3. **Preview with dry-run** before destructive operations
+3. **Use `merge` for complete pipelines** - handles deduplication, normalization, and pruning
 4. **Monitor disk space** for large join operations
 5. **Use Parquet format** for repeated analytical workloads
+6. **Generate QC reports** after operations to verify data quality
 
 ## Error Handling and Recovery
 
@@ -493,14 +776,20 @@ For users migrating from cat-merge workflows:
 
 | cat-merge | Koza Graph Operations |
 |-----------|----------------------|
-| `merge()` | `koza join` + `koza prune` |
-| Directory merge | `koza join --nodes *.nodes.* --edges *.edges.*` |
+| `merge()` | `koza merge` (recommended) or `koza join` + `koza prune` |
+| Directory merge | `koza merge --nodes *.nodes.* --edges *.edges.*` |
 | Format conversion | `koza split --output-format {format}` |
+| SSSOM normalization | `koza normalize --mappings *.sssom.tsv` |
+| Deduplication | Included in `koza merge` or `koza append --deduplicate` |
+| QC reporting | `koza report qc --database graph.duckdb` |
 
 ### Key Improvements
 
 1. **Multi-format support**: No longer limited to TSV
-2. **Schema flexibility**: Automatic handling of column differences  
+2. **Schema flexibility**: Automatic handling of column differences
 3. **Data preservation**: Non-destructive operations with archiving
 4. **Rich CLI**: Progress bars, statistics, and detailed reporting
 5. **Incremental updates**: Append operation for database evolution
+6. **Composite pipelines**: `koza merge` handles join → deduplicate → normalize → prune in one command
+7. **SSSOM normalization**: Built-in support for identifier mapping via SSSOM files
+8. **Comprehensive reporting**: QC reports, graph stats, schema analysis, and example extraction
