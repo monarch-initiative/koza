@@ -255,5 +255,5 @@ After joining files, you might want to:
 ## See Also
 
 - [CLI Reference: koza join](../reference/cli.md#koza-join)
-- [Multi-Format Support](../../graph-operations.md#multi-format-support)
-- [Schema Reporting](../../graph-operations.md#schema-reporting)
+- [Schema Handling](../explanation/schema-handling.md) - Format detection and schema harmonization
+- [Generate Reports](generate-reports.md) - Schema analysis and QC reporting

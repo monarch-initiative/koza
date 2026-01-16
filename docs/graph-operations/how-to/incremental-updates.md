@@ -293,4 +293,4 @@ koza report qc --database knowledge_graph.duckdb --output qc_report.yaml
 - [CLI Reference: koza append](../reference/cli.md#koza-append)
 - [How to Join Files](join-files.md) - Creating the initial database
 - [How to Clean Graphs](clean-graph.md) - Deduplication and pruning operations
-- [Schema Reporting](../../graph-operations.md#schema-reporting) - Detailed schema analysis
+- [Schema Handling](../explanation/schema-handling.md) - Schema evolution and harmonization
