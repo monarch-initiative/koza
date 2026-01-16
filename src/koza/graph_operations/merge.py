@@ -5,6 +5,7 @@ Merge operation - composite pipeline orchestrating join → normalize → prune 
 import tempfile
 import time
 from pathlib import Path
+from typing import Any
 
 from loguru import logger
 
@@ -424,7 +425,7 @@ def prepare_merge_config_from_paths(
     output_database: Path | None = None,
     skip_normalize: bool = False,
     skip_prune: bool = False,
-    **kwargs,
+    **kwargs: Any,
 ) -> MergeConfig:
     """
     Create a MergeConfig from file paths with automatic FileSpec generation.
