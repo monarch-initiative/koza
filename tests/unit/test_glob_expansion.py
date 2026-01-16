@@ -1,10 +1,5 @@
 """Tests for glob pattern expansion in Source class."""
 
-from pathlib import Path
-
-import pytest
-
-from koza.model.formats import InputFormat
 from koza.model.reader import YAMLReaderConfig
 from koza.model.source import Source
 

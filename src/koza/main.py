@@ -52,7 +52,18 @@ def parse_input_files(args: list[str]):
 
 
 def _expand_cli_file_patterns(patterns: list[str]) -> list[str]:
-    """Expand glob patterns from CLI arguments and return list of files."""
+    """Expand glob patterns from CLI arguments and return a list of files.
+
+    For each argument:
+      * If it contains glob characters (``*``, ``?``, ``[]``) and matches files,
+        the matching paths are expanded and added to the result in sorted order.
+      * If it contains glob characters but matches no files, the original pattern
+        is preserved and returned as a literal string.
+      * If it contains no glob characters, it is treated as a literal path.
+
+    The returned list is constructed in the same order as the input patterns,
+    with matches for each glob pattern sorted individually.
+    """
     expanded_files = []
     for pattern in patterns:
         # Check for glob characters
@@ -177,8 +188,9 @@ def transform(
             raise typer.BadParameter("--input-file/-i required when using a .py transform file")
 
         expanded_files = _expand_cli_file_patterns(input_files)
-        if not expanded_files:
-            raise typer.BadParameter(f"No files matched: {input_files}")
+        # Note: expanded_files will always have at least the original patterns
+        # (unmatched globs are preserved as literals), so validation happens
+        # when files are opened rather than here.
 
         detected_format = input_format or _infer_input_format(expanded_files)
 

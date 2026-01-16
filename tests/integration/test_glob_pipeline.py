@@ -2,8 +2,6 @@
 
 from pathlib import Path
 
-import pytest
-
 from koza.model.formats import OutputFormat
 from koza.model.koza import KozaConfig
 from koza.model.reader import CSVReaderConfig, JSONReaderConfig, YAMLReaderConfig
@@ -22,7 +20,7 @@ from biolink_model.datamodel.pydanticmodel_v2 import NamedThing
 from koza.model.graphs import KnowledgeGraph
 
 @koza.transform_record()
-def transform(koza_app, record):
+def transform(koza, record):
     node = NamedThing(id=record["id"], name=record["name"], category=["biolink:NamedThing"])
     return KnowledgeGraph(nodes=[node])
 '''

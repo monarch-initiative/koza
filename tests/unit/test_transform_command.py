@@ -1,7 +1,5 @@
 """Tests for transform command helper functions and CLI."""
 
-from pathlib import Path
-
 import pytest
 
 from koza.main import _expand_cli_file_patterns, _infer_input_format
@@ -34,7 +32,7 @@ class TestInferInputFormat:
 
     def test_empty_files_raises(self):
         """Empty file list raises error."""
-        with pytest.raises(ValueError, match="No files"):
+        with pytest.raises(ValueError, match="No files provided"):
             _infer_input_format([])
 
     def test_uses_first_file_for_inference(self):
@@ -51,20 +49,14 @@ class TestInferInputFormat:
 class TestExpandCliFilePatterns:
     """Test the _expand_cli_file_patterns function."""
 
-    def test_expands_glob_pattern(self, tmp_path):
+    def test_expands_glob_pattern(self, tmp_path, monkeypatch):
         """Glob patterns are expanded."""
         (tmp_path / "file1.yaml").write_text("test")
         (tmp_path / "file2.yaml").write_text("test")
 
-        import os
-
-        old_cwd = os.getcwd()
-        try:
-            os.chdir(tmp_path)
-            expanded = _expand_cli_file_patterns(["*.yaml"])
-            assert len(expanded) == 2
-        finally:
-            os.chdir(old_cwd)
+        monkeypatch.chdir(tmp_path)
+        expanded = _expand_cli_file_patterns(["*.yaml"])
+        assert len(expanded) == 2
 
     def test_literal_path_unchanged(self, tmp_path):
         """Paths without glob chars returned as-is."""
@@ -76,38 +68,26 @@ class TestExpandCliFilePatterns:
         expanded = _expand_cli_file_patterns(["nonexistent/*.yaml"])
         assert expanded == ["nonexistent/*.yaml"]
 
-    def test_results_sorted(self, tmp_path):
+    def test_results_sorted(self, tmp_path, monkeypatch):
         """Matched files returned in sorted order."""
         (tmp_path / "c.yaml").write_text("test")
         (tmp_path / "a.yaml").write_text("test")
         (tmp_path / "b.yaml").write_text("test")
 
-        import os
+        monkeypatch.chdir(tmp_path)
+        expanded = _expand_cli_file_patterns(["*.yaml"])
+        assert expanded == ["a.yaml", "b.yaml", "c.yaml"]
 
-        old_cwd = os.getcwd()
-        try:
-            os.chdir(tmp_path)
-            expanded = _expand_cli_file_patterns(["*.yaml"])
-            assert expanded == ["a.yaml", "b.yaml", "c.yaml"]
-        finally:
-            os.chdir(old_cwd)
-
-    def test_recursive_glob(self, tmp_path):
+    def test_recursive_glob(self, tmp_path, monkeypatch):
         """**/*.yaml matches files at any depth."""
         (tmp_path / "root.yaml").write_text("test")
         subdir = tmp_path / "sub"
         subdir.mkdir()
         (subdir / "nested.yaml").write_text("test")
 
-        import os
-
-        old_cwd = os.getcwd()
-        try:
-            os.chdir(tmp_path)
-            expanded = _expand_cli_file_patterns(["**/*.yaml"])
-            assert len(expanded) == 2
-        finally:
-            os.chdir(old_cwd)
+        monkeypatch.chdir(tmp_path)
+        expanded = _expand_cli_file_patterns(["**/*.yaml"])
+        assert len(expanded) == 2
 
 
 class TestTransformCommand:
