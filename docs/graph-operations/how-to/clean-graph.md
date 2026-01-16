@@ -20,7 +20,7 @@ Dangling edges are edges that reference nodes which do not exist in the graph. T
 Use the `prune` command to identify and remove dangling edges:
 
 ```bash
-koza prune --database graph.duckdb --keep-singletons
+koza prune graph.duckdb --keep-singletons
 ```
 
 ### How It Works
@@ -56,7 +56,7 @@ Singleton nodes are nodes that have no edges connecting them to other nodes. Dep
 Use `--keep-singletons` to preserve isolated nodes in your graph:
 
 ```bash
-koza prune --database graph.duckdb --keep-singletons
+koza prune graph.duckdb --keep-singletons
 ```
 
 This is useful when:
@@ -70,7 +70,7 @@ This is useful when:
 Use `--remove-singletons` to move isolated nodes to an archive table:
 
 ```bash
-koza prune --database graph.duckdb --remove-singletons
+koza prune graph.duckdb --remove-singletons
 ```
 
 This is useful when:
@@ -81,19 +81,23 @@ This is useful when:
 
 When singletons are removed, they are moved to the `singleton_nodes` table for later inspection.
 
-## Deduplicating Nodes
+## Deduplicating Nodes and Edges
 
-The `deduplicate` command removes duplicate nodes that share the same `id`, keeping only the first occurrence.
-
-```bash
-koza deduplicate --database graph.duckdb --nodes
-```
+Deduplication is performed automatically as part of the `merge` or `append` pipelines. There is no standalone `koza deduplicate` command.
 
 ### How It Works
+
+For nodes:
 
 1. Nodes are grouped by their `id` field
 2. For duplicate IDs, the first occurrence is kept (ordered by `file_source` or `provided_by`)
 3. All other occurrences are moved to the `duplicate_nodes` archive table
+
+For edges:
+
+1. Edges are grouped by their `id` field (or by subject-predicate-object if no ID)
+2. For duplicates, the first occurrence is kept
+3. All other occurrences are moved to the `duplicate_edges` archive table
 
 This is important when:
 
@@ -101,24 +105,12 @@ This is important when:
 - You have appended data that overlaps with existing nodes
 - You need deterministic, unique node records
 
-## Deduplicating Edges
+### Using Deduplication via Append
 
-The `deduplicate` command can also remove duplicate edges:
-
-```bash
-koza deduplicate --database graph.duckdb --edges
-```
-
-### How It Works
-
-1. Edges are grouped by their `id` field (or by subject-predicate-object if no ID)
-2. For duplicates, the first occurrence is kept
-3. All other occurrences are moved to the `duplicate_edges` archive table
-
-To deduplicate both nodes and edges in one command:
+To deduplicate an existing database, use the `--deduplicate` flag with append:
 
 ```bash
-koza deduplicate --database graph.duckdb --nodes --edges
+koza append graph.duckdb --deduplicate
 ```
 
 ## Inspecting Archived Data
@@ -260,7 +252,7 @@ After cleanup, verify your graph integrity with reports.
 ### Generate QC Report
 
 ```bash
-koza report qc --database graph.duckdb --output qc_report.yaml
+koza report qc -d graph.duckdb -o qc_report.yaml
 ```
 
 This will show:
@@ -272,7 +264,7 @@ This will show:
 ### Generate Graph Statistics
 
 ```bash
-koza report graph-stats --database graph.duckdb --output graph_stats.yaml
+koza report graph-stats -d graph.duckdb -o graph_stats.yaml
 ```
 
 ### Check Archive Tables

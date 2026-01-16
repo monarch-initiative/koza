@@ -2,6 +2,8 @@
 
 Welcome to graph operations! In this tutorial, you will create a simple knowledge graph from scratch, explore it with SQL queries, and export it to files. By the end, you will understand the core workflow that powers more advanced graph processing pipelines.
 
+> **Note**: If running from a source checkout, use `uv run koza` instead of `koza`. If installed via pip, use `koza` directly.
+
 ## What You Will Learn
 
 - Create sample KGX node and edge files
@@ -347,13 +349,13 @@ After working with your graph in the database, you may want to export it back to
 
 First, let us export the complete graph. The simplest approach is to split on a field where all records have the same value, or to use a field that groups naturally.
 
-Export nodes by source:
+Export nodes by category:
 
 ```bash
-koza split sample_nodes.tsv provided_by --output-dir ./export
+koza split sample_nodes.tsv category --output-dir ./export
 ```
 
-This creates separate files for each data source:
+This creates separate files for each category:
 
 ```bash
 ls -la ./export/
@@ -361,9 +363,11 @@ ls -la ./export/
 
 Output:
 ```
-sample_infores_hgnc_nodes.tsv
-sample_infores_mondo_nodes.tsv
+sample_Gene_nodes.tsv
+sample_Disease_nodes.tsv
 ```
+
+> **Note**: When data has been loaded through `koza transform`, the `provided_by` field is typically overwritten with the ingest name. If you want to split by data source after transformation, use a different field or ensure your data preserves the original source information in another column.
 
 ### Convert to different formats
 

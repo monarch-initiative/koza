@@ -74,7 +74,7 @@ Duplicate nodes may indicate:
 
 ### duplicate_edges
 
-Contains all rows that had duplicate IDs in the edges table. Similar to `duplicate_nodes`, all duplicates are archived and only the first occurrence is retained.
+Contains all rows that had duplicate `id` values in the edges table. Similar to `duplicate_nodes`, all duplicates are archived and only the first occurrence is retained.
 
 ```sql
 -- Example: View duplicate edges by source
@@ -204,8 +204,7 @@ If you determine that archived data should be restored:
 ```sql
 -- Restore specific dangling edges (perhaps after adding missing nodes)
 INSERT INTO edges
-SELECT * EXCLUDE (missing_subject, missing_object, source)
-FROM dangling_edges
+SELECT * FROM dangling_edges
 WHERE file_source = 'my_source';
 
 -- Restore singleton nodes
