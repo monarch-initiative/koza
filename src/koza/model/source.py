@@ -1,3 +1,4 @@
+import glob as glob_module
 from collections.abc import Iterable
 from pathlib import Path
 from tarfile import TarFile
@@ -46,6 +47,38 @@ class Source:
         self.last_row: dict[str, Any] | None = None
         self._opened: list[ZipFile | TarFile | TextIO] = []
 
+    def _expand_file_patterns(self, patterns: list[str]) -> list[Path]:
+        """Expand glob patterns in file list and return resolved paths.
+
+        Supports glob patterns: *, ?, [abc], ** (recursive)
+
+        Args:
+            patterns: List of file paths or glob patterns
+
+        Returns:
+            List of resolved Path objects, sorted alphabetically
+        """
+        expanded_files: list[Path] = []
+        for pattern in patterns:
+            pattern_path = Path(pattern)
+            if not pattern_path.is_absolute():
+                pattern_path = self.base_directory / pattern_path
+
+            pattern_str = str(pattern_path)
+
+            # Check for glob characters
+            if any(c in pattern_str for c in ["*", "?", "[", "]"]):
+                matches = sorted(glob_module.glob(pattern_str, recursive=True))
+                if matches:
+                    expanded_files.extend(Path(m) for m in matches)
+                else:
+                    # No matches - treat as literal (will fail at open_resource)
+                    expanded_files.append(pattern_path)
+            else:
+                expanded_files.append(pattern_path)
+
+        return expanded_files
+
     def _open_files(self):
         # Handle file_archive separately from regular files
         # If file_archive is specified, open it and filter files from it
@@ -91,11 +124,9 @@ class Source:
                     else:
                         raise ValueError(f"File type {self.reader_config.format} not supported")
         else:
-            # Process regular files
-            for file in self.reader_config.files:
-                file_path = Path(file)
-                if not file_path.is_absolute():
-                    file_path = self.base_directory / file_path
+            # Process regular files with glob expansion
+            expanded_files = self._expand_file_patterns(self.reader_config.files)
+            for file_path in expanded_files:
                 opened_resource = open_resource(file_path)
                 if isinstance(opened_resource, tuple):
                     archive, resources = opened_resource
