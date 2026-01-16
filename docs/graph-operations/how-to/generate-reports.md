@@ -431,4 +431,4 @@ koza edge-examples -d merged.duckdb -o edge_samples.tsv -s 5
 
 - [CLI Reference](../reference/cli.md) - Complete command documentation
 - [Configuration Reference](../reference/configuration.md) - Report configuration options
-- [Understanding Output Files](./understand-output.md) - Interpreting report results
+- [Data Integrity](../explanation/data-integrity.md) - Understanding archive tables in reports
