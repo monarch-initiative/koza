@@ -90,7 +90,7 @@ def _infer_input_format(files: list[str]) -> InputFormat:
     }
 
     if not files:
-        raise ValueError("No files to infer format from")
+        raise ValueError("No files provided. Cannot infer input format from empty file list.")
 
     ext = Path(files[0]).suffix.lower()
     if ext not in ext_to_format:
