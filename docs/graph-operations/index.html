@@ -1,0 +1,2352 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://koza.monarchinitiative.org/graph-operations/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../images/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Koza Graph Operations Guide - Koza Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,300i,400,400i,700,700i%7CSource+Sans+Pro+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Source Sans Pro";--md-code-font:"Source Sans Pro Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#koza-graph-operations-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Koza Documentation" class="md-header__button md-logo" aria-label="Koza Documentation" data-md-component="logo">
+      
+  <img src="../img/pupa.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Koza Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Koza Graph Operations Guide
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 2c-1.82 0-3.53.5-5 1.35C8 5.08 10 8.3 10 12s-2 6.92-5 8.65C6.47 21.5 8.18 22 10 22a10 10 0 0 0 10-10A10 10 0 0 0 10 2"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/monarch-initiative/koza" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    monarch-initiative/koza
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Welcome
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../Ingests/" class="md-tabs__link">
+          
+  
+  
+  Ingests
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../Usage/CLI/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  CLI
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../Usage/Module/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Module
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Koza Documentation" class="md-nav__button md-logo" aria-label="Koza Documentation" data-md-component="logo">
+      
+  <img src="../img/pupa.png" alt="logo">
+
+    </a>
+    Koza Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/monarch-initiative/koza" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    monarch-initiative/koza
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Welcome
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ingests
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Ingests
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Ingests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuring an Ingest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Ingests/koza_config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Koza Config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Ingests/mapping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mapping
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Ingests/transform/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Transform Code
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Ingests/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Usage/CLI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Usage/Module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Module
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#core-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reporting-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reporting Operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Principles
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#join-operation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Join Operation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Join Operation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic Usage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#advanced-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Advanced Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#schema-harmonization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Schema Harmonization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#split-operation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Split Operation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Split Operation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-usage_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic Usage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#format-conversion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Format Conversion
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filtering-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filtering Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multivalued-field-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multivalued Field Handling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prune-operation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prune Operation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Prune Operation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-usage_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic Usage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#singleton-node-strategies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Singleton Node Strategies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dangling-edge-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dangling Edge Handling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#append-operation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Append Operation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Append Operation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-usage_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic Usage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#schema-evolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Schema Evolution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#schema-evolution-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Schema Evolution Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deduplication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deduplication
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#merge-operation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Merge Operation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Merge Operation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-usage_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic Usage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pipeline-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipeline Steps
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skipping-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Skipping Steps
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#export-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Export Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#normalize-operation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Normalize Operation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Normalize Operation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-usage_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic Usage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-a-mappings-directory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using a Mappings Directory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sssom-file-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SSSOM File Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#duplicate-mapping-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Duplicate Mapping Handling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deduplicate-operation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deduplicate Operation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Deduplicate Operation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-to-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When to Use
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#archive-tables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Archive Tables
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reporting-operations_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reporting Operations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reporting Operations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#qc-report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        QC Report
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#graph-statistics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Graph Statistics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#schema-report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Schema Report
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#node-report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Node Report
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Node Report">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#output-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output Formats
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#edge-report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Edge Report
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#node-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Node Examples
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#edge-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Edge Examples
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#schema-reporting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Schema Reporting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Schema Reporting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#report-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Report Contents
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#report-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Report Formats
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#multi-format-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multi-Format Support
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Multi-Format Support">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#supported-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supported Formats
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#format-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Format Detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mixed-format-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mixed-Format Operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#format-conversion_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Format Conversion
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Considerations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Performance Considerations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#memory-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memory Management
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Query Optimization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Best Practices
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-handling-and-recovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Handling and Recovery
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Error Handling and Recovery">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Issues
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recovery-strategies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recovery Strategies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-integrity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Integrity
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-usage-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Advanced Usage Examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced Usage Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pipeline-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipeline Workflows
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#batch-processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Batch Processing
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#performance-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Issues
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-quality-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Quality Issues
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#getting-help" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Getting Help
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migration-from-cat-merge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration from cat-merge
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Migration from cat-merge">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#equivalent-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Equivalent Operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-improvements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Improvements
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="koza-graph-operations-guide">Koza Graph Operations Guide</h1>
+<p>This guide provides comprehensive documentation for Koza's graph operations, designed to work with Knowledge Graph Exchange (KGX) files in multiple formats.</p>
+<h2 id="overview">Overview</h2>
+<p>Koza graph operations provide powerful tools for manipulating, analyzing, and transforming knowledge graphs stored in KGX format. All operations are built on DuckDB for high performance and support TSV, JSONL, and Parquet formats seamlessly.</p>
+<h3 id="core-operations">Core Operations</h3>
+<ul>
+<li><strong><a href="#join">join</a></strong> - Combine multiple KGX files into unified database</li>
+<li><strong><a href="#split">split</a></strong> - Extract subsets with format conversion</li>
+<li><strong><a href="#prune">prune</a></strong> - Clean graph integrity issues</li>
+<li><strong><a href="#append">append</a></strong> - Incrementally add data with schema evolution</li>
+<li><strong><a href="#merge">merge</a></strong> - Complete pipeline: join → deduplicate → normalize → prune</li>
+<li><strong><a href="#normalize">normalize</a></strong> - Apply SSSOM mappings to normalize identifiers</li>
+<li><strong><a href="#deduplicate">deduplicate</a></strong> - Remove duplicate nodes and edges</li>
+</ul>
+<h3 id="reporting-operations">Reporting Operations</h3>
+<ul>
+<li><strong><a href="#reporting-operations">report</a></strong> - Generate QC, graph stats, or schema reports</li>
+<li><strong><a href="#node-report">node-report</a></strong> - Detailed node analysis by category/source</li>
+<li><strong><a href="#edge-report">edge-report</a></strong> - Detailed edge analysis by predicate/source</li>
+<li><strong><a href="#node-examples">node-examples</a></strong> - Extract example nodes by category</li>
+<li><strong><a href="#edge-examples">edge-examples</a></strong> - Extract example edges by predicate</li>
+</ul>
+<h3 id="key-principles">Key Principles</h3>
+<ol>
+<li><strong>Format Agnostic</strong>: All operations work across TSV, JSONL, and Parquet</li>
+<li><strong>Schema Flexible</strong>: Automatic harmonization handles column differences</li>
+<li><strong>Non-destructive</strong>: Data is moved to archive tables, never deleted</li>
+<li><strong>Performance Focused</strong>: DuckDB enables fast processing of large graphs</li>
+</ol>
+<h2 id="join-operation">Join Operation</h2>
+<p>The <code>join</code> operation combines multiple KGX files into a unified DuckDB database with automatic schema harmonization.</p>
+<h3 id="basic-usage">Basic Usage</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Join node and edge files from different formats</span>
+koza<span class="w"> </span>join<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>genes.tsv<span class="w"> </span>proteins.jsonl<span class="w"> </span>pathways.parquet<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span>gene_protein.tsv<span class="w"> </span>protein_pathway.jsonl<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>merged_graph.duckdb
+</code></pre></div>
+<h3 id="advanced-options">Advanced Options</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Join with comprehensive reporting and progress tracking</span>
+koza<span class="w"> </span>join<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>*.nodes.*<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span>*.edges.*<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--schema-report<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--show-progress<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--quiet
+</code></pre></div>
+<h3 id="schema-harmonization">Schema Harmonization</h3>
+<p>Join automatically handles files with different column schemas:</p>
+<ul>
+<li><strong>Missing columns</strong>: Filled with NULL values</li>
+<li><strong>Extra columns</strong>: Preserved in final schema</li>
+<li><strong>Type conflicts</strong>: Resolved using DuckDB's type inference</li>
+<li><strong>Multi-valued fields</strong>: Detected and converted to arrays where appropriate</li>
+</ul>
+<h3 id="output">Output</h3>
+<ul>
+<li><strong>Database file</strong>: DuckDB database with <code>nodes</code> and <code>edges</code> tables</li>
+<li><strong>Schema report</strong>: YAML file with detailed schema analysis (if <code>--schema-report</code>)</li>
+<li><strong>CLI summary</strong>: Statistics on files processed, records loaded, schema changes</li>
+</ul>
+<p>Example CLI output:
+<div class="highlight"><pre><span></span><code>✓ Join completed successfully
+  📁 Files processed: 6 (6 successful)
+  📊 Records loaded: 125,340 nodes, 298,567 edges
+  🔄 Schema harmonization: 3 missing columns filled, 2 extra preserved
+  📂 Database created: merged_graph.duckdb (4.2 MB)
+  ⏱️  Total time: 12.4s
+</code></pre></div></p>
+<h2 id="split-operation">Split Operation</h2>
+<p>The <code>split</code> operation extracts subsets of data from a database with configurable filters and format conversion.</p>
+<h3 id="basic-usage_1">Basic Usage</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Split by provided_by field into separate files</span>
+koza<span class="w"> </span>split<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--split-on<span class="w"> </span>provided_by<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output-dir<span class="w"> </span>./split_output
+</code></pre></div>
+<h3 id="format-conversion">Format Conversion</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Convert TSV database to Parquet files during split</span>
+koza<span class="w"> </span>split<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--split-on<span class="w"> </span>category<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output-format<span class="w"> </span>parquet<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output-dir<span class="w"> </span>./parquet_output
+</code></pre></div>
+<h3 id="filtering-options">Filtering Options</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Split with custom filters</span>
+koza<span class="w"> </span>split<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--split-on<span class="w"> </span>namespace<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--filter-nodes<span class="w"> </span><span class="s2">&quot;category=&#39;biolink:Gene&#39;&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--filter-edges<span class="w"> </span><span class="s2">&quot;predicate=&#39;biolink:interacts_with&#39;&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output-dir<span class="w"> </span>./filtered_split
+</code></pre></div>
+<h3 id="multivalued-field-handling">Multivalued Field Handling</h3>
+<p>When splitting on array-type fields (e.g., <code>category</code>, <code>provided_by</code>), split automatically handles expansion:</p>
+<ul>
+<li><strong>Single-valued fields</strong>: Direct matching on field value</li>
+<li><strong>Array fields</strong>: Uses <code>UNNEST()</code> to expand arrays, creating one output file per unique value</li>
+<li><strong>Records appear in multiple outputs</strong>: If a node has <code>category: ['biolink:Gene', 'biolink:NamedThing']</code>, it will appear in both split files</li>
+</ul>
+<h3 id="output_1">Output</h3>
+<p>Creates separate files for each unique value in the split field:
+- <code>{value}_nodes.{format}</code>
+- <code>{value}_edges.{format}</code></p>
+<h2 id="prune-operation">Prune Operation</h2>
+<p>The <code>prune</code> operation cleans up graph integrity issues by handling dangling edges and singleton nodes.</p>
+<h3 id="basic-usage_2">Basic Usage</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Remove dangling edges, keep singleton nodes</span>
+koza<span class="w"> </span>prune<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--keep-singletons
+</code></pre></div>
+<h3 id="singleton-node-strategies">Singleton Node Strategies</h3>
+<p><strong>Keep singletons</strong> (default):
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>prune<span class="w"> </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span>--keep-singletons
+</code></pre></div></p>
+<p><strong>Remove singletons</strong>:
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>prune<span class="w"> </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span>--remove-singletons
+</code></pre></div></p>
+<h3 id="dangling-edge-handling">Dangling Edge Handling</h3>
+<p>Dangling edges (pointing to non-existent nodes) are automatically:
+1. Identified using LEFT JOIN queries
+2. Moved to <code>dangling_edges</code> table (not deleted)
+3. Categorized by missing subject vs object nodes
+4. Reported with source attribution</p>
+<h3 id="output_2">Output</h3>
+<p>Prune creates additional tables for data preservation:
+- <strong><code>dangling_edges</code></strong>: Edges pointing to missing nodes
+- <strong><code>singleton_nodes</code></strong>: Isolated nodes (if <code>--remove-singletons</code>)
+- <strong>Original tables</strong>: Cleaned of integrity issues</p>
+<p>Example CLI output:
+<div class="highlight"><pre><span></span><code>✓ Graph pruned successfully
+  - 156 dangling edges moved to dangling_edges table
+  - 23 singleton nodes preserved (--keep-singletons)
+  - Main graph: 174,844 connected edges remain
+📊 Dangling edges by source:
+  - source_a: 89 edges (missing 12 target nodes)
+  - source_b: 67 edges (missing 8 target nodes)
+</code></pre></div></p>
+<h2 id="append-operation">Append Operation</h2>
+<p>The <code>append</code> operation adds new data to existing databases with schema evolution and optional deduplication.</p>
+<h3 id="basic-usage_3">Basic Usage</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Add new files to existing database</span>
+koza<span class="w"> </span>append<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>existing_graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>new_genes.tsv<span class="w"> </span>updated_pathways.jsonl<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span>new_interactions.parquet
+</code></pre></div>
+<h3 id="schema-evolution">Schema Evolution</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Append with automatic schema evolution and deduplication</span>
+koza<span class="w"> </span>append<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>genes_with_new_fields.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--deduplicate<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--show-progress<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--schema-report
+</code></pre></div>
+<h3 id="schema-evolution-features">Schema Evolution Features</h3>
+<ul>
+<li><strong>New columns</strong>: Automatically added to existing tables</li>
+<li><strong>Backward compatibility</strong>: Existing data gets NULL for new columns</li>
+<li><strong>Type safety</strong>: DuckDB handles type inference and conversion</li>
+<li><strong>Change tracking</strong>: Reports all schema modifications</li>
+</ul>
+<h3 id="deduplication">Deduplication</h3>
+<p>When <code>--deduplicate</code> is enabled:
+- Removes exact duplicates by ID field
+- Keeps first occurrence of each ID
+- Reports number of duplicates removed
+- Works on both nodes and edges tables</p>
+<h3 id="output_3">Output</h3>
+<p>Append operation provides detailed change tracking:</p>
+<p>Example CLI output:
+<div class="highlight"><pre><span></span><code>✓ Append completed successfully
+  📁 Files processed: 3 (3 successful)
+  📊 Records added: 15,234
+  🔄 Schema evolution: 2 new columns added
+    - Added 1 new columns to nodes: custom_score
+    - Added 1 new columns to edges: confidence_value
+  🔧 Duplicates removed: 45
+  📈 Database growth:
+    - Nodes: 125,340 → 138,574 (+13,234)
+    - Edges: 298,567 → 300,567 (+2,000)
+    - Database: graph.duckdb (4.8 MB)
+  ⏱️  Total time: 8.2s
+</code></pre></div></p>
+<h2 id="merge-operation">Merge Operation</h2>
+<p>The <code>merge</code> operation is a composite pipeline that orchestrates multiple operations in sequence: <strong>join → deduplicate → normalize → prune</strong>. This is the recommended way to create a complete, clean knowledge graph from multiple sources.</p>
+<h3 id="basic-usage_4">Basic Usage</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Complete merge pipeline with all steps</span>
+koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>*.nodes.*<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span>*.edges.*<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--mappings<span class="w"> </span>mappings/*.sssom.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>merged_graph.duckdb
+</code></pre></div>
+<h3 id="pipeline-steps">Pipeline Steps</h3>
+<ol>
+<li><strong>Join</strong>: Loads all input node and edge files into a unified database</li>
+<li><strong>Deduplicate</strong>: Removes duplicate nodes/edges by ID (keeps first occurrence)</li>
+<li><strong>Normalize</strong>: Applies SSSOM mappings to normalize identifiers</li>
+<li><strong>Prune</strong>: Removes dangling edges and handles singleton nodes</li>
+</ol>
+<h3 id="skipping-steps">Skipping Steps</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Skip normalization (no SSSOM mappings)</span>
+koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>*.nodes.*<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span>*.edges.*<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--skip-normalize
+
+<span class="c1"># Skip both normalization and pruning</span>
+koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>*.nodes.*<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span>*.edges.*<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--skip-normalize<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--skip-prune
+
+<span class="c1"># Skip deduplication</span>
+koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>*.nodes.*<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span>*.edges.*<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--skip-deduplicate
+</code></pre></div>
+<h3 id="export-options">Export Options</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Merge and export to files</span>
+koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>*.nodes.*<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span>*.edges.*<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--export<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--export-dir<span class="w"> </span>./output<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--graph-name<span class="w"> </span>my_graph<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output-format<span class="w"> </span>parquet
+
+<span class="c1"># Create compressed archive</span>
+koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>*.nodes.*<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span>*.edges.*<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--export<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--export-dir<span class="w"> </span>./output<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--archive<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--compress
+</code></pre></div>
+<h3 id="output_4">Output</h3>
+<p>Example CLI output:
+<div class="highlight"><pre><span></span><code>Starting merge pipeline...
+Pipeline: join → deduplicate → normalize → prune
+Output database: merged_graph.duckdb
+Step 1: Join - Loading input files...
+Join completed: 6 files | 125,340 nodes | 298,567 edges
+Step 2: Deduplicate - Removing duplicate nodes/edges...
+Deduplicate completed: 45 duplicate nodes, 123 duplicate edges removed
+Step 3: Normalize - Applying SSSOM mappings...
+Normalize completed: 3 mapping files | 15,234 edge references normalized
+Step 4: Prune - Cleaning graph structure...
+Prune completed: 156 dangling edges moved | 23 singleton nodes handled
+Merge pipeline completed successfully!
+</code></pre></div></p>
+<h2 id="normalize-operation">Normalize Operation</h2>
+<p>The <code>normalize</code> operation applies SSSOM (Simple Standard for Sharing Ontological Mappings) files to normalize node identifiers in edge references.</p>
+<h3 id="basic-usage_5">Basic Usage</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Apply SSSOM mappings to existing database</span>
+koza<span class="w"> </span>normalize<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--mappings<span class="w"> </span>mappings/mondo.sssom.tsv<span class="w"> </span>mappings/hp.sssom.tsv
+</code></pre></div>
+<h3 id="using-a-mappings-directory">Using a Mappings Directory</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Load all SSSOM files from a directory</span>
+koza<span class="w"> </span>normalize<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--mappings-dir<span class="w"> </span>./mappings
+</code></pre></div>
+<h3 id="how-it-works">How It Works</h3>
+<ol>
+<li><strong>Load SSSOM files</strong>: Reads mapping files with <code>#</code> comment handling for YAML headers</li>
+<li><strong>Create mappings table</strong>: Deduplicates by <code>object_id</code> (one mapping per ID to prevent edge duplication)</li>
+<li><strong>Normalize edges</strong>: Rewrites <code>subject</code> and <code>object</code> columns using the mappings</li>
+<li><strong>Preserve originals</strong>: Stores original values in <code>original_subject</code> and <code>original_object</code> columns</li>
+</ol>
+<h3 id="sssom-file-format">SSSOM File Format</h3>
+<p>Standard SSSOM TSV format with optional YAML header:</p>
+<div class="highlight"><pre><span></span><code>#curie_map:
+#  MONDO: http://purl.obolibrary.org/obo/MONDO_
+#  OMIM: https://omim.org/entry/
+subject_id  predicate_id    object_id   mapping_justification
+MONDO:0005148   skos:exactMatch OMIM:222100 semapv:ManualMappingCuration
+</code></pre></div>
+<h3 id="duplicate-mapping-handling">Duplicate Mapping Handling</h3>
+<p>When one <code>object_id</code> maps to multiple <code>subject_id</code> values:
+- Only the first mapping is kept (ordered by source file, then subject_id)
+- A warning is issued with the count of duplicate mappings removed
+- This prevents edge duplication during normalization</p>
+<h3 id="output_5">Output</h3>
+<div class="highlight"><pre><span></span><code>✓ Loaded 45,678 unique mappings
+⚠️  Found 234 duplicate mappings (one object_id mapped to multiple subject_ids). Keeping only one mapping per object_id.
+✓ Normalized 12,345 edge subject/object references
+</code></pre></div>
+<h2 id="deduplicate-operation">Deduplicate Operation</h2>
+<p>The <code>deduplicate</code> operation removes duplicate nodes and edges from a graph database, keeping the first occurrence of each ID.</p>
+<h3 id="how-it-works_1">How It Works</h3>
+<ol>
+<li><strong>Identify duplicates</strong>: Finds nodes/edges with the same ID appearing multiple times</li>
+<li><strong>Archive duplicates</strong>: Moves ALL duplicate rows to <code>duplicate_nodes</code> / <code>duplicate_edges</code> tables</li>
+<li><strong>Keep first</strong>: Retains only the first occurrence (ordered by <code>file_source</code> or <code>provided_by</code>)</li>
+</ol>
+<h3 id="when-to-use">When to Use</h3>
+<p>Deduplication is automatically included in the <code>merge</code> pipeline. Use standalone deduplication when:
+- You've appended data without deduplication
+- You need to clean up an existing database
+- You want finer control over the deduplication process</p>
+<h3 id="archive-tables">Archive Tables</h3>
+<p>After deduplication, you can inspect removed duplicates:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- View duplicate nodes</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">duplicate_nodes</span><span class="w"> </span><span class="k">LIMIT</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span>
+
+<span class="c1">-- Count duplicates by source</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="n">file_source</span><span class="p">,</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">duplicate_edges</span><span class="w"> </span><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">file_source</span><span class="p">;</span>
+</code></pre></div>
+<p><strong>Note</strong>: The deduplicate operation is not exposed as a standalone CLI command but is available programmatically and as part of the <code>merge</code> pipeline.</p>
+<h2 id="reporting-operations_1">Reporting Operations</h2>
+<p>Koza provides comprehensive reporting capabilities for analyzing graph databases.</p>
+<h3 id="qc-report">QC Report</h3>
+<p>Generate quality control reports with node/edge statistics grouped by source:</p>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>report<span class="w"> </span>qc<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>qc_report.yaml
+</code></pre></div>
+<h3 id="graph-statistics">Graph Statistics</h3>
+<p>Generate comprehensive graph statistics:</p>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>report<span class="w"> </span>graph-stats<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>graph_stats.yaml
+</code></pre></div>
+<h3 id="schema-report">Schema Report</h3>
+<p>Analyze table schemas and column coverage:</p>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>report<span class="w"> </span>schema<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>schema_report.yaml
+</code></pre></div>
+<h2 id="node-report">Node Report</h2>
+<p>Generate detailed node analysis reports with category and source breakdowns:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># From database</span>
+koza<span class="w"> </span>node-report<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>node_report.tsv
+
+<span class="c1"># From file directly</span>
+koza<span class="w"> </span>node-report<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--file<span class="w"> </span>nodes.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>node_report.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--format<span class="w"> </span>tsv
+</code></pre></div>
+<h3 id="output-formats">Output Formats</h3>
+<ul>
+<li><strong>TSV</strong>: Tab-separated values (default)</li>
+<li><strong>CSV</strong>: Comma-separated values</li>
+<li><strong>JSON</strong>: JSON format</li>
+</ul>
+<h2 id="edge-report">Edge Report</h2>
+<p>Generate detailed edge analysis reports with predicate and source breakdowns:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># From database</span>
+koza<span class="w"> </span>edge-report<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>edge_report.tsv
+
+<span class="c1"># With node denormalization (adds subject/object names)</span>
+koza<span class="w"> </span>edge-report<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>nodes.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>edge_report.tsv
+</code></pre></div>
+<h2 id="node-examples">Node Examples</h2>
+<p>Extract example nodes for each category:</p>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>node-examples<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>examples/<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--limit<span class="w"> </span><span class="m">10</span>
+</code></pre></div>
+<h2 id="edge-examples">Edge Examples</h2>
+<p>Extract example edges for each predicate:</p>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>edge-examples<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>examples/<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--limit<span class="w"> </span><span class="m">10</span>
+</code></pre></div>
+<h2 id="schema-reporting">Schema Reporting</h2>
+<p>All operations support optional schema reporting with <code>--schema-report</code> flag.</p>
+<h3 id="report-contents">Report Contents</h3>
+<p>Schema reports include:
+- <strong>File analysis</strong>: Format detection, column counts, record counts
+- <strong>Schema summary</strong>: Unique columns across all files
+- <strong>Column details</strong>: Data types, null percentages, example values
+- <strong>Format compatibility</strong>: Cross-format column mapping</p>
+<h3 id="report-formats">Report Formats</h3>
+<p><strong>CLI Summary</strong>:
+<div class="highlight"><pre><span></span><code>📋 Schema Analysis:
+  - Nodes: 4 files, 23 unique columns
+  - Edges: 2 files, 18 unique columns
+📊 Column Coverage:
+  - id: 100% (required field)
+  - category: 100% (nodes only)
+  - predicate: 100% (edges only)
+  - custom_score: 25% (extension field)
+</code></pre></div></p>
+<p><strong>YAML Report</strong> (saved as <code>{database_name}_schema_report_{operation}.yaml</code>):
+<div class="highlight"><pre><span></span><code><span class="nt">operation</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">join</span>
+<span class="nt">timestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2024-01-15T10:30:45&quot;</span>
+<span class="nt">summary</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">nodes</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">file_count</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<span class="w">    </span><span class="nt">unique_columns</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">23</span>
+<span class="w">    </span><span class="nt">total_records</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">125340</span>
+<span class="w">  </span><span class="nt">edges</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">file_count</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span><span class="w">  </span>
+<span class="w">    </span><span class="nt">unique_columns</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">18</span>
+<span class="w">    </span><span class="nt">total_records</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">298567</span>
+<span class="nt">files</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;genes.tsv&quot;</span>
+<span class="w">    </span><span class="nt">format</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TSV&quot;</span>
+<span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;nodes&quot;</span>
+<span class="w">    </span><span class="nt">records</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50000</span>
+<span class="w">    </span><span class="nt">columns</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;VARCHAR&quot;</span><span class="p p-Indicator">,</span><span class="nt"> null_pct</span><span class="p">:</span><span class="w"> </span><span class="nv">0</span><span class="p p-Indicator">}</span>
+<span class="w">      </span><span class="nt">category</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;VARCHAR&quot;</span><span class="p p-Indicator">,</span><span class="nt"> null_pct</span><span class="p">:</span><span class="w"> </span><span class="nv">0</span><span class="p p-Indicator">}</span>
+<span class="w">      </span><span class="c1"># ... additional columns</span>
+</code></pre></div></p>
+<h2 id="multi-format-support">Multi-Format Support</h2>
+<h3 id="supported-formats">Supported Formats</h3>
+<ul>
+<li><strong>TSV</strong>: Tab-separated values (standard KGX format)</li>
+<li><strong>JSONL</strong>: JSON Lines (one JSON object per line)</li>
+<li><strong>Parquet</strong>: Columnar format for analytics</li>
+</ul>
+<h3 id="format-detection">Format Detection</h3>
+<p>Automatic detection based on:
+1. File extension (<code>.tsv</code>, <code>.jsonl</code>, <code>.parquet</code>)
+2. Compression support (<code>.gz</code>, <code>.bz2</code>)
+3. Content analysis for ambiguous cases</p>
+<h3 id="mixed-format-operations">Mixed-Format Operations</h3>
+<p>All operations seamlessly handle mixed formats:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Join files in different formats</span>
+koza<span class="w"> </span>join<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>genes.tsv<span class="w"> </span>proteins.jsonl<span class="w"> </span>pathways.parquet<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span>interactions.tsv.gz<span class="w"> </span>associations.jsonl.bz2<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>mixed_graph.duckdb
+</code></pre></div>
+<h3 id="format-conversion_1">Format Conversion</h3>
+<p>Operations can convert between formats:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Convert TSV to Parquet during split</span>
+koza<span class="w"> </span>split<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>tsv_graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--split-on<span class="w"> </span>provided_by<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output-format<span class="w"> </span>parquet
+</code></pre></div>
+<h2 id="performance-considerations">Performance Considerations</h2>
+<h3 id="memory-management">Memory Management</h3>
+<ul>
+<li><strong>Streaming</strong>: Large files processed in chunks</li>
+<li><strong>Lazy evaluation</strong>: Operations chained without intermediate copies  </li>
+<li><strong>Compression</strong>: Support for compressed inputs reduces I/O</li>
+</ul>
+<h3 id="query-optimization">Query Optimization</h3>
+<ul>
+<li><strong>DuckDB engine</strong>: Vectorized execution and query optimization</li>
+<li><strong>Columnar storage</strong>: Efficient for analytical workloads</li>
+<li><strong>Parallel processing</strong>: Multi-threaded operations where possible</li>
+</ul>
+<h3 id="best-practices">Best Practices</h3>
+<ol>
+<li><strong>Use compressed files</strong> (<code>.gz</code>) to reduce I/O time</li>
+<li><strong>Enable progress bars</strong> (<code>--show-progress</code>) for long operations</li>
+<li><strong>Use <code>merge</code> for complete pipelines</strong> - handles deduplication, normalization, and pruning</li>
+<li><strong>Monitor disk space</strong> for large join operations</li>
+<li><strong>Use Parquet format</strong> for repeated analytical workloads</li>
+<li><strong>Generate QC reports</strong> after operations to verify data quality</li>
+</ol>
+<h2 id="error-handling-and-recovery">Error Handling and Recovery</h2>
+<h3 id="common-issues">Common Issues</h3>
+<p><strong>File not found</strong>:
+<div class="highlight"><pre><span></span><code>Error: File not found: missing_file.tsv
+Solution: Verify file paths and permissions
+</code></pre></div></p>
+<p><strong>Schema conflicts</strong>:
+<div class="highlight"><pre><span></span><code>Warning: Type conflict for column &#39;score&#39; (INTEGER vs VARCHAR)
+Resolution: DuckDB will use most permissive type (VARCHAR)
+</code></pre></div></p>
+<p><strong>Memory limits</strong>:
+<div class="highlight"><pre><span></span><code>Error: Out of memory during operation
+Solution: Process files in smaller batches or increase system memory
+</code></pre></div></p>
+<h3 id="recovery-strategies">Recovery Strategies</h3>
+<ol>
+<li><strong>Non-destructive operations</strong>: Original data preserved in archive tables</li>
+<li><strong>Transaction safety</strong>: Operations are atomic (all succeed or all fail)  </li>
+<li><strong>Backup recommendations</strong>: Copy databases before destructive operations</li>
+<li><strong>Logging</strong>: Comprehensive logging for debugging issues</li>
+</ol>
+<h3 id="data-integrity">Data Integrity</h3>
+<p>All operations maintain referential integrity:
+- Dangling edges moved to separate tables (not deleted)
+- Schema changes tracked and reversible
+- Duplicate data preserved with clear provenance
+- Foreign key relationships maintained where possible</p>
+<h2 id="advanced-usage-examples">Advanced Usage Examples</h2>
+<h3 id="pipeline-workflows">Pipeline Workflows</h3>
+<p>Chain multiple operations for complete graph processing:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Complete graph processing pipeline</span>
+koza<span class="w"> </span>join<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>*.nodes.*<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span>*.edges.*<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>raw_graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--schema-report
+
+koza<span class="w"> </span>prune<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>raw_graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--keep-singletons
+
+koza<span class="w"> </span>append<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>raw_graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>corrections.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--deduplicate
+
+koza<span class="w"> </span>split<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>raw_graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--split-on<span class="w"> </span>namespace<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output-format<span class="w"> </span>parquet<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output-dir<span class="w"> </span>final_graphs
+</code></pre></div>
+<h3 id="configuration-files">Configuration Files</h3>
+<p>Use configuration files for complex operations:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># join_config.yaml</span>
+<span class="nt">nodes</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;genes.tsv&quot;</span>
+<span class="w">    </span><span class="nt">source_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;gene_source&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;proteins.jsonl&quot;</span>
+<span class="w">    </span><span class="nt">source_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;protein_source&quot;</span>
+<span class="nt">edges</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;interactions.parquet&quot;</span>
+<span class="w">    </span><span class="nt">source_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;interaction_source&quot;</span>
+<span class="nt">output</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;configured_graph.duckdb&quot;</span>
+<span class="nt">schema_report</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="nt">show_progress</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>join<span class="w"> </span>--config<span class="w"> </span>join_config.yaml
+</code></pre></div>
+<h3 id="batch-processing">Batch Processing</h3>
+<p>Process multiple databases in batch:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Process all databases in directory</span>
+<span class="k">for</span><span class="w"> </span>db<span class="w"> </span><span class="k">in</span><span class="w"> </span>*.duckdb<span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Processing </span><span class="nv">$db</span><span class="s2">&quot;</span>
+<span class="w">  </span>koza<span class="w"> </span>prune<span class="w"> </span>--database<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$db</span><span class="s2">&quot;</span><span class="w"> </span>--keep-singletons<span class="w"> </span>--quiet
+<span class="w">  </span>koza<span class="w"> </span>split<span class="w"> </span>--database<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$db</span><span class="s2">&quot;</span><span class="w"> </span>--split-on<span class="w"> </span>provided_by<span class="w"> </span>--output-dir<span class="w"> </span><span class="s2">&quot;./split_</span><span class="k">$(</span>basename<span class="w"> </span><span class="nv">$db</span><span class="w"> </span>.duckdb<span class="k">)</span><span class="s2">&quot;</span>
+<span class="k">done</span>
+</code></pre></div>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="performance-issues">Performance Issues</h3>
+<p><strong>Slow join operations</strong>:
+- Check available memory and disk space
+- Use compressed input files
+- Consider processing files in smaller batches</p>
+<p><strong>High memory usage</strong>:
+- Enable streaming mode (automatic for large files)
+- Close other applications during processing
+- Use temporary directories on fast storage</p>
+<h3 id="data-quality-issues">Data Quality Issues</h3>
+<p><strong>Unexpected schema changes</strong>:
+- Review schema reports for column additions
+- Verify input file consistency
+- Check for encoding issues in text files</p>
+<p><strong>Missing data after operations</strong>:
+- Check archive tables (<code>dangling_edges</code>, <code>singleton_nodes</code>)
+- Review operation logs for warnings
+- Verify input file integrity</p>
+<h3 id="getting-help">Getting Help</h3>
+<p>For additional support:
+- Check operation-specific help: <code>koza {operation} --help</code>
+- Review schema reports for data insights
+- Enable verbose logging with <code>--debug</code> flag
+- Consult the <a href="https://koza.monarchinitiative.org/">Koza documentation</a></p>
+<h2 id="migration-from-cat-merge">Migration from cat-merge</h2>
+<p>For users migrating from cat-merge workflows:</p>
+<h3 id="equivalent-operations">Equivalent Operations</h3>
+<table>
+<thead>
+<tr>
+<th>cat-merge</th>
+<th>Koza Graph Operations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>merge()</code></td>
+<td><code>koza merge</code> (recommended) or <code>koza join</code> + <code>koza prune</code></td>
+</tr>
+<tr>
+<td>Directory merge</td>
+<td><code>koza merge --nodes *.nodes.* --edges *.edges.*</code></td>
+</tr>
+<tr>
+<td>Format conversion</td>
+<td><code>koza split --output-format {format}</code></td>
+</tr>
+<tr>
+<td>SSSOM normalization</td>
+<td><code>koza normalize --mappings *.sssom.tsv</code></td>
+</tr>
+<tr>
+<td>Deduplication</td>
+<td>Included in <code>koza merge</code> or <code>koza append --deduplicate</code></td>
+</tr>
+<tr>
+<td>QC reporting</td>
+<td><code>koza report qc --database graph.duckdb</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="key-improvements">Key Improvements</h3>
+<ol>
+<li><strong>Multi-format support</strong>: No longer limited to TSV</li>
+<li><strong>Schema flexibility</strong>: Automatic handling of column differences</li>
+<li><strong>Data preservation</strong>: Non-destructive operations with archiving</li>
+<li><strong>Rich CLI</strong>: Progress bars, statistics, and detailed reporting</li>
+<li><strong>Incremental updates</strong>: Append operation for database evolution</li>
+<li><strong>Composite pipelines</strong>: <code>koza merge</code> handles join → deduplicate → normalize → prune in one command</li>
+<li><strong>SSSOM normalization</strong>: Built-in support for identifier mapping via SSSOM files</li>
+<li><strong>Comprehensive reporting</strong>: QC reports, graph stats, schema analysis, and example extraction</li>
+</ol>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://monarchinitiative.org" target="_blank" rel="noopener" title="monarchinitiative.org" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M277.8 8.6c-12.3-11.4-31.3-11.4-43.5 0l-224 208c-9.6 9-12.8 22.9-8 35.1S18.8 272 32 272h16v176c0 35.3 28.7 64 64 64h288c35.3 0 64-28.7 64-64V272h16c13.2 0 25-8.1 29.8-20.3s1.6-26.2-8-35.1zM240 320h32c26.5 0 48 21.5 48 48v96H192v-96c0-26.5 21.5-48 48-48"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/monarch-initiative/" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["content.code.copy", "navigation.expand", "navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

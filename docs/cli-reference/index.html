@@ -1,0 +1,2253 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://koza.monarchinitiative.org/cli-reference/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../images/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Koza CLI Reference - Koza Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,300i,400,400i,700,700i%7CSource+Sans+Pro+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Source Sans Pro";--md-code-font:"Source Sans Pro Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#koza-cli-reference" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Koza Documentation" class="md-header__button md-logo" aria-label="Koza Documentation" data-md-component="logo">
+      
+  <img src="../img/pupa.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Koza Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Koza CLI Reference
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 2c-1.82 0-3.53.5-5 1.35C8 5.08 10 8.3 10 12s-2 6.92-5 8.65C6.47 21.5 8.18 22 10 22a10 10 0 0 0 10-10A10 10 0 0 0 10 2"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/monarch-initiative/koza" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    monarch-initiative/koza
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Welcome
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../Ingests/" class="md-tabs__link">
+          
+  
+  
+  Ingests
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../Usage/CLI/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  CLI
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../Usage/Module/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Module
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Koza Documentation" class="md-nav__button md-logo" aria-label="Koza Documentation" data-md-component="logo">
+      
+  <img src="../img/pupa.png" alt="logo">
+
+    </a>
+    Koza Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/monarch-initiative/koza" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    monarch-initiative/koza
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Welcome
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ingests
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Ingests
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Ingests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuring an Ingest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Ingests/koza_config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Koza Config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Ingests/mapping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mapping
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Ingests/transform/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Transform Code
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Ingests/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Usage/CLI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Usage/Module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Module
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#global-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Global Options
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Global Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#version-information" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version Information
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Commands
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#transform" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        transform
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="transform">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#synopsis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Synopsis
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#arguments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Arguments
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Examples
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#join" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        join
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="join">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#synopsis_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Synopsis
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#options_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-specification-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Specification Formats
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#examples_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Examples
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#split" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        split
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="split">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#synopsis_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Synopsis
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#options_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#examples_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Examples
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prune" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        prune
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="prune">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#synopsis_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Synopsis
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#options_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#singleton-node-strategies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Singleton Node Strategies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#examples_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Examples
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#append" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        append
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="append">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#synopsis_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Synopsis
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#options_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#schema-evolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Schema Evolution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deduplication-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deduplication Strategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#examples_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Examples
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Patterns
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#file-specification-formats_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Specification Formats
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="File Specification Formats">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#glob-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Glob Patterns
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#source-attribution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Source Attribution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mixed-specifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mixed Specifications
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#progress-and-logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Progress and Logging
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Progress and Logging">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#progress-indicators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Progress Indicators
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#log-levels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Log Levels
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output Formats
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Output Formats">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#supported-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supported Formats
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#format-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Format Selection
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Handling
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Error Handling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-error-messages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Error Messages
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common Error Messages">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#file-not-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Not Found
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#database-not-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Database Not Found
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#schema-conflicts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Schema Conflicts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#permission-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Permission Issues
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Codes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance-tips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Tips
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Performance Tips">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#for-large-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        For Large Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memory-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memory Optimization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#automation-scripts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automation Scripts
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#integration-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Integration Examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Integration Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#shell-scripts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shell Scripts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cicd-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CI/CD Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#getting-help" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Getting Help
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debug-information" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Debug Information
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Monitoring
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="koza-cli-reference">Koza CLI Reference</h1>
+<p>Complete reference for all Koza command-line interface commands and options.</p>
+<h2 id="global-options">Global Options</h2>
+<h3 id="version-information">Version Information</h3>
+<p><div class="highlight"><pre><span></span><code>koza<span class="w"> </span>--version
+</code></pre></div>
+Display the current Koza version and exit.</p>
+<hr />
+<h2 id="commands">Commands</h2>
+<h3 id="transform">transform</h3>
+<p>Transform biomedical data sources into KGX format using semi-declarative Python transforms.</p>
+<h4 id="synopsis">Synopsis</h4>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>transform<span class="w"> </span>CONFIGURATION_YAML<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</code></pre></div>
+<h4 id="arguments">Arguments</h4>
+<ul>
+<li><code>CONFIGURATION_YAML</code> (required) - Path to the transform configuration YAML file</li>
+</ul>
+<h4 id="options">Options</h4>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Short</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--input-file</code></td>
+<td><code>-i</code></td>
+<td>List[str]</td>
+<td>None</td>
+<td>Override input files specified in configuration</td>
+</tr>
+<tr>
+<td><code>--output-dir</code></td>
+<td><code>-o</code></td>
+<td>str</td>
+<td><code>./output</code></td>
+<td>Path to output directory</td>
+</tr>
+<tr>
+<td><code>--output-format</code></td>
+<td><code>-f</code></td>
+<td>OutputFormat</td>
+<td><code>tsv</code></td>
+<td>Output format (<code>tsv</code>, <code>jsonl</code>, <code>parquet</code>)</td>
+</tr>
+<tr>
+<td><code>--limit</code></td>
+<td><code>-n</code></td>
+<td>int</td>
+<td>0</td>
+<td>Number of rows to process (0 = all)</td>
+</tr>
+<tr>
+<td><code>--progress</code></td>
+<td><code>-p</code></td>
+<td>bool</td>
+<td>False</td>
+<td>Display progress bar during transform</td>
+</tr>
+<tr>
+<td><code>--quiet</code></td>
+<td><code>-q</code></td>
+<td>bool</td>
+<td>False</td>
+<td>Suppress output except errors</td>
+</tr>
+<tr>
+<td><code>--global-table</code></td>
+<td></td>
+<td>str</td>
+<td>None</td>
+<td>Path to global translation table YAML</td>
+</tr>
+<tr>
+<td><code>--local-table</code></td>
+<td></td>
+<td>str</td>
+<td>None</td>
+<td>Path to local translation table YAML</td>
+</tr>
+<tr>
+<td><code>--log-level</code></td>
+<td></td>
+<td>str</td>
+<td><code>WARNING</code></td>
+<td>Set logging level</td>
+</tr>
+<tr>
+<td><code>--log-conf</code></td>
+<td></td>
+<td>str</td>
+<td>None</td>
+<td>Path to logging configuration file</td>
+</tr>
+</tbody>
+</table>
+<h4 id="examples">Examples</h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># Basic transform</span>
+koza<span class="w"> </span>transform<span class="w"> </span>examples/string/protein-links-detailed.yaml
+
+<span class="c1"># Transform with custom output directory and format</span>
+koza<span class="w"> </span>transform<span class="w"> </span>config.yaml<span class="w"> </span>-o<span class="w"> </span>./results<span class="w"> </span>-f<span class="w"> </span>jsonl
+
+<span class="c1"># Transform with progress and row limit</span>
+koza<span class="w"> </span>transform<span class="w"> </span>config.yaml<span class="w"> </span>--progress<span class="w"> </span>--limit<span class="w"> </span><span class="m">1000</span>
+
+<span class="c1"># Transform with global translation table</span>
+koza<span class="w"> </span>transform<span class="w"> </span>config.yaml<span class="w"> </span>--global-table<span class="w"> </span>translation.yaml
+</code></pre></div>
+<hr />
+<h3 id="join">join</h3>
+<p>Combine multiple KGX files into a unified DuckDB database with automatic schema harmonization.</p>
+<h4 id="synopsis_1">Synopsis</h4>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>join<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</code></pre></div>
+<h4 id="options_1">Options</h4>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--nodes</code></td>
+<td>List[str]</td>
+<td>None</td>
+<td>Node files to join (supports glob patterns)</td>
+</tr>
+<tr>
+<td><code>--edges</code></td>
+<td>List[str]</td>
+<td>None</td>
+<td>Edge files to join (supports glob patterns)</td>
+</tr>
+<tr>
+<td><code>--input-dir</code></td>
+<td>Path</td>
+<td>None</td>
+<td>Directory containing KGX files (auto-discovers)</td>
+</tr>
+<tr>
+<td><code>--output</code></td>
+<td>str</td>
+<td><code>joined_graph.duckdb</code></td>
+<td>Output DuckDB database path</td>
+</tr>
+<tr>
+<td><code>--schema-report</code></td>
+<td>bool</td>
+<td>False</td>
+<td>Generate detailed schema analysis report</td>
+</tr>
+<tr>
+<td><code>--show-progress</code></td>
+<td>bool</td>
+<td>False</td>
+<td>Display progress bars during loading</td>
+</tr>
+<tr>
+<td><code>--quiet</code></td>
+<td>bool</td>
+<td>False</td>
+<td>Suppress all output except errors</td>
+</tr>
+</tbody>
+</table>
+<h4 id="file-specification-formats">File Specification Formats</h4>
+<p><strong>Simple paths</strong>:
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>join<span class="w"> </span>--nodes<span class="w"> </span>genes.tsv<span class="w"> </span>proteins.jsonl<span class="w"> </span>--edges<span class="w"> </span>interactions.parquet
+</code></pre></div></p>
+<p><strong>With source names</strong>:
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>join<span class="w"> </span>--nodes<span class="w"> </span><span class="s2">&quot;genes:genes.tsv&quot;</span><span class="w"> </span><span class="s2">&quot;proteins:proteins.jsonl&quot;</span>
+</code></pre></div></p>
+<p><strong>Glob patterns</strong>:
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>join<span class="w"> </span>--nodes<span class="w"> </span><span class="s2">&quot;*.nodes.*&quot;</span><span class="w"> </span>--edges<span class="w"> </span><span class="s2">&quot;*.edges.*&quot;</span>
+</code></pre></div></p>
+<h4 id="examples_1">Examples</h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># Basic join with mixed formats</span>
+koza<span class="w"> </span>join<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>genes.tsv<span class="w"> </span>proteins.jsonl<span class="w"> </span>pathways.parquet<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span>gene_protein.tsv<span class="w"> </span>protein_pathway.jsonl<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>unified_graph.duckdb
+
+<span class="c1"># Join with schema reporting and progress</span>
+koza<span class="w"> </span>join<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span><span class="s2">&quot;*.nodes.*&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span><span class="s2">&quot;*.edges.*&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--schema-report<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--show-progress
+
+<span class="c1"># Auto-discover files in directory</span>
+koza<span class="w"> </span>join<span class="w"> </span>--input-dir<span class="w"> </span>./kgx_files<span class="w"> </span>--output<span class="w"> </span>merged.duckdb
+
+<span class="c1"># Quiet operation for scripts</span>
+koza<span class="w"> </span>join<span class="w"> </span>--nodes<span class="w"> </span><span class="s2">&quot;*.nodes.tsv&quot;</span><span class="w"> </span>--edges<span class="w"> </span><span class="s2">&quot;*.edges.tsv&quot;</span><span class="w"> </span>--quiet
+</code></pre></div>
+<h4 id="output">Output</h4>
+<ul>
+<li><strong>Database file</strong>: DuckDB database with <code>nodes</code> and <code>edges</code> tables</li>
+<li><strong>Schema report</strong>: <code>{output}_schema_report_join.yaml</code> (if <code>--schema-report</code>)</li>
+<li><strong>CLI summary</strong>: Files processed, records loaded, schema harmonization details</li>
+</ul>
+<hr />
+<h3 id="split">split</h3>
+<p>Extract subsets of data from a DuckDB database with configurable filters and format conversion.</p>
+<h4 id="synopsis_2">Synopsis</h4>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>split<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</code></pre></div>
+<h4 id="options_2">Options</h4>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--database</code></td>
+<td>Path</td>
+<td>Required</td>
+<td>Input DuckDB database path</td>
+</tr>
+<tr>
+<td><code>--split-on</code></td>
+<td>str</td>
+<td>Required</td>
+<td>Column to split on (creates separate files per value)</td>
+</tr>
+<tr>
+<td><code>--output-dir</code></td>
+<td>Path</td>
+<td><code>./split_output</code></td>
+<td>Directory for output files</td>
+</tr>
+<tr>
+<td><code>--output-format</code></td>
+<td>KGXFormat</td>
+<td><code>tsv</code></td>
+<td>Output format (<code>tsv</code>, <code>jsonl</code>, <code>parquet</code>)</td>
+</tr>
+<tr>
+<td><code>--filter-nodes</code></td>
+<td>str</td>
+<td>None</td>
+<td>SQL WHERE clause for filtering nodes</td>
+</tr>
+<tr>
+<td><code>--filter-edges</code></td>
+<td>str</td>
+<td>None</td>
+<td>SQL WHERE clause for filtering edges</td>
+</tr>
+<tr>
+<td><code>--show-progress</code></td>
+<td>bool</td>
+<td>False</td>
+<td>Display progress bars during export</td>
+</tr>
+<tr>
+<td><code>--quiet</code></td>
+<td>bool</td>
+<td>False</td>
+<td>Suppress all output except errors</td>
+</tr>
+</tbody>
+</table>
+<h4 id="examples_2">Examples</h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># Split by source with original format</span>
+koza<span class="w"> </span>split<span class="w"> </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span>--split-on<span class="w"> </span>provided_by
+
+<span class="c1"># Split with format conversion to Parquet</span>
+koza<span class="w"> </span>split<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--split-on<span class="w"> </span>namespace<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output-format<span class="w"> </span>parquet<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output-dir<span class="w"> </span>./parquet_output
+
+<span class="c1"># Split with custom filters</span>
+koza<span class="w"> </span>split<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--split-on<span class="w"> </span>category<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--filter-nodes<span class="w"> </span><span class="s2">&quot;namespace=&#39;HGNC&#39;&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--filter-edges<span class="w"> </span><span class="s2">&quot;predicate=&#39;biolink:interacts_with&#39;&quot;</span>
+
+<span class="c1"># Split with progress tracking</span>
+koza<span class="w"> </span>split<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>large_graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--split-on<span class="w"> </span>provided_by<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--show-progress
+</code></pre></div>
+<h4 id="output_1">Output</h4>
+<p>For each unique value in the split column, creates:
+- <code>{value}_nodes.{format}</code> - Node data for that value
+- <code>{value}_edges.{format}</code> - Edge data for that value</p>
+<hr />
+<h3 id="prune">prune</h3>
+<p>Clean up graph integrity issues by handling dangling edges and singleton nodes.</p>
+<h4 id="synopsis_3">Synopsis</h4>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>prune<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</code></pre></div>
+<h4 id="options_3">Options</h4>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--database</code></td>
+<td>Path</td>
+<td>Required</td>
+<td>DuckDB database to prune</td>
+</tr>
+<tr>
+<td><code>--keep-singletons</code></td>
+<td>bool</td>
+<td>False</td>
+<td>Preserve isolated nodes in main graph</td>
+</tr>
+<tr>
+<td><code>--remove-singletons</code></td>
+<td>bool</td>
+<td>False</td>
+<td>Move isolated nodes to separate table</td>
+</tr>
+<tr>
+<td><code>--dry-run</code></td>
+<td>bool</td>
+<td>False</td>
+<td>Preview changes without applying them</td>
+</tr>
+<tr>
+<td><code>--show-progress</code></td>
+<td>bool</td>
+<td>False</td>
+<td>Display progress bars during operation</td>
+</tr>
+<tr>
+<td><code>--quiet</code></td>
+<td>bool</td>
+<td>False</td>
+<td>Suppress all output except errors</td>
+</tr>
+</tbody>
+</table>
+<h4 id="singleton-node-strategies">Singleton Node Strategies</h4>
+<p><strong>Keep singletons</strong> (default behavior):
+- Isolated nodes remain in <code>nodes</code> table
+- Only dangling edges are moved</p>
+<p><strong>Remove singletons</strong>:
+- Isolated nodes moved to <code>singleton_nodes</code> table
+- Main graph contains only connected nodes</p>
+<h4 id="examples_3">Examples</h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># Basic pruning with singleton preservation</span>
+koza<span class="w"> </span>prune<span class="w"> </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span>--keep-singletons
+
+<span class="c1"># Remove singletons to separate table</span>
+koza<span class="w"> </span>prune<span class="w"> </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span>--remove-singletons
+
+<span class="c1"># Preview changes without applying</span>
+koza<span class="w"> </span>prune<span class="w"> </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span>--dry-run
+
+<span class="c1"># Quiet operation for automation</span>
+koza<span class="w"> </span>prune<span class="w"> </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span>--keep-singletons<span class="w"> </span>--quiet
+
+<span class="c1"># With progress tracking for large graphs</span>
+koza<span class="w"> </span>prune<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>large_graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--remove-singletons<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--show-progress
+</code></pre></div>
+<h4 id="output_2">Output</h4>
+<p>Creates additional tables for data preservation:
+- <strong><code>dangling_edges</code></strong>: Edges pointing to non-existent nodes
+- <strong><code>singleton_nodes</code></strong>: Isolated nodes (if <code>--remove-singletons</code>)
+- <strong>CLI summary</strong>: Counts of edges/nodes moved, integrity statistics</p>
+<hr />
+<h3 id="append">append</h3>
+<p>Add new KGX files to existing databases with schema evolution and optional deduplication.</p>
+<h4 id="synopsis_4">Synopsis</h4>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>append<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</code></pre></div>
+<h4 id="options_4">Options</h4>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--database</code></td>
+<td>Path</td>
+<td>Required</td>
+<td>Existing DuckDB database to append to</td>
+</tr>
+<tr>
+<td><code>--nodes</code></td>
+<td>List[str]</td>
+<td>None</td>
+<td>Node files to append</td>
+</tr>
+<tr>
+<td><code>--edges</code></td>
+<td>List[str]</td>
+<td>None</td>
+<td>Edge files to append</td>
+</tr>
+<tr>
+<td><code>--deduplicate</code></td>
+<td>bool</td>
+<td>False</td>
+<td>Remove exact duplicates after appending</td>
+</tr>
+<tr>
+<td><code>--schema-report</code></td>
+<td>bool</td>
+<td>False</td>
+<td>Generate schema analysis after append</td>
+</tr>
+<tr>
+<td><code>--show-progress</code></td>
+<td>bool</td>
+<td>False</td>
+<td>Display progress bars during loading</td>
+</tr>
+<tr>
+<td><code>--quiet</code></td>
+<td>bool</td>
+<td>False</td>
+<td>Suppress all output except errors</td>
+</tr>
+</tbody>
+</table>
+<h4 id="schema-evolution">Schema Evolution</h4>
+<p>When appending files with new columns:
+- New columns automatically added to existing tables
+- Existing records get NULL values for new columns
+- All schema changes are tracked and reported</p>
+<h4 id="deduplication-strategy">Deduplication Strategy</h4>
+<p>When <code>--deduplicate</code> is enabled:
+- Removes exact duplicates by ID field
+- Keeps first occurrence of each duplicate ID
+- Operates on both nodes and edges tables
+- Reports number of duplicates removed</p>
+<h4 id="examples_4">Examples</h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># Basic append operation</span>
+koza<span class="w"> </span>append<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>existing_graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>new_genes.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span>new_interactions.jsonl
+
+<span class="c1"># Append with deduplication and schema reporting</span>
+koza<span class="w"> </span>append<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>genes_with_new_fields.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span>updated_interactions.parquet<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--deduplicate<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--schema-report
+
+<span class="c1"># Append multiple files with progress</span>
+koza<span class="w"> </span>append<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span><span class="s2">&quot;new_*.nodes.*&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span><span class="s2">&quot;new_*.edges.*&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--show-progress
+
+<span class="c1"># Quiet append for automation</span>
+koza<span class="w"> </span>append<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>corrections.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--quiet
+</code></pre></div>
+<h4 id="output_3">Output</h4>
+<ul>
+<li><strong>Schema changes</strong>: Reports new columns added and their sources</li>
+<li><strong>Record counts</strong>: Shows before/after record counts for nodes and edges</li>
+<li><strong>Duplicate statistics</strong>: Number of duplicates removed (if <code>--deduplicate</code>)</li>
+<li><strong>Schema report</strong>: Detailed analysis (if <code>--schema-report</code>)</li>
+</ul>
+<hr />
+<h2 id="common-patterns">Common Patterns</h2>
+<h3 id="file-specification-formats_1">File Specification Formats</h3>
+<p>All commands that accept file lists support multiple specification formats:</p>
+<h4 id="glob-patterns">Glob Patterns</h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># Match all node files</span>
+--nodes<span class="w"> </span><span class="s2">&quot;*.nodes.*&quot;</span>
+
+<span class="c1"># Match specific formats</span>
+--nodes<span class="w"> </span><span class="s2">&quot;*.tsv&quot;</span><span class="w"> </span>--edges<span class="w"> </span><span class="s2">&quot;*.jsonl&quot;</span>
+
+<span class="c1"># Complex patterns</span>
+--nodes<span class="w"> </span><span class="s2">&quot;**/genes*.{tsv,jsonl}&quot;</span>
+</code></pre></div>
+<h4 id="source-attribution">Source Attribution</h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># Assign source names to files</span>
+--nodes<span class="w"> </span><span class="s2">&quot;genes:genes.tsv&quot;</span><span class="w"> </span><span class="s2">&quot;proteins:proteins.jsonl&quot;</span>
+--edges<span class="w"> </span><span class="s2">&quot;interactions:interactions.parquet&quot;</span>
+</code></pre></div>
+<h4 id="mixed-specifications">Mixed Specifications</h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># Combine different formats</span>
+--nodes<span class="w"> </span>genes.tsv<span class="w"> </span><span class="s2">&quot;pathways:pathways.jsonl&quot;</span><span class="w"> </span>proteins.parquet
+</code></pre></div>
+<h3 id="progress-and-logging">Progress and Logging</h3>
+<h4 id="progress-indicators">Progress Indicators</h4>
+<ul>
+<li><code>--show-progress</code>: Display progress bars for file operations</li>
+<li><code>--quiet</code>: Suppress all non-error output</li>
+<li>Cannot use both flags together</li>
+</ul>
+<h4 id="log-levels">Log Levels</h4>
+<p>Available for <code>transform</code> command:
+- <code>DEBUG</code>: Verbose debugging information
+- <code>INFO</code>: General information messages<br />
+- <code>WARNING</code>: Warning messages (default)
+- <code>ERROR</code>: Error messages only</p>
+<h3 id="output-formats">Output Formats</h3>
+<h4 id="supported-formats">Supported Formats</h4>
+<ul>
+<li><strong>TSV</strong>: Tab-separated values (KGX standard)</li>
+<li><strong>JSONL</strong>: JSON Lines format  </li>
+<li><strong>Parquet</strong>: Columnar format for analytics</li>
+</ul>
+<h4 id="format-selection">Format Selection</h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># Explicit format specification</span>
+--output-format<span class="w"> </span>tsv
+--output-format<span class="w"> </span>jsonl<span class="w">  </span>
+--output-format<span class="w"> </span>parquet
+
+<span class="c1"># Automatic format detection from file extensions</span>
+<span class="c1"># genes.tsv → TSV format</span>
+<span class="c1"># genes.jsonl → JSONL format</span>
+<span class="c1"># genes.parquet → Parquet format</span>
+</code></pre></div>
+<h2 id="error-handling">Error Handling</h2>
+<h3 id="common-error-messages">Common Error Messages</h3>
+<h4 id="file-not-found">File Not Found</h4>
+<p><div class="highlight"><pre><span></span><code>Error: File not found: missing_file.tsv
+</code></pre></div>
+<strong>Solution</strong>: Verify file paths and check file permissions</p>
+<h4 id="database-not-found">Database Not Found</h4>
+<p><div class="highlight"><pre><span></span><code>Error: Database not found: nonexistent.duckdb
+</code></pre></div>
+<strong>Solution</strong>: Verify database path or create database with <code>join</code> command first</p>
+<h4 id="schema-conflicts">Schema Conflicts</h4>
+<p><div class="highlight"><pre><span></span><code>Warning: Type conflict for column &#39;score&#39; (INTEGER vs VARCHAR)
+</code></pre></div>
+<strong>Resolution</strong>: DuckDB automatically resolves to most permissive type</p>
+<h4 id="permission-issues">Permission Issues</h4>
+<p><div class="highlight"><pre><span></span><code>Error: Permission denied writing to output directory
+</code></pre></div>
+<strong>Solution</strong>: Check write permissions on output directory</p>
+<h3 id="exit-codes">Exit Codes</h3>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>Success</td>
+</tr>
+<tr>
+<td>1</td>
+<td>General error (file not found, permission denied, etc.)</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Invalid arguments or configuration</td>
+</tr>
+<tr>
+<td>130</td>
+<td>Interrupted by user (Ctrl+C)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="performance-tips">Performance Tips</h2>
+<h3 id="for-large-files">For Large Files</h3>
+<ol>
+<li><strong>Use compressed formats</strong> (<code>.gz</code>, <code>.bz2</code>) to reduce I/O</li>
+<li><strong>Enable progress bars</strong> to monitor long operations  </li>
+<li><strong>Use Parquet format</strong> for repeated analytical operations</li>
+<li><strong>Process in chunks</strong> using directory-based operations</li>
+</ol>
+<h3 id="memory-optimization">Memory Optimization</h3>
+<ol>
+<li><strong>Close other applications</strong> during large operations</li>
+<li><strong>Use streaming operations</strong> (automatic for large files)</li>
+<li><strong>Monitor disk space</strong> for join operations</li>
+<li><strong>Consider temporary directory</strong> on fast storage</li>
+</ol>
+<h3 id="automation-scripts">Automation Scripts</h3>
+<ol>
+<li><strong>Use <code>--quiet</code> flag</strong> to suppress output in scripts</li>
+<li><strong>Check exit codes</strong> for error handling</li>
+<li><strong>Enable logging</strong> for debugging automated workflows</li>
+<li><strong>Use glob patterns</strong> for flexible file matching</li>
+</ol>
+<h2 id="integration-examples">Integration Examples</h2>
+<h3 id="shell-scripts">Shell Scripts</h3>
+<div class="highlight"><pre><span></span><code><span class="ch">#!/bin/bash</span>
+<span class="c1"># Complete graph processing pipeline</span>
+
+<span class="nb">set</span><span class="w"> </span>-e<span class="w">  </span><span class="c1"># Exit on error</span>
+
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Starting graph processing pipeline...&quot;</span>
+
+<span class="c1"># Join all source files</span>
+koza<span class="w"> </span>join<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span><span class="s2">&quot;sources/*.nodes.*&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span><span class="s2">&quot;sources/*.edges.*&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>raw_graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--show-progress
+
+<span class="c1"># Clean up integrity issues</span>
+koza<span class="w"> </span>prune<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>raw_graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--keep-singletons
+
+<span class="c1"># Add corrected data</span>
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-f<span class="w"> </span><span class="s2">&quot;corrections.tsv&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">  </span>koza<span class="w"> </span>append<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--database<span class="w"> </span>raw_graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--nodes<span class="w"> </span>corrections.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--deduplicate<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--quiet
+<span class="k">fi</span>
+
+<span class="c1"># Export by namespace</span>
+koza<span class="w"> </span>split<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>raw_graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--split-on<span class="w"> </span>namespace<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output-format<span class="w"> </span>parquet<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output-dir<span class="w"> </span>final_graphs
+
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Pipeline completed successfully&quot;</span>
+</code></pre></div>
+<h3 id="cicd-integration">CI/CD Integration</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># GitHub Actions example</span>
+<span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Process Knowledge Graph</span>
+<span class="nt">on</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">push</span><span class="p p-Indicator">]</span>
+
+<span class="nt">jobs</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">process-graph</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">runs-on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ubuntu-latest</span>
+<span class="w">    </span><span class="nt">steps</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/checkout@v2</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Install Koza</span>
+<span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pip install koza</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Join graph files</span>
+<span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">          </span><span class="no">koza join \</span>
+<span class="w">            </span><span class="no">--input-dir ./data \</span>
+<span class="w">            </span><span class="no">--output graph.duckdb \</span>
+<span class="w">            </span><span class="no">--quiet</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Clean graph</span>
+<span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">          </span><span class="no">koza prune \</span>
+<span class="w">            </span><span class="no">--database graph.duckdb \</span>
+<span class="w">            </span><span class="no">--keep-singletons \</span>
+<span class="w">            </span><span class="no">--quiet</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Upload results</span>
+<span class="w">        </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/upload-artifact@v2</span>
+<span class="w">        </span><span class="nt">with</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">processed-graph</span>
+<span class="w">          </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">graph.duckdb</span>
+</code></pre></div>
+<h3 id="configuration-files">Configuration Files</h3>
+<p>While most commands use command-line arguments, complex configurations can be managed through:</p>
+<ol>
+<li><strong>Environment variables</strong> for commonly used paths</li>
+<li><strong>Shell aliases</strong> for frequently used command combinations  </li>
+<li><strong>Configuration files</strong> for transform operations (YAML format)</li>
+<li><strong>Makefiles</strong> for complex multi-step workflows</li>
+</ol>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="getting-help">Getting Help</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># General help</span>
+koza<span class="w"> </span>--help
+
+<span class="c1"># Command-specific help  </span>
+koza<span class="w"> </span>join<span class="w"> </span>--help
+koza<span class="w"> </span>split<span class="w"> </span>--help
+koza<span class="w"> </span>prune<span class="w"> </span>--help
+koza<span class="w"> </span>append<span class="w"> </span>--help
+koza<span class="w"> </span>transform<span class="w"> </span>--help
+</code></pre></div>
+<h3 id="debug-information">Debug Information</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Enable verbose logging for transform</span>
+koza<span class="w"> </span>transform<span class="w"> </span>config.yaml<span class="w"> </span>--log-level<span class="w"> </span>DEBUG
+
+<span class="c1"># Use dry-run to preview prune operations</span>
+koza<span class="w"> </span>prune<span class="w"> </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span>--dry-run
+
+<span class="c1"># Generate schema reports for analysis</span>
+koza<span class="w"> </span>join<span class="w"> </span>--nodes<span class="w"> </span><span class="s2">&quot;*.tsv&quot;</span><span class="w"> </span>--schema-report
+</code></pre></div>
+<h3 id="performance-monitoring">Performance Monitoring</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Monitor large operations with progress</span>
+koza<span class="w"> </span>join<span class="w"> </span>--nodes<span class="w"> </span><span class="s2">&quot;*.nodes.*&quot;</span><span class="w"> </span>--edges<span class="w"> </span><span class="s2">&quot;*.edges.*&quot;</span><span class="w"> </span>--show-progress
+
+<span class="c1"># Time operations for benchmarking</span>
+<span class="nb">time</span><span class="w"> </span>koza<span class="w"> </span>join<span class="w"> </span>--nodes<span class="w"> </span><span class="s2">&quot;*.nodes.tsv&quot;</span><span class="w"> </span>--quiet
+</code></pre></div>
+<p>For additional support, consult the <a href="../graph-operations/">comprehensive graph operations guide</a> and the <a href="https://koza.monarchinitiative.org/">Koza documentation</a>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://monarchinitiative.org" target="_blank" rel="noopener" title="monarchinitiative.org" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M277.8 8.6c-12.3-11.4-31.3-11.4-43.5 0l-224 208c-9.6 9-12.8 22.9-8 35.1S18.8 272 32 272h16v176c0 35.3 28.7 64 64 64h288c35.3 0 64-28.7 64-64V272h16c13.2 0 25-8.1 29.8-20.3s1.6-26.2-8-35.1zM240 320h32c26.5 0 48 21.5 48 48v96H192v-96c0-26.5 21.5-48 48-48"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/monarch-initiative/" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["content.code.copy", "navigation.expand", "navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
