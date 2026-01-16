@@ -34,7 +34,7 @@ class TestInferInputFormat:
 
     def test_empty_files_raises(self):
         """Empty file list raises error."""
-        with pytest.raises(ValueError, match="No files"):
+        with pytest.raises(ValueError, match="No files provided"):
             _infer_input_format([])
 
     def test_uses_first_file_for_inference(self):
