@@ -370,4 +370,4 @@ head -1 ./output/my_graph_nodes.jsonl | jq .
 - [CLI Reference](../reference/cli.md) - Complete CLI documentation
 - [How to Join Files](join-files.md) - Creating DuckDB databases to export from
 - [How to Split Graphs](split-graph.md) - Alternative export with field-based splitting
-- [Multi-Format Support](../../graph-operations.md#multi-format-support) - Format details
+- [Schema Handling](../explanation/schema-handling.md) - Format details and type inference
