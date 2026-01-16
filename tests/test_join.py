@@ -432,11 +432,11 @@ HGNC:456	biolink:Gene
 class TestMultivaluedFieldHandling:
     """Test multivalued field transformation during join."""
 
-    def test_pipe_delimited_category_becomes_array(self, temp_dir):
-        """Test that pipe-delimited category values become arrays."""
-        nodes_content = """id\tcategory\tname
-HGNC:123\tbiolink:Gene|biolink:NamedThing\tgene1
-HGNC:456\tbiolink:Gene\tgene2
+    def test_pipe_delimited_synonym_becomes_array(self, temp_dir):
+        """Test that pipe-delimited synonym values become arrays."""
+        nodes_content = """id\tsynonym\tname
+HGNC:123\tACE2|ACE-2|ACEH\tgene1
+HGNC:456\tTP53\tgene2
 """
         nodes_file = temp_dir / "test_nodes.tsv"
         nodes_file.write_text(nodes_content)
@@ -460,15 +460,15 @@ HGNC:456\tbiolink:Gene\tgene2
 
         conn = duckdb.connect(str(output_db))
 
-        # Check that category column is now VARCHAR[]
+        # Check that synonym column is now VARCHAR[]
         schema = conn.execute("DESCRIBE nodes").fetchall()
-        category_type = next(row[1] for row in schema if row[0] == "category")
-        assert "[]" in category_type  # Should be VARCHAR[]
+        synonym_type = next(row[1] for row in schema if row[0] == "synonym")
+        assert "[]" in synonym_type  # Should be VARCHAR[]
 
         # Check actual values
-        results = conn.execute("SELECT id, category FROM nodes ORDER BY id").fetchall()
-        assert results[0][1] == ["biolink:Gene", "biolink:NamedThing"]  # Pipe-delimited became array
-        assert results[1][1] == ["biolink:Gene"]  # Single value also became array
+        results = conn.execute("SELECT id, synonym FROM nodes ORDER BY id").fetchall()
+        assert results[0][1] == ["ACE2", "ACE-2", "ACEH"]  # Pipe-delimited became array
+        assert results[1][1] == ["TP53"]  # Single value also became array
         conn.close()
 
     def test_has_evidence_multivalued(self, temp_dir):
