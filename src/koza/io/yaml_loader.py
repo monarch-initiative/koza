@@ -46,6 +46,7 @@ class UniqueIncludeLoader(SafeLoader):
         class LoaderWithBase(cls):
             def __init__(self, stream: str | TextIO):
                 super().__init__(stream, base_filename)
+
         return LoaderWithBase
 
 

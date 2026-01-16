@@ -11,6 +11,9 @@ from koza.model.koza import KozaConfig
 from koza.runner import KozaRunner, KozaTransform, KozaTransformHooks
 from koza.utils.exceptions import NoTransformException
 
+ROOT_DIR = Path(__file__).parent.parent.parent
+OUTPUT_DIR = ROOT_DIR / "tests/output"
+
 
 class MockWriter(KozaWriter):
     def __init__(self):
@@ -207,13 +210,14 @@ def test_load_config():
 
 
 def test_override_input_files():
-    config_file = (Path(__file__).parent / "../../examples/string/protein-links-detailed.yaml").resolve()
-    config, runner = KozaRunner.from_config_file(
+    config_file = ROOT_DIR / "examples/string/protein-links-detailed.yaml"
+    config, _ = KozaRunner.from_config_file(
         str(config_file),
         input_files=[
             "foo.tsv",
             "bar.tsv",
         ],
+        output_dir=str(OUTPUT_DIR),
     )
     readers = config.get_readers()
     assert readers[0].reader.files == ["foo.tsv", "bar.tsv"]
@@ -221,28 +225,31 @@ def test_override_input_files():
 
 
 def test_override_input_file_directory():
-    config_file = (Path(__file__).parent / "../../examples/string/protein-links-detailed.yaml").resolve()
-    config, runner = KozaRunner.from_config_file(
+    config_file = ROOT_DIR / "examples/string/protein-links-detailed.yaml"
+    config, _ = KozaRunner.from_config_file(
         str(config_file),
-        input_files_dir="/override_input_dir/"
+        input_files_dir="/override_input_dir/",
+        output_dir=str(OUTPUT_DIR),
     )
     readers = config.get_readers()
-    assert readers[0].reader.files == ["/override_input_dir/../data/string.tsv",
-                                       "/override_input_dir/../data/string2.tsv"]
+    assert readers[0].reader.files == [
+        "/override_input_dir/../data/string.tsv",
+        "/override_input_dir/../data/string2.tsv",
+    ]
     assert readers[0].reader.format == InputFormat.csv
 
 
 def test_override_input_files_and_directory():
-    config_file = (Path(__file__).parent / "../../examples/string/protein-links-detailed.yaml").resolve()
-    config, runner = KozaRunner.from_config_file(
+    config_file = ROOT_DIR / "examples/string/protein-links-detailed.yaml"
+    config, _ = KozaRunner.from_config_file(
         str(config_file),
         input_files=[
             "foo.tsv",
             "bar.tsv",
         ],
-        input_files_dir="/override_input_dir/"
+        input_files_dir="/override_input_dir/",
+        output_dir=str(OUTPUT_DIR),
     )
     readers = config.get_readers()
-    assert readers[0].reader.files == ["/override_input_dir/foo.tsv",
-                                       "/override_input_dir/bar.tsv"]
+    assert readers[0].reader.files == ["/override_input_dir/foo.tsv", "/override_input_dir/bar.tsv"]
     assert readers[0].reader.format == InputFormat.csv
