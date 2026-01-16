@@ -51,13 +51,36 @@ from .utils import GraphDatabase
 
 def generate_qc_report(config: QCReportConfig) -> QCReportResult:
     """
-    Generate comprehensive QC report for a graph database.
+    Generate a comprehensive quality control report for a graph database.
+
+    This operation analyzes a graph database and produces a detailed QC report
+    including node/edge counts by source, duplicate detection, dangling edge
+    analysis, and singleton node counts. The report can be grouped by different
+    columns (e.g., provided_by, file_source).
+
+    The QC report includes:
+    - Summary: Total nodes, edges, duplicates, dangling edges, singletons
+    - Nodes by source: Count and category breakdown per source
+    - Edges by source: Count and predicate breakdown per source
+    - Dangling edges by source: Edges pointing to non-existent nodes
+    - Duplicate analysis: Nodes/edges with duplicate IDs
 
     Args:
-        config: QCReportConfig with database and output parameters
+        config: QCReportConfig containing:
+            - database_path: Path to the DuckDB database to analyze
+            - output_file: Optional path to write YAML report
+            - group_by: Column to group statistics by (default: "provided_by")
+            - quiet: Suppress console output
 
     Returns:
-        QCReportResult with QC analysis data
+        QCReportResult containing:
+            - qc_report: QCReport with all analysis data
+            - output_file: Path where report was written (if specified)
+            - total_time_seconds: Report generation duration
+
+    Raises:
+        FileNotFoundError: If database does not exist
+        Exception: If database analysis fails
     """
     start_time = time.time()
 
@@ -98,13 +121,33 @@ def generate_qc_report(config: QCReportConfig) -> QCReportResult:
 
 def generate_graph_stats(config: GraphStatsConfig) -> GraphStatsResult:
     """
-    Generate comprehensive graph statistics report.
+    Generate comprehensive statistical analysis of a graph database.
+
+    This operation produces detailed statistics about a graph's structure,
+    including node category distributions, edge predicate distributions,
+    degree statistics, and biolink model compliance analysis.
+
+    The statistics report includes:
+    - Node statistics: Total count, unique categories, category distribution
+    - Edge statistics: Total count, unique predicates, predicate distribution
+    - Predicate details: Subject/object category pairs for each predicate
+    - Biolink compliance: Validation against biolink model categories/predicates
 
     Args:
-        config: GraphStatsConfig with database and output parameters
+        config: GraphStatsConfig containing:
+            - database_path: Path to the DuckDB database to analyze
+            - output_file: Optional path to write YAML report
+            - quiet: Suppress console output
 
     Returns:
-        GraphStatsResult with graph statistics data
+        GraphStatsResult containing:
+            - stats_report: GraphStatsReport with all statistics
+            - output_file: Path where report was written (if specified)
+            - total_time_seconds: Report generation duration
+
+    Raises:
+        FileNotFoundError: If database does not exist
+        Exception: If database analysis fails
     """
     start_time = time.time()
 
@@ -147,13 +190,33 @@ def generate_graph_stats(config: GraphStatsConfig) -> GraphStatsResult:
 
 def generate_schema_compliance_report(config: SchemaReportConfig) -> SchemaReportResult:
     """
-    Generate schema analysis and compliance report.
+    Generate a schema analysis and biolink compliance report.
+
+    This operation analyzes the schema (columns and data types) of the nodes
+    and edges tables, comparing them against expected biolink model properties
+    and identifying any non-standard or missing columns.
+
+    The schema report includes:
+    - Table schemas: Column names and DuckDB data types for nodes/edges
+    - Biolink compliance: Which columns match biolink model slots
+    - Non-standard columns: Columns not in the biolink model
+    - Data type analysis: Column type distributions and potential issues
 
     Args:
-        config: SchemaReportConfig with database and output parameters
+        config: SchemaReportConfig containing:
+            - database_path: Path to the DuckDB database to analyze
+            - output_file: Optional path to write YAML report
+            - quiet: Suppress console output
 
     Returns:
-        SchemaReportResult with schema analysis data
+        SchemaReportResult containing:
+            - schema_report: SchemaAnalysisReport with all analysis
+            - output_file: Path where report was written (if specified)
+            - total_time_seconds: Report generation duration
+
+    Raises:
+        FileNotFoundError: If database does not exist
+        Exception: If schema analysis fails
     """
     start_time = time.time()
 
@@ -1118,15 +1181,37 @@ def _load_files_to_database(
 
 def generate_node_report(config: NodeReportConfig) -> NodeReportResult:
     """
-    Generate tabular node report: GROUP BY ALL categorical columns + count.
+    Generate a tabular node report grouped by categorical columns.
 
-    Handles both database input and direct file input (loads into in-memory db).
+    This operation creates a summary report of nodes grouped by specified
+    categorical columns (e.g., category, provided_by, namespace), with counts
+    for each unique combination. Useful for understanding the distribution
+    and composition of nodes in a graph.
+
+    Can operate on either an existing DuckDB database or load nodes directly
+    from a KGX file into an in-memory database.
+
+    Special handling:
+    - "namespace" column: Extracts the CURIE prefix from the id column
 
     Args:
-        config: NodeReportConfig with input and output parameters
+        config: NodeReportConfig containing:
+            - database_path: Path to existing database (or None to load from file)
+            - node_file: FileSpec for direct file loading (if no database_path)
+            - categorical_columns: List of columns to group by (e.g., ["category", "provided_by"])
+            - output_file: Path to write the report (TSV, CSV, or Parquet)
+            - output_format: Format for output file
+            - quiet: Suppress console output
 
     Returns:
-        NodeReportResult with generation statistics
+        NodeReportResult containing:
+            - output_file: Path where report was written
+            - total_rows: Number of unique combinations in the report
+            - total_time_seconds: Report generation duration
+
+    Raises:
+        ValueError: If no valid columns found for the report
+        Exception: If database operations fail
     """
     start_time = time.time()
 
@@ -1198,16 +1283,39 @@ def generate_node_report(config: NodeReportConfig) -> NodeReportResult:
 
 def generate_edge_report(config: EdgeReportConfig) -> EdgeReportResult:
     """
-    Generate tabular edge report with denormalized node info.
+    Generate a tabular edge report with denormalized node information.
 
-    Creates denormalized_edges view if needed, then generates report with:
-    SELECT categorical_cols..., count(*) FROM denormalized_edges GROUP BY ALL
+    This operation creates a summary report of edges grouped by specified
+    categorical columns, with counts for each unique combination. The report
+    can include denormalized node information (subject_category, object_category)
+    by joining edges with the nodes table.
+
+    Creates a 'denormalized_edges' view that joins edges with nodes to provide
+    subject and object category information alongside edge predicates.
+
+    Special handling:
+    - "subject_namespace" / "object_namespace": Extract CURIE prefixes from subject/object
 
     Args:
-        config: EdgeReportConfig with input and output parameters
+        config: EdgeReportConfig containing:
+            - database_path: Path to existing database (or None to load from files)
+            - node_file: FileSpec for node file (if no database_path)
+            - edge_file: FileSpec for edge file (if no database_path)
+            - categorical_columns: List of columns to group by
+              (e.g., ["predicate", "subject_category", "object_category"])
+            - output_file: Path to write the report (TSV, CSV, or Parquet)
+            - output_format: Format for output file
+            - quiet: Suppress console output
 
     Returns:
-        EdgeReportResult with generation statistics
+        EdgeReportResult containing:
+            - output_file: Path where report was written
+            - total_rows: Number of unique combinations in the report
+            - total_time_seconds: Report generation duration
+
+    Raises:
+        ValueError: If no valid columns found for the report
+        Exception: If database operations fail
     """
     start_time = time.time()
 
@@ -1279,19 +1387,38 @@ def generate_edge_report(config: EdgeReportConfig) -> EdgeReportResult:
 
 def generate_node_examples(config: NodeExamplesConfig) -> NodeExamplesResult:
     """
-    Generate N sample rows per node type (category).
+    Generate sample nodes for each node type (category) in the graph.
 
-    Uses DuckDB window function to sample N examples per type:
-    SELECT * FROM (
-        SELECT *, ROW_NUMBER() OVER (PARTITION BY category ORDER BY id) as rn
-        FROM nodes
-    ) WHERE rn <= N
+    This operation extracts N representative examples for each unique value
+    of the specified type column (typically "category"). Useful for data
+    exploration, QC review, and documentation purposes.
+
+    Uses DuckDB window functions to efficiently sample N rows per type:
+    ROW_NUMBER() OVER (PARTITION BY type_column ORDER BY id) <= sample_size
+
+    Can operate on either an existing DuckDB database or load nodes directly
+    from a KGX file into an in-memory database.
 
     Args:
-        config: NodeExamplesConfig with input and output parameters
+        config: NodeExamplesConfig containing:
+            - database_path: Path to existing database (or None to load from file)
+            - node_file: FileSpec for direct file loading (if no database_path)
+            - type_column: Column to partition by (default: "category")
+            - sample_size: Number of examples per type (default: 5)
+            - output_file: Path to write the examples (TSV, CSV, or Parquet)
+            - output_format: Format for output file
+            - quiet: Suppress console output
 
     Returns:
-        NodeExamplesResult with generation statistics
+        NodeExamplesResult containing:
+            - output_file: Path where examples were written
+            - types_sampled: Number of unique types found
+            - total_examples: Total number of example rows written
+            - total_time_seconds: Report generation duration
+
+    Raises:
+        ValueError: If type_column not found in nodes table
+        Exception: If database operations fail
     """
     start_time = time.time()
 
@@ -1362,15 +1489,38 @@ def generate_node_examples(config: NodeExamplesConfig) -> NodeExamplesResult:
 
 def generate_edge_examples(config: EdgeExamplesConfig) -> EdgeExamplesResult:
     """
-    Generate N sample rows per edge type (subject_category, predicate, object_category).
+    Generate sample edges for each edge type pattern in the graph.
 
-    Uses denormalized view + window function for sampling.
+    This operation extracts N representative examples for each unique combination
+    of (subject_category, predicate, object_category). Useful for data exploration,
+    QC review, and understanding the relationship patterns in a knowledge graph.
+
+    Creates a denormalized view joining edges with nodes to include subject and
+    object category information, then uses DuckDB window functions to efficiently
+    sample N rows per edge type pattern.
+
+    Can operate on either an existing DuckDB database or load nodes and edges
+    directly from KGX files into an in-memory database.
 
     Args:
-        config: EdgeExamplesConfig with input and output parameters
+        config: EdgeExamplesConfig containing:
+            - database_path: Path to existing database (or None to load from files)
+            - node_file: FileSpec for node file (if no database_path)
+            - edge_file: FileSpec for edge file (if no database_path)
+            - sample_size: Number of examples per edge type (default: 5)
+            - output_file: Path to write the examples (TSV, CSV, or Parquet)
+            - output_format: Format for output file
+            - quiet: Suppress console output
 
     Returns:
-        EdgeExamplesResult with generation statistics
+        EdgeExamplesResult containing:
+            - output_file: Path where examples were written
+            - types_sampled: Number of unique edge type patterns found
+            - total_examples: Total number of example rows written
+            - total_time_seconds: Report generation duration
+
+    Raises:
+        Exception: If database operations fail
     """
     start_time = time.time()
 

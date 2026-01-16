@@ -16,13 +16,43 @@ from .utils import GraphDatabase, print_operation_summary
 
 def prune_graph(config: PruneConfig) -> PruneResult:
     """
-    Prune graph by handling dangling edges and singleton nodes.
+    Clean up graph integrity issues by handling dangling edges and singleton nodes.
+
+    This operation identifies and handles two common graph quality issues:
+    - Dangling edges: Edges where subject or object IDs don't exist in the nodes table
+    - Singleton nodes: Nodes that don't appear as subject or object in any edge
+
+    The prune process:
+    1. Identifies dangling edges and moves them to a 'dangling_edges' table
+    2. Based on config, either keeps or moves singleton nodes to 'singleton_nodes' table
+    3. Optionally filters by minimum connected component size (not yet implemented)
+
+    Dangling edges and singleton nodes are preserved in separate tables for QC
+    analysis rather than being deleted, allowing investigation of data issues.
 
     Args:
-        config: PruneConfig with database path and prune parameters
+        config: PruneConfig containing:
+            - database_path: Path to the DuckDB database to prune
+            - keep_singletons: If True, preserve singleton nodes in main table (default)
+            - remove_singletons: If True, move singleton nodes to singleton_nodes table
+            - min_component_size: Minimum connected component size (not yet implemented)
+            - quiet: Suppress console output
+            - show_progress: Display progress during operations
 
     Returns:
-        PruneResult with operation statistics
+        PruneResult containing:
+            - database_path: Path to the pruned database
+            - dangling_edges_moved: Count of edges moved to dangling_edges table
+            - singleton_nodes_moved: Count of nodes moved to singleton_nodes table
+            - singleton_nodes_kept: Count of singleton nodes preserved in main table
+            - final_stats: DatabaseStats with final node/edge counts
+            - dangling_edges_by_source: Breakdown of dangling edges by file_source
+            - missing_nodes_by_source: Count of missing node IDs by source
+            - total_time_seconds: Operation duration
+            - success: Whether the operation completed successfully
+
+    Raises:
+        Exception: If database operations fail
     """
     start_time = time.time()
 
@@ -86,10 +116,21 @@ def prune_graph(config: PruneConfig) -> PruneResult:
 
 def _handle_dangling_edges(db: GraphDatabase, config: PruneConfig) -> tuple[int, dict[str, int], dict[str, int]]:
     """
-    Identify and move dangling edges to separate table.
+    Identify and move dangling edges to a separate table for QC tracking.
+
+    A dangling edge is one where either the subject or object ID does not exist
+    in the nodes table. This function finds all such edges, analyzes them by
+    source file, and moves them to a 'dangling_edges' table.
+
+    Args:
+        db: GraphDatabase instance with active connection
+        config: PruneConfig for quiet/progress settings
 
     Returns:
-        Tuple of (edges_moved, edges_by_source, missing_nodes_by_source)
+        Tuple of:
+            - edges_moved: Total count of dangling edges moved
+            - edges_by_source: Dict mapping file_source to count of dangling edges
+            - missing_nodes_by_source: Dict mapping file_source to count of unique missing node IDs
     """
     # Check if edges table exists
     try:
@@ -216,10 +257,21 @@ def _handle_dangling_edges(db: GraphDatabase, config: PruneConfig) -> tuple[int,
 
 def _handle_singleton_nodes(db: GraphDatabase, config: PruneConfig) -> tuple[int, int]:
     """
-    Handle singleton nodes based on configuration.
+    Handle singleton nodes based on configuration settings.
+
+    A singleton node is one that does not appear as subject or object in any edge.
+    Based on the config, singletons can either be:
+    - Kept in the main nodes table (default behavior, or with keep_singletons=True)
+    - Moved to a 'singleton_nodes' table (with remove_singletons=True)
+
+    Args:
+        db: GraphDatabase instance with active connection
+        config: PruneConfig with keep_singletons/remove_singletons flags
 
     Returns:
-        Tuple of (nodes_moved, nodes_kept)
+        Tuple of:
+            - nodes_moved: Count of singleton nodes moved to singleton_nodes table
+            - nodes_kept: Count of singleton nodes kept in main nodes table
     """
     # Check if edges table exists
     try:

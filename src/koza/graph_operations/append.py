@@ -18,13 +18,46 @@ from .utils import GraphDatabase, get_duckdb_read_statement, print_operation_sum
 
 def append_graphs(config: AppendConfig) -> AppendResult:
     """
-    Append new KGX files to an existing DuckDB database.
+    Append new KGX files to an existing DuckDB database with schema evolution.
+
+    This operation adds records from new KGX files to an existing database,
+    automatically handling schema differences. New columns in the input files
+    are added to the existing tables, allowing incremental updates to a graph
+    without re-processing all source files.
+
+    The append process:
+    1. Connects to an existing DuckDB database
+    2. Records the initial schema and statistics
+    3. For each new file, loads into a temp table and compares schema
+    4. Adds any new columns to the main table (schema evolution)
+    5. Inserts records using UNION ALL BY NAME for schema compatibility
+    6. Optionally deduplicates after appending
+    7. Generates a schema report if requested
 
     Args:
-        config: AppendConfig with database path and files to append
+        config: AppendConfig containing:
+            - database_path: Path to the existing DuckDB database
+            - node_files: List of FileSpec objects for new node files
+            - edge_files: List of FileSpec objects for new edge files
+            - deduplicate: Whether to remove duplicates after appending
+            - schema_reporting: Whether to generate schema analysis report
+            - quiet: Suppress console output
+            - show_progress: Display progress bars during loading
 
     Returns:
-        AppendResult with operation statistics
+        AppendResult containing:
+            - database_path: Path to the updated database
+            - files_loaded: List of FileLoadResult with per-file statistics
+            - records_added: Net change in record count (nodes + edges)
+            - new_columns_added: Count of new columns added via schema evolution
+            - schema_changes: List of descriptions of schema changes
+            - final_stats: DatabaseStats with updated counts
+            - schema_report: Optional schema analysis if enabled
+            - duplicates_handled: Count of duplicates removed (if deduplication enabled)
+            - total_time_seconds: Operation duration
+
+    Raises:
+        Exception: If database connection fails or file operations error
     """
     start_time = time.time()
     files_loaded: list[FileLoadResult] = []
@@ -132,7 +165,16 @@ def append_graphs(config: AppendConfig) -> AppendResult:
 
 
 def _get_table_schema(db: GraphDatabase, table_name: str) -> dict[str, str]:
-    """Get current schema of a table as {column_name: data_type}."""
+    """
+    Get the current schema of a table as a column name to type mapping.
+
+    Args:
+        db: GraphDatabase instance with active connection
+        table_name: Name of the table to describe ("nodes" or "edges")
+
+    Returns:
+        Dict mapping column names to their DuckDB data types, or empty dict if table doesn't exist
+    """
     try:
         describe_result = db.conn.execute(f"DESCRIBE {table_name}").fetchall()
         return {col[0]: col[1] for col in describe_result}
@@ -143,10 +185,17 @@ def _get_table_schema(db: GraphDatabase, table_name: str) -> dict[str, str]:
 
 def _compare_schemas(table_name: str, old_schema: dict[str, str], new_schema: dict[str, str]) -> tuple[list[str], int]:
     """
-    Compare schemas and return changes and new column count.
+    Compare old and new schemas to identify added columns.
+
+    Args:
+        table_name: Name of the table being compared (for human-readable output)
+        old_schema: Dict of column names to types before append
+        new_schema: Dict of column names to types after append
 
     Returns:
-        Tuple of (change_descriptions, new_columns_count)
+        Tuple of:
+            - change_descriptions: List of human-readable descriptions of changes
+            - new_columns_count: Number of columns that were added
     """
     changes = []
     new_columns = set(new_schema.keys()) - set(old_schema.keys())
@@ -160,7 +209,23 @@ def _compare_schemas(table_name: str, old_schema: dict[str, str], new_schema: di
 def _append_files(
     db: GraphDatabase, file_specs: list, table_type: str, config: AppendConfig, existing_schema: dict[str, str]
 ) -> list[FileLoadResult]:
-    """Append files to existing table with schema evolution support."""
+    """
+    Append multiple files to an existing table with schema evolution support.
+
+    Iterates through the provided file specs, loading each into the target table.
+    New columns discovered in the files are automatically added to the existing
+    table schema.
+
+    Args:
+        db: GraphDatabase instance with active connection
+        file_specs: List of FileSpec objects for files to append
+        table_type: Target table name ("nodes" or "edges")
+        config: AppendConfig for quiet/progress settings
+        existing_schema: Dict of existing column names to types for schema comparison
+
+    Returns:
+        List of FileLoadResult objects with per-file load statistics
+    """
 
     files_loaded = []
 
@@ -188,7 +253,22 @@ def _append_files(
 def _append_single_file(
     db: GraphDatabase, file_spec, table_type: str, existing_schema: dict[str, str]
 ) -> FileLoadResult:
-    """Append a single file with schema evolution support."""
+    """
+    Append a single file to an existing table with schema evolution.
+
+    Loads the file into a temporary table, compares its schema to the existing
+    table, adds any new columns via ALTER TABLE, then inserts the records using
+    UNION ALL BY NAME for compatibility.
+
+    Args:
+        db: GraphDatabase instance with active connection
+        file_spec: FileSpec object for the file to append
+        table_type: Target table name ("nodes" or "edges")
+        existing_schema: Dict of existing column names to types
+
+    Returns:
+        FileLoadResult with load statistics and any errors encountered
+    """
 
     start_time = time.time()
     errors = []
@@ -290,10 +370,21 @@ def _append_single_file(
 
 def _deduplicate_tables(db: GraphDatabase, config: AppendConfig) -> int:
     """
-    Perform basic deduplication on nodes and edges tables.
+    Perform basic deduplication on nodes and edges tables after append.
 
-    This is a simple implementation that removes exact duplicates by ID.
-    More sophisticated deduplication strategies could be added later.
+    Removes duplicate records by ID (for both nodes and edges). For edges without
+    an 'id' column, deduplicates on (subject, predicate, object) tuple. Uses
+    DISTINCT ON to keep the first occurrence.
+
+    Note: For more sophisticated deduplication with QC tracking, use the
+    deduplicate_graph operation instead.
+
+    Args:
+        db: GraphDatabase instance with active connection
+        config: AppendConfig (currently unused but reserved for future options)
+
+    Returns:
+        Total count of duplicate records removed (nodes + edges)
     """
     duplicates_removed = 0
 

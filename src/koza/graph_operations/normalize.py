@@ -22,13 +22,42 @@ from .utils import GraphDatabase, print_operation_summary
 
 def normalize_graph(config: NormalizeConfig) -> NormalizeResult:
     """
-    Apply SSSOM mappings to normalize node identifiers in graph data.
+    Apply SSSOM mappings to normalize node identifiers in edge references.
+
+    This operation uses SSSOM (Simple Standard for Sharing Ontological Mappings)
+    files to replace node identifiers in the edges table with their canonical
+    equivalents. This is useful for harmonizing identifiers from different sources
+    to a common namespace.
+
+    The normalization process:
+    1. Loads SSSOM mapping files (TSV format with YAML header)
+    2. Creates a mappings table, deduplicating by object_id to prevent edge duplication
+    3. Updates edge subject/object columns using the mappings (object_id -> subject_id)
+    4. Preserves original identifiers in original_subject/original_object columns
+
+    Note: Only edge references are normalized. Node IDs in the nodes table are
+    not modified - use the mappings to update node IDs separately if needed.
 
     Args:
-        config: NormalizeConfig with mapping files and options
+        config: NormalizeConfig containing:
+            - database_path: Path to the DuckDB database to normalize
+            - mapping_files: List of FileSpec objects for SSSOM mapping files
+            - quiet: Suppress console output
+            - show_progress: Display progress bars during loading
 
     Returns:
-        NormalizeResult with operation statistics
+        NormalizeResult containing:
+            - success: Whether the operation completed successfully
+            - mappings_loaded: List of FileLoadResult with per-file statistics
+            - edges_normalized: Count of edge references that were updated
+            - final_stats: DatabaseStats with node/edge counts
+            - total_time_seconds: Operation duration
+            - summary: OperationSummary with status and messages
+            - errors: List of error messages if any
+            - warnings: List of warnings (e.g., duplicate mappings found)
+
+    Raises:
+        ValueError: If no nodes/edges tables exist or no mapping files load
     """
     start_time = time.time()
     mappings_loaded: list[FileLoadResult] = []
@@ -167,14 +196,25 @@ def normalize_graph(config: NormalizeConfig) -> NormalizeResult:
 
 def _load_sssom_file(db: GraphDatabase, file_spec: FileSpec) -> FileLoadResult:
     """
-    Load an SSSOM file with proper header handling.
+    Load an SSSOM mapping file into a temporary table.
+
+    SSSOM files are TSV format with a YAML metadata header (lines starting with #).
+    This function loads the file using DuckDB's read_csv with comment='#' to skip
+    the header, and creates a temporary table for later merging.
+
+    The key columns used from SSSOM files are:
+    - subject_id: The canonical/target identifier
+    - object_id: The source identifier to be mapped
 
     Args:
-        db: GraphDatabase instance
-        file_spec: FileSpec for the SSSOM file
+        db: GraphDatabase instance with active connection
+        file_spec: FileSpec for the SSSOM file (path and source_name)
 
     Returns:
-        FileLoadResult with load statistics
+        FileLoadResult containing:
+            - records_loaded: Number of mappings loaded
+            - temp_table_name: Name of the temporary table created
+            - errors: List of any errors encountered
     """
     start_time = time.time()
     errors = []
@@ -238,15 +278,26 @@ def _load_sssom_file(db: GraphDatabase, file_spec: FileSpec) -> FileLoadResult:
 
 def _create_mappings_table(db: GraphDatabase, mapping_results: list[FileLoadResult]) -> int:
     """
-    Create final mappings table from temp tables, deduplicating by object_id.
+    Create a unified mappings table from all loaded SSSOM temporary tables.
+
+    Combines all temporary mapping tables using UNION ALL BY NAME and deduplicates
+    by object_id to ensure each source identifier maps to exactly one target.
 
     SSSOM mappings can have one-to-many relationships (one object_id mapping to
     multiple subject_id values). This would cause the normalization JOIN to create
     duplicate edges with the same UUID. To prevent this, we deduplicate mappings
-    by object_id, keeping only one mapping per object_id.
+    by object_id, keeping only one mapping per object_id (ordered by mapping_source
+    and subject_id for determinism).
+
+    Args:
+        db: GraphDatabase instance with active connection
+        mapping_results: List of FileLoadResult objects with temp_table_name set
 
     Returns:
-        Number of duplicate mappings that were removed
+        Number of duplicate mappings that were removed during deduplication
+
+    Raises:
+        ValueError: If no mapping files loaded successfully
     """
     # Get temp tables that loaded successfully
     mapping_tables = []
@@ -303,10 +354,23 @@ def _normalize_edges_table(db: GraphDatabase, config: NormalizeConfig) -> int:
     """
     Apply SSSOM mappings to normalize edge subject/object references.
 
-    Preserves existing original_subject and original_object columns if they exist.
+    Updates the edges table by replacing subject and object IDs with their
+    canonical equivalents from the mappings table. The original identifiers
+    are preserved in original_subject and original_object columns.
+
+    If original_subject/original_object columns already exist (from a previous
+    normalization), they are preserved rather than overwritten.
+
+    The normalization uses a LEFT JOIN on the mappings table:
+    - If a mapping exists for subject/object, replace with the mapping's subject_id
+    - If no mapping exists, keep the original identifier
+
+    Args:
+        db: GraphDatabase instance with active connection and mappings table
+        config: NormalizeConfig (used for quiet setting)
 
     Returns:
-        Number of edge references that were normalized
+        Number of edge references (subject or object) that were actually changed
     """
     # Check if original_subject and original_object columns already exist
     edge_columns_result = db.conn.execute("DESCRIBE edges").fetchall()
@@ -461,14 +525,21 @@ def _normalize_edges_table(db: GraphDatabase, config: NormalizeConfig) -> int:
 
 def prepare_mapping_file_specs_from_paths(mapping_paths: list[Path], source_name: str | None = None) -> list[FileSpec]:
     """
-    Convert list of mapping file paths to FileSpec objects.
+    Convert a list of SSSOM mapping file paths to FileSpec objects.
+
+    This CLI helper creates FileSpec objects for SSSOM mapping files, which are
+    always in TSV format. Each file's stem is used as its source_name for
+    tracking which mappings came from which file.
 
     Args:
-        mapping_paths: List of paths to SSSOM mapping files
-        source_name: Optional source name for all files
+        mapping_paths: List of Path objects pointing to SSSOM mapping files
+        source_name: Optional source name to apply to all files (overrides per-file names)
 
     Returns:
-        List of FileSpec objects for mapping files
+        List of FileSpec objects configured for SSSOM mapping files
+
+    Raises:
+        FileNotFoundError: If any mapping file does not exist
     """
     file_specs = []
 

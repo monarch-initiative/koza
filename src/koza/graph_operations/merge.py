@@ -27,16 +27,57 @@ from .utils import GraphDatabase, print_operation_summary
 
 def merge_graphs(config: MergeConfig) -> MergeResult:
     """
-    Execute the complete merge pipeline: join → normalize → prune.
+    Execute the complete merge pipeline: join → deduplicate → normalize → prune.
 
     This composite operation orchestrates multiple graph operations in sequence
-    to create a clean, normalized, and validated graph database.
+    to create a clean, normalized, and validated graph database from multiple
+    source files. It's the recommended way to build a production-ready knowledge
+    graph from raw KGX files and SSSOM mappings.
+
+    The pipeline steps:
+    1. **Join**: Load all node/edge files into a unified DuckDB database
+    2. **Deduplicate**: Remove duplicate nodes/edges by ID (optional, skip with skip_deduplicate)
+    3. **Normalize**: Apply SSSOM mappings to harmonize identifiers (optional, skip with skip_normalize)
+    4. **Prune**: Handle dangling edges and singleton nodes (optional, skip with skip_prune)
+    5. **Export**: Optionally export final graph to TSV/JSONL/Parquet files or archive
+
+    Each step can be skipped via config flags. If a step fails, the pipeline can
+    either abort (default) or continue with remaining steps (continue_on_pipeline_step_error).
 
     Args:
-        config: MergeConfig with pipeline configuration
+        config: MergeConfig containing:
+            - node_files: List of FileSpec objects for node files
+            - edge_files: List of FileSpec objects for edge files
+            - mapping_files: List of FileSpec objects for SSSOM mapping files
+            - output_database: Path for output database (temp if not specified)
+            - skip_deduplicate: Skip deduplication step
+            - skip_normalize: Skip normalization step (also skipped if no mapping files)
+            - skip_prune: Skip pruning step
+            - keep_singletons/remove_singletons: Singleton node handling in prune step
+            - export_final: Whether to export final graph to files
+            - export_directory: Where to write exported files
+            - output_format: Format for exported files (TSV, JSONL, Parquet)
+            - archive: Create a tar archive instead of loose files
+            - compress: Gzip compress the archive
+            - graph_name: Name prefix for exported files
+            - continue_on_pipeline_step_error: Continue pipeline if a step fails
+            - schema_reporting: Generate schema analysis report
+            - quiet: Suppress console output
+            - show_progress: Display progress bars
 
     Returns:
-        MergeResult with complete pipeline statistics
+        MergeResult containing:
+            - success: Whether the full pipeline completed successfully
+            - join_result/deduplicate_result/normalize_result/prune_result: Per-step results
+            - operations_completed: List of steps that completed successfully
+            - operations_skipped: List of steps that were skipped
+            - final_stats: DatabaseStats with final node/edge counts
+            - database_path: Path to output database (None if temp was used)
+            - exported_files: List of paths to exported files
+            - total_time_seconds: Total pipeline duration
+            - summary: OperationSummary with overall status
+            - errors: List of error messages from failed steps
+            - warnings: List of warning messages
     """
     start_time = time.time()
     errors = []
@@ -386,19 +427,24 @@ def prepare_merge_config_from_paths(
     **kwargs,
 ) -> MergeConfig:
     """
-    Helper function to create MergeConfig from file paths.
+    Create a MergeConfig from file paths with automatic FileSpec generation.
+
+    This CLI helper converts Path objects to FileSpec objects and assembles
+    a complete MergeConfig. File formats are auto-detected from extensions,
+    and file stems are used as source names for provenance tracking.
 
     Args:
-        node_files: List of node file paths
-        edge_files: List of edge file paths
-        mapping_files: List of SSSOM mapping file paths
-        output_database: Optional output database path
-        skip_normalize: Skip normalization step
-        skip_prune: Skip pruning step
-        **kwargs: Additional MergeConfig parameters
+        node_files: List of Path objects for node KGX files
+        edge_files: List of Path objects for edge KGX files
+        mapping_files: List of Path objects for SSSOM mapping files
+        output_database: Optional path for persistent output database
+        skip_normalize: If True, skip the normalization step
+        skip_prune: If True, skip the pruning step
+        **kwargs: Additional MergeConfig parameters (e.g., quiet, show_progress,
+            export_final, export_directory, archive, compress, graph_name)
 
     Returns:
-        MergeConfig object
+        Fully configured MergeConfig ready for merge_graphs()
     """
     from .join import prepare_file_specs_from_paths
     from .normalize import prepare_mapping_file_specs_from_paths

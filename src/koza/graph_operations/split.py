@@ -15,13 +15,43 @@ from .utils import GraphDatabase, print_operation_summary
 
 def split_graph(config: SplitConfig) -> SplitResult:
     """
-    Split a KGX file by specified fields with optional format conversion.
+    Split a KGX file into multiple output files based on field values.
+
+    This operation partitions a single KGX file (nodes or edges) into separate files
+    based on the unique values of one or more specified fields. Supports format
+    conversion between TSV, JSONL, and Parquet during the split.
+
+    The split process:
+    1. Loads the input file into an in-memory DuckDB database
+    2. Identifies all unique value combinations for the specified split fields
+    3. For each unique combination, exports matching records to a separate file
+    4. Output filenames are generated from the split field values
+
+    Handles multivalued fields (arrays) by using list_contains() for filtering,
+    allowing records to appear in multiple output files if they contain multiple
+    values in the split field.
 
     Args:
-        config: SplitConfig with input file and split parameters
+        config: SplitConfig containing:
+            - input_file: FileSpec for the input KGX file
+            - split_fields: List of column names to split on (e.g., ["provided_by"])
+            - output_directory: Path where split files will be written
+            - output_format: Target format (TSV, JSONL, Parquet); defaults to input format
+            - remove_prefixes: Strip CURIE prefixes from values in output filenames
+            - quiet: Suppress console output
+            - show_progress: Display progress bar during splitting
 
     Returns:
-        SplitResult with operation statistics
+        SplitResult containing:
+            - input_file: The original input FileSpec
+            - output_files: List of Path objects for created files
+            - total_records_split: Total number of records processed
+            - split_values: List of dicts showing the field value combinations
+            - total_time_seconds: Operation duration
+
+    Raises:
+        FileNotFoundError: If input file does not exist
+        Exception: If loading or export operations fail
     """
     start_time = time.time()
     output_files = []
@@ -189,9 +219,27 @@ def split_graph(config: SplitConfig) -> SplitResult:
 def _generate_filename(
     original_path: Path, values_dict: dict[str, str], output_format: KGXFormat, remove_prefixes: bool
 ) -> str:
-    """Generate output filename from split values."""
+    """
+    Generate output filename from split field values.
+
+    Constructs a filename by combining the original file's prefix, the split
+    field values, and the original suffix (e.g., "_nodes", "_edges").
+
+    Example: "monarch_nodes.tsv" split on provided_by="infores:hgnc" produces
+    "monarch_hgnc_nodes.tsv" (with remove_prefixes=True).
+
+    Args:
+        original_path: Path to the original input file
+        values_dict: Dict mapping field names to their values for this split
+        output_format: Target output format (determines file extension)
+        remove_prefixes: If True, strip CURIE prefixes (e.g., "HP:0001234" -> "0001234")
+
+    Returns:
+        Generated filename string with appropriate extension
+    """
 
     def clean_value_for_filename(value: str) -> str:
+        """Sanitize a field value for use in a filename."""
         if remove_prefixes and ":" in value:
             value = value.split(":")[-1]
         return value.replace("biolink:", "").replace(" ", "_").replace(":", "_")
@@ -230,7 +278,23 @@ def _generate_filename(
 def _export_split_data(
     db: GraphDatabase, table_name: str, where_clause: str, output_path: Path, output_format: KGXFormat
 ):
-    """Export filtered data to specified format."""
+    """
+    Export filtered records from a table to a file in the specified format.
+
+    Uses DuckDB's COPY command to efficiently export records matching the
+    WHERE clause to TSV, JSONL, or Parquet format.
+
+    Args:
+        db: GraphDatabase instance with active connection
+        table_name: Name of the table to export from ("nodes" or "edges")
+        where_clause: SQL WHERE clause to filter records (without "WHERE" keyword)
+        output_path: Destination file path
+        output_format: Target format (TSV, JSONL, or PARQUET)
+
+    Raises:
+        ValueError: If output_format is not supported
+        Exception: If the COPY operation fails
+    """
 
     try:
         if output_format == KGXFormat.TSV:

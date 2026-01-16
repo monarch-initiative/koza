@@ -18,11 +18,38 @@ def join_graphs(config: JoinConfig) -> JoinResult:
     """
     Join multiple KGX files into a unified DuckDB database.
 
+    This operation loads node and edge files from various formats (TSV, JSONL, Parquet)
+    into a single DuckDB database, combining them using UNION ALL BY NAME to handle
+    schema differences across files. Each file's records are tagged with a source
+    identifier for provenance tracking.
+
+    The join process:
+    1. Creates or opens a DuckDB database (in-memory if no path specified)
+    2. Loads each node file into a temporary table with format auto-detection
+    3. Loads each edge file into a temporary table with format auto-detection
+    4. Optionally generates a schema report analyzing column types and values
+    5. Combines all temporary tables into final 'nodes' and 'edges' tables
+
     Args:
-        config: JoinConfig with file specifications and options
+        config: JoinConfig containing:
+            - node_files: List of FileSpec objects for node files
+            - edge_files: List of FileSpec objects for edge files
+            - database_path: Optional path for persistent database (None for in-memory)
+            - schema_reporting: Whether to generate schema analysis report
+            - generate_provided_by: Whether to add provided_by column from source names
+            - quiet: Suppress console output
+            - show_progress: Display progress bars during loading
 
     Returns:
-        JoinResult with operation statistics
+        JoinResult containing:
+            - files_loaded: List of FileLoadResult with per-file statistics
+            - final_stats: DatabaseStats with node/edge counts and database size
+            - schema_report: Optional schema analysis if schema_reporting enabled
+            - total_time_seconds: Operation duration
+            - database_path: Path to the created database
+
+    Raises:
+        Exception: If file loading fails or database operations error
     """
     start_time = time.time()
     files_loaded: list[FileLoadResult] = []
@@ -165,15 +192,20 @@ def prepare_file_specs_from_paths(
     node_paths: list[str], edge_paths: list[str]
 ) -> tuple[list[FileSpec], list[FileSpec]]:
     """
-    Convert file paths to FileSpec objects with auto-detection.
-    Supports glob patterns.
+    Convert file paths to FileSpec objects with format auto-detection.
+
+    This CLI helper expands glob patterns and creates FileSpec objects for each
+    matched file. The file format (TSV, JSONL, Parquet) is auto-detected from
+    the file extension. Each file's stem is used as its source_name for
+    provenance tracking.
 
     Args:
-        node_paths: List of node file paths (can include glob patterns)
-        edge_paths: List of edge file paths (can include glob patterns)
+        node_paths: List of node file paths or glob patterns (e.g., "data/*.tsv")
+        edge_paths: List of edge file paths or glob patterns (e.g., "data/*_edges.jsonl")
 
     Returns:
-        Tuple of (node_file_specs, edge_file_specs)
+        Tuple of (node_file_specs, edge_file_specs) with FileSpec objects
+        configured for the appropriate file type (NODES or EDGES)
     """
     import glob
 

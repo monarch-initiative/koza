@@ -148,12 +148,24 @@ def deduplicate_graph(config: DeduplicateConfig) -> DeduplicateResult:
 
 def _deduplicate_nodes(db: GraphDatabase, config: DeduplicateConfig) -> dict:
     """
-    Deduplicate nodes table.
+    Deduplicate the nodes table by ID with QC tracking.
 
-    1. Copy ALL rows with duplicate IDs to duplicate_nodes table
-    2. Keep only first occurrence in nodes table (ordered by file_source)
+    This function:
+    1. Identifies all rows with duplicate IDs
+    2. Copies ALL duplicate rows to a 'duplicate_nodes' table (for QC analysis)
+    3. Keeps only the first occurrence in the main nodes table
 
-    Returns dict with 'found' and 'removed' counts.
+    The first occurrence is determined by ordering on file_source or provided_by
+    column (if available), ensuring deterministic results.
+
+    Args:
+        db: GraphDatabase instance with active connection
+        config: DeduplicateConfig (used for quiet setting)
+
+    Returns:
+        Dict with:
+            - 'found': Total count of rows that had duplicate IDs
+            - 'removed': Count of duplicate rows removed from main table
     """
     # Check if nodes table exists
     try:
@@ -214,12 +226,27 @@ def _deduplicate_nodes(db: GraphDatabase, config: DeduplicateConfig) -> dict:
 
 def _deduplicate_edges(db: GraphDatabase, config: DeduplicateConfig) -> dict:
     """
-    Deduplicate edges table.
+    Deduplicate the edges table by ID with QC tracking.
 
-    1. Copy ALL rows with duplicate IDs to duplicate_edges table
-    2. Keep only first occurrence in edges table (ordered by file_source)
+    This function:
+    1. Identifies all rows with duplicate IDs
+    2. Copies ALL duplicate rows to a 'duplicate_edges' table (for QC analysis)
+    3. Keeps only the first occurrence in the main edges table
 
-    Returns dict with 'found' and 'removed' counts.
+    The first occurrence is determined by ordering on file_source or provided_by
+    column (if available), ensuring deterministic results.
+
+    Note: Requires edges table to have an 'id' column. If no 'id' column exists,
+    edge deduplication is skipped with a warning.
+
+    Args:
+        db: GraphDatabase instance with active connection
+        config: DeduplicateConfig (used for quiet setting)
+
+    Returns:
+        Dict with:
+            - 'found': Total count of rows that had duplicate IDs
+            - 'removed': Count of duplicate rows removed from main table
     """
     # Check if edges table exists
     try:
@@ -290,9 +317,22 @@ def _deduplicate_edges(db: GraphDatabase, config: DeduplicateConfig) -> dict:
 
 def _get_order_column(db: GraphDatabase, table: str) -> str:
     """
-    Determine which column to use for ordering when keeping first occurrence.
+    Determine which column to use for ordering when keeping the first occurrence.
 
-    Prefers file_source, falls back to provided_by, then uses a constant.
+    For deterministic deduplication, we need a column to order by when deciding
+    which duplicate to keep. This function checks for common provenance columns.
+
+    Priority order:
+    1. file_source - Added by koza during file loading
+    2. provided_by - Standard KGX provenance column
+    3. "1" (constant) - Fallback when no ordering column exists
+
+    Args:
+        db: GraphDatabase instance with active connection
+        table: Name of the table to check ("nodes" or "edges")
+
+    Returns:
+        Column name to use in ORDER BY clause, or "1" if no suitable column exists
     """
     columns = db.conn.execute(f"DESCRIBE {table}").fetchall()
     column_names = {col[0] for col in columns}
