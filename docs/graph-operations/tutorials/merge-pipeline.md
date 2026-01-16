@@ -2,6 +2,8 @@
 
 Master the full graph merge pipeline by combining data from multiple sources with different identifier schemes.
 
+> **Note**: If running from a source checkout, use `uv run koza` instead of `koza`. If installed via pip, use `koza` directly.
+
 ## What You'll Learn
 
 - Prepare input files from multiple sources
@@ -172,34 +174,33 @@ Now run the complete merge pipeline with a single command.
 
 ```bash
 koza merge \
-  --nodes genes_nodes.tsv diseases_nodes.tsv \
-  --edges associations_edges.tsv \
-  --mappings mondo_omim.sssom.tsv \
-  --output merged_graph.duckdb
+  -n genes_nodes.tsv \
+  -n diseases_nodes.tsv \
+  -e associations_edges.tsv \
+  -m mondo_omim.sssom.tsv \
+  -o merged_graph.duckdb
 ```
 
 ### Understanding the Command Options
 
 | Option | Purpose |
 |--------|---------|
-| `--nodes` | Node files to load (can specify multiple) |
-| `--edges` | Edge files to load (can specify multiple) |
-| `--mappings` | SSSOM mapping files for normalization |
-| `--output` | Output DuckDB database file |
+| `-n`, `--nodes` | Node files to load (use `-n` multiple times for multiple files) |
+| `-e`, `--edges` | Edge files to load (use `-e` multiple times for multiple files) |
+| `-m`, `--mappings` | SSSOM mapping files for normalization |
+| `-o`, `--output` | Output DuckDB database file |
 
 ### Expected Output
 
 ```
 Starting merge pipeline...
-Pipeline: join -> deduplicate -> normalize -> prune
+Pipeline: join -> normalize -> prune
 Output database: merged_graph.duckdb
 Step 1: Join - Loading input files...
 Join completed: 3 files | 7 nodes | 4 edges
-Step 2: Deduplicate - Removing duplicate nodes/edges...
-Deduplicate completed: 0 duplicate nodes, 0 duplicate edges removed
-Step 3: Normalize - Applying SSSOM mappings...
+Step 2: Normalize - Applying SSSOM mappings...
 Normalize completed: 1 mapping files | 3 edge references normalized
-Step 4: Prune - Cleaning graph structure...
+Step 3: Prune - Cleaning graph structure...
 Prune completed: 0 dangling edges moved | 0 singleton nodes handled
 Merge pipeline completed successfully!
 ```
@@ -211,32 +212,32 @@ Let's examine what happened at each pipeline step.
 ### Pipeline Steps Explained
 
 1. **Join**: Loaded all node and edge files into a unified database
-2. **Deduplicate**: Removed any duplicate nodes or edges by ID
-3. **Normalize**: Applied SSSOM mappings to convert OMIM IDs to MONDO IDs in node identifiers
-4. **Prune**: Removed dangling edges and handled singleton nodes
+2. **Normalize**: Applied SSSOM mappings to convert OMIM IDs to MONDO IDs in edge references
+3. **Prune**: Removed dangling edges and handled singleton nodes
 
 ### Verify Normalization Worked
 
-Check that disease node IDs were normalized:
+Check that edge references were normalized. Normalization updates the `subject` and `object` columns in the edges table, preserving the original values in `original_subject` and `original_object`:
 
 ```bash
 duckdb merged_graph.duckdb -c "
-  SELECT id, name, original_id
-  FROM nodes
-  WHERE category = 'biolink:Disease'
+  SELECT subject, object, original_subject, original_object
+  FROM edges
+  WHERE original_object IS NOT NULL
 "
 ```
 
 Expected output:
 ```
-id            | name                | original_id
---------------+---------------------+-------------
-MONDO:0007254 | Breast Cancer       | OMIM:114480
-MONDO:0009061 | Cystic Fibrosis     | OMIM:219700
-MONDO:0007903 | Li-Fraumeni Syndrome| OMIM:151623
+subject   | object        | original_subject | original_object
+----------+---------------+------------------+----------------
+HGNC:1100 | MONDO:0007254 | NULL             | OMIM:114480
+HGNC:1101 | MONDO:0007254 | NULL             | OMIM:114480
+HGNC:7989 | MONDO:0007903 | NULL             | OMIM:151623
+HGNC:3689 | MONDO:0009061 | NULL             | OMIM:219700
 ```
 
-The `original_id` column preserves the original OMIM identifier for provenance.
+The `original_subject` and `original_object` columns preserve the original identifiers for provenance. Note that in this example, the edge objects were normalized from OMIM to MONDO IDs, so `original_object` contains the original OMIM ID while `object` now contains the MONDO equivalent.
 
 ### Verify Edges Connect Properly
 
@@ -278,9 +279,9 @@ If you do not need identifier normalization (e.g., IDs already match):
 
 ```bash
 koza merge \
-  --nodes *.nodes.tsv \
-  --edges *.edges.tsv \
-  --output graph.duckdb \
+  -n "*.nodes.tsv" \
+  -e "*.edges.tsv" \
+  -o graph.duckdb \
   --skip-normalize
 ```
 
@@ -290,24 +291,11 @@ Keep all edges and nodes, even if some are dangling or disconnected:
 
 ```bash
 koza merge \
-  --nodes *.nodes.tsv \
-  --edges *.edges.tsv \
-  --mappings *.sssom.tsv \
-  --output graph.duckdb \
+  -n "*.nodes.tsv" \
+  -e "*.edges.tsv" \
+  -m "*.sssom.tsv" \
+  -o graph.duckdb \
   --skip-prune
-```
-
-### Skip Deduplication
-
-If you are certain your input has no duplicates:
-
-```bash
-koza merge \
-  --nodes *.nodes.tsv \
-  --edges *.edges.tsv \
-  --mappings *.sssom.tsv \
-  --output graph.duckdb \
-  --skip-deduplicate
 ```
 
 ### Handle Singleton Nodes
@@ -316,10 +304,10 @@ By default, singleton nodes (nodes with no edges) are kept. To move them to a se
 
 ```bash
 koza merge \
-  --nodes *.nodes.tsv \
-  --edges *.edges.tsv \
-  --mappings *.sssom.tsv \
-  --output graph.duckdb \
+  -n "*.nodes.tsv" \
+  -e "*.edges.tsv" \
+  -m "*.sssom.tsv" \
+  -o graph.duckdb \
   --remove-singletons
 ```
 
@@ -329,10 +317,10 @@ Export the merged graph to files for use in other tools:
 
 ```bash
 koza merge \
-  --nodes *.nodes.tsv \
-  --edges *.edges.tsv \
-  --mappings *.sssom.tsv \
-  --output graph.duckdb \
+  -n "*.nodes.tsv" \
+  -e "*.edges.tsv" \
+  -m "*.sssom.tsv" \
+  -o graph.duckdb \
   --export \
   --export-dir ./output/ \
   --graph-name my_knowledge_graph
@@ -346,10 +334,10 @@ For distribution, create a compressed tar archive:
 
 ```bash
 koza merge \
-  --nodes *.nodes.tsv \
-  --edges *.edges.tsv \
-  --mappings *.sssom.tsv \
-  --output graph.duckdb \
+  -n "*.nodes.tsv" \
+  -e "*.edges.tsv" \
+  -m "*.sssom.tsv" \
+  -o graph.duckdb \
   --export \
   --export-dir ./output/ \
   --archive \
@@ -367,7 +355,7 @@ For directories with standard naming conventions, use auto-discovery:
 koza merge \
   --input-dir ./data/ \
   --mappings-dir ./sssom/ \
-  --output merged.duckdb
+  -o merged.duckdb
 ```
 
 This automatically finds files matching patterns like `*_nodes.tsv` and `*.sssom.tsv`.
@@ -384,12 +372,12 @@ Error: Must specify --mappings-dir, --mappings, or --skip-normalize
 
 ```bash
 # Option 1: Provide mappings
-koza merge --nodes *.nodes.tsv --edges *.edges.tsv \
-  --mappings mondo.sssom.tsv --output graph.duckdb
+koza merge -n "*.nodes.tsv" -e "*.edges.tsv" \
+  -m mondo.sssom.tsv -o graph.duckdb
 
 # Option 2: Skip normalization
-koza merge --nodes *.nodes.tsv --edges *.edges.tsv \
-  --skip-normalize --output graph.duckdb
+koza merge -n "*.nodes.tsv" -e "*.edges.tsv" \
+  --skip-normalize -o graph.duckdb
 ```
 
 ### Many Dangling Edges After Merge
@@ -428,10 +416,11 @@ This occurs when your SSSOM file contains one-to-many mappings (one source ID ma
 ```bash
 # Preferred mappings file first
 koza merge \
-  --nodes *.nodes.tsv \
-  --edges *.edges.tsv \
-  --mappings preferred_mappings.sssom.tsv secondary_mappings.sssom.tsv \
-  --output graph.duckdb
+  -n "*.nodes.tsv" \
+  -e "*.edges.tsv" \
+  -m preferred_mappings.sssom.tsv \
+  -m secondary_mappings.sssom.tsv \
+  -o graph.duckdb
 ```
 
 ### Join Failed - No Files Loaded
@@ -454,10 +443,11 @@ ls -la *.nodes.tsv *.edges.tsv
 
 # Use explicit paths instead of patterns
 koza merge \
-  --nodes genes_nodes.tsv diseases_nodes.tsv \
-  --edges associations_edges.tsv \
-  --mappings mondo_omim.sssom.tsv \
-  --output graph.duckdb
+  -n genes_nodes.tsv \
+  -n diseases_nodes.tsv \
+  -e associations_edges.tsv \
+  -m mondo_omim.sssom.tsv \
+  -o graph.duckdb
 ```
 
 ### Out of Memory for Large Graphs

@@ -24,12 +24,12 @@ This creates `gene_graph.duckdb` containing two tables: `nodes` and `edges`.
 
 ### Joining Multiple Files
 
-You can specify multiple files for each table type:
+You can specify multiple files for each table type by repeating the options:
 
 ```bash
 koza join \
-  --nodes genes.tsv proteins.tsv pathways.tsv \
-  --edges gene_protein.tsv protein_pathway.tsv \
+  -n genes.tsv -n proteins.tsv -n pathways.tsv \
+  -e gene_protein.tsv -e protein_pathway.tsv \
   --output combined_graph.duckdb
 ```
 
@@ -39,8 +39,8 @@ The join operation seamlessly handles files in different formats. DuckDB automat
 
 ```bash
 koza join \
-  --nodes genes.tsv proteins.jsonl pathways.parquet \
-  --edges interactions.tsv associations.jsonl.gz \
+  -n genes.tsv -n proteins.jsonl -n pathways.parquet \
+  -e interactions.tsv -e associations.jsonl.gz \
   --output mixed_format_graph.duckdb
 ```
 
@@ -86,8 +86,8 @@ Use the `--schema-report` flag to generate a detailed YAML report analyzing the 
 
 ```bash
 koza join \
-  --nodes genes.tsv proteins.jsonl \
-  --edges interactions.tsv \
+  -n genes.tsv -n proteins.jsonl \
+  -e interactions.tsv \
   --output graph.duckdb \
   --schema-report
 ```
@@ -106,19 +106,9 @@ Schema harmonization handles:
 - **Type conflicts**: Resolved using DuckDB's type inference
 - **Multi-valued fields**: Detected and converted to arrays where appropriate
 
-## Generating provided_by
+## Source Attribution
 
-Use `--generate-provided-by` to automatically populate the `provided_by` field based on source filenames:
-
-```bash
-koza join \
-  --nodes hgnc_genes.tsv uniprot_proteins.tsv \
-  --edges string_interactions.tsv \
-  --output graph.duckdb \
-  --generate-provided-by
-```
-
-This sets `provided_by` to the source filename (without extension) for each record, enabling provenance tracking and later splitting by source.
+The join operation automatically tracks which file each record came from using the `file_source` column. This enables provenance tracking and later splitting by source. No additional flags are needed - source attribution happens automatically during the join operation.
 
 ## Persistent vs In-Memory
 
@@ -155,26 +145,17 @@ koza join \
 
 ## Progress Tracking
 
-For large files, enable progress tracking:
+Progress tracking is enabled by default. Use `--quiet` to suppress all output:
 
 ```bash
 koza join \
-  --nodes *.nodes.* \
-  --edges *.edges.* \
+  --nodes "*.nodes.*" \
+  --edges "*.edges.*" \
   --output graph.duckdb \
-  --show-progress
-```
-
-Combine with `--quiet` to show only progress bars without other output:
-
-```bash
-koza join \
-  --nodes *.nodes.* \
-  --edges *.edges.* \
-  --output graph.duckdb \
-  --show-progress \
   --quiet
 ```
+
+Use `-p` or `--progress` to explicitly control progress bars (enabled by default).
 
 ## Verification
 
@@ -198,8 +179,8 @@ duckdb graph.duckdb "DESCRIBE edges"
 
 ```bash
 koza report qc \
-  --database graph.duckdb \
-  --output qc_report.yaml
+  -d graph.duckdb \
+  -o qc_report.yaml
 ```
 
 ### View Sample Records
@@ -211,11 +192,11 @@ duckdb graph.duckdb "SELECT * FROM edges LIMIT 5"
 
 ### Verify Source Attribution
 
-If using `--generate-provided-by`:
+Check file source tracking:
 
 ```bash
-duckdb graph.duckdb "SELECT provided_by, COUNT(*) FROM nodes GROUP BY provided_by"
-duckdb graph.duckdb "SELECT provided_by, COUNT(*) FROM edges GROUP BY provided_by"
+duckdb graph.duckdb "SELECT file_source, COUNT(*) FROM nodes GROUP BY file_source"
+duckdb graph.duckdb "SELECT file_source, COUNT(*) FROM edges GROUP BY file_source"
 ```
 
 ## Complete Example
@@ -224,12 +205,10 @@ A typical workflow combining multiple options:
 
 ```bash
 koza join \
-  --nodes data/hgnc_genes.tsv data/uniprot_proteins.jsonl data/reactome_pathways.parquet \
-  --edges data/gene_protein_interactions.tsv data/protein_pathway_associations.jsonl \
+  -n data/hgnc_genes.tsv -n data/uniprot_proteins.jsonl -n data/reactome_pathways.parquet \
+  -e data/gene_protein_interactions.tsv -e data/protein_pathway_associations.jsonl \
   --output knowledge_graph.duckdb \
-  --generate-provided-by \
-  --schema-report \
-  --show-progress
+  --schema-report
 ```
 
 Expected output:

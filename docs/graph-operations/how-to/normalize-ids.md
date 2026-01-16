@@ -29,14 +29,18 @@ MONDO:0007455	skos:exactMatch	OMIM:114500	semapv:ManualMappingCuration
 MONDO:0008199	skos:exactMatch	OMIM:176000	semapv:ManualMappingCuration
 ```
 
-### Key Columns for Normalization
+### How Koza Uses SSSOM for Normalization
 
-- **subject_id**: The target identifier (what you want to normalize TO)
-- **object_id**: The source identifier (what you want to normalize FROM)
-- **predicate_id**: The mapping relationship (e.g., `skos:exactMatch`, `skos:closeMatch`)
+Koza uses a **simplifying assumption** when applying SSSOM mappings: it maps FROM the `object_id` TO the `subject_id`. This is a practical simplification for identifier normalization and does not reflect the full semantic meaning of SSSOM mapping files (where subject/object semantics depend on the predicate).
+
+The relevant columns for normalization are:
+
+- **subject_id**: The target identifier (what Koza normalizes TO)
+- **object_id**: The source identifier (what Koza normalizes FROM)
+- **predicate_id**: The mapping relationship (e.g., `skos:exactMatch`) - used for filtering but not for determining direction
 - **mapping_justification**: How the mapping was created (optional but recommended)
 
-During normalization, Koza replaces `object_id` values in your edges with the corresponding `subject_id` values.
+**Important**: Normalization changes **edge references** (the `subject` and `object` columns in the edges table), not the node IDs themselves. If an edge references an identifier that appears in the SSSOM `object_id` column, that reference is updated to the corresponding `subject_id`.
 
 ## Basic Normalization
 
@@ -61,8 +65,7 @@ duckdb graph.duckdb -c "
 ### Step 2: Apply the Mapping
 
 ```bash
-koza normalize \
-  --database graph.duckdb \
+koza normalize graph.duckdb \
   --mappings mondo-omim.sssom.tsv
 ```
 
@@ -83,12 +86,10 @@ When you have mappings from multiple sources, you can apply them all at once.
 ### Using Multiple Files
 
 ```bash
-koza normalize \
-  --database graph.duckdb \
-  --mappings \
-    mondo-omim.sssom.tsv \
-    mondo-orphanet.sssom.tsv \
-    hp-mp.sssom.tsv
+koza normalize graph.duckdb \
+  -m mondo-omim.sssom.tsv \
+  -m mondo-orphanet.sssom.tsv \
+  -m hp-mp.sssom.tsv
 ```
 
 ### Using a Mappings Directory
@@ -96,8 +97,7 @@ koza normalize \
 If all your SSSOM files are in one directory:
 
 ```bash
-koza normalize \
-  --database graph.duckdb \
+koza normalize graph.duckdb \
   --mappings-dir ./mappings/
 ```
 
@@ -219,7 +219,7 @@ duckdb graph.duckdb -c "
 " > before_omim_ids.txt
 
 # Run normalization
-koza normalize --database graph.duckdb --mappings mondo-omim.sssom.tsv
+koza normalize graph.duckdb -m mondo-omim.sssom.tsv
 
 # After normalization - check OMIM IDs are gone
 duckdb graph.duckdb -c "
@@ -250,7 +250,7 @@ This shows OMIM IDs that remain in the `object` column (not normalized), likely 
 Use `koza report` to get overall statistics after normalization:
 
 ```bash
-koza report qc --database graph.duckdb --output post_normalize_qc.yaml
+koza report qc -d graph.duckdb -o post_normalize_qc.yaml
 ```
 
 ## Variations
@@ -261,9 +261,9 @@ The recommended approach for new graphs is to use `koza merge`, which includes n
 
 ```bash
 koza merge \
-  --nodes *.nodes.* \
-  --edges *.edges.* \
-  --mappings mappings/*.sssom.tsv \
+  --nodes "*.nodes.*" \
+  --edges "*.edges.*" \
+  --mappings "mappings/*.sssom.tsv" \
   --output merged_graph.duckdb
 ```
 
@@ -277,8 +277,8 @@ If you want to run merge without normalization:
 
 ```bash
 koza merge \
-  --nodes *.nodes.* \
-  --edges *.edges.* \
+  --nodes "*.nodes.*" \
+  --edges "*.edges.*" \
   --output merged_graph.duckdb \
   --skip-normalize
 ```
@@ -289,10 +289,10 @@ You can run normalize at any point after your database has edges:
 
 ```bash
 # First, join your files
-koza join --nodes *.nodes.* --edges *.edges.* --output graph.duckdb
+koza join --nodes "*.nodes.*" --edges "*.edges.*" --output graph.duckdb
 
 # Later, normalize with new mappings
-koza normalize --database graph.duckdb --mappings new_mappings.sssom.tsv
+koza normalize graph.duckdb -m new_mappings.sssom.tsv
 ```
 
 ## See Also

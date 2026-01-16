@@ -525,7 +525,7 @@ The `node-report` command generates tabular reports showing node counts grouped 
 | `--database` | `-d` | Path | None | Path to DuckDB database file |
 | `--file` | `-f` | Path | None | Path to node file (TSV, JSONL, or Parquet) |
 | `--output` | `-o` | Path | None | Path to output report file |
-| `--format` | | TabularReportFormat | `tsv` | Output format: `tsv`, `csv`, `json`, or `parquet` |
+| `--format` | | TabularReportFormat | `tsv` | Output format: `tsv`, `jsonl`, or `parquet` |
 | `--column` | `-c` | List[str] | None | Categorical columns to group by (can specify multiple) |
 | `--quiet` | `-q` | bool | False | Suppress progress output |
 
@@ -543,8 +543,8 @@ koza node-report -f nodes.tsv -o node_report.parquet --format parquet
 # Custom categorical columns
 koza node-report -d merged.duckdb -o report.tsv -c namespace -c category -c provided_by
 
-# JSON output format
-koza node-report -d merged.duckdb -o node_report.json --format json
+# JSONL output format
+koza node-report -d merged.duckdb -o node_report.jsonl --format jsonl
 ```
 
 ### Output
@@ -577,7 +577,7 @@ The `edge-report` command generates tabular reports showing edge counts grouped 
 | `--nodes` | `-n` | Path | None | Path to node file (for denormalization) |
 | `--edges` | `-e` | Path | None | Path to edge file (TSV, JSONL, or Parquet) |
 | `--output` | `-o` | Path | None | Path to output report file |
-| `--format` | | TabularReportFormat | `tsv` | Output format: `tsv`, `csv`, `json`, or `parquet` |
+| `--format` | | TabularReportFormat | `tsv` | Output format: `tsv`, `jsonl`, or `parquet` |
 | `--column` | `-c` | List[str] | None | Categorical columns to group by (can specify multiple) |
 | `--quiet` | `-q` | bool | False | Suppress progress output |
 
@@ -629,7 +629,7 @@ The `node-examples` command samples N example rows for each distinct value in a 
 | `--database` | `-d` | Path | None | Path to DuckDB database file |
 | `--file` | `-f` | Path | None | Path to node file (TSV, JSONL, or Parquet) |
 | `--output` | `-o` | Path | None | Path to output examples file |
-| `--format` | | TabularReportFormat | `tsv` | Output format: `tsv`, `csv`, `json`, or `parquet` |
+| `--format` | | TabularReportFormat | `tsv` | Output format: `tsv`, `jsonl`, or `parquet` |
 | `--sample-size` | `-n` | int | 5 | Number of examples per type |
 | `--type-column` | `-t` | str | `category` | Column to partition examples by |
 | `--quiet` | `-q` | bool | False | Suppress progress output |
@@ -685,7 +685,7 @@ The `edge-examples` command samples N example rows for each distinct combination
 | `--nodes` | `-n` | Path | None | Path to node file (for denormalization) |
 | `--edges` | `-e` | Path | None | Path to edge file (TSV, JSONL, or Parquet) |
 | `--output` | `-o` | Path | None | Path to output examples file |
-| `--format` | | TabularReportFormat | `tsv` | Output format: `tsv`, `csv`, `json`, or `parquet` |
+| `--format` | | TabularReportFormat | `tsv` | Output format: `tsv`, `jsonl`, or `parquet` |
 | `--sample-size` | `-s` | int | 5 | Number of examples per type |
 | `--type-column` | `-t` | List[str] | None | Columns to partition examples by (can specify multiple) |
 | `--quiet` | `-q` | bool | False | Suppress progress output |
@@ -759,8 +759,6 @@ All commands that accept file lists support multiple specification formats:
 
 Supported formats for tabular reports and exports:
 - **TSV**: Tab-separated values (KGX standard)
-- **CSV**: Comma-separated values
-- **JSON**: JSON format
 - **JSONL**: JSON Lines format
 - **Parquet**: Columnar format for analytics
 
