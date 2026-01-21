@@ -40,7 +40,7 @@ class TSVWriter(KozaWriter):
 
         if edge_properties:  # Make edge file
             if config.sssom_config:
-                edge_properties = self.add_sssom_columns(edge_properties)
+                edge_properties = self.add_sssom_columns(edge_properties, config.sssom_config)
             self.edge_columns = TSVWriter._order_columns(edge_properties, "edge")
             self.edges_file_name = Path(self.dirname if self.dirname else "", f"{self.basename}_edges.tsv")
             self.edgeFH = open(self.edges_file_name, "w")
@@ -127,10 +127,20 @@ class TSVWriter(KozaWriter):
         return ordered_columns
 
     @staticmethod
-    def add_sssom_columns(edge_properties: list):
+    def add_sssom_columns(edge_properties: list, sssom_config):
         """Add SSSOM columns to a set of columns."""
-        if "original_subject" not in edge_properties:
-            edge_properties.append("original_subject")
-        if "original_object" not in edge_properties:
-            edge_properties.append("original_object")
+        # Add original columns for fields that have preserve_original=True
+        if hasattr(sssom_config, '_unified_field_mappings'):
+            # New API structure
+            for field_name, field_config in sssom_config._unified_field_mappings.items():
+                if field_config['preserve_original']:
+                    original_field_name = field_config['original_field_name']
+                    if original_field_name not in edge_properties:
+                        edge_properties.append(original_field_name)
+        else:
+            # Fallback for deprecated API (shouldn't happen after migration, but just in case)
+            for field_name in getattr(sssom_config, 'field_target_mappings', {}):
+                original_field_name = f"original_{field_name}"
+                if original_field_name not in edge_properties:
+                    edge_properties.append(original_field_name)
         return edge_properties
