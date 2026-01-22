@@ -70,7 +70,7 @@ output/
   merged_graph_edges.jsonl
 ```
 
-JSONL is particularly useful when:
+JSONL is suited for:
 
 - Working with JavaScript or Node.js applications
 - Streaming large files line by line
@@ -99,10 +99,10 @@ output/
   merged_graph_edges.parquet
 ```
 
-Parquet is ideal for:
+Parquet supports:
 
 - Large-scale analytics with tools like Spark, Pandas, or Polars
-- Efficient storage with automatic compression
+- Storage with automatic compression
 - Column-based queries (selecting specific fields)
 - Integration with data warehouses and cloud analytics platforms
 
@@ -133,7 +133,7 @@ Archives are useful for:
 
 - Data releases and distribution
 - Preserving file relationships
-- Simpler file management and transfer
+- Single-file management and transfer
 - Versioned snapshots of graph data
 
 ## Compressed Archives
@@ -158,7 +158,7 @@ output/
   merged_graph.tar.gz
 ```
 
-Compressed archives significantly reduce file size, especially for TSV and JSONL formats. Parquet files are already compressed internally, so the benefit is smaller.
+Compressed archives reduce file size, especially for TSV and JSONL formats. Parquet files are already compressed internally, so the size reduction is smaller.
 
 !!! note "Compression requires archive"
     The `--compress` flag requires `--archive` to be enabled. You cannot create a compressed archive without first enabling archiving.
@@ -256,7 +256,7 @@ koza merge \
 
 ## Using merge for Export
 
-The `merge` command provides the most comprehensive export workflow, combining data processing with export in a single pipeline.
+The `merge` command combines data processing with export in a single pipeline.
 
 ### Complete Pipeline with Export
 

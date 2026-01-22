@@ -257,7 +257,7 @@ koza report qc -d graph.duckdb -o post_normalize_qc.yaml
 
 ### Using Normalize in the Merge Pipeline
 
-The recommended approach for new graphs is to use `koza merge`, which includes normalization:
+For new graphs, `koza merge` includes normalization as part of its pipeline:
 
 ```bash
 koza merge \

@@ -14,6 +14,22 @@ Divide a graph into subsets based on field values with optional format conversio
 - A KGX file to split (TSV, JSONL, or Parquet format)
 - Knowledge of which field(s) to split on (e.g., `provided_by`, `category`, `predicate`)
 
+## Output Filename Pattern
+
+Split generates output filenames automatically using this pattern:
+
+```
+{input_basename}_{field_value}_{nodes|edges}.{format}
+```
+
+For example, splitting `monarch_nodes.tsv` by `provided_by` where one value is `infores:hgnc` produces:
+
+```
+monarch_infores_hgnc_nodes.tsv
+```
+
+The field value has special characters (like `:`) replaced with underscores.
+
 ## Split by Single Field
 
 The most common use case is splitting by a single field like `provided_by` or `category`.
@@ -24,15 +40,11 @@ The most common use case is splitting by a single field like `provided_by` or `c
 koza split monarch_nodes.tsv provided_by --output-dir ./split_by_source
 ```
 
-This creates one file per unique `provided_by` value:
+This creates one file per unique `provided_by` value in `./split_by_source/`:
 
-```
-split_by_source/
-  monarch_infores_hgnc_nodes.tsv
-  monarch_infores_omim_nodes.tsv
-  monarch_infores_mondo_nodes.tsv
-  ...
-```
+- `monarch_infores_hgnc_nodes.tsv` (nodes where `provided_by` = `infores:hgnc`)
+- `monarch_infores_omim_nodes.tsv` (nodes where `provided_by` = `infores:omim`)
+- `monarch_infores_mondo_nodes.tsv` (nodes where `provided_by` = `infores:mondo`)
 
 ### Split edges by predicate
 
@@ -40,7 +52,7 @@ split_by_source/
 koza split monarch_edges.tsv predicate --output-dir ./split_by_predicate
 ```
 
-This creates separate files for each relationship type:
+Output files are named `{input}_{predicate_value}_edges.tsv`:
 
 ```
 split_by_predicate/
@@ -113,13 +125,13 @@ This node will appear in both:
 - `monarch_Gene_nodes.tsv`
 - `monarch_NamedThing_nodes.tsv`
 
-This behavior ensures complete coverage - every record appears in every subset it belongs to.
+With this behavior, every record appears in every subset it belongs to.
 
 The split operation automatically detects array fields and uses appropriate filtering (via `list_contains()`) to handle them correctly.
 
 ## Prefix Removal
 
-Use `--remove-prefixes` to create cleaner filenames by stripping CURIE prefixes from field values.
+Use `--remove-prefixes` to strip CURIE prefixes from field values when generating filenames.
 
 ### Without prefix removal (default)
 
@@ -139,11 +151,11 @@ koza split monarch_nodes.tsv provided_by \
 
 Output: `monarch_hgnc_nodes.tsv`
 
-This is particularly useful when:
+This option applies when:
 
 - Field values use common prefixes like `infores:`, `biolink:`, or `HP:`
-- You want shorter, more readable filenames
-- You are organizing files by the meaningful part of the identifier
+- Shorter filenames are needed
+- Files should be organized by the local part of the identifier
 
 ## Output Directory
 

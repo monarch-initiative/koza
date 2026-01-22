@@ -8,17 +8,17 @@ The architecture follows a pipeline pattern where data flows through discrete st
 
 ## Why DuckDB?
 
-DuckDB was chosen as the foundation for graph operations for several compelling reasons:
+DuckDB was chosen as the foundation for graph operations for these reasons:
 
-**Columnar storage for analytics workloads**: Knowledge graph operations involve scanning and aggregating large datasets - counting nodes by category, grouping edges by predicate, or identifying duplicates. DuckDB's columnar storage excels at these analytical queries, providing significant performance advantages over row-oriented databases.
+**Columnar storage for analytics workloads**: Knowledge graph operations involve scanning and aggregating large datasets - counting nodes by category, grouping edges by predicate, or identifying duplicates. DuckDB's columnar storage is optimized for these analytical queries and outperforms row-oriented databases for this use case.
 
 **SQL interface for flexibility**: Using SQL allows complex graph operations to be expressed declaratively. Operations like finding dangling edges, applying identifier mappings, or generating QC reports can be written as straightforward SQL queries that are easy to understand and modify.
 
-**In-memory and persistent modes**: DuckDB supports both in-memory databases (for quick, temporary processing) and persistent files (for iterative workflows). This flexibility allows users to choose the appropriate mode for their use case without changing their code.
+**In-memory and persistent modes**: DuckDB supports both in-memory databases (for quick, temporary processing) and persistent files (for iterative workflows). Users can choose the appropriate mode for their use case without changing their code.
 
-**Excellent performance with large files**: DuckDB can directly read TSV, JSONL, and Parquet files without requiring a separate loading step. Its parallel query execution and efficient compression make it well-suited for multi-gigabyte knowledge graphs.
+**Performance with large files**: DuckDB can directly read TSV, JSONL, and Parquet files without requiring a separate loading step. Its parallel query execution and efficient compression handle multi-gigabyte knowledge graphs.
 
-**No external server needed**: DuckDB runs as an embedded library, eliminating the need to install, configure, or manage a separate database server. This simplifies deployment and makes the tools accessible to users without database administration experience.
+**No external server needed**: DuckDB runs as an embedded library. There is no need to install, configure, or manage a separate database server.
 
 ## In-Memory vs Persistent
 
@@ -51,7 +51,7 @@ with GraphDatabase(db_path=Path("my_graph.duckdb")) as db:
 
 Use persistent mode when:
 
-- Working with large graphs that benefit from DuckDB's disk-based storage
+- Working with large graphs that use DuckDB's disk-based storage
 - Building iterative pipelines where you want to inspect intermediate results
 - Running multiple operations over time and want to avoid reloading source files
 - Generating QC reports from a database created by a previous operation
@@ -78,7 +78,7 @@ result = db.load_file(file_spec, generate_provided_by=True)
 
 After loading all files, temporary tables are combined into final `nodes` and `edges` tables using DuckDB's `UNION ALL BY NAME`. This approach:
 
-- Handles schema differences gracefully (files with different columns are merged, with NULL for missing values)
+- Handles schema differences (files with different columns are merged, with NULL for missing values)
 - Preserves all columns from all input files
 - Avoids the need to pre-define a fixed schema
 
@@ -240,4 +240,4 @@ with GraphDatabase(db_path) as db:
     print(f"Total nodes: {result[0]}")
 ```
 
-This direct SQL access provides flexibility for custom analyses, ad-hoc queries, and integration with other tools that support DuckDB.
+This direct SQL access supports custom analyses, ad-hoc queries, and integration with other tools that use DuckDB.

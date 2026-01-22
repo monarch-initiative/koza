@@ -54,7 +54,7 @@ edges:
     count: 148567
 ```
 
-The report helps identify:
+The report includes:
 
 - Total entity counts and data distribution
 - Potential integrity issues (dangling edges, duplicates)
@@ -62,7 +62,7 @@ The report helps identify:
 
 ## Graph Statistics
 
-The `koza report graph-stats` command generates comprehensive graph statistics similar to the `merged_graph_stats.yaml` output from cat-merge.
+The `koza report graph-stats` command generates graph statistics similar to the `merged_graph_stats.yaml` output from cat-merge.
 
 ### Basic Usage
 
@@ -178,7 +178,7 @@ schema_analysis:
         - symbol
 ```
 
-The schema report helps identify:
+The schema report includes:
 
 - Column coverage across source files
 - Schema harmonization applied during join
@@ -299,11 +299,11 @@ MONDO:0005148	diabetes mellitus	biolink:Disease	disease_source	...
 MONDO:0004975	Alzheimer disease	biolink:Disease	disease_source	...
 ```
 
-This is useful for:
+The output can be used for:
 
-- Quick data validation and spot-checking
+- Data validation and spot-checking
 - Documentation and examples
-- Debugging data quality issues
+- Investigating data quality issues
 
 ## Edge Examples
 
@@ -345,9 +345,9 @@ HGNC:9999	biolink:interacts_with	HGNC:8888	MYC	MAX	biogrid	...
 MONDO:0005148	biolink:associated_with	HP:0001943	diabetes	Hypoglycemia	hpo	...
 ```
 
-Edge examples help verify:
+Edge examples show:
 
-- Correct subject/object relationships
+- Subject/object relationships
 - Predicate usage patterns
 - Knowledge source attribution
 

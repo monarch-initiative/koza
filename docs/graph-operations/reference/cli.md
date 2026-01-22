@@ -140,7 +140,7 @@ The `merge` command orchestrates a complete graph processing pipeline in sequenc
 3. **Normalize**: Apply SSSOM mappings to edge subject/object references
 4. **Prune**: Remove dangling edges and handle singleton nodes
 
-This is the recommended approach for creating a production-ready knowledge graph from multiple sources.
+This command runs the complete pipeline for creating a production-ready knowledge graph from multiple sources.
 
 ### Options
 
@@ -620,7 +620,7 @@ koza node-examples [OPTIONS]
 
 ### Description
 
-The `node-examples` command samples N example rows for each distinct value in a type column (default: `category`). Useful for documentation, debugging, and data exploration.
+The `node-examples` command samples N example rows for each distinct value in a type column (default: `category`). The output can be used for documentation, debugging, and data exploration.
 
 ### Options
 

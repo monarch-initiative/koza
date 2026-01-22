@@ -1,6 +1,6 @@
 # Graph Operations
 
-Graph operations provide a suite of tools for building, transforming, and analyzing knowledge graphs in KGX format. Built on DuckDB for high performance, these operations handle the complete lifecycle from raw data files to production-ready graphs.
+Graph operations provide tools for building, transforming, and analyzing knowledge graphs in KGX format. Built on DuckDB, these operations handle the lifecycle from raw data files to merged graphs.
 
 ## Quick Start
 
@@ -8,86 +8,60 @@ Combine multiple KGX files into a single graph:
 
 ```bash
 koza join \
-  --nodes source1_nodes.tsv source2_nodes.tsv \
-  --edges source1_edges.tsv source2_edges.tsv \
-  --output my_graph.duckdb
+  -n source1_nodes.tsv -n source2_nodes.tsv \
+  -e source1_edges.tsv -e source2_edges.tsv \
+  -o my_graph.duckdb
 ```
 
 ## When to Use Each Operation
 
 ```mermaid
-graph TD
-    A[Raw KGX Files] --> B{Multiple sources?}
+flowchart TD
+    A[KGX Files] --> B{Multiple sources?}
     B -->|Yes| C[join]
-    B -->|No| D[Load single file]
-    C --> E{Need ID harmonization?}
-    D --> E
-    E -->|Yes| F[normalize with SSSOM]
-    E -->|No| G{Data quality issues?}
-    F --> G
-    G -->|Duplicates| H[deduplicate]
-    G -->|Dangling edges| I[prune]
-    G -->|Both| J[merge pipeline]
-    H --> K{Need subsets?}
-    I --> K
+    B -->|No| D{Need full pipeline?}
+    C --> D
+    D -->|Yes| E[merge]
+    D -->|No| F{Need ID harmonization?}
+    E --> G[Done]
+    F -->|Yes| H[normalize]
+    F -->|No| I{Dangling edges?}
+    H --> I
+    I -->|Yes| J[prune]
+    I -->|No| K{Need subsets?}
     J --> K
-    K -->|Yes| L[split by field]
-    K -->|No| M[Export/Analyze]
-    L --> M
+    K -->|Yes| L[split]
+    K -->|No| G
+    L --> G
 ```
 
 | Operation | Use When You Need To... |
 |-----------|------------------------|
 | **join** | Combine multiple KGX files into one database |
+| **merge** | Run complete pipeline: join → normalize → prune |
 | **split** | Extract subsets by field value (e.g., by source) |
-| **merge** | Run complete pipeline: join → deduplicate → normalize → prune |
-| **normalize** | Apply SSSOM mappings to harmonize identifiers |
-| **deduplicate** | Remove duplicate nodes/edges by ID |
-| **prune** | Clean up dangling edges and singleton nodes |
-| **append** | Add new data to existing database |
+| **normalize** | Apply SSSOM mappings to harmonize edge identifiers |
+| **prune** | Remove dangling edges and optionally singleton nodes |
+| **append** | Add new data to an existing database |
 
 ## Documentation Sections
 
-<div class="grid cards" markdown>
+### [Tutorials](tutorials/index.md)
+Step-by-step lessons for learning graph operations from scratch.
 
--   :material-school: **[Tutorials](tutorials/index.md)**
+### [How-to Guides](how-to/index.md)
+Practical recipes for specific tasks and common workflows.
 
-    ---
+### [Reference](reference/index.md)
+Technical documentation for CLI commands, Python API, and configuration.
 
-    Step-by-step lessons for learning graph operations from scratch.
-
-    [:octicons-arrow-right-24: Start learning](tutorials/index.md)
-
--   :material-directions: **[How-to Guides](how-to/index.md)**
-
-    ---
-
-    Practical recipes for specific tasks and common workflows.
-
-    [:octicons-arrow-right-24: Find solutions](how-to/index.md)
-
--   :material-book-open-variant: **[Reference](reference/index.md)**
-
-    ---
-
-    Technical documentation for CLI commands, Python API, and configuration.
-
-    [:octicons-arrow-right-24: Look up details](reference/index.md)
-
--   :material-lightbulb: **[Explanation](explanation/index.md)**
-
-    ---
-
-    Background concepts and architectural decisions explained.
-
-    [:octicons-arrow-right-24: Understand more](explanation/index.md)
-
-</div>
+### [Explanation](explanation/index.md)
+Background concepts and architectural decisions explained.
 
 ## Key Features
 
-- **Multi-format support**: TSV, JSONL, and Parquet files
-- **Schema harmonization**: Automatic handling of different column sets
-- **Non-destructive**: Problem data moved to archive tables, never deleted
-- **Provenance tracking**: Source attribution for all records
-- **SQL access**: Query your graph directly with DuckDB SQL
+- **Supported formats**: TSV, JSONL, and Parquet files
+- **Schema harmonization**: Handles different column sets across input files
+- **Archive behavior**: Problem data is moved to archive tables, not deleted
+- **Provenance tracking**: Records source attribution for all records
+- **SQL access**: Graphs can be queried with DuckDB SQL

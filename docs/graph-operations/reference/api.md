@@ -1,6 +1,6 @@
 # Python API Reference
 
-This reference documentation is auto-generated from the source code docstrings using [mkdocstrings](https://mkdocstrings.github.io/). Each function includes detailed parameter descriptions, return types, and usage examples.
+This reference documentation is auto-generated from the source code docstrings using [mkdocstrings](https://mkdocstrings.github.io/). Each function includes parameter descriptions, return types, and usage examples.
 
 ## Core Operations
 
@@ -75,7 +75,7 @@ These functions generate various reports and statistics about graph databases.
 
 ### generate_qc_report
 
-Generate a comprehensive quality control report.
+Generate a quality control report.
 
 ::: koza.graph_operations.report.generate_qc_report
     options:
@@ -84,7 +84,7 @@ Generate a comprehensive quality control report.
 
 ### generate_graph_stats
 
-Generate detailed graph statistics.
+Generate graph statistics.
 
 ::: koza.graph_operations.report.generate_graph_stats
     options:

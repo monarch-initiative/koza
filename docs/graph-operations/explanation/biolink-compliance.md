@@ -4,7 +4,7 @@ Understanding how graph operations work with the Biolink Model and KGX format.
 
 ## Overview
 
-Knowledge graphs in the biomedical domain benefit from standardized data models that enable interoperability and consistent querying. The Biolink Model provides this standardization, defining the vocabulary and structure for representing biological and medical knowledge. Graph operations in Koza are designed to work with Biolink-compliant data in the KGX (Knowledge Graph Exchange) format.
+Knowledge graphs in the biomedical domain use standardized data models for interoperability and consistent querying. The Biolink Model defines the vocabulary and structure for representing biological and medical knowledge. Graph operations in Koza work with Biolink-compliant data in the KGX (Knowledge Graph Exchange) format.
 
 ## What is Biolink?
 
@@ -16,11 +16,11 @@ The [Biolink Model](https://biolink.github.io/biolink-model/) is a high-level da
 - **Slot definitions**: Properties that can be attached to nodes and edges, such as `name`, `description`, `in_taxon`
 - **Maintained by Monarch Initiative**: The model evolves based on community needs and is actively maintained
 
-The Biolink Model uses a LinkML schema definition, which allows tools to programmatically understand field definitions, including whether fields are multivalued, required, or optional.
+The Biolink Model uses a LinkML schema definition. This schema specifies field definitions, including whether fields are multivalued, required, or optional. Tools can read this schema programmatically.
 
 ## KGX Format
 
-KGX (Knowledge Graph Exchange) is the file format that implements the Biolink Model for data exchange. It provides a simple tabular representation suitable for large-scale data processing.
+KGX (Knowledge Graph Exchange) is the file format that implements the Biolink Model for data exchange. It uses a tabular representation for large-scale data processing.
 
 ### Node Files
 
@@ -123,7 +123,7 @@ When loading KGX files, graph operations:
 
 1. **Detect array columns** using the Biolink Model schema (via LinkML)
 2. **Parse pipe-delimited values** in TSV files (e.g., `PMID:123|PMID:456`)
-3. **Store as native arrays** in DuckDB for efficient querying
+3. **Store as native arrays** in DuckDB
 4. **Preserve array structure** when exporting back to KGX format
 
 ```python
@@ -135,7 +135,7 @@ When loading KGX files, graph operations:
 
 ### Configuration for Multivalued Fields
 
-Some fields that are technically multivalued in Biolink are treated as single-valued in graph operations for practical reasons:
+Some fields that are technically multivalued in Biolink are treated as single-valued in graph operations:
 
 - **`category`**: While nodes can have multiple categories, operations typically use the most specific one
 - **`in_taxon`**: Entities usually have a single primary taxon
@@ -145,7 +145,7 @@ This behavior can be customized through schema configuration.
 
 ## Compliance Checking
 
-Graph operations provide tools to verify Biolink compliance of your data.
+Graph operations include tools to verify Biolink compliance of your data.
 
 ### Schema Report Command
 
@@ -286,10 +286,10 @@ id: EXAMPLE:12345
 
 ### Missing Provenance
 
-**Problem**: Data without source attribution makes it difficult to track data lineage.
+**Problem**: Data without source attribution lacks data lineage tracking.
 
 ```yaml
-# Missing provenance - harder to debug issues:
+# Missing provenance:
 - id: HGNC:1234
   category: biolink:Gene
   name: BRCA1
@@ -313,7 +313,7 @@ schema_analysis:
   # This causes NULL values in merged data
 ```
 
-**Solution**: The join operation handles this automatically by creating a unified schema. Review the schema report to understand which columns come from which sources.
+**Solution**: The join operation creates a unified schema automatically. Review the schema report to see which columns come from which sources.
 
 ## Best Practices
 

@@ -1,6 +1,6 @@
 # How-to Guides
 
-Practical recipes for accomplishing specific tasks with graph operations. Each guide focuses on a single goal and provides step-by-step instructions.
+Step-by-step instructions for specific graph operation tasks. Each guide focuses on a single goal.
 
 ## Data Loading & Combination
 
@@ -8,18 +8,18 @@ Practical recipes for accomplishing specific tasks with graph operations. Each g
 Combine multiple KGX files into a unified database. Covers basic joins, mixed formats, glob patterns, and schema reporting.
 
 ### [Incremental Updates](incremental-updates.md)
-Add new data to an existing database with automatic schema evolution and optional deduplication.
+Add new data to an existing database, with options for schema updates and deduplication.
 
 ## Data Transformation
 
 ### [Split Graphs](split-graph.md)
-Divide a graph into subsets based on field values. Useful for extracting data by source, category, or other attributes.
+Divide a graph into subsets based on field values such as source, category, or other attributes.
 
 ### [Normalize IDs](normalize-ids.md)
 Apply SSSOM mappings to harmonize identifiers across different naming conventions and ontologies.
 
 ### [Clean Graphs](clean-graph.md)
-Remove duplicates, dangling edges, and optionally singleton nodes to ensure graph integrity.
+Remove duplicates, dangling edges, and optionally singleton nodes from a graph.
 
 ## Reporting & Analysis
 

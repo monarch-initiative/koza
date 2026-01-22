@@ -32,7 +32,7 @@ koza append \
 
 ### Mixed Format Support
 
-Like other Koza operations, append handles mixed formats seamlessly:
+Like other Koza operations, append handles mixed formats:
 
 ```bash
 koza append \

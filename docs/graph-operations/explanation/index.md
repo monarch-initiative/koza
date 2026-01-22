@@ -1,45 +1,45 @@
 # Explanation
 
-Understand the concepts, architecture, and design decisions behind graph operations. These pages provide background knowledge that helps you use the tools more effectively.
+This section covers concepts, architecture, and design decisions behind graph operations.
 
 ## Topics
 
 ### [Architecture](architecture.md)
 
-Learn how graph operations work under the hood:
+Describes how graph operations are structured:
 
-- **Why DuckDB?** - Performance benefits of columnar storage and SQL
-- **In-memory vs persistent** - When to use each mode
-- **Processing pipeline** - How data flows through operations
+- **Why DuckDB?** - Columnar storage and SQL for graph processing
+- **In-memory vs persistent** - Different operational modes
+- **Processing pipeline** - Data flow through operations
 - **GraphDatabase context manager** - Connection handling and transactions
 
 ### [Schema Handling](schema-handling.md)
 
-Understand how graph operations manage different schemas:
+Covers how graph operations manage different schemas:
 
 - **The schema challenge** - Why different sources have different columns
-- **UNION ALL BY NAME** - DuckDB's schema harmonization strategy
+- **UNION ALL BY NAME** - DuckDB's schema harmonization approach
 - **Auto-detection** - How formats and types are inferred
 - **Schema evolution** - Adding columns during append operations
-- **NULL handling** - What happens with missing values
+- **NULL handling** - Treatment of missing values
 
 ### [Data Integrity](data-integrity.md)
 
-Learn about the non-destructive approach to data quality:
+Explains the non-destructive approach to data quality:
 
 - **Philosophy: move, don't delete** - Why problem data is archived
-- **Archive tables** - Where problematic data goes
+- **Archive tables** - Where problematic data is stored
 - **Provenance tracking** - How source attribution works
-- **Recovery** - Getting data back from archives
-- **Why this matters** - Benefits for QC and debugging
+- **Recovery** - Retrieving data from archives
+- **Use cases** - QC and debugging scenarios
 
 ### [Biolink Compliance](biolink-compliance.md)
 
-Understand integration with the Biolink model:
+Describes integration with the Biolink model:
 
 - **What is Biolink?** - The knowledge graph standard
 - **Required fields** - Minimum columns for valid KGX
-- **Multivalued fields** - Handling arrays in node/edge properties
+- **Multivalued fields** - Arrays in node/edge properties
 - **Compliance checking** - How validation works
 - **Common issues** - Frequent compliance problems and fixes
 
@@ -51,12 +51,12 @@ Knowledge Graph Exchange (KGX) is a standard format for representing knowledge g
 
 ### DuckDB
 
-DuckDB is an embedded analytical database that provides:
+DuckDB is an embedded analytical database with:
 
-- Fast columnar processing
+- Columnar processing
 - SQL query interface
 - In-memory and persistent modes
-- Excellent compression
+- Data compression
 
 ### SSSOM
 
@@ -64,8 +64,8 @@ Simple Standard for Sharing Ontological Mappings (SSSOM) is a format for represe
 
 ## Design Principles
 
-1. **Non-destructive**: Problem data is moved to archive tables, never deleted
+1. **Non-destructive**: Problem data is moved to archive tables, not deleted
 2. **Provenance**: All records track their source file
 3. **Flexibility**: Operations work with any valid KGX files
-4. **Performance**: DuckDB enables efficient processing of large graphs
-5. **SQL access**: You can always query your graph directly
+4. **Performance**: DuckDB handles processing of large graphs
+5. **SQL access**: Graphs can be queried directly

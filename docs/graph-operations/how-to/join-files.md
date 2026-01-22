@@ -35,7 +35,7 @@ koza join \
 
 ## Mixed Formats
 
-The join operation seamlessly handles files in different formats. DuckDB automatically detects formats based on file extensions.
+The join operation handles files in different formats. DuckDB automatically detects formats based on file extensions.
 
 ```bash
 koza join \

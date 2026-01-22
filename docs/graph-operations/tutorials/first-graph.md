@@ -1,10 +1,10 @@
 # Build Your First Graph
 
-Welcome to graph operations! In this tutorial, you will create a simple knowledge graph from scratch, explore it with SQL queries, and export it to files. By the end, you will understand the core workflow that powers more advanced graph processing pipelines.
+This tutorial covers creating a knowledge graph from scratch, exploring it with SQL queries, and exporting it to files. You will learn the core workflow used in graph processing pipelines.
 
 > **Note**: If running from a source checkout, use `uv run koza` instead of `koza`. If installed via pip, use `koza` directly.
 
-## What You Will Learn
+## Overview
 
 - Create sample KGX node and edge files
 - Join files into a DuckDB database
@@ -103,7 +103,7 @@ You should see the header row followed by data rows for each file.
 
 ## Step 2: Join Into a Database
 
-Now we will combine these files into a DuckDB database. DuckDB is a fast, embedded analytical database that makes querying your graph data easy and efficient.
+Now we will combine these files into a DuckDB database. DuckDB is an embedded analytical database that supports SQL queries on your graph data.
 
 ### Run the join command
 
@@ -135,7 +135,7 @@ The `koza join` command:
 4. Created a DuckDB database with optimized storage
 5. Loaded all records into `nodes` and `edges` tables
 
-This same process works seamlessly with:
+This same process works with:
 
 - Mixed file formats (TSV, JSONL, Parquet)
 - Multiple input files per table
@@ -144,7 +144,7 @@ This same process works seamlessly with:
 
 ## Step 3: Explore with SQL
 
-One of the great benefits of using DuckDB is that you can query your graph using standard SQL. Let us explore our data.
+DuckDB allows you to query your graph using standard SQL. Let us explore our data.
 
 ### Count nodes and edges
 
@@ -355,17 +355,15 @@ Export nodes by category:
 koza split sample_nodes.tsv category --output-dir ./export
 ```
 
-This creates separate files for each category:
+Output filenames are generated as `{input}_{field_value}_{type}.tsv`. Since our input is `sample_nodes.tsv` and we're splitting by `category`, this produces:
 
-```bash
-ls -la ./export/
+```
+./export/
+  sample_biolink_Gene_nodes.tsv      # nodes where category = biolink:Gene
+  sample_biolink_Disease_nodes.tsv   # nodes where category = biolink:Disease
 ```
 
-Output:
-```
-sample_Gene_nodes.tsv
-sample_Disease_nodes.tsv
-```
+(The `:` in `biolink:Gene` becomes `_` in the filename.)
 
 > **Note**: When data has been loaded through `koza transform`, the `provided_by` field is typically overwritten with the ingest name. If you want to split by data source after transformation, use a different field or ensure your data preserves the original source information in another column.
 
@@ -379,6 +377,8 @@ koza split sample_nodes.tsv category \
   --format parquet
 ```
 
+This produces files like `sample_biolink_Gene_nodes.parquet`.
+
 Or convert to JSONL (JSON Lines, useful for streaming):
 
 ```bash
@@ -386,6 +386,8 @@ koza split sample_edges.tsv predicate \
   --output-dir ./jsonl_export \
   --format jsonl
 ```
+
+This produces files like `sample_biolink_related_to_edges.jsonl` (one per predicate value).
 
 ### Check exported files
 
@@ -403,13 +405,13 @@ ls ./jsonl_export/
 head ./jsonl_export/*.jsonl
 ```
 
-## What You Learned
+## Summary
 
-Congratulations! You have completed the core graph operations workflow. Here is what you accomplished:
+This tutorial covered the core graph operations workflow. Here is what you accomplished:
 
 1. **Created KGX files** - You made sample node and edge files in the standard KGX TSV format
 
-2. **Joined files into a database** - The `koza join` command combined your files into an efficient DuckDB database that supports fast SQL queries
+2. **Joined files into a database** - The `koza join` command combined your files into a DuckDB database
 
 3. **Explored with SQL** - You queried your graph to:
    - Count nodes and edges
@@ -459,8 +461,8 @@ cd ..
 rm -rf kgx-tutorial
 ```
 
-Or keep them around to continue exploring!
+Or keep them around to continue exploring.
 
 ---
 
-You now have the foundational knowledge to work with knowledge graphs using Koza. The same patterns you learned here scale to handle real-world graphs with millions of nodes and edges. Happy graphing!
+These patterns scale to handle graphs with millions of nodes and edges.

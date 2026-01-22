@@ -2,7 +2,7 @@
 
 ## Goal
 
-Remove duplicates, dangling edges, and optionally singleton nodes from your knowledge graph. This guide covers the cleanup operations that ensure graph integrity while preserving data through non-destructive archiving.
+Remove duplicates, dangling edges, and optionally singleton nodes from your knowledge graph. This guide covers cleanup operations that identify and archive problematic data while preserving it for later inspection.
 
 ## Prerequisites
 
@@ -59,11 +59,11 @@ Use `--keep-singletons` to preserve isolated nodes in your graph:
 koza prune graph.duckdb --keep-singletons
 ```
 
-This is useful when:
+Use this option when:
 
-- Nodes have value on their own (e.g., ontology terms, reference data)
-- You plan to add edges later that will connect these nodes
-- You want to preserve all node metadata regardless of connectivity
+- Nodes have standalone meaning (e.g., ontology terms, reference data)
+- Edges connecting these nodes may be added later
+- All node metadata should be preserved regardless of connectivity
 
 ### Remove Singletons
 
@@ -73,11 +73,11 @@ Use `--remove-singletons` to move isolated nodes to an archive table:
 koza prune graph.duckdb --remove-singletons
 ```
 
-This is useful when:
+Use this option when:
 
-- You only want nodes that participate in relationships
-- You are optimizing for graph traversal queries
-- Isolated nodes represent incomplete or low-quality data
+- Only nodes that participate in relationships are needed
+- The graph will be used primarily for traversal queries
+- Isolated nodes represent incomplete data
 
 When singletons are removed, they are moved to the `singleton_nodes` table for later inspection.
 
@@ -99,11 +99,11 @@ For edges:
 2. For duplicates, the first occurrence is kept
 3. All other occurrences are moved to the `duplicate_edges` archive table
 
-This is important when:
+This applies when:
 
-- Multiple source files define the same node with potentially different attributes
-- You have appended data that overlaps with existing nodes
-- You need deterministic, unique node records
+- Multiple source files define the same node with different attributes
+- Appended data overlaps with existing nodes
+- Deterministic, unique node records are required
 
 ### Using Deduplication via Append
 

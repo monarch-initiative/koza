@@ -2,7 +2,7 @@
 
 ## Overview
 
-When building knowledge graphs from multiple sources, one of the biggest challenges is handling different schemas. Each data source may use different columns, different naming conventions, and different data types. Graph operations use DuckDB's powerful schema harmonization features to seamlessly combine these heterogeneous files into a unified graph.
+When building knowledge graphs from multiple sources, handling different schemas is a common challenge. Each data source may use different columns, different naming conventions, and different data types. Graph operations use DuckDB's schema harmonization features to combine these heterogeneous files into a unified graph.
 
 This document explains how schema handling works, from format detection through schema evolution, so you can understand what happens when your files have different columns.
 
@@ -47,9 +47,9 @@ Graph operations use DuckDB's `UNION ALL BY NAME` feature to combine files with 
 
 **Columns matched by name, not position**: Unlike traditional `UNION ALL` which requires identical column order, `UNION ALL BY NAME` matches columns by their names. This means files can have columns in any order.
 
-**Missing columns filled with NULL**: When a file lacks a column that exists in another file, DuckDB automatically fills those cells with `NULL`. This preserves all data while handling schema differences gracefully.
+**Missing columns filled with NULL**: When a file lacks a column that exists in another file, DuckDB fills those cells with `NULL`. No data is lost.
 
-**All columns from all sources preserved**: The final table includes every column from every source file. No data is lost, and no manual schema mapping is required.
+**All columns from all sources preserved**: The final table includes every column from every source file. No manual schema mapping is required.
 
 ### Example
 
@@ -73,7 +73,7 @@ For chemicals: `taxon`, `chromosome`, `definition` will be `NULL`
 
 ### How Format Is Detected
 
-Graph operations automatically detect file formats so you do not need to specify them explicitly. The `FileSpec` model handles this through field validators.
+Graph operations detect file formats automatically. The `FileSpec` model handles this through field validators.
 
 ### File Extension Detection
 
@@ -87,7 +87,7 @@ The format is detected from the file extension:
 
 ### Compression Detection
 
-Compressed files are handled transparently. The system first strips the compression extension, then detects the underlying format:
+The system handles compressed files by first stripping the compression extension, then detecting the underlying format:
 
 | File | Detected Format |
 |------|-----------------|
@@ -95,7 +95,7 @@ Compressed files are handled transparently. The system first strips the compress
 | `edges.jsonl.bz2` | JSONL (compressed) |
 | `data.parquet.xz` | Parquet (compressed) |
 
-DuckDB natively supports reading compressed files without manual decompression.
+DuckDB reads compressed files without manual decompression.
 
 ### File Type Detection
 
@@ -108,9 +108,9 @@ The system also auto-detects whether a file contains nodes or edges based on fil
 
 ### How Column Types Are Determined
 
-DuckDB performs automatic type inference when reading files. The behavior varies by format:
+DuckDB performs type inference when reading files. The behavior varies by format:
 
-**TSV files**: By default, graph operations read TSV files with `all_varchar=true`, treating all columns as text. This ensures no data is lost due to type mismatches and allows consistent handling of mixed-type columns.
+**TSV files**: By default, graph operations read TSV files with `all_varchar=true`, treating all columns as text. This avoids data loss from type mismatches and handles mixed-type columns consistently.
 
 **JSONL files**: DuckDB infers types from the JSON structure. Arrays become `VARCHAR[]` (array of strings), numbers become appropriate numeric types, and strings remain `VARCHAR`. The option `convert_strings_to_integers=false` prevents UUID-like strings from being incorrectly parsed as integers.
 
@@ -158,7 +158,7 @@ for col_name in new_columns:
 
 ### NULL Backfill for Existing Rows
 
-When a new column is added to an existing table, all existing rows receive `NULL` for that column. This is automatic in DuckDB and ensures the table remains consistent.
+When a new column is added to an existing table, all existing rows receive `NULL` for that column. DuckDB does this automatically.
 
 ### Example
 
@@ -177,7 +177,7 @@ When a new column is added to an existing table, all existing rows receive `NULL
 
 ### What Happens with Missing Values
 
-NULL values are a natural part of schema harmonization. Here is how they flow through operations:
+NULL values occur during schema harmonization. Here is how they flow through operations:
 
 **During join**: Missing columns are filled with `NULL` via `UNION ALL BY NAME`
 
@@ -198,7 +198,7 @@ For multivalued fields, there is a distinction:
 - `[]` (empty array): The field was provided but contains no values
 - `['value']`: The field contains one or more values
 
-Graph operations preserve this distinction when possible, though TSV format cannot distinguish between `NULL` and empty string.
+Graph operations preserve this distinction when possible. TSV format cannot distinguish between `NULL` and empty string.
 
 ## Best Practices
 
@@ -226,4 +226,4 @@ SELECT
 FROM nodes
 ```
 
-**Use provided_by for provenance**: Enable `generate_provided_by` (default) to track which source each record came from, making it easy to investigate schema differences.
+**Use provided_by for provenance**: Enable `generate_provided_by` (default) to track which source each record came from. This allows investigation of schema differences by source.

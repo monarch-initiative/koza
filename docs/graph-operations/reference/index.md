@@ -6,7 +6,7 @@ Technical reference documentation for graph operations. Use these pages to look 
 
 ### [CLI Reference](cli.md)
 
-Complete documentation for all graph operation CLI commands:
+Documentation for all graph operation CLI commands:
 
 - `koza join` - Combine KGX files
 - `koza split` - Split by field values
@@ -68,7 +68,7 @@ Each model includes:
 |--------|-----------|-------------|
 | TSV | `.tsv` | Tab-separated values (KGX standard) |
 | JSONL | `.jsonl` | JSON Lines (one record per line) |
-| Parquet | `.parquet` | Columnar format (efficient for large files) |
+| Parquet | `.parquet` | Columnar binary format |
 
 Compression supported: `.gz`, `.bz2`, `.xz`
 

@@ -1,10 +1,10 @@
 # Complete Merge Workflow
 
-Master the full graph merge pipeline by combining data from multiple sources with different identifier schemes.
+This tutorial covers the full graph merge pipeline. It demonstrates combining data from multiple sources with different identifier schemes.
 
 > **Note**: If running from a source checkout, use `uv run koza` instead of `koza`. If installed via pip, use `koza` directly.
 
-## What You'll Learn
+## Overview
 
 - Prepare input files from multiple sources
 - Create SSSOM mapping files for identifier harmonization
@@ -458,20 +458,20 @@ For very large graphs, DuckDB handles most memory management automatically. If y
 2. Process files in batches using `koza append`
 3. Ensure sufficient disk space for temporary files
 
-## What You Learned
+## Summary
 
-In this tutorial, you learned how to:
+This tutorial covered:
 
-- Prepare KGX files from multiple sources with different ID schemes
-- Create SSSOM mapping files to harmonize identifiers
-- Run the complete merge pipeline (join, deduplicate, normalize, prune)
-- Customize the pipeline by skipping steps or changing options
-- Verify the merge results using DuckDB queries
-- Troubleshoot common issues with mappings and dangling edges
+- Preparing KGX files from multiple sources with different ID schemes
+- Creating SSSOM mapping files to harmonize identifiers
+- Running the complete merge pipeline (join, deduplicate, normalize, prune)
+- Customizing the pipeline by skipping steps or changing options
+- Verifying merge results using DuckDB queries
+- Troubleshooting common issues with mappings and dangling edges
 
 ## Next Steps
 
-Now that you understand the merge pipeline, explore these resources:
+Related documentation:
 
 - [How to Normalize IDs](../how-to/normalize-ids.md) - Deep dive into SSSOM mappings
 - [How to Join Files](../how-to/join-files.md) - Advanced file joining options
