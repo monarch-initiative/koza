@@ -16,7 +16,10 @@ This tutorial covers creating a knowledge graph from scratch, exploring it with 
 
 Before starting, ensure you have:
 
-- **Koza installed**: `pip install koza`
+- **Koza installed**:
+    - uv: `uvx koza` (run directly), `uv add koza`, or `uv pip install koza`
+    - poetry: `poetry add koza`
+    - pip: `pip install koza`
 - **DuckDB CLI** (optional but recommended): Install from [duckdb.org](https://duckdb.org/docs/installation/) or `pip install duckdb`
 - **Basic command line familiarity**
 

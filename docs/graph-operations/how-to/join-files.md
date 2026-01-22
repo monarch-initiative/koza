@@ -6,7 +6,7 @@ Combine multiple KGX files into a unified DuckDB database. The join operation au
 
 ## Prerequisites
 
-- Koza installed (`pip install koza`)
+- Koza installed (`uvx koza`, `uv add koza`, `poetry add koza`, or `pip install koza`)
 - KGX files (nodes and/or edges in TSV, JSONL, or Parquet format)
 
 ## Basic Join

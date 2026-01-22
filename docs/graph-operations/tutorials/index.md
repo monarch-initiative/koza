@@ -6,7 +6,7 @@ Step-by-step lessons covering graph operations workflows. These tutorials guide 
 
 Before starting these tutorials, ensure you have:
 
-- Koza installed (`pip install koza`)
+- Koza installed (`uvx koza`, `uv add koza`, `poetry add koza`, or `pip install koza`)
 - Basic familiarity with the command line
 - Sample KGX files (provided in tutorials or from your own data)
 
