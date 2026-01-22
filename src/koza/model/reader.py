@@ -38,8 +38,7 @@ class BaseReaderConfig:
     """Base configuration for all reader types.
 
     Attributes:
-        files: List of file paths or glob patterns. Supports: *, ?, [abc], ** (recursive).
-            Examples: 'data/*.yaml', 'exports/**/*.json', 'file.tsv'
+        files: List of file paths to process.
         file_archive: Path to an archive file (zip/tar) containing data files.
         filters: List of column filters to apply to the data.
     """

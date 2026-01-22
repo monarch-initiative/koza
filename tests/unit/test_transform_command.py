@@ -2,7 +2,7 @@
 
 import pytest
 
-from koza.main import _expand_cli_file_patterns, _infer_input_format
+from koza.main import _infer_input_format
 from koza.model.formats import InputFormat
 
 
@@ -44,50 +44,6 @@ class TestInferInputFormat:
         """Extension matching is case-insensitive."""
         assert _infer_input_format(["TEST.YAML"]) == InputFormat.yaml
         assert _infer_input_format(["test.JSON"]) == InputFormat.json
-
-
-class TestExpandCliFilePatterns:
-    """Test the _expand_cli_file_patterns function."""
-
-    def test_expands_glob_pattern(self, tmp_path, monkeypatch):
-        """Glob patterns are expanded."""
-        (tmp_path / "file1.yaml").write_text("test")
-        (tmp_path / "file2.yaml").write_text("test")
-
-        monkeypatch.chdir(tmp_path)
-        expanded = _expand_cli_file_patterns(["*.yaml"])
-        assert len(expanded) == 2
-
-    def test_literal_path_unchanged(self, tmp_path):
-        """Paths without glob chars returned as-is."""
-        expanded = _expand_cli_file_patterns(["explicit.yaml"])
-        assert expanded == ["explicit.yaml"]
-
-    def test_no_matches_returns_literal(self, tmp_path):
-        """Pattern with no matches treated as literal path."""
-        expanded = _expand_cli_file_patterns(["nonexistent/*.yaml"])
-        assert expanded == ["nonexistent/*.yaml"]
-
-    def test_results_sorted(self, tmp_path, monkeypatch):
-        """Matched files returned in sorted order."""
-        (tmp_path / "c.yaml").write_text("test")
-        (tmp_path / "a.yaml").write_text("test")
-        (tmp_path / "b.yaml").write_text("test")
-
-        monkeypatch.chdir(tmp_path)
-        expanded = _expand_cli_file_patterns(["*.yaml"])
-        assert expanded == ["a.yaml", "b.yaml", "c.yaml"]
-
-    def test_recursive_glob(self, tmp_path, monkeypatch):
-        """**/*.yaml matches files at any depth."""
-        (tmp_path / "root.yaml").write_text("test")
-        subdir = tmp_path / "sub"
-        subdir.mkdir()
-        (subdir / "nested.yaml").write_text("test")
-
-        monkeypatch.chdir(tmp_path)
-        expanded = _expand_cli_file_patterns(["**/*.yaml"])
-        assert len(expanded) == 2
 
 
 class TestTransformCommand:

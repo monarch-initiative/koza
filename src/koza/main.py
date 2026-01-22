@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """CLI for Koza - wraps the koza library to provide a command line interface"""
 
-import glob as glob_module
 from collections import defaultdict
 from pathlib import Path
 from typing import Annotated, Optional
@@ -51,34 +50,6 @@ def parse_input_files(args: list[str]):
     return untagged_ret if untagged_ret else dict(tagged_ret)
 
 
-def _expand_cli_file_patterns(patterns: list[str]) -> list[str]:
-    """Expand glob patterns from CLI arguments and return a list of files.
-
-    For each argument:
-      * If it contains glob characters (``*``, ``?``, ``[]``) and matches files,
-        the matching paths are expanded and added to the result in sorted order.
-      * If it contains glob characters but matches no files, the original pattern
-        is preserved and returned as a literal string.
-      * If it contains no glob characters, it is treated as a literal path.
-
-    The returned list is constructed in the same order as the input patterns,
-    with matches for each glob pattern sorted individually.
-    """
-    expanded_files = []
-    for pattern in patterns:
-        # Check for glob characters
-        if any(c in pattern for c in ["*", "?", "[", "]"]):
-            matches = sorted(glob_module.glob(pattern, recursive=True))
-            if matches:
-                expanded_files.extend(matches)
-            else:
-                # If no glob matches, treat as literal filename
-                expanded_files.append(pattern)
-        else:
-            expanded_files.append(pattern)
-    return expanded_files
-
-
 def _infer_input_format(files: list[str]) -> InputFormat:
     """Infer input format from file extensions.
 
@@ -118,7 +89,7 @@ def transform(
     ],
     input_files: Annotated[
         Optional[list[str]],
-        typer.Option("--input-file", "-i", help="Input files or glob patterns (required for .py transforms)"),
+        typer.Option("--input-file", "-i", help="Input files (required for .py transforms, shell expansion supported)"),
     ] = None,
     input_format: Annotated[
         Optional[InputFormat],
@@ -153,14 +124,14 @@ def transform(
         # With config file (existing behavior)
         koza transform config.yaml
 
-        # Config-free mode with transform file
-        koza transform transform.py -i 'data/*.yaml'
+        # Config-free mode with transform file (shell expands the glob)
+        koza transform transform.py -i data/*.yaml
 
         # With output options
-        koza transform transform.py -i 'data/*.yaml' -f jsonl -o ./output
+        koza transform transform.py -i data/*.yaml -f jsonl -o ./output
 
         # Explicit input format
-        koza transform transform.py -i 'data/*.dat' --input-format yaml
+        koza transform transform.py -i data/*.dat --input-format yaml
     """
     logger.remove()
 
@@ -187,12 +158,7 @@ def transform(
         if not input_files:
             raise typer.BadParameter("--input-file/-i required when using a .py transform file")
 
-        expanded_files = _expand_cli_file_patterns(input_files)
-        # Note: expanded_files will always have at least the original patterns
-        # (unmatched globs are preserved as literals), so validation happens
-        # when files are opened rather than here.
-
-        detected_format = input_format or _infer_input_format(expanded_files)
+        detected_format = input_format or _infer_input_format(input_files)
 
         # Create appropriate reader config based on format
         reader_configs = {
@@ -201,7 +167,7 @@ def transform(
             InputFormat.jsonl: JSONLReaderConfig,
             InputFormat.csv: CSVReaderConfig,
         }
-        reader_config = reader_configs[detected_format](files=expanded_files)
+        reader_config = reader_configs[detected_format](files=input_files)
 
         # Default node and edge properties for KGX output
         default_node_properties = ["id", "category", "name", "description", "xref", "provided_by", "synonym"]
