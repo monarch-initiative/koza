@@ -36,11 +36,14 @@ $ koza transform [OPTIONS] TRANSFORM.py [INPUT_FILES]...
 **Arguments**:
 
 * `CONFIG_OR_TRANSFORM`: Configuration YAML file OR Python transform file  [required]
-* `INPUT_FILES`: Input files for config-free mode (supports shell glob expansion)
+* `INPUT_FILES`: Input files (supports shell glob expansion)
+  - **Config-free mode** (`.py` file): Required. These files are processed by the transform.
+  - **Config file mode** (`.yaml` file): Optional. If provided, overrides the `files` list in the config's reader section.
 
 **Options**:
 
 * `--input-format`: Input format (auto-detected from extension if not specified)
+* `-d, --delimiter TEXT`: Field delimiter for CSV/TSV files (default: tab for .tsv, comma for .csv)
 * `-o, --output-dir TEXT`: Path to output directory  [default: ./output]
 * `-f, --output-format [tsv|jsonl|parquet]`: Output format  [default: tsv]
 * `-n, --limit INTEGER`: Number of rows to process (if skipped, processes entire source file)  [default: 0]
@@ -53,6 +56,9 @@ $ koza transform [OPTIONS] TRANSFORM.py [INPUT_FILES]...
 ```console
 # Config file mode
 $ koza transform examples/string/protein-links-detailed.yaml
+
+# Config file mode with input file override
+$ koza transform config.yaml different_data.tsv
 
 # Config-free mode with Python transform
 $ koza transform transform.py -o ./output -f jsonl data/*.yaml

@@ -207,3 +207,115 @@ class TestConfigFreeTransform:
         assert result.exit_code == 0, f"CLI failed: {result.output}"
         nodes_file = output_dir / "transform_nodes.tsv"
         assert nodes_file.exists()
+
+    def test_config_free_csv_auto_delimiter(self, tmp_path):
+        """Config-free mode auto-detects comma delimiter for .csv files."""
+        from typer.testing import CliRunner
+
+        from koza.main import typer_app
+
+        runner = CliRunner()
+
+        # Create sample CSV file with comma delimiter
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        (data_dir / "data.csv").write_text("id,name\nentity_1,Entity 1\nentity_2,Entity 2\n")
+
+        transform_file = tmp_path / "transform.py"
+        transform_file.write_text(TRANSFORM_CODE)
+
+        output_dir = tmp_path / "output"
+
+        result = runner.invoke(
+            typer_app,
+            [
+                "transform",
+                str(transform_file),
+                "-o",
+                str(output_dir),
+                str(data_dir / "data.csv"),
+            ],
+        )
+
+        assert result.exit_code == 0, f"CLI failed: {result.output}"
+        nodes_file = output_dir / "transform_nodes.tsv"
+        assert nodes_file.exists()
+        lines = nodes_file.read_text().strip().split("\n")
+        # Header + 2 data rows
+        assert len(lines) == 3
+
+    def test_config_free_tsv_auto_delimiter(self, tmp_path):
+        """Config-free mode auto-detects tab delimiter for .tsv files."""
+        from typer.testing import CliRunner
+
+        from koza.main import typer_app
+
+        runner = CliRunner()
+
+        # Create sample TSV file with tab delimiter
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        (data_dir / "data.tsv").write_text("id\tname\nentity_1\tEntity 1\nentity_2\tEntity 2\n")
+
+        transform_file = tmp_path / "transform.py"
+        transform_file.write_text(TRANSFORM_CODE)
+
+        output_dir = tmp_path / "output"
+
+        result = runner.invoke(
+            typer_app,
+            [
+                "transform",
+                str(transform_file),
+                "-o",
+                str(output_dir),
+                str(data_dir / "data.tsv"),
+            ],
+        )
+
+        assert result.exit_code == 0, f"CLI failed: {result.output}"
+        nodes_file = output_dir / "transform_nodes.tsv"
+        assert nodes_file.exists()
+        lines = nodes_file.read_text().strip().split("\n")
+        # Header + 2 data rows
+        assert len(lines) == 3
+
+    def test_config_free_explicit_delimiter(self, tmp_path):
+        """Config-free mode with explicit delimiter override."""
+        from typer.testing import CliRunner
+
+        from koza.main import typer_app
+
+        runner = CliRunner()
+
+        # Create sample file with pipe delimiter and non-standard extension
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        (data_dir / "data.txt").write_text("id|name\nentity_1|Entity 1\n")
+
+        transform_file = tmp_path / "transform.py"
+        transform_file.write_text(TRANSFORM_CODE)
+
+        output_dir = tmp_path / "output"
+
+        result = runner.invoke(
+            typer_app,
+            [
+                "transform",
+                str(transform_file),
+                "--input-format",
+                "csv",
+                "-d",
+                "|",
+                "-o",
+                str(output_dir),
+                str(data_dir / "data.txt"),
+            ],
+        )
+
+        assert result.exit_code == 0, f"CLI failed: {result.output}"
+        nodes_file = output_dir / "transform_nodes.tsv"
+        assert nodes_file.exists()
+        lines = nodes_file.read_text().strip().split("\n")
+        # Header + 1 data row
+        assert len(lines) == 2

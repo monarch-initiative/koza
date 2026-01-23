@@ -29,7 +29,9 @@ koza transform TRANSFORM.py [OPTIONS] [INPUT_FILES]...
 
 #### Arguments
 - `CONFIG_OR_TRANSFORM` (required) - Configuration YAML file OR Python transform file
-- `INPUT_FILES` (optional, variadic) - Input files for config-free mode (supports shell glob expansion)
+- `INPUT_FILES` (optional, variadic) - Input files (supports shell glob expansion)
+  - **Config-free mode** (`.py` file): Required. These files are processed by the transform.
+  - **Config file mode** (`.yaml` file): Optional. If provided, overrides the `files` list in the config's reader section.
 
 #### Options
 
@@ -38,6 +40,7 @@ koza transform TRANSFORM.py [OPTIONS] [INPUT_FILES]...
 | `--output-dir` | `-o` | str | `./output` | Path to output directory |
 | `--output-format` | `-f` | OutputFormat | `tsv` | Output format (`tsv`, `jsonl`, `parquet`) |
 | `--input-format` | | InputFormat | auto | Input format (auto-detected from extension if not specified) |
+| `--delimiter` | `-d` | str | auto | Field delimiter for CSV/TSV (default: tab for .tsv, comma for .csv) |
 | `--limit` | `-n` | int | 0 | Number of rows to process (0 = all) |
 | `--progress` | `-p` | bool | False | Display progress bar during transform |
 | `--quiet` | `-q` | bool | False | Suppress output except errors |

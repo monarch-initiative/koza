@@ -147,6 +147,10 @@ def transform(
         bool,
         typer.Option("--quiet", "-q", help="Disable log output"),
     ] = False,
+    delimiter: Annotated[
+        str | None,
+        typer.Option("--delimiter", "-d", help="Field delimiter for CSV/TSV files (default: tab for .tsv, comma for .csv)"),
+    ] = None,
     input_files: Annotated[
         list[str] | None,
         typer.Argument(help="Input files (required for .py transforms, supports shell glob expansion)"),
@@ -168,6 +172,12 @@ def transform(
 
         # Explicit input format
         koza transform transform.py --input-format yaml data/*.dat
+
+        # CSV with comma delimiter (default for .csv files)
+        koza transform transform.py data/*.csv
+
+        # TSV with explicit delimiter
+        koza transform transform.py -d '\\t' data/*.txt
     """
     logger.remove()
 
@@ -192,18 +202,26 @@ def transform(
     if is_transform_file:
         # Config-free mode: build config from CLI args
         if not input_files:
-            raise typer.BadParameter("--input-file/-i required when using a .py transform file")
+            raise typer.BadParameter("Input files required when using a .py transform file. Provide files as positional arguments after the transform file.")
 
         detected_format = input_format or _infer_input_format(input_files)
 
         # Create appropriate reader config based on format
-        reader_configs = {
-            InputFormat.yaml: YAMLReaderConfig,
-            InputFormat.json: JSONReaderConfig,
-            InputFormat.jsonl: JSONLReaderConfig,
-            InputFormat.csv: CSVReaderConfig,
-        }
-        reader_config = reader_configs[detected_format](files=input_files)
+        if detected_format == InputFormat.csv:
+            # Infer delimiter from file extension if not provided
+            if delimiter is None:
+                ext = Path(input_files[0]).suffix.lower()
+                inferred_delimiter = "," if ext == ".csv" else "\t"
+            else:
+                inferred_delimiter = delimiter
+            reader_config = CSVReaderConfig(files=input_files, delimiter=inferred_delimiter)
+        else:
+            reader_configs = {
+                InputFormat.yaml: YAMLReaderConfig,
+                InputFormat.json: JSONReaderConfig,
+                InputFormat.jsonl: JSONLReaderConfig,
+            }
+            reader_config = reader_configs[detected_format](files=input_files)
 
         # Default node and edge properties for KGX output
         default_node_properties = ["id", "category", "name", "description", "xref", "provided_by", "synonym"]
