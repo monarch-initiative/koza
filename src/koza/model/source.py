@@ -46,6 +46,13 @@ class Source:
         self.last_row: dict[str, Any] | None = None
         self._opened: list[ZipFile | TarFile | TextIO] = []
 
+    def _resolve_file_path(self, file_path: str) -> Path:
+        """Resolve a file path against the base directory if relative."""
+        path = Path(file_path)
+        if not path.is_absolute():
+            path = self.base_directory / path
+        return path
+
     def _open_files(self):
         # Handle file_archive separately from regular files
         # If file_archive is specified, open it and filter files from it
@@ -92,10 +99,8 @@ class Source:
                         raise ValueError(f"File type {self.reader_config.format} not supported")
         else:
             # Process regular files
-            for file in self.reader_config.files:
-                file_path = Path(file)
-                if not file_path.is_absolute():
-                    file_path = self.base_directory / file_path
+            for file_str in self.reader_config.files:
+                file_path = self._resolve_file_path(file_str)
                 opened_resource = open_resource(file_path)
                 if isinstance(opened_resource, tuple):
                     archive, resources = opened_resource

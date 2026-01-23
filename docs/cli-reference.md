@@ -20,30 +20,34 @@ Transform biomedical data sources into KGX format using semi-declarative Python 
 
 #### Synopsis
 ```bash
-koza transform CONFIGURATION_YAML [OPTIONS]
+# Config file mode (traditional)
+koza transform CONFIG.yaml [OPTIONS]
+
+# Config-free mode with Python transform (input files as positional args)
+koza transform TRANSFORM.py [OPTIONS] [INPUT_FILES]...
 ```
 
 #### Arguments
-- `CONFIGURATION_YAML` (required) - Path to the transform configuration YAML file
+- `CONFIG_OR_TRANSFORM` (required) - Configuration YAML file OR Python transform file
+- `INPUT_FILES` (optional, variadic) - Input files (supports shell glob expansion)
+  - **Config-free mode** (`.py` file): Required. These files are processed by the transform.
+  - **Config file mode** (`.yaml` file): Optional. If provided, overrides the `files` list in the config's reader section.
 
 #### Options
 
 | Option | Short | Type | Default | Description |
 |--------|-------|------|---------|-------------|
-| `--input-file` | `-i` | List[str] | None | Override input files specified in configuration |
 | `--output-dir` | `-o` | str | `./output` | Path to output directory |
 | `--output-format` | `-f` | OutputFormat | `tsv` | Output format (`tsv`, `jsonl`, `parquet`) |
+| `--input-format` | | InputFormat | auto | Input format (auto-detected from extension if not specified) |
+| `--delimiter` | `-d` | str | auto | Field delimiter for CSV/TSV (default: tab for .tsv, comma for .csv) |
 | `--limit` | `-n` | int | 0 | Number of rows to process (0 = all) |
 | `--progress` | `-p` | bool | False | Display progress bar during transform |
 | `--quiet` | `-q` | bool | False | Suppress output except errors |
-| `--global-table` |  | str | None | Path to global translation table YAML |
-| `--local-table` |  | str | None | Path to local translation table YAML |
-| `--log-level` |  | str | `WARNING` | Set logging level |
-| `--log-conf` |  | str | None | Path to logging configuration file |
 
 #### Examples
 ```bash
-# Basic transform
+# Basic transform with config file
 koza transform examples/string/protein-links-detailed.yaml
 
 # Transform with custom output directory and format
@@ -52,8 +56,11 @@ koza transform config.yaml -o ./results -f jsonl
 # Transform with progress and row limit
 koza transform config.yaml --progress --limit 1000
 
-# Transform with global translation table
-koza transform config.yaml --global-table translation.yaml
+# Config-free mode with Python transform file (input files at end)
+koza transform transform.py -o ./output -f jsonl data/*.yaml
+
+# Config-free mode with explicit input format
+koza transform transform.py --input-format yaml data/*.dat
 ```
 
 ---

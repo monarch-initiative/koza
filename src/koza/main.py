@@ -28,7 +28,7 @@ from koza.graph_operations import (
     prune_graph,
     split_graph,
 )
-from koza.model.formats import OutputFormat
+from koza.model.formats import InputFormat, OutputFormat
 from koza.model.graph_operations import (
     AppendConfig,
     EdgeExamplesConfig,
@@ -46,6 +46,10 @@ from koza.model.graph_operations import (
     SplitConfig,
     TabularReportFormat,
 )
+from koza.model.koza import KozaConfig
+from koza.model.reader import CSVReaderConfig, JSONLReaderConfig, JSONReaderConfig, YAMLReaderConfig
+from koza.model.transform import TransformConfig
+from koza.model.writer import WriterConfig
 from koza.runner import KozaRunner
 
 typer_app = typer.Typer(
@@ -82,15 +86,46 @@ def parse_input_files(args: list[str]):
     return untagged_ret if untagged_ret else dict(tagged_ret)
 
 
+def _infer_input_format(files: list[str]) -> InputFormat:
+    """Infer input format from file extensions.
+
+    Args:
+        files: List of file paths
+
+    Returns:
+        Inferred InputFormat
+
+    Raises:
+        ValueError: If no files provided or extension not recognized
+    """
+    ext_to_format = {
+        ".yaml": InputFormat.yaml,
+        ".yml": InputFormat.yaml,
+        ".json": InputFormat.json,
+        ".jsonl": InputFormat.jsonl,
+        ".tsv": InputFormat.csv,
+        ".csv": InputFormat.csv,
+    }
+
+    if not files:
+        raise ValueError("No files provided. Cannot infer input format from empty file list.")
+
+    ext = Path(files[0]).suffix.lower()
+    if ext not in ext_to_format:
+        raise ValueError(f"Cannot infer format from extension '{ext}'. Use --input-format.")
+
+    return ext_to_format[ext]
+
+
 @typer_app.command()
 def transform(
-    configuration_yaml: Annotated[
+    config_or_transform: Annotated[
         str,
-        typer.Argument(help="Configuration YAML file"),
+        typer.Argument(help="Configuration YAML file OR Python transform file"),
     ],
-    input_files: Annotated[
-        list[str] | None,
-        typer.Option("--input-file", "-i", help="Override input files"),
+    input_format: Annotated[
+        InputFormat | None,
+        typer.Option("--input-format", help="Input format (auto-detected if not specified)"),
     ] = None,
     output_dir: Annotated[
         str,
@@ -112,8 +147,38 @@ def transform(
         bool,
         typer.Option("--quiet", "-q", help="Disable log output"),
     ] = False,
+    delimiter: Annotated[
+        str | None,
+        typer.Option("--delimiter", "-d", help="Field delimiter for CSV/TSV files (default: tab for .tsv, comma for .csv)"),
+    ] = None,
+    input_files: Annotated[
+        list[str] | None,
+        typer.Argument(help="Input files (required for .py transforms, supports shell glob expansion)"),
+    ] = None,
 ) -> None:
-    """Transform a source file"""
+    """Transform a source file.
+
+    Accepts either a config YAML file or a Python transform file directly.
+
+    Examples:
+        # With config file (existing behavior)
+        koza transform config.yaml
+
+        # Config-free mode with transform file (shell expands the glob)
+        koza transform transform.py -o ./output -f jsonl data/*.yaml
+
+        # With output options
+        koza transform transform.py -f jsonl -o ./output data/*.yaml
+
+        # Explicit input format
+        koza transform transform.py --input-format yaml data/*.dat
+
+        # CSV with comma delimiter (default for .csv files)
+        koza transform transform.py data/*.csv
+
+        # TSV with explicit delimiter
+        koza transform transform.py -d '\\t' data/*.txt
+    """
     logger.remove()
 
     output_path = Path(output_dir)
@@ -131,17 +196,67 @@ def transform(
 
         logger.add(log, format=prompt, colorize=True)
 
-    parsed_input_files = parse_input_files(input_files) if input_files else None
+    input_path = Path(config_or_transform)
+    is_transform_file = input_path.suffix == ".py"
 
-    # FIXME: Verbosity, logging
-    config, runner = KozaRunner.from_config_file(
-        configuration_yaml,
-        input_files=parsed_input_files,
-        output_dir=output_dir,
-        output_format=output_format,
-        row_limit=row_limit,
-        show_progress=show_progress,
-    )
+    if is_transform_file:
+        # Config-free mode: build config from CLI args
+        if not input_files:
+            raise typer.BadParameter("Input files required when using a .py transform file. Provide files as positional arguments after the transform file.")
+
+        detected_format = input_format or _infer_input_format(input_files)
+
+        # Create appropriate reader config based on format
+        if detected_format == InputFormat.csv:
+            # Infer delimiter from file extension if not provided
+            if delimiter is None:
+                ext = Path(input_files[0]).suffix.lower()
+                inferred_delimiter = "," if ext == ".csv" else "\t"
+            else:
+                inferred_delimiter = delimiter
+            reader_config = CSVReaderConfig(files=input_files, delimiter=inferred_delimiter)
+        else:
+            reader_configs = {
+                InputFormat.yaml: YAMLReaderConfig,
+                InputFormat.json: JSONReaderConfig,
+                InputFormat.jsonl: JSONLReaderConfig,
+            }
+            reader_config = reader_configs[detected_format](files=input_files)
+
+        # Default node and edge properties for KGX output
+        default_node_properties = ["id", "category", "name", "description", "xref", "provided_by", "synonym"]
+        default_edge_properties = ["id", "subject", "predicate", "object", "category", "provided_by"]
+
+        config = KozaConfig(
+            name=input_path.stem,
+            reader=reader_config,
+            transform=TransformConfig(code=str(input_path)),
+            writer=WriterConfig(
+                format=output_format,
+                node_properties=default_node_properties,
+                edge_properties=default_edge_properties,
+            ),
+        )
+
+        runner = KozaRunner.from_config(
+            config,
+            base_directory=Path.cwd(),
+            output_dir=output_dir,
+            row_limit=row_limit,
+            show_progress=show_progress,
+        )
+    else:
+        # Existing behavior: load from config file
+        parsed_input_files = parse_input_files(input_files) if input_files else None
+
+        config, runner = KozaRunner.from_config_file(
+            config_or_transform,
+            input_files=parsed_input_files,
+            output_dir=output_dir,
+            output_format=output_format,
+            row_limit=row_limit,
+            show_progress=show_progress,
+        )
 
     logger.info(f"Running transform for {config.name} with output to `{output_dir}`")
 
