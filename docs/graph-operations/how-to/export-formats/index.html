@@ -1,0 +1,2613 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://koza.monarchinitiative.org/graph-operations/how-to/export-formats/">
+      
+      
+        <link rel="prev" href="../generate-reports/">
+      
+      
+        <link rel="next" href="../../reference/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../images/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Export Formats - Koza Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,300i,400,400i,700,700i%7CSource+Sans+Pro+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Source Sans Pro";--md-code-font:"Source Sans Pro Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#how-to-export-formats" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Koza Documentation" class="md-header__button md-logo" aria-label="Koza Documentation" data-md-component="logo">
+      
+  <img src="../../../img/pupa.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Koza Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Export Formats
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 2c-1.82 0-3.53.5-5 1.35C8 5.08 10 8.3 10 12s-2 6.92-5 8.65C6.47 21.5 8.18 22 10 22a10 10 0 0 0 10-10A10 10 0 0 0 10 2"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/monarch-initiative/koza" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    monarch-initiative/koza
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Welcome
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../Ingests/" class="md-tabs__link">
+          
+  
+  
+  Ingests
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../" class="md-tabs__link">
+          
+  
+  
+  Graph Operations
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../Usage/CLI/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  CLI
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../Usage/Module/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Module
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Koza Documentation" class="md-nav__button md-logo" aria-label="Koza Documentation" data-md-component="logo">
+      
+  <img src="../../../img/pupa.png" alt="logo">
+
+    </a>
+    Koza Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/monarch-initiative/koza" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    monarch-initiative/koza
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Welcome
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ingests
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Ingests
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Ingests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuring an Ingest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Ingests/koza_config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Koza Config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Ingests/mapping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mapping
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Ingests/transform/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Transform Code
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Ingests/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Graph Operations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Graph Operations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/first-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build Your First Graph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/merge-pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Complete Merge Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-to Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to Guides
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../join-files/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Join Files
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../split-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Split Graphs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../normalize-ids/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Normalize IDs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../clean-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Clean Graphs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../incremental-updates/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Incremental Updates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../generate-reports/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Generate Reports
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Export Formats
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Export Formats
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#goal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Goal
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#export-to-tsv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Export to TSV
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Export to TSV">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#using-split-for-simple-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using split for simple export
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-merge-with-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using merge with export
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#export-to-jsonl" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Export to JSONL
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#export-to-parquet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Export to Parquet
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#creating-archives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating Archives
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compressed-archives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compressed Archives
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#custom-graph-naming" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Custom Graph Naming
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#loose-files-vs-archives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Loose Files vs Archives
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Loose Files vs Archives">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#use-loose-files-when" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Use Loose Files When
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#use-archives-when" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Use Archives When
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#use-compressed-archives-when" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Use Compressed Archives When
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#using-merge-for-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using merge for Export
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Using merge for Export">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#complete-pipeline-with-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Complete Pipeline with Export
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#export-only-merge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Export-Only Merge
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#selective-pipeline-with-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Selective Pipeline with Export
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cli-options-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI Options Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Verification">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#check-exported-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Check exported files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verify-record-counts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verify record counts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#inspect-archive-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inspect archive contents
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#validate-exported-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validate exported data
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        See Also
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Python API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/schema-handling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Schema Handling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/data-integrity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/biolink-compliance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Biolink Compliance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Usage/CLI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Usage/Module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Module
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#goal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Goal
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#export-to-tsv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Export to TSV
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Export to TSV">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#using-split-for-simple-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using split for simple export
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-merge-with-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using merge with export
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#export-to-jsonl" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Export to JSONL
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#export-to-parquet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Export to Parquet
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#creating-archives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating Archives
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compressed-archives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compressed Archives
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#custom-graph-naming" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Custom Graph Naming
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#loose-files-vs-archives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Loose Files vs Archives
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Loose Files vs Archives">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#use-loose-files-when" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Use Loose Files When
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#use-archives-when" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Use Archives When
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#use-compressed-archives-when" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Use Compressed Archives When
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#using-merge-for-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using merge for Export
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Using merge for Export">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#complete-pipeline-with-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Complete Pipeline with Export
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#export-only-merge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Export-Only Merge
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#selective-pipeline-with-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Selective Pipeline with Export
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cli-options-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI Options Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Verification">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#check-exported-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Check exported files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verify-record-counts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verify record counts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#inspect-archive-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inspect archive contents
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#validate-exported-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validate exported data
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        See Also
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="how-to-export-formats">How to Export Formats</h1>
+<h2 id="goal">Goal</h2>
+<p>Export graph data to TSV, JSONL, or Parquet format with optional archiving. This is useful for:</p>
+<ul>
+<li>Sharing graph data with collaborators or downstream tools</li>
+<li>Converting between formats for different analysis workflows</li>
+<li>Creating distributable archives for data releases</li>
+<li>Preparing data for analytics platforms that prefer Parquet</li>
+</ul>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>A DuckDB database containing graph data (created via <code>koza join</code> or <code>koza merge</code>)</li>
+<li>Target directory for exported files</li>
+</ul>
+<h2 id="export-to-tsv">Export to TSV</h2>
+<p>TSV (Tab-Separated Values) is the standard KGX format, widely supported by knowledge graph tools.</p>
+<h3 id="using-split-for-simple-export">Using split for simple export</h3>
+<p>The <code>split</code> command can export an entire graph without splitting when you export all records:</p>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>split<span class="w"> </span>graph.duckdb<span class="w"> </span>id<span class="w"> </span>--output-dir<span class="w"> </span>./export<span class="w"> </span>--format<span class="w"> </span>tsv
+</code></pre></div>
+<h3 id="using-merge-with-export">Using merge with export</h3>
+<p>The most common approach is to use <code>merge</code> with export options, which processes and exports in one step:</p>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>*.nodes.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span>*.edges.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--export<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--export-dir<span class="w"> </span>./output<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--format<span class="w"> </span>tsv
+</code></pre></div>
+<p>This creates:</p>
+<div class="highlight"><pre><span></span><code>output/
+  merged_graph_nodes.tsv
+  merged_graph_edges.tsv
+</code></pre></div>
+<h2 id="export-to-jsonl">Export to JSONL</h2>
+<p>JSON Lines format stores one JSON object per line, useful for streaming and JavaScript-based tools.</p>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>*.nodes.*<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span>*.edges.*<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--export<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--export-dir<span class="w"> </span>./output<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--format<span class="w"> </span>jsonl
+</code></pre></div>
+<p>Output:</p>
+<div class="highlight"><pre><span></span><code>output/
+  merged_graph_nodes.jsonl
+  merged_graph_edges.jsonl
+</code></pre></div>
+<p>JSONL is suited for:</p>
+<ul>
+<li>Working with JavaScript or Node.js applications</li>
+<li>Streaming large files line by line</li>
+<li>Preserving complex nested structures</li>
+<li>Integration with document databases</li>
+</ul>
+<h2 id="export-to-parquet">Export to Parquet</h2>
+<p>Parquet is a columnar format optimized for analytical workloads and large datasets.</p>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>*.nodes.*<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span>*.edges.*<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--export<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--export-dir<span class="w"> </span>./output<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--format<span class="w"> </span>parquet
+</code></pre></div>
+<p>Output:</p>
+<div class="highlight"><pre><span></span><code>output/
+  merged_graph_nodes.parquet
+  merged_graph_edges.parquet
+</code></pre></div>
+<p>Parquet supports:</p>
+<ul>
+<li>Large-scale analytics with tools like Spark, Pandas, or Polars</li>
+<li>Storage with automatic compression</li>
+<li>Column-based queries (selecting specific fields)</li>
+<li>Integration with data warehouses and cloud analytics platforms</li>
+</ul>
+<h2 id="creating-archives">Creating Archives</h2>
+<p>Use the <code>--archive</code> flag to bundle exported files into a tar archive:</p>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>*.nodes.*<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span>*.edges.*<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--export<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--export-dir<span class="w"> </span>./output<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--archive
+</code></pre></div>
+<p>This creates a single archive file:</p>
+<div class="highlight"><pre><span></span><code>output/
+  merged_graph.tar
+</code></pre></div>
+<p>The archive contains the nodes and edges files in the specified format (TSV by default).</p>
+<p>Archives are useful for:</p>
+<ul>
+<li>Data releases and distribution</li>
+<li>Preserving file relationships</li>
+<li>Single-file management and transfer</li>
+<li>Versioned snapshots of graph data</li>
+</ul>
+<h2 id="compressed-archives">Compressed Archives</h2>
+<p>Add <code>--compress</code> to create a gzip-compressed tar archive:</p>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>*.nodes.*<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span>*.edges.*<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--export<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--export-dir<span class="w"> </span>./output<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--archive<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--compress
+</code></pre></div>
+<p>This creates:</p>
+<div class="highlight"><pre><span></span><code>output/
+  merged_graph.tar.gz
+</code></pre></div>
+<p>Compressed archives reduce file size, especially for TSV and JSONL formats. Parquet files are already compressed internally, so the size reduction is smaller.</p>
+<div class="admonition note">
+<p class="admonition-title">Compression requires archive</p>
+<p>The <code>--compress</code> flag requires <code>--archive</code> to be enabled. You cannot create a compressed archive without first enabling archiving.</p>
+</div>
+<h2 id="custom-graph-naming">Custom Graph Naming</h2>
+<p>Use <code>--graph-name</code> to specify custom names for exported files:</p>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>*.nodes.*<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span>*.edges.*<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--export<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--export-dir<span class="w"> </span>./output<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--graph-name<span class="w"> </span>monarch_kg_2024_01
+</code></pre></div>
+<p>Output with custom naming:</p>
+<div class="highlight"><pre><span></span><code>output/
+  monarch_kg_2024_01_nodes.tsv
+  monarch_kg_2024_01_edges.tsv
+</code></pre></div>
+<p>Or with archiving:</p>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>*.nodes.*<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span>*.edges.*<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--export<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--export-dir<span class="w"> </span>./output<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--graph-name<span class="w"> </span>monarch_kg_2024_01<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--archive<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--compress
+</code></pre></div>
+<p>Creates: <code>output/monarch_kg_2024_01.tar.gz</code></p>
+<p>Custom naming is useful for:</p>
+<ul>
+<li>Version-specific releases (<code>monarch_kg_v2024_01</code>)</li>
+<li>Environment identification (<code>kg_production</code>, <code>kg_staging</code>)</li>
+<li>Source attribution (<code>hgnc_gene_graph</code>)</li>
+<li>Date-stamped snapshots</li>
+</ul>
+<h2 id="loose-files-vs-archives">Loose Files vs Archives</h2>
+<p>Choose the appropriate export strategy based on your use case.</p>
+<h3 id="use-loose-files-when">Use Loose Files When</h3>
+<ul>
+<li>Directly loading into analysis tools (Pandas, R, DuckDB)</li>
+<li>Incremental updates to individual files</li>
+<li>Quick inspection and validation</li>
+<li>Development and testing workflows</li>
+</ul>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>*.nodes.*<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span>*.edges.*<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--export<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--export-dir<span class="w"> </span>./output
+</code></pre></div>
+<h3 id="use-archives-when">Use Archives When</h3>
+<ul>
+<li>Creating official data releases</li>
+<li>Distributing to external users</li>
+<li>Long-term storage and backup</li>
+<li>Ensuring file integrity during transfer</li>
+</ul>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>*.nodes.*<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span>*.edges.*<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--export<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--export-dir<span class="w"> </span>./releases<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--graph-name<span class="w"> </span>monarch_kg_v2024_01<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--archive<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--compress
+</code></pre></div>
+<h3 id="use-compressed-archives-when">Use Compressed Archives When</h3>
+<ul>
+<li>Minimizing storage costs</li>
+<li>Transferring over networks</li>
+<li>Publishing to data repositories</li>
+<li>Creating distributable packages</li>
+</ul>
+<h2 id="using-merge-for-export">Using merge for Export</h2>
+<p>The <code>merge</code> command combines data processing with export in a single pipeline.</p>
+<h3 id="complete-pipeline-with-export">Complete Pipeline with Export</h3>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>data/*.nodes.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span>data/*.edges.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--mappings<span class="w"> </span>sssom/*.sssom.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>processed_graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--export<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--export-dir<span class="w"> </span>./release<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--graph-name<span class="w"> </span>my_knowledge_graph<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--format<span class="w"> </span>parquet<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--archive<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--compress
+</code></pre></div>
+<p>This runs the complete pipeline (join, deduplicate, normalize, prune) and exports the final clean data.</p>
+<h3 id="export-only-merge">Export-Only Merge</h3>
+<p>If you only want to export from an existing database, you can skip all processing steps:</p>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>empty.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span>empty.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>existing_graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--skip-normalize<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--skip-prune<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--skip-deduplicate<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--export<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--export-dir<span class="w"> </span>./output
+</code></pre></div>
+<h3 id="selective-pipeline-with-export">Selective Pipeline with Export</h3>
+<p>Run specific pipeline steps and export:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Join and deduplicate only, then export</span>
+koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>*.nodes.*<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span>*.edges.*<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--skip-normalize<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--skip-prune<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--export<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--export-dir<span class="w"> </span>./output<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--format<span class="w"> </span>tsv
+</code></pre></div>
+<h2 id="cli-options-reference">CLI Options Reference</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--export</code></td>
+<td>Enable export of final data to files</td>
+</tr>
+<tr>
+<td><code>--export-dir</code></td>
+<td>Directory for exported files (required with <code>--export</code>)</td>
+</tr>
+<tr>
+<td><code>--format</code>, <code>-f</code></td>
+<td>Output format: <code>tsv</code>, <code>jsonl</code>, or <code>parquet</code> (default: <code>tsv</code>)</td>
+</tr>
+<tr>
+<td><code>--archive</code></td>
+<td>Export as tar archive instead of loose files</td>
+</tr>
+<tr>
+<td><code>--compress</code></td>
+<td>Compress archive as tar.gz (requires <code>--archive</code>)</td>
+</tr>
+<tr>
+<td><code>--graph-name</code></td>
+<td>Custom name for graph files (default: <code>merged_graph</code>)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="verification">Verification</h2>
+<p>After exporting, verify the output files.</p>
+<h3 id="check-exported-files">Check exported files</h3>
+<div class="highlight"><pre><span></span><code>ls<span class="w"> </span>-la<span class="w"> </span>./output/
+</code></pre></div>
+<h3 id="verify-record-counts">Verify record counts</h3>
+<p>For TSV:</p>
+<div class="highlight"><pre><span></span><code>wc<span class="w"> </span>-l<span class="w"> </span>./output/*_nodes.tsv<span class="w"> </span>./output/*_edges.tsv
+</code></pre></div>
+<p>For Parquet (using DuckDB):</p>
+<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;SELECT COUNT(*) FROM read_parquet(&#39;./output/*_nodes.parquet&#39;)&quot;</span>
+duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;SELECT COUNT(*) FROM read_parquet(&#39;./output/*_edges.parquet&#39;)&quot;</span>
+</code></pre></div>
+<h3 id="inspect-archive-contents">Inspect archive contents</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># List tar contents</span>
+tar<span class="w"> </span>-tvf<span class="w"> </span>./output/my_graph.tar
+
+<span class="c1"># List compressed tar contents</span>
+tar<span class="w"> </span>-tzvf<span class="w"> </span>./output/my_graph.tar.gz
+</code></pre></div>
+<h3 id="validate-exported-data">Validate exported data</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Check first few records</span>
+head<span class="w"> </span>-5<span class="w"> </span>./output/my_graph_nodes.tsv
+
+<span class="c1"># For JSONL, validate JSON structure</span>
+head<span class="w"> </span>-1<span class="w"> </span>./output/my_graph_nodes.jsonl<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>.
+</code></pre></div>
+<h2 id="see-also">See Also</h2>
+<ul>
+<li><a href="../../reference/cli/">CLI Reference</a> - Complete CLI documentation</li>
+<li><a href="../join-files/">How to Join Files</a> - Creating DuckDB databases to export from</li>
+<li><a href="../split-graph/">How to Split Graphs</a> - Alternative export with field-based splitting</li>
+<li><a href="../../explanation/schema-handling/">Schema Handling</a> - Format details and type inference</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://monarchinitiative.org" target="_blank" rel="noopener" title="monarchinitiative.org" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M277.8 8.6c-12.3-11.4-31.3-11.4-43.5 0l-224 208c-9.6 9-12.8 22.9-8 35.1S18.8 272 32 272h16v176c0 35.3 28.7 64 64 64h288c35.3 0 64-28.7 64-64V272h16c13.2 0 25-8.1 29.8-20.3s1.6-26.2-8-35.1zM240 320h32c26.5 0 48 21.5 48 48v96H192v-96c0-26.5 21.5-48 48-48"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/monarch-initiative/" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["content.code.copy", "navigation.expand", "navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

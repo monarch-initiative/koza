@@ -1,0 +1,2552 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://koza.monarchinitiative.org/graph-operations/explanation/schema-handling/">
+      
+      
+        <link rel="prev" href="../architecture/">
+      
+      
+        <link rel="next" href="../data-integrity/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../images/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Schema Handling - Koza Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,300i,400,400i,700,700i%7CSource+Sans+Pro+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Source Sans Pro";--md-code-font:"Source Sans Pro Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#schema-handling" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Koza Documentation" class="md-header__button md-logo" aria-label="Koza Documentation" data-md-component="logo">
+      
+  <img src="../../../img/pupa.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Koza Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Schema Handling
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 2c-1.82 0-3.53.5-5 1.35C8 5.08 10 8.3 10 12s-2 6.92-5 8.65C6.47 21.5 8.18 22 10 22a10 10 0 0 0 10-10A10 10 0 0 0 10 2"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/monarch-initiative/koza" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    monarch-initiative/koza
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Welcome
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../Ingests/" class="md-tabs__link">
+          
+  
+  
+  Ingests
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../" class="md-tabs__link">
+          
+  
+  
+  Graph Operations
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../Usage/CLI/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  CLI
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../Usage/Module/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Module
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Koza Documentation" class="md-nav__button md-logo" aria-label="Koza Documentation" data-md-component="logo">
+      
+  <img src="../../../img/pupa.png" alt="logo">
+
+    </a>
+    Koza Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/monarch-initiative/koza" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    monarch-initiative/koza
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Welcome
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ingests
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Ingests
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Ingests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuring an Ingest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Ingests/koza_config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Koza Config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Ingests/mapping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mapping
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Ingests/transform/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Transform Code
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Ingests/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Graph Operations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Graph Operations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/first-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build Your First Graph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/merge-pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Complete Merge Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-to Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to Guides
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/join-files/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Join Files
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/split-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Split Graphs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/normalize-ids/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Normalize IDs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/clean-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Clean Graphs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/incremental-updates/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Incremental Updates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/generate-reports/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Generate Reports
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/export-formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Export Formats
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Python API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Schema Handling
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Schema Handling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-schema-challenge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Schema Challenge
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The Schema Challenge">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-different-kgx-files-have-different-columns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why Different KGX Files Have Different Columns
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-schema-variation-in-practice" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example: Schema Variation in Practice
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#union-all-by-name" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        UNION ALL BY NAME
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="UNION ALL BY NAME">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#duckdbs-schema-harmonization-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DuckDB's Schema Harmonization Strategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#format-auto-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Format Auto-Detection
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Format Auto-Detection">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-format-is-detected" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Format Is Detected
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-extension-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Extension Detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compression-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compression Detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-type-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Type Detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#type-inference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Type Inference
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Type Inference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-column-types-are-determined" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Column Types Are Determined
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#array-detection-for-multivalued-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Array Detection for Multivalued Fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#schema-evolution-with-append" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Schema Evolution with Append
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Schema Evolution with Append">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-new-columns-are-added" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How New Columns Are Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Process
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#null-backfill-for-existing-rows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NULL Backfill for Existing Rows
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#null-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NULL Handling
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="NULL Handling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-happens-with-missing-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Happens with Missing Values
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nulls-vs-empty-arrays" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NULLs vs Empty Arrays
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Best Practices
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Best Practices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tips-for-maintaining-clean-schemas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tips for Maintaining Clean Schemas
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../data-integrity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../biolink-compliance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Biolink Compliance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Usage/CLI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Usage/Module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Module
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-schema-challenge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Schema Challenge
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The Schema Challenge">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-different-kgx-files-have-different-columns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why Different KGX Files Have Different Columns
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-schema-variation-in-practice" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example: Schema Variation in Practice
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#union-all-by-name" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        UNION ALL BY NAME
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="UNION ALL BY NAME">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#duckdbs-schema-harmonization-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DuckDB's Schema Harmonization Strategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#format-auto-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Format Auto-Detection
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Format Auto-Detection">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-format-is-detected" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Format Is Detected
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-extension-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Extension Detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compression-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compression Detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-type-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Type Detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#type-inference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Type Inference
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Type Inference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-column-types-are-determined" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Column Types Are Determined
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#array-detection-for-multivalued-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Array Detection for Multivalued Fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#schema-evolution-with-append" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Schema Evolution with Append
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Schema Evolution with Append">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-new-columns-are-added" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How New Columns Are Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Process
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#null-backfill-for-existing-rows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NULL Backfill for Existing Rows
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#null-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NULL Handling
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="NULL Handling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-happens-with-missing-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Happens with Missing Values
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nulls-vs-empty-arrays" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NULLs vs Empty Arrays
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Best Practices
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Best Practices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tips-for-maintaining-clean-schemas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tips for Maintaining Clean Schemas
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="schema-handling">Schema Handling</h1>
+<h2 id="overview">Overview</h2>
+<p>When building knowledge graphs from multiple sources, handling different schemas is a common challenge. Each data source may use different columns, different naming conventions, and different data types. Graph operations use DuckDB's schema harmonization features to combine these heterogeneous files into a unified graph.</p>
+<p>This document explains how schema handling works, from format detection through schema evolution, so you can understand what happens when your files have different columns.</p>
+<h2 id="the-schema-challenge">The Schema Challenge</h2>
+<h3 id="why-different-kgx-files-have-different-columns">Why Different KGX Files Have Different Columns</h3>
+<p>Knowledge graph data comes from many different sources, and each source may have different characteristics:</p>
+<p><strong>Different data sources</strong>: A gene annotation database exports different fields than a disease ontology. One might include <code>taxon</code> and <code>chromosome</code>, while another includes <code>definition</code> and <code>synonyms</code>.</p>
+<p><strong>Different Biolink slots used</strong>: The Biolink model defines many optional slots for nodes and edges. A protein interaction dataset might use <code>has_evidence</code> and <code>supporting_publications</code>, while a chemical database uses <code>has_chemical_formula</code> and <code>molecular_weight</code>.</p>
+<p><strong>Optional vs required fields</strong>: While KGX defines core fields like <code>id</code>, <code>name</code>, <code>category</code> for nodes and <code>subject</code>, <code>predicate</code>, <code>object</code> for edges, most other fields are optional. Different sources populate different subsets.</p>
+<p><strong>Custom extensions</strong>: Some data sources include custom columns beyond the Biolink model, such as source-specific identifiers, confidence scores, or annotation metadata.</p>
+<h3 id="example-schema-variation-in-practice">Example: Schema Variation in Practice</h3>
+<p>Consider combining three node files:</p>
+<div class="highlight"><pre><span></span><code># gene_nodes.tsv (5 columns)
+id    name    category    taxon    chromosome
+
+# disease_nodes.tsv (4 columns)
+id    name    category    definition
+
+# chemical_nodes.tsv (6 columns)
+id    name    category    formula    smiles    molecular_weight
+</code></pre></div>
+<p>When these files are combined, the result must include all columns from all sources, with appropriate handling for missing values.</p>
+<h2 id="union-all-by-name">UNION ALL BY NAME</h2>
+<h3 id="duckdbs-schema-harmonization-strategy">DuckDB's Schema Harmonization Strategy</h3>
+<p>Graph operations use DuckDB's <code>UNION ALL BY NAME</code> feature to combine files with different schemas. This is the key mechanism that makes heterogeneous file handling possible.</p>
+<h3 id="how-it-works">How It Works</h3>
+<p><strong>Columns matched by name, not position</strong>: Unlike traditional <code>UNION ALL</code> which requires identical column order, <code>UNION ALL BY NAME</code> matches columns by their names. This means files can have columns in any order.</p>
+<p><strong>Missing columns filled with NULL</strong>: When a file lacks a column that exists in another file, DuckDB fills those cells with <code>NULL</code>. No data is lost.</p>
+<p><strong>All columns from all sources preserved</strong>: The final table includes every column from every source file. No manual schema mapping is required.</p>
+<h3 id="example">Example</h3>
+<div class="highlight"><pre><span></span><code><span class="c1">-- DuckDB automatically handles schema differences</span>
+<span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">nodes</span><span class="w"> </span><span class="k">AS</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">temp_genes</span>
+<span class="k">UNION</span><span class="w"> </span><span class="k">ALL</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">NAME</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">temp_diseases</span>
+<span class="k">UNION</span><span class="w"> </span><span class="k">ALL</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">NAME</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">temp_chemicals</span>
+</code></pre></div>
+<p>Result schema: <code>id</code>, <code>name</code>, <code>category</code>, <code>taxon</code>, <code>chromosome</code>, <code>definition</code>, <code>formula</code>, <code>smiles</code>, <code>molecular_weight</code></p>
+<p>For genes: <code>definition</code>, <code>formula</code>, <code>smiles</code>, <code>molecular_weight</code> will be <code>NULL</code>
+For diseases: <code>taxon</code>, <code>chromosome</code>, <code>formula</code>, <code>smiles</code>, <code>molecular_weight</code> will be <code>NULL</code>
+For chemicals: <code>taxon</code>, <code>chromosome</code>, <code>definition</code> will be <code>NULL</code></p>
+<h2 id="format-auto-detection">Format Auto-Detection</h2>
+<h3 id="how-format-is-detected">How Format Is Detected</h3>
+<p>Graph operations detect file formats automatically. The <code>FileSpec</code> model handles this through field validators.</p>
+<h3 id="file-extension-detection">File Extension Detection</h3>
+<p>The format is detected from the file extension:</p>
+<table>
+<thead>
+<tr>
+<th>Extension</th>
+<th>Format</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>.tsv</code>, <code>.txt</code></td>
+<td>TSV (tab-separated values)</td>
+</tr>
+<tr>
+<td><code>.jsonl</code>, <code>.json</code></td>
+<td>JSONL (JSON Lines)</td>
+</tr>
+<tr>
+<td><code>.parquet</code></td>
+<td>Parquet</td>
+</tr>
+</tbody>
+</table>
+<h3 id="compression-detection">Compression Detection</h3>
+<p>The system handles compressed files by first stripping the compression extension, then detecting the underlying format:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Detected Format</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>nodes.tsv.gz</code></td>
+<td>TSV (compressed)</td>
+</tr>
+<tr>
+<td><code>edges.jsonl.bz2</code></td>
+<td>JSONL (compressed)</td>
+</tr>
+<tr>
+<td><code>data.parquet.xz</code></td>
+<td>Parquet (compressed)</td>
+</tr>
+</tbody>
+</table>
+<p>DuckDB reads compressed files without manual decompression.</p>
+<h3 id="file-type-detection">File Type Detection</h3>
+<p>The system also auto-detects whether a file contains nodes or edges based on filename patterns:</p>
+<ul>
+<li>Files containing <code>_nodes.</code> or starting with <code>nodes.</code> are detected as node files</li>
+<li>Files containing <code>_edges.</code> or starting with <code>edges.</code> are detected as edge files</li>
+</ul>
+<h2 id="type-inference">Type Inference</h2>
+<h3 id="how-column-types-are-determined">How Column Types Are Determined</h3>
+<p>DuckDB performs type inference when reading files. The behavior varies by format:</p>
+<p><strong>TSV files</strong>: By default, graph operations read TSV files with <code>all_varchar=true</code>, treating all columns as text. This avoids data loss from type mismatches and handles mixed-type columns consistently.</p>
+<p><strong>JSONL files</strong>: DuckDB infers types from the JSON structure. Arrays become <code>VARCHAR[]</code> (array of strings), numbers become appropriate numeric types, and strings remain <code>VARCHAR</code>. The option <code>convert_strings_to_integers=false</code> prevents UUID-like strings from being incorrectly parsed as integers.</p>
+<p><strong>Parquet files</strong>: Types are preserved exactly as stored in the Parquet schema, since Parquet is a typed format.</p>
+<h3 id="array-detection-for-multivalued-fields">Array Detection for Multivalued Fields</h3>
+<p>Graph operations identify multivalued fields (like <code>synonym</code>, <code>xref</code>, <code>publications</code>) and convert them appropriately:</p>
+<ol>
+<li><strong>Schema-based detection</strong>: The system consults the Biolink model schema to determine which fields are defined as multivalued</li>
+<li><strong>Fallback list</strong>: When the schema is unavailable, a hardcoded list of common KGX multivalued fields is used</li>
+<li><strong>Transformation</strong>: For TSV files, pipe-delimited values (<code>value1|value2|value3</code>) are converted to arrays</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1"># Fields that are always treated as single-valued (overrides schema)</span>
+<span class="n">FORCE_SINGLE_VALUED_FIELDS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;category&quot;</span><span class="p">,</span> <span class="s2">&quot;in_taxon&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">}</span>
+
+<span class="c1"># Fallback multivalued fields when schema unavailable</span>
+<span class="n">KGX_MULTIVALUED_FIELDS_FALLBACK</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;xref&quot;</span><span class="p">,</span> <span class="s2">&quot;synonym&quot;</span><span class="p">,</span> <span class="s2">&quot;publications&quot;</span><span class="p">,</span> <span class="s2">&quot;provided_by&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;qualifiers&quot;</span><span class="p">,</span> <span class="s2">&quot;knowledge_source&quot;</span><span class="p">,</span> <span class="s2">&quot;has_evidence&quot;</span><span class="p">,</span> <span class="o">...</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2 id="schema-evolution-with-append">Schema Evolution with Append</h2>
+<h3 id="how-new-columns-are-added">How New Columns Are Added</h3>
+<p>The append operation supports schema evolution, allowing you to add files with new columns to an existing database.</p>
+<h3 id="the-process">The Process</h3>
+<ol>
+<li><strong>Load new file into temp table</strong>: The new file is loaded with its full schema</li>
+<li><strong>Compare schemas</strong>: The temp table schema is compared to the existing table</li>
+<li><strong>ALTER TABLE ADD COLUMN</strong>: Any columns in the new file that do not exist in the target table are added via <code>ALTER TABLE</code></li>
+<li><strong>Insert with UNION ALL BY NAME</strong>: Data is inserted using schema-compatible union</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1"># Schema evolution in append operation</span>
+<span class="n">new_columns</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">file_columns</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">existing_schema</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+<span class="k">for</span> <span class="n">col_name</span> <span class="ow">in</span> <span class="n">new_columns</span><span class="p">:</span>
+    <span class="n">col_type</span> <span class="o">=</span> <span class="n">file_columns</span><span class="p">[</span><span class="n">col_name</span><span class="p">]</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ALTER TABLE </span><span class="si">{</span><span class="n">table_type</span><span class="si">}</span><span class="s2"> ADD COLUMN </span><span class="si">{</span><span class="n">col_name</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">col_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="null-backfill-for-existing-rows">NULL Backfill for Existing Rows</h3>
+<p>When a new column is added to an existing table, all existing rows receive <code>NULL</code> for that column. DuckDB does this automatically.</p>
+<h3 id="example_1">Example</h3>
+<div class="highlight"><pre><span></span><code># Original database has nodes with: id, name, category
+
+# New file has: id, name, category, taxon, description
+
+# After append:
+# - taxon and description columns are added
+# - Original nodes have NULL for taxon and description
+# - New nodes have all five fields populated
+</code></pre></div>
+<h2 id="null-handling">NULL Handling</h2>
+<h3 id="what-happens-with-missing-values">What Happens with Missing Values</h3>
+<p>NULL values occur during schema harmonization. Here is how they flow through operations:</p>
+<p><strong>During join</strong>: Missing columns are filled with <code>NULL</code> via <code>UNION ALL BY NAME</code></p>
+<p><strong>During append</strong>: New columns in existing rows are <code>NULL</code>; missing columns in new rows are <code>NULL</code></p>
+<p><strong>During export</strong>: <code>NULL</code> values are preserved in the output format:
+- TSV: Empty cell (no value between tabs)
+- JSONL: Field omitted from the JSON object
+- Parquet: Native NULL representation</p>
+<p><strong>In queries</strong>: Use <code>IS NULL</code> / <code>IS NOT NULL</code> to filter, or <code>COALESCE()</code> to provide defaults</p>
+<h3 id="nulls-vs-empty-arrays">NULLs vs Empty Arrays</h3>
+<p>For multivalued fields, there is a distinction:</p>
+<ul>
+<li><code>NULL</code>: The field has no value (not provided)</li>
+<li><code>[]</code> (empty array): The field was provided but contains no values</li>
+<li><code>['value']</code>: The field contains one or more values</li>
+</ul>
+<p>Graph operations preserve this distinction when possible. TSV format cannot distinguish between <code>NULL</code> and empty string.</p>
+<h2 id="best-practices">Best Practices</h2>
+<h3 id="tips-for-maintaining-clean-schemas">Tips for Maintaining Clean Schemas</h3>
+<p><strong>Use consistent column naming</strong>: Follow Biolink naming conventions (<code>snake_case</code>) across all your source files.</p>
+<p><strong>Document your extensions</strong>: If you add custom columns beyond Biolink, document what they contain.</p>
+<p><strong>Validate before joining</strong>: Use the schema report feature (<code>--schema-reporting</code>) to analyze schemas before combining files.</p>
+<p><strong>Consider output format</strong>: If schema consistency matters for downstream tools, consider exporting to Parquet which preserves exact types.</p>
+<p><strong>Handle multivalued fields consistently</strong>: Use pipe-delimited format (<code>value1|value2</code>) in TSV files for multivalued fields.</p>
+<p><strong>Review NULL patterns</strong>: After joining, query for NULL patterns to understand data coverage:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Find columns with high NULL rates</span>
+<span class="k">SELECT</span>
+<span class="w">    </span><span class="s1">&#39;taxon&#39;</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="k">column_name</span><span class="p">,</span>
+<span class="w">    </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">total</span><span class="p">,</span>
+<span class="w">    </span><span class="k">COUNT</span><span class="p">(</span><span class="n">taxon</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">non_null</span><span class="p">,</span>
+<span class="w">    </span><span class="n">ROUND</span><span class="p">(</span><span class="mi">100</span><span class="p">.</span><span class="mi">0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="n">taxon</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">),</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">coverage_pct</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">nodes</span>
+</code></pre></div>
+<p><strong>Use provided_by for provenance</strong>: Enable <code>generate_provided_by</code> (default) to track which source each record came from. This allows investigation of schema differences by source.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://monarchinitiative.org" target="_blank" rel="noopener" title="monarchinitiative.org" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M277.8 8.6c-12.3-11.4-31.3-11.4-43.5 0l-224 208c-9.6 9-12.8 22.9-8 35.1S18.8 272 32 272h16v176c0 35.3 28.7 64 64 64h288c35.3 0 64-28.7 64-64V272h16c13.2 0 25-8.1 29.8-20.3s1.6-26.2-8-35.1zM240 320h32c26.5 0 48 21.5 48 48v96H192v-96c0-26.5 21.5-48 48-48"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/monarch-initiative/" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["content.code.copy", "navigation.expand", "navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

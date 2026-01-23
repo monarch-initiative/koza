@@ -1,0 +1,2576 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://koza.monarchinitiative.org/graph-operations/how-to/incremental-updates/">
+      
+      
+        <link rel="prev" href="../clean-graph/">
+      
+      
+        <link rel="next" href="../generate-reports/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../images/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Incremental Updates - Koza Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,300i,400,400i,700,700i%7CSource+Sans+Pro+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Source Sans Pro";--md-code-font:"Source Sans Pro Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#how-to-do-incremental-updates" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Koza Documentation" class="md-header__button md-logo" aria-label="Koza Documentation" data-md-component="logo">
+      
+  <img src="../../../img/pupa.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Koza Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Incremental Updates
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 2c-1.82 0-3.53.5-5 1.35C8 5.08 10 8.3 10 12s-2 6.92-5 8.65C6.47 21.5 8.18 22 10 22a10 10 0 0 0 10-10A10 10 0 0 0 10 2"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/monarch-initiative/koza" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    monarch-initiative/koza
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Welcome
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../Ingests/" class="md-tabs__link">
+          
+  
+  
+  Ingests
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../" class="md-tabs__link">
+          
+  
+  
+  Graph Operations
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../Usage/CLI/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  CLI
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../Usage/Module/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Module
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Koza Documentation" class="md-nav__button md-logo" aria-label="Koza Documentation" data-md-component="logo">
+      
+  <img src="../../../img/pupa.png" alt="logo">
+
+    </a>
+    Koza Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/monarch-initiative/koza" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    monarch-initiative/koza
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Welcome
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ingests
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Ingests
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Ingests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuring an Ingest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Ingests/koza_config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Koza Config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Ingests/mapping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mapping
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Ingests/transform/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Transform Code
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Ingests/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Graph Operations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Graph Operations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/first-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build Your First Graph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/merge-pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Complete Merge Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-to Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to Guides
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../join-files/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Join Files
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../split-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Split Graphs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../normalize-ids/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Normalize IDs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../clean-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Clean Graphs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Incremental Updates
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Incremental Updates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#goal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Goal
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#basic-append" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic Append
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Basic Append">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mixed-format-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mixed Format Support
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#schema-evolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Schema Evolution
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Schema Evolution">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-schema-evolution-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Schema Evolution Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example Output
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deduplication-during-append" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deduplication During Append
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Deduplication During Append">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-deduplication-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Deduplication Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-with-deduplication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example with Deduplication
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tracking-schema-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tracking Schema Changes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tracking Schema Changes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#inspecting-schema-changes-via-sql" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inspecting Schema Changes via SQL
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#when-to-use-append-vs-join" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When to Use Append vs Join
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="When to Use Append vs Join">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#append-use-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Append Use Cases
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#join-use-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Join Use Cases
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#complete-pipeline-comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Complete Pipeline Comparison
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Verification">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#check-record-counts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Check Record Counts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verify-new-data-is-present" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verify New Data Is Present
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#check-schema-evolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Check Schema Evolution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verify-deduplication-if-used" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verify Deduplication (if used)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#generate-qc-report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Generate QC Report
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#complete-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Complete Example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        See Also
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../generate-reports/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Generate Reports
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../export-formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Export Formats
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Python API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/schema-handling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Schema Handling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/data-integrity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/biolink-compliance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Biolink Compliance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Usage/CLI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Usage/Module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Module
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#goal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Goal
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#basic-append" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic Append
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Basic Append">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mixed-format-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mixed Format Support
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#schema-evolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Schema Evolution
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Schema Evolution">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-schema-evolution-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Schema Evolution Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example Output
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deduplication-during-append" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deduplication During Append
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Deduplication During Append">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-deduplication-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Deduplication Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-with-deduplication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example with Deduplication
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tracking-schema-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tracking Schema Changes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tracking Schema Changes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#inspecting-schema-changes-via-sql" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inspecting Schema Changes via SQL
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#when-to-use-append-vs-join" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When to Use Append vs Join
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="When to Use Append vs Join">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#append-use-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Append Use Cases
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#join-use-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Join Use Cases
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#complete-pipeline-comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Complete Pipeline Comparison
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Verification">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#check-record-counts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Check Record Counts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verify-new-data-is-present" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verify New Data Is Present
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#check-schema-evolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Check Schema Evolution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verify-deduplication-if-used" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verify Deduplication (if used)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#generate-qc-report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Generate QC Report
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#complete-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Complete Example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        See Also
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="how-to-do-incremental-updates">How to Do Incremental Updates</h1>
+<h2 id="goal">Goal</h2>
+<p>Add new data to an existing DuckDB database with automatic schema evolution. The <code>append</code> operation lets you incrementally grow your knowledge graph without rebuilding from scratch, automatically handling schema differences between old and new data.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>An existing DuckDB database (created via <code>koza join</code>, <code>koza merge</code>, or a previous <code>koza append</code>)</li>
+<li>New KGX files to append (nodes and/or edges in TSV, JSONL, or Parquet format)</li>
+<li>Koza installed and available in your PATH</li>
+</ul>
+<h2 id="basic-append">Basic Append</h2>
+<p>The simplest append adds new node and edge files to an existing database.</p>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>append<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>existing_graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>new_genes.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span>new_interactions.tsv
+</code></pre></div>
+<p>You can append multiple files at once:</p>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>append<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>existing_graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>new_genes.tsv<span class="w"> </span>updated_pathways.jsonl<span class="w"> </span>additional_proteins.parquet<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span>new_interactions.tsv<span class="w"> </span>new_associations.jsonl
+</code></pre></div>
+<h3 id="mixed-format-support">Mixed Format Support</h3>
+<p>Like other Koza operations, append handles mixed formats:</p>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>append<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>genes.tsv<span class="w"> </span>proteins.jsonl<span class="w"> </span>pathways.parquet<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span>interactions.tsv.gz<span class="w"> </span>associations.jsonl.bz2
+</code></pre></div>
+<h2 id="schema-evolution">Schema Evolution</h2>
+<p>When new files contain columns that do not exist in the database, append automatically adds these columns to the schema.</p>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>append<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>genes_with_new_fields.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span>interactions_with_confidence.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--schema-report
+</code></pre></div>
+<h3 id="how-schema-evolution-works">How Schema Evolution Works</h3>
+<ol>
+<li><strong>New columns detected</strong>: Append compares incoming file schemas with existing table schemas</li>
+<li><strong>Columns added</strong>: New columns are added to the database tables using <code>ALTER TABLE</code></li>
+<li><strong>Backward compatibility</strong>: Existing rows get NULL values for the new columns</li>
+<li><strong>Type safety</strong>: DuckDB handles type inference and conversion automatically</li>
+</ol>
+<h3 id="example-output">Example Output</h3>
+<div class="highlight"><pre><span></span><code>Append completed successfully
+  Files processed: 2 (2 successful)
+  Records added: 15,234
+  Schema evolution: 2 new columns added
+    - Added 1 new column to nodes: custom_score
+    - Added 1 new column to edges: confidence_value
+  Database growth:
+    - Nodes: 125,340 -&gt; 138,574 (+13,234)
+    - Edges: 298,567 -&gt; 300,567 (+2,000)
+  Total time: 8.2s
+</code></pre></div>
+<h2 id="deduplication-during-append">Deduplication During Append</h2>
+<p>When appending data that may overlap with existing records, use the <code>--deduplicate</code> flag to remove duplicates:</p>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>append<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>updated_genes.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span>updated_interactions.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--deduplicate
+</code></pre></div>
+<h3 id="how-deduplication-works">How Deduplication Works</h3>
+<ol>
+<li><strong>Append first</strong>: New data is added to the tables</li>
+<li><strong>Identify duplicates</strong>: Records with the same ID are identified</li>
+<li><strong>Keep first occurrence</strong>: The first occurrence (by load order) is kept</li>
+<li><strong>Archive duplicates</strong>: Duplicate records are moved to <code>duplicate_nodes</code> and <code>duplicate_edges</code> tables</li>
+</ol>
+<h3 id="example-with-deduplication">Example with Deduplication</h3>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>append<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>genes_v2.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--deduplicate<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--show-progress
+</code></pre></div>
+<p>Output:</p>
+<div class="highlight"><pre><span></span><code>Append completed successfully
+  Files processed: 1 (1 successful)
+  Records added: 5,234
+  Duplicates removed: 45
+  Database: graph.duckdb (4.8 MB)
+  Total time: 4.1s
+</code></pre></div>
+<div class="admonition info">
+<p class="admonition-title">Deduplication Preserves Data</p>
+<p>Duplicate records are moved to archive tables (<code>duplicate_nodes</code>, <code>duplicate_edges</code>), not deleted. You can inspect these tables to understand what was deduplicated.</p>
+</div>
+<h2 id="tracking-schema-changes">Tracking Schema Changes</h2>
+<p>Use the <code>--schema-report</code> flag to generate a detailed report of schema changes:</p>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>append<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>new_data.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--schema-report
+</code></pre></div>
+<p>This creates a YAML file (e.g., <code>graph_schema_report_append.yaml</code>) containing:</p>
+<ul>
+<li><strong>File analysis</strong>: Format detection, column counts, record counts per file</li>
+<li><strong>Schema changes</strong>: List of new columns added to each table</li>
+<li><strong>Column details</strong>: Data types, null percentages, example values</li>
+</ul>
+<h3 id="inspecting-schema-changes-via-sql">Inspecting Schema Changes via SQL</h3>
+<p>After appending, you can also check the schema directly:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># View current table schemas</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">&quot;DESCRIBE nodes&quot;</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">&quot;DESCRIBE edges&quot;</span>
+
+<span class="c1"># Check which columns have NULL values (potentially new columns)</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">&quot;SELECT COUNT(*) - COUNT(custom_score) as nulls FROM nodes&quot;</span>
+</code></pre></div>
+<h2 id="when-to-use-append-vs-join">When to Use Append vs Join</h2>
+<p>Choose the right operation based on your use case:</p>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Use Append</th>
+<th>Use Join</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Adding new data to existing database</td>
+<td>Yes</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Preserving existing database state</td>
+<td>Yes</td>
+<td>No (overwrites)</td>
+</tr>
+<tr>
+<td>Incremental daily/weekly updates</td>
+<td>Yes</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Full rebuild from all sources</td>
+<td>No</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Starting fresh with new data</td>
+<td>No</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Schema evolution needed</td>
+<td>Yes (automatic)</td>
+<td>Yes (automatic)</td>
+</tr>
+<tr>
+<td>Combining many files initially</td>
+<td>No</td>
+<td>Yes</td>
+</tr>
+</tbody>
+</table>
+<h3 id="append-use-cases">Append Use Cases</h3>
+<ul>
+<li><strong>Daily data ingestion</strong>: Add new records from a data pipeline each day</li>
+<li><strong>Incremental updates</strong>: Add corrections or updates without full rebuild</li>
+<li><strong>Data augmentation</strong>: Add new sources to an existing graph</li>
+<li><strong>Schema extension</strong>: Add new properties to existing entities</li>
+</ul>
+<h3 id="join-use-cases">Join Use Cases</h3>
+<ul>
+<li><strong>Initial graph creation</strong>: Combine multiple source files into a new database</li>
+<li><strong>Full rebuild</strong>: Replace existing data with a fresh build from sources</li>
+<li><strong>Format conversion</strong>: Load data into DuckDB for the first time</li>
+</ul>
+<h3 id="complete-pipeline-comparison">Complete Pipeline Comparison</h3>
+<p><strong>Incremental approach (append):</strong>
+<div class="highlight"><pre><span></span><code><span class="c1"># Initial build</span>
+koza<span class="w"> </span>join<span class="w"> </span>--nodes<span class="w"> </span>*.nodes.*<span class="w"> </span>--edges<span class="w"> </span>*.edges.*<span class="w"> </span>--output<span class="w"> </span>graph.duckdb
+
+<span class="c1"># Later: add new data</span>
+koza<span class="w"> </span>append<span class="w"> </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span>--nodes<span class="w"> </span>new_data.tsv<span class="w"> </span>--deduplicate
+koza<span class="w"> </span>append<span class="w"> </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span>--nodes<span class="w"> </span>more_data.tsv<span class="w"> </span>--deduplicate
+</code></pre></div></p>
+<p><strong>Full rebuild approach (join):</strong>
+<div class="highlight"><pre><span></span><code><span class="c1"># Rebuild everything each time</span>
+koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>*.nodes.*<span class="w"> </span>new_data.tsv<span class="w"> </span>more_data.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span>*.edges.*<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>graph.duckdb
+</code></pre></div></p>
+<h2 id="verification">Verification</h2>
+<p>After appending, verify the operation succeeded.</p>
+<h3 id="check-record-counts">Check Record Counts</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Compare before and after counts</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">&quot;SELECT COUNT(*) AS node_count FROM nodes&quot;</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">&quot;SELECT COUNT(*) AS edge_count FROM edges&quot;</span>
+</code></pre></div>
+<h3 id="verify-new-data-is-present">Verify New Data Is Present</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Check for records from the new source</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">&quot;SELECT COUNT(*) FROM nodes WHERE file_source LIKE &#39;%new_data%&#39;&quot;</span>
+
+<span class="c1"># Or by provided_by if set</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">&quot;SELECT provided_by, COUNT(*) FROM nodes GROUP BY provided_by ORDER BY COUNT(*) DESC&quot;</span>
+</code></pre></div>
+<h3 id="check-schema-evolution">Check Schema Evolution</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># View the current schema</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">&quot;DESCRIBE nodes&quot;</span>
+
+<span class="c1"># Check for new columns with mostly NULL values (recently added)</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">&quot;</span>
+<span class="s2">SELECT</span>
+<span class="s2">    column_name,</span>
+<span class="s2">    COUNT(*) - COUNT(column_name) as null_count,</span>
+<span class="s2">    COUNT(*) as total_count</span>
+<span class="s2">FROM nodes</span>
+<span class="s2">UNPIVOT (value FOR column_name IN (*))</span>
+<span class="s2">GROUP BY column_name</span>
+<span class="s2">ORDER BY null_count DESC</span>
+<span class="s2">&quot;</span>
+</code></pre></div>
+<h3 id="verify-deduplication-if-used">Verify Deduplication (if used)</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Check duplicate archive tables</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">&quot;SELECT COUNT(*) as duplicate_nodes FROM duplicate_nodes&quot;</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">&quot;SELECT COUNT(*) as duplicate_edges FROM duplicate_edges&quot;</span>
+
+<span class="c1"># View sample duplicates</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">&quot;SELECT * FROM duplicate_nodes LIMIT 5&quot;</span>
+</code></pre></div>
+<h3 id="generate-qc-report">Generate QC Report</h3>
+<p>For comprehensive verification:</p>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>report<span class="w"> </span>qc<span class="w"> </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span>--output<span class="w"> </span>qc_report.yaml
+</code></pre></div>
+<h2 id="complete-example">Complete Example</h2>
+<p>A typical incremental update workflow:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Step 1: Initial graph build</span>
+koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>source_a.nodes.tsv<span class="w"> </span>source_b.nodes.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span>source_a.edges.tsv<span class="w"> </span>source_b.edges.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>knowledge_graph.duckdb
+
+<span class="c1"># Step 2: Check initial counts</span>
+duckdb<span class="w"> </span>knowledge_graph.duckdb<span class="w"> </span><span class="s2">&quot;SELECT COUNT(*) FROM nodes&quot;</span>
+<span class="c1"># Returns: 125340</span>
+
+<span class="c1"># Step 3: Append new data with deduplication and schema tracking</span>
+koza<span class="w"> </span>append<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--database<span class="w"> </span>knowledge_graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span>new_source_c.nodes.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span>new_source_c.edges.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--deduplicate<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--schema-report<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--show-progress
+
+<span class="c1"># Step 4: Verify the update</span>
+duckdb<span class="w"> </span>knowledge_graph.duckdb<span class="w"> </span><span class="s2">&quot;SELECT COUNT(*) FROM nodes&quot;</span>
+<span class="c1"># Returns: 138574</span>
+
+<span class="c1"># Step 5: Generate updated QC report</span>
+koza<span class="w"> </span>report<span class="w"> </span>qc<span class="w"> </span>--database<span class="w"> </span>knowledge_graph.duckdb<span class="w"> </span>--output<span class="w"> </span>qc_report.yaml
+</code></pre></div>
+<h2 id="see-also">See Also</h2>
+<ul>
+<li><a href="../../reference/cli/#koza-append">CLI Reference: koza append</a></li>
+<li><a href="../join-files/">How to Join Files</a> - Creating the initial database</li>
+<li><a href="../clean-graph/">How to Clean Graphs</a> - Deduplication and pruning operations</li>
+<li><a href="../../explanation/schema-handling/">Schema Handling</a> - Schema evolution and harmonization</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://monarchinitiative.org" target="_blank" rel="noopener" title="monarchinitiative.org" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M277.8 8.6c-12.3-11.4-31.3-11.4-43.5 0l-224 208c-9.6 9-12.8 22.9-8 35.1S18.8 272 32 272h16v176c0 35.3 28.7 64 64 64h288c35.3 0 64-28.7 64-64V272h16c13.2 0 25-8.1 29.8-20.3s1.6-26.2-8-35.1zM240 320h32c26.5 0 48 21.5 48 48v96H192v-96c0-26.5 21.5-48 48-48"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/monarch-initiative/" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["content.code.copy", "navigation.expand", "navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

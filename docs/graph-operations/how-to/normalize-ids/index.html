@@ -1,0 +1,2737 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://koza.monarchinitiative.org/graph-operations/how-to/normalize-ids/">
+      
+      
+        <link rel="prev" href="../split-graph/">
+      
+      
+        <link rel="next" href="../clean-graph/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../images/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Normalize IDs - Koza Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,300i,400,400i,700,700i%7CSource+Sans+Pro+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Source Sans Pro";--md-code-font:"Source Sans Pro Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#how-to-normalize-ids" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Koza Documentation" class="md-header__button md-logo" aria-label="Koza Documentation" data-md-component="logo">
+      
+  <img src="../../../img/pupa.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Koza Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Normalize IDs
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 2c-1.82 0-3.53.5-5 1.35C8 5.08 10 8.3 10 12s-2 6.92-5 8.65C6.47 21.5 8.18 22 10 22a10 10 0 0 0 10-10A10 10 0 0 0 10 2"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/monarch-initiative/koza" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    monarch-initiative/koza
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Welcome
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../Ingests/" class="md-tabs__link">
+          
+  
+  
+  Ingests
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../" class="md-tabs__link">
+          
+  
+  
+  Graph Operations
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../Usage/CLI/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  CLI
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../Usage/Module/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Module
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Koza Documentation" class="md-nav__button md-logo" aria-label="Koza Documentation" data-md-component="logo">
+      
+  <img src="../../../img/pupa.png" alt="logo">
+
+    </a>
+    Koza Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/monarch-initiative/koza" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    monarch-initiative/koza
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Welcome
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ingests
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Ingests
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Ingests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuring an Ingest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Ingests/koza_config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Koza Config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Ingests/mapping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mapping
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Ingests/transform/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Transform Code
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Ingests/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Graph Operations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Graph Operations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/first-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build Your First Graph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/merge-pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Complete Merge Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-to Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to Guides
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../join-files/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Join Files
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../split-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Split Graphs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Normalize IDs
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Normalize IDs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#goal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Goal
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#understanding-sssom" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Understanding SSSOM
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Understanding SSSOM">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sssom-file-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SSSOM File Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-koza-uses-sssom-for-normalization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Koza Uses SSSOM for Normalization
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#basic-normalization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic Normalization
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Basic Normalization">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-verify-your-database" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Verify Your Database
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-apply-the-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Apply the Mapping
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example Output
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#multiple-mapping-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multiple Mapping Files
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Multiple Mapping Files">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#using-multiple-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using Multiple Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-a-mappings-directory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using a Mappings Directory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#order-of-application" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Order of Application
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#original-value-preservation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Original Value Preservation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Original Value Preservation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#querying-original-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Querying Original Values
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#duplicate-mapping-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Duplicate Mapping Handling
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Duplicate Mapping Handling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Problem
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-koza-handles-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Koza Handles It
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#warning-message" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Warning Message
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#best-practice" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Best Practice
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Verification">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#check-normalization-statistics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Check Normalization Statistics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compare-before-and-after" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compare Before and After
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verify-mapping-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verify Mapping Coverage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#generate-a-report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Generate a Report
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Variations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Variations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#using-normalize-in-the-merge-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using Normalize in the Merge Pipeline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skip-normalization-in-merge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Skip Normalization in Merge
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#normalize-after-other-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Normalize After Other Operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        See Also
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../clean-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Clean Graphs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../incremental-updates/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Incremental Updates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../generate-reports/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Generate Reports
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../export-formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Export Formats
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Python API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/schema-handling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Schema Handling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/data-integrity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/biolink-compliance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Biolink Compliance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Usage/CLI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Usage/Module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Module
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#goal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Goal
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#understanding-sssom" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Understanding SSSOM
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Understanding SSSOM">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sssom-file-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SSSOM File Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-koza-uses-sssom-for-normalization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Koza Uses SSSOM for Normalization
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#basic-normalization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic Normalization
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Basic Normalization">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-verify-your-database" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Verify Your Database
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-apply-the-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Apply the Mapping
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example Output
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#multiple-mapping-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multiple Mapping Files
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Multiple Mapping Files">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#using-multiple-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using Multiple Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-a-mappings-directory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using a Mappings Directory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#order-of-application" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Order of Application
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#original-value-preservation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Original Value Preservation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Original Value Preservation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#querying-original-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Querying Original Values
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#duplicate-mapping-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Duplicate Mapping Handling
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Duplicate Mapping Handling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Problem
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-koza-handles-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Koza Handles It
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#warning-message" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Warning Message
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#best-practice" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Best Practice
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Verification">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#check-normalization-statistics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Check Normalization Statistics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compare-before-and-after" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compare Before and After
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verify-mapping-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verify Mapping Coverage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#generate-a-report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Generate a Report
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Variations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Variations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#using-normalize-in-the-merge-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using Normalize in the Merge Pipeline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skip-normalization-in-merge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Skip Normalization in Merge
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#normalize-after-other-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Normalize After Other Operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        See Also
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="how-to-normalize-ids">How to Normalize IDs</h1>
+<h2 id="goal">Goal</h2>
+<p>Apply SSSOM mappings to harmonize identifiers in edge references. This allows you to consolidate equivalent identifiers from different sources (e.g., mapping OMIM disease IDs to MONDO) so that edges reference consistent node identifiers.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>A DuckDB database with edges (created via <code>koza join</code>, <code>koza merge</code>, or <code>koza append</code>)</li>
+<li>One or more SSSOM mapping files that define the identifier mappings you want to apply</li>
+</ul>
+<h2 id="understanding-sssom">Understanding SSSOM</h2>
+<p><a href="https://mapping-commons.github.io/sssom/">SSSOM (Simple Standard for Sharing Ontological Mappings)</a> is a standard format for representing mappings between ontology terms and other identifiers.</p>
+<h3 id="sssom-file-format">SSSOM File Format</h3>
+<p>An SSSOM TSV file typically has an optional YAML header (lines starting with <code>#</code>) followed by tab-separated data:</p>
+<div class="highlight"><pre><span></span><code>#curie_map:
+#  MONDO: http://purl.obolibrary.org/obo/MONDO_
+#  OMIM: https://omim.org/entry/
+#  HP: http://purl.obolibrary.org/obo/HP_
+#mapping_set_id: https://example.org/mappings/mondo-omim
+subject_id  predicate_id    object_id   mapping_justification
+MONDO:0005148   skos:exactMatch OMIM:222100 semapv:ManualMappingCuration
+MONDO:0007455   skos:exactMatch OMIM:114500 semapv:ManualMappingCuration
+MONDO:0008199   skos:exactMatch OMIM:176000 semapv:ManualMappingCuration
+</code></pre></div>
+<h3 id="how-koza-uses-sssom-for-normalization">How Koza Uses SSSOM for Normalization</h3>
+<p>Koza uses a <strong>simplifying assumption</strong> when applying SSSOM mappings: it maps FROM the <code>object_id</code> TO the <code>subject_id</code>. This is a practical simplification for identifier normalization and does not reflect the full semantic meaning of SSSOM mapping files (where subject/object semantics depend on the predicate).</p>
+<p>The relevant columns for normalization are:</p>
+<ul>
+<li><strong>subject_id</strong>: The target identifier (what Koza normalizes TO)</li>
+<li><strong>object_id</strong>: The source identifier (what Koza normalizes FROM)</li>
+<li><strong>predicate_id</strong>: The mapping relationship (e.g., <code>skos:exactMatch</code>) - used for filtering but not for determining direction</li>
+<li><strong>mapping_justification</strong>: How the mapping was created (optional but recommended)</li>
+</ul>
+<p><strong>Important</strong>: Normalization changes <strong>edge references</strong> (the <code>subject</code> and <code>object</code> columns in the edges table), not the node IDs themselves. If an edge references an identifier that appears in the SSSOM <code>object_id</code> column, that reference is updated to the corresponding <code>subject_id</code>.</p>
+<h2 id="basic-normalization">Basic Normalization</h2>
+<p>Apply a single SSSOM file to normalize identifiers in your database.</p>
+<h3 id="step-1-verify-your-database">Step 1: Verify Your Database</h3>
+<p>First, check the current state of your edges:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Count edges and check identifier patterns</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;</span>
+<span class="s2">  SELECT COUNT(*) as edge_count FROM edges;</span>
+<span class="s2">&quot;</span>
+
+<span class="c1"># See sample identifiers</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;</span>
+<span class="s2">  SELECT DISTINCT subject FROM edges LIMIT 10;</span>
+<span class="s2">&quot;</span>
+</code></pre></div>
+<h3 id="step-2-apply-the-mapping">Step 2: Apply the Mapping</h3>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>normalize<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--mappings<span class="w"> </span>mondo-omim.sssom.tsv
+</code></pre></div>
+<h3 id="example-output">Example Output</h3>
+<div class="highlight"><pre><span></span><code>Loading SSSOM mappings...
+  Loaded 45,678 unique mappings from 1 file(s)
+Normalizing edge references...
+  Normalized 12,345 edge subject/object references
+Normalization completed successfully
+</code></pre></div>
+<h2 id="multiple-mapping-files">Multiple Mapping Files</h2>
+<p>When you have mappings from multiple sources, you can apply them all at once.</p>
+<h3 id="using-multiple-files">Using Multiple Files</h3>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>normalize<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-m<span class="w"> </span>mondo-omim.sssom.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-m<span class="w"> </span>mondo-orphanet.sssom.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-m<span class="w"> </span>hp-mp.sssom.tsv
+</code></pre></div>
+<h3 id="using-a-mappings-directory">Using a Mappings Directory</h3>
+<p>If all your SSSOM files are in one directory:</p>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>normalize<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--mappings-dir<span class="w"> </span>./mappings/
+</code></pre></div>
+<p>This loads all <code>.sssom.tsv</code> files from the specified directory.</p>
+<h3 id="order-of-application">Order of Application</h3>
+<p>When using multiple mapping files:</p>
+<ol>
+<li>Files are processed in the order specified (or alphabetically for <code>--mappings-dir</code>)</li>
+<li>All mappings are loaded into a single mappings table before normalization</li>
+<li>If the same <code>object_id</code> appears in multiple files, the first occurrence is kept</li>
+</ol>
+<h2 id="original-value-preservation">Original Value Preservation</h2>
+<p>Normalization preserves the original identifier values so you can trace back to the source data.</p>
+<h3 id="how-it-works">How It Works</h3>
+<p>When an edge's <code>subject</code> or <code>object</code> is normalized:</p>
+<ul>
+<li>The <strong>new</strong> (normalized) identifier is written to <code>subject</code> or <code>object</code></li>
+<li>The <strong>original</strong> identifier is stored in <code>original_subject</code> or <code>original_object</code></li>
+</ul>
+<h3 id="example">Example</h3>
+<p>Before normalization:</p>
+<table>
+<thead>
+<tr>
+<th>subject</th>
+<th>object</th>
+<th>predicate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>HGNC:1234</td>
+<td>OMIM:222100</td>
+<td>biolink:gene_associated_with_condition</td>
+</tr>
+</tbody>
+</table>
+<p>After normalization (with OMIM to MONDO mapping):</p>
+<table>
+<thead>
+<tr>
+<th>subject</th>
+<th>object</th>
+<th>predicate</th>
+<th>original_subject</th>
+<th>original_object</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>HGNC:1234</td>
+<td>MONDO:0005148</td>
+<td>biolink:gene_associated_with_condition</td>
+<td>NULL</td>
+<td>OMIM:222100</td>
+</tr>
+</tbody>
+</table>
+<p>Note: <code>original_subject</code> is NULL because <code>HGNC:1234</code> was not in the mappings and was not changed.</p>
+<h3 id="querying-original-values">Querying Original Values</h3>
+<p>You can find all normalized edges:</p>
+<div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">subject</span><span class="p">,</span><span class="w"> </span><span class="k">object</span><span class="p">,</span><span class="w"> </span><span class="n">original_subject</span><span class="p">,</span><span class="w"> </span><span class="n">original_object</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">edges</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">original_subject</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span>
+<span class="w">   </span><span class="k">OR</span><span class="w"> </span><span class="n">original_object</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">;</span>
+</code></pre></div>
+<h2 id="duplicate-mapping-handling">Duplicate Mapping Handling</h2>
+<p>SSSOM files sometimes contain one-to-many mappings where a single <code>object_id</code> maps to multiple <code>subject_id</code> values. Koza handles this to prevent edge duplication.</p>
+<h3 id="the-problem">The Problem</h3>
+<p>If your SSSOM file contains:</p>
+<div class="highlight"><pre><span></span><code>subject_id  predicate_id    object_id   mapping_justification
+MONDO:0005148   skos:exactMatch OMIM:222100 semapv:ManualMappingCuration
+MONDO:0005149   skos:closeMatch OMIM:222100 semapv:LexicalMatching
+</code></pre></div>
+<p>Without deduplication, an edge referencing <code>OMIM:222100</code> could become two edges.</p>
+<h3 id="how-koza-handles-it">How Koza Handles It</h3>
+<p>Koza keeps only <strong>one mapping per object_id</strong>:</p>
+<ol>
+<li>Mappings are ordered by source file, then by <code>subject_id</code></li>
+<li>The first mapping for each <code>object_id</code> is kept</li>
+<li>Subsequent duplicates are discarded with a warning</li>
+</ol>
+<h3 id="warning-message">Warning Message</h3>
+<p>When duplicates are detected:</p>
+<div class="highlight"><pre><span></span><code>Loading SSSOM mappings...
+  Loaded 45,678 unique mappings from 2 file(s)
+  Found 234 duplicate mappings (one object_id mapped to multiple subject_ids).
+  Keeping only one mapping per object_id.
+</code></pre></div>
+<h3 id="best-practice">Best Practice</h3>
+<p>To control which mapping is used, ensure your preferred mappings come first:</p>
+<ol>
+<li>Order the <code>--mappings</code> arguments with preferred files first</li>
+<li>Or curate your SSSOM files to have one mapping per identifier</li>
+</ol>
+<h2 id="verification">Verification</h2>
+<p>After normalization, verify the results.</p>
+<h3 id="check-normalization-statistics">Check Normalization Statistics</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Count how many edges were normalized</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;</span>
+<span class="s2">  SELECT</span>
+<span class="s2">    COUNT(*) as total_edges,</span>
+<span class="s2">    COUNT(original_subject) as normalized_subjects,</span>
+<span class="s2">    COUNT(original_object) as normalized_objects</span>
+<span class="s2">  FROM edges;</span>
+<span class="s2">&quot;</span>
+</code></pre></div>
+<h3 id="compare-before-and-after">Compare Before and After</h3>
+<p>Save identifiers before normalization for comparison:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Before normalization - export unique identifiers</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;</span>
+<span class="s2">  SELECT DISTINCT object FROM edges WHERE object LIKE &#39;OMIM:%&#39;</span>
+<span class="s2">&quot;</span><span class="w"> </span>&gt;<span class="w"> </span>before_omim_ids.txt
+
+<span class="c1"># Run normalization</span>
+koza<span class="w"> </span>normalize<span class="w"> </span>graph.duckdb<span class="w"> </span>-m<span class="w"> </span>mondo-omim.sssom.tsv
+
+<span class="c1"># After normalization - check OMIM IDs are gone</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;</span>
+<span class="s2">  SELECT DISTINCT object FROM edges WHERE object LIKE &#39;OMIM:%&#39;</span>
+<span class="s2">&quot;</span><span class="w"> </span>&gt;<span class="w"> </span>after_omim_ids.txt
+
+<span class="c1"># Compare</span>
+diff<span class="w"> </span>before_omim_ids.txt<span class="w"> </span>after_omim_ids.txt
+</code></pre></div>
+<h3 id="verify-mapping-coverage">Verify Mapping Coverage</h3>
+<p>Check which identifiers were not mapped:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Find object identifiers that match a pattern but were not normalized</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="k">DISTINCT</span><span class="w"> </span><span class="k">object</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">edges</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="k">object</span><span class="w"> </span><span class="k">LIKE</span><span class="w"> </span><span class="s1">&#39;OMIM:%&#39;</span>
+<span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">original_object</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NULL</span>
+<span class="k">LIMIT</span><span class="w"> </span><span class="mi">20</span><span class="p">;</span>
+</code></pre></div>
+<p>This shows OMIM IDs that remain in the <code>object</code> column (not normalized), likely because they were not in your mapping file.</p>
+<h3 id="generate-a-report">Generate a Report</h3>
+<p>Use <code>koza report</code> to get overall statistics after normalization:</p>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>report<span class="w"> </span>qc<span class="w"> </span>-d<span class="w"> </span>graph.duckdb<span class="w"> </span>-o<span class="w"> </span>post_normalize_qc.yaml
+</code></pre></div>
+<h2 id="variations">Variations</h2>
+<h3 id="using-normalize-in-the-merge-pipeline">Using Normalize in the Merge Pipeline</h3>
+<p>For new graphs, <code>koza merge</code> includes normalization as part of its pipeline:</p>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span><span class="s2">&quot;*.nodes.*&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span><span class="s2">&quot;*.edges.*&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--mappings<span class="w"> </span><span class="s2">&quot;mappings/*.sssom.tsv&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>merged_graph.duckdb
+</code></pre></div>
+<p>This runs: join -&gt; deduplicate -&gt; <strong>normalize</strong> -&gt; prune</p>
+<p>See the <a href="../../reference/cli/#koza-merge">merge command reference</a> for details.</p>
+<h3 id="skip-normalization-in-merge">Skip Normalization in Merge</h3>
+<p>If you want to run merge without normalization:</p>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span><span class="s2">&quot;*.nodes.*&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span><span class="s2">&quot;*.edges.*&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>merged_graph.duckdb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--skip-normalize
+</code></pre></div>
+<h3 id="normalize-after-other-operations">Normalize After Other Operations</h3>
+<p>You can run normalize at any point after your database has edges:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># First, join your files</span>
+koza<span class="w"> </span>join<span class="w"> </span>--nodes<span class="w"> </span><span class="s2">&quot;*.nodes.*&quot;</span><span class="w"> </span>--edges<span class="w"> </span><span class="s2">&quot;*.edges.*&quot;</span><span class="w"> </span>--output<span class="w"> </span>graph.duckdb
+
+<span class="c1"># Later, normalize with new mappings</span>
+koza<span class="w"> </span>normalize<span class="w"> </span>graph.duckdb<span class="w"> </span>-m<span class="w"> </span>new_mappings.sssom.tsv
+</code></pre></div>
+<h2 id="see-also">See Also</h2>
+<ul>
+<li><a href="../../reference/cli/#koza-normalize">CLI Reference: normalize</a> - Full command options</li>
+<li><a href="../../reference/cli/#koza-merge">Merge Pipeline</a> - Complete merge workflow including normalization</li>
+<li><a href="https://mapping-commons.github.io/sssom/">SSSOM Specification</a> - Official SSSOM documentation</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://monarchinitiative.org" target="_blank" rel="noopener" title="monarchinitiative.org" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M277.8 8.6c-12.3-11.4-31.3-11.4-43.5 0l-224 208c-9.6 9-12.8 22.9-8 35.1S18.8 272 32 272h16v176c0 35.3 28.7 64 64 64h288c35.3 0 64-28.7 64-64V272h16c13.2 0 25-8.1 29.8-20.3s1.6-26.2-8-35.1zM240 320h32c26.5 0 48 21.5 48 48v96H192v-96c0-26.5 21.5-48 48-48"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/monarch-initiative/" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["content.code.copy", "navigation.expand", "navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

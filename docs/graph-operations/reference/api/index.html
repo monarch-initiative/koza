@@ -1,0 +1,4796 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://koza.monarchinitiative.org/graph-operations/reference/api/">
+      
+      
+        <link rel="prev" href="../cli/">
+      
+      
+        <link rel="next" href="../configuration/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../images/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Python API - Koza Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,300i,400,400i,700,700i%7CSource+Sans+Pro+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Source Sans Pro";--md-code-font:"Source Sans Pro Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#python-api-reference" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Koza Documentation" class="md-header__button md-logo" aria-label="Koza Documentation" data-md-component="logo">
+      
+  <img src="../../../img/pupa.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Koza Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Python API
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 2c-1.82 0-3.53.5-5 1.35C8 5.08 10 8.3 10 12s-2 6.92-5 8.65C6.47 21.5 8.18 22 10 22a10 10 0 0 0 10-10A10 10 0 0 0 10 2"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/monarch-initiative/koza" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    monarch-initiative/koza
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Welcome
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../Ingests/" class="md-tabs__link">
+          
+  
+  
+  Ingests
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../" class="md-tabs__link">
+          
+  
+  
+  Graph Operations
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../Usage/CLI/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  CLI
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../Usage/Module/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Module
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Koza Documentation" class="md-nav__button md-logo" aria-label="Koza Documentation" data-md-component="logo">
+      
+  <img src="../../../img/pupa.png" alt="logo">
+
+    </a>
+    Koza Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/monarch-initiative/koza" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    monarch-initiative/koza
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Welcome
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ingests
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Ingests
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Ingests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuring an Ingest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Ingests/koza_config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Koza Config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Ingests/mapping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mapping
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Ingests/transform/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Transform Code
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Ingests/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Graph Operations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Graph Operations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/first-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build Your First Graph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/merge-pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Complete Merge Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-to Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to Guides
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/join-files/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Join Files
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/split-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Split Graphs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/normalize-ids/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Normalize IDs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/clean-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Clean Graphs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/incremental-updates/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Incremental Updates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/generate-reports/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Generate Reports
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/export-formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Export Formats
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Python API
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Python API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#core-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Operations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Core Operations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#join_graphs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        join_graphs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza.graph_operations.join.join_graphs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        join_graphs
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="join_graphs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#split_graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        split_graph
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza.graph_operations.split.split_graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        split_graph
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="split_graph">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#merge_graphs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        merge_graphs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza.graph_operations.merge.merge_graphs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        merge_graphs
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="merge_graphs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#normalize_graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        normalize_graph
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza.graph_operations.normalize.normalize_graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        normalize_graph
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="normalize_graph">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#deduplicate_graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        deduplicate_graph
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza.graph_operations.deduplicate.deduplicate_graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        deduplicate_graph
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="deduplicate_graph">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prune_graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        prune_graph
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza.graph_operations.prune.prune_graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        prune_graph
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="prune_graph">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#append_graphs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        append_graphs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza.graph_operations.append.append_graphs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        append_graphs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reporting-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reporting Functions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reporting Functions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#generate_qc_report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        generate_qc_report
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza.graph_operations.report.generate_qc_report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        generate_qc_report
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="generate_qc_report">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#generate_graph_stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        generate_graph_stats
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza.graph_operations.report.generate_graph_stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        generate_graph_stats
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="generate_graph_stats">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#generate_schema_compliance_report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        generate_schema_compliance_report
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza.graph_operations.report.generate_schema_compliance_report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        generate_schema_compliance_report
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="generate_schema_compliance_report">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#generate_node_report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        generate_node_report
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza.graph_operations.report.generate_node_report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        generate_node_report
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="generate_node_report">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#generate_edge_report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        generate_edge_report
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza.graph_operations.report.generate_edge_report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        generate_edge_report
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="generate_edge_report">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#generate_node_examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        generate_node_examples
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza.graph_operations.report.generate_node_examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        generate_node_examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="generate_node_examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#generate_edge_examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        generate_edge_examples
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza.graph_operations.report.generate_edge_examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        generate_edge_examples
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#helper-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Helper Functions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Helper Functions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prepare_file_specs_from_paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        prepare_file_specs_from_paths
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza.graph_operations.join.prepare_file_specs_from_paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        prepare_file_specs_from_paths
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="prepare_file_specs_from_paths">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prepare_merge_config_from_paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        prepare_merge_config_from_paths
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza.graph_operations.merge.prepare_merge_config_from_paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        prepare_merge_config_from_paths
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="prepare_merge_config_from_paths">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prepare_mapping_file_specs_from_paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        prepare_mapping_file_specs_from_paths
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza.graph_operations.normalize.prepare_mapping_file_specs_from_paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        prepare_mapping_file_specs_from_paths
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/schema-handling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Schema Handling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/data-integrity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/biolink-compliance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Biolink Compliance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Usage/CLI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Usage/Module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Module
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#core-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Operations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Core Operations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#join_graphs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        join_graphs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza.graph_operations.join.join_graphs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        join_graphs
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="join_graphs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#split_graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        split_graph
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza.graph_operations.split.split_graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        split_graph
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="split_graph">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#merge_graphs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        merge_graphs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza.graph_operations.merge.merge_graphs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        merge_graphs
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="merge_graphs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#normalize_graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        normalize_graph
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza.graph_operations.normalize.normalize_graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        normalize_graph
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="normalize_graph">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#deduplicate_graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        deduplicate_graph
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza.graph_operations.deduplicate.deduplicate_graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        deduplicate_graph
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="deduplicate_graph">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prune_graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        prune_graph
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza.graph_operations.prune.prune_graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        prune_graph
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="prune_graph">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#append_graphs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        append_graphs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza.graph_operations.append.append_graphs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        append_graphs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reporting-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reporting Functions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reporting Functions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#generate_qc_report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        generate_qc_report
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza.graph_operations.report.generate_qc_report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        generate_qc_report
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="generate_qc_report">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#generate_graph_stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        generate_graph_stats
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza.graph_operations.report.generate_graph_stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        generate_graph_stats
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="generate_graph_stats">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#generate_schema_compliance_report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        generate_schema_compliance_report
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza.graph_operations.report.generate_schema_compliance_report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        generate_schema_compliance_report
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="generate_schema_compliance_report">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#generate_node_report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        generate_node_report
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza.graph_operations.report.generate_node_report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        generate_node_report
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="generate_node_report">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#generate_edge_report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        generate_edge_report
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza.graph_operations.report.generate_edge_report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        generate_edge_report
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="generate_edge_report">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#generate_node_examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        generate_node_examples
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza.graph_operations.report.generate_node_examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        generate_node_examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="generate_node_examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#generate_edge_examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        generate_edge_examples
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza.graph_operations.report.generate_edge_examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        generate_edge_examples
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#helper-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Helper Functions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Helper Functions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prepare_file_specs_from_paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        prepare_file_specs_from_paths
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza.graph_operations.join.prepare_file_specs_from_paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        prepare_file_specs_from_paths
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="prepare_file_specs_from_paths">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prepare_merge_config_from_paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        prepare_merge_config_from_paths
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza.graph_operations.merge.prepare_merge_config_from_paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        prepare_merge_config_from_paths
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="prepare_merge_config_from_paths">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prepare_mapping_file_specs_from_paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        prepare_mapping_file_specs_from_paths
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza.graph_operations.normalize.prepare_mapping_file_specs_from_paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        prepare_mapping_file_specs_from_paths
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="python-api-reference">Python API Reference</h1>
+<p>This reference documentation is auto-generated from the source code docstrings using <a href="https://mkdocstrings.github.io/">mkdocstrings</a>. Each function includes parameter descriptions, return types, and usage examples.</p>
+<h2 id="core-operations">Core Operations</h2>
+<p>These are the primary graph transformation functions. Each operation takes a configuration object and returns a result object with statistics and output information.</p>
+<h3 id="join_graphs">join_graphs</h3>
+<p>Combine multiple KGX files into a single DuckDB database.</p>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="koza.graph_operations.join.join_graphs" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">join_graphs</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Join multiple KGX files into a unified DuckDB database.</p>
+<p>This operation loads node and edge files from various formats (TSV, JSONL, Parquet)
+into a single DuckDB database, combining them using UNION ALL BY NAME to handle
+schema differences across files. Each file's records are tagged with a source
+identifier for provenance tracking.</p>
+<p>The join process:
+1. Creates or opens a DuckDB database (in-memory if no path specified)
+2. Loads each node file into a temporary table with format auto-detection
+3. Loads each edge file into a temporary table with format auto-detection
+4. Optionally generates a schema report analyzing column types and values
+5. Combines all temporary tables into final 'nodes' and 'edges' tables</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>config</code>
+            </td>
+            <td>
+                  <code><span title="koza.model.graph_operations.JoinConfig">JoinConfig</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>JoinConfig containing:
+- node_files: List of FileSpec objects for node files
+- edge_files: List of FileSpec objects for edge files
+- database_path: Optional path for persistent database (None for in-memory)
+- schema_reporting: Whether to generate schema analysis report
+- generate_provided_by: Whether to add provided_by column from source names
+- quiet: Suppress console output
+- show_progress: Display progress bars during loading</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="koza.model.graph_operations.JoinResult">JoinResult</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>JoinResult containing:
+- files_loaded: List of FileLoadResult with per-file statistics
+- final_stats: DatabaseStats with node/edge counts and database size
+- schema_report: Optional schema analysis if schema_reporting enabled
+- total_time_seconds: Operation duration
+- database_path: Path to the created database</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/exceptions.html#Exception">Exception</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If file loading fails or database operations error</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div><h3 id="split_graph">split_graph</h3>
+<p>Split a graph database into separate files based on column values.</p>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="koza.graph_operations.split.split_graph" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">split_graph</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Split a KGX file into multiple output files based on field values.</p>
+<p>This operation partitions a single KGX file (nodes or edges) into separate files
+based on the unique values of one or more specified fields. Supports format
+conversion between TSV, JSONL, and Parquet during the split.</p>
+<p>The split process:
+1. Loads the input file into an in-memory DuckDB database
+2. Identifies all unique value combinations for the specified split fields
+3. For each unique combination, exports matching records to a separate file
+4. Output filenames are generated from the split field values</p>
+<p>Handles multivalued fields (arrays) by using list_contains() for filtering,
+allowing records to appear in multiple output files if they contain multiple
+values in the split field.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>config</code>
+            </td>
+            <td>
+                  <code><span title="koza.model.graph_operations.SplitConfig">SplitConfig</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>SplitConfig containing:
+- input_file: FileSpec for the input KGX file
+- split_fields: List of column names to split on (e.g., ["provided_by"])
+- output_directory: Path where split files will be written
+- output_format: Target format (TSV, JSONL, Parquet); defaults to input format
+- remove_prefixes: Strip CURIE prefixes from values in output filenames
+- quiet: Suppress console output
+- show_progress: Display progress bar during splitting</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="koza.model.graph_operations.SplitResult">SplitResult</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>SplitResult containing:
+- input_file: The original input FileSpec
+- output_files: List of Path objects for created files
+- total_records_split: Total number of records processed
+- split_values: List of dicts showing the field value combinations
+- total_time_seconds: Operation duration</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/exceptions.html#FileNotFoundError">FileNotFoundError</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If input file does not exist</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/exceptions.html#Exception">Exception</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If loading or export operations fail</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div><h3 id="merge_graphs">merge_graphs</h3>
+<p>End-to-end pipeline combining join, normalize, deduplicate, and prune operations.</p>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="koza.graph_operations.merge.merge_graphs" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">merge_graphs</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Execute the complete merge pipeline: join → deduplicate → normalize → prune.</p>
+<p>This composite operation orchestrates multiple graph operations in sequence
+to create a clean, normalized, and validated graph database from multiple
+source files. It's the recommended way to build a production-ready knowledge
+graph from raw KGX files and SSSOM mappings.</p>
+<p>The pipeline steps:
+1. <strong>Join</strong>: Load all node/edge files into a unified DuckDB database
+2. <strong>Deduplicate</strong>: Remove duplicate nodes/edges by ID (optional, skip with skip_deduplicate)
+3. <strong>Normalize</strong>: Apply SSSOM mappings to harmonize identifiers (optional, skip with skip_normalize)
+4. <strong>Prune</strong>: Handle dangling edges and singleton nodes (optional, skip with skip_prune)
+5. <strong>Export</strong>: Optionally export final graph to TSV/JSONL/Parquet files or archive</p>
+<p>Each step can be skipped via config flags. If a step fails, the pipeline can
+either abort (default) or continue with remaining steps (continue_on_pipeline_step_error).</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>config</code>
+            </td>
+            <td>
+                  <code><span title="koza.model.graph_operations.MergeConfig">MergeConfig</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>MergeConfig containing:
+- node_files: List of FileSpec objects for node files
+- edge_files: List of FileSpec objects for edge files
+- mapping_files: List of FileSpec objects for SSSOM mapping files
+- output_database: Path for output database (temp if not specified)
+- skip_deduplicate: Skip deduplication step
+- skip_normalize: Skip normalization step (also skipped if no mapping files)
+- skip_prune: Skip pruning step
+- keep_singletons/remove_singletons: Singleton node handling in prune step
+- export_final: Whether to export final graph to files
+- export_directory: Where to write exported files
+- output_format: Format for exported files (TSV, JSONL, Parquet)
+- archive: Create a tar archive instead of loose files
+- compress: Gzip compress the archive
+- graph_name: Name prefix for exported files
+- continue_on_pipeline_step_error: Continue pipeline if a step fails
+- schema_reporting: Generate schema analysis report
+- quiet: Suppress console output
+- show_progress: Display progress bars</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="koza.model.graph_operations.MergeResult">MergeResult</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>MergeResult containing:
+- success: Whether the full pipeline completed successfully
+- join_result/deduplicate_result/normalize_result/prune_result: Per-step results
+- operations_completed: List of steps that completed successfully
+- operations_skipped: List of steps that were skipped
+- final_stats: DatabaseStats with final node/edge counts
+- database_path: Path to output database (None if temp was used)
+- exported_files: List of paths to exported files
+- total_time_seconds: Total pipeline duration
+- summary: OperationSummary with overall status
+- errors: List of error messages from failed steps
+- warnings: List of warning messages</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div><h3 id="normalize_graph">normalize_graph</h3>
+<p>Apply SSSOM mappings to normalize identifiers in a graph.</p>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="koza.graph_operations.normalize.normalize_graph" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">normalize_graph</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Apply SSSOM mappings to normalize node identifiers in edge references.</p>
+<p>This operation uses SSSOM (Simple Standard for Sharing Ontological Mappings)
+files to replace node identifiers in the edges table with their canonical
+equivalents. This is useful for harmonizing identifiers from different sources
+to a common namespace.</p>
+<p>The normalization process:
+1. Loads SSSOM mapping files (TSV format with YAML header)
+2. Creates a mappings table, deduplicating by object_id to prevent edge duplication
+3. Updates edge subject/object columns using the mappings (object_id -&gt; subject_id)
+4. Preserves original identifiers in original_subject/original_object columns</p>
+<p>Note: Only edge references are normalized. Node IDs in the nodes table are
+not modified - use the mappings to update node IDs separately if needed.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>config</code>
+            </td>
+            <td>
+                  <code><span title="koza.model.graph_operations.NormalizeConfig">NormalizeConfig</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>NormalizeConfig containing:
+- database_path: Path to the DuckDB database to normalize
+- mapping_files: List of FileSpec objects for SSSOM mapping files
+- quiet: Suppress console output
+- show_progress: Display progress bars during loading</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="koza.model.graph_operations.NormalizeResult">NormalizeResult</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>NormalizeResult containing:
+- success: Whether the operation completed successfully
+- mappings_loaded: List of FileLoadResult with per-file statistics
+- edges_normalized: Count of edge references that were updated
+- final_stats: DatabaseStats with node/edge counts
+- total_time_seconds: Operation duration
+- summary: OperationSummary with status and messages
+- errors: List of error messages if any
+- warnings: List of warnings (e.g., duplicate mappings found)</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/exceptions.html#ValueError">ValueError</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If no nodes/edges tables exist or no mapping files load</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div><h3 id="deduplicate_graph">deduplicate_graph</h3>
+<p>Remove duplicate nodes and edges from a graph database.</p>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="koza.graph_operations.deduplicate.deduplicate_graph" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">deduplicate_graph</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Deduplicate nodes and edges in a graph database.</p>
+<p>This operation:
+1. Identifies nodes/edges with duplicate IDs
+2. Copies ALL duplicate rows to duplicate_nodes/duplicate_edges tables
+3. Keeps only the first occurrence in main tables (ordered by file_source)</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>config</code>
+            </td>
+            <td>
+                  <code><span title="koza.model.graph_operations.DeduplicateConfig">DeduplicateConfig</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>DeduplicateConfig with database path and options</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="koza.model.graph_operations.DeduplicateResult">DeduplicateResult</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>DeduplicateResult with deduplication statistics</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div><h3 id="prune_graph">prune_graph</h3>
+<p>Remove dangling edges and optionally singleton nodes from a graph.</p>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="koza.graph_operations.prune.prune_graph" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">prune_graph</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Clean up graph integrity issues by handling dangling edges and singleton nodes.</p>
+<p>This operation identifies and handles two common graph quality issues:
+- Dangling edges: Edges where subject or object IDs don't exist in the nodes table
+- Singleton nodes: Nodes that don't appear as subject or object in any edge</p>
+<p>The prune process:
+1. Identifies dangling edges and moves them to a 'dangling_edges' table
+2. Based on config, either keeps or moves singleton nodes to 'singleton_nodes' table
+3. Optionally filters by minimum connected component size (not yet implemented)</p>
+<p>Dangling edges and singleton nodes are preserved in separate tables for QC
+analysis rather than being deleted, allowing investigation of data issues.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>config</code>
+            </td>
+            <td>
+                  <code><span title="koza.model.graph_operations.PruneConfig">PruneConfig</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>PruneConfig containing:
+- database_path: Path to the DuckDB database to prune
+- keep_singletons: If True, preserve singleton nodes in main table (default)
+- remove_singletons: If True, move singleton nodes to singleton_nodes table
+- min_component_size: Minimum connected component size (not yet implemented)
+- quiet: Suppress console output
+- show_progress: Display progress during operations</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="koza.model.graph_operations.PruneResult">PruneResult</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>PruneResult containing:
+- database_path: Path to the pruned database
+- dangling_edges_moved: Count of edges moved to dangling_edges table
+- singleton_nodes_moved: Count of nodes moved to singleton_nodes table
+- singleton_nodes_kept: Count of singleton nodes preserved in main table
+- final_stats: DatabaseStats with final node/edge counts
+- dangling_edges_by_source: Breakdown of dangling edges by file_source
+- missing_nodes_by_source: Count of missing node IDs by source
+- total_time_seconds: Operation duration
+- success: Whether the operation completed successfully</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/exceptions.html#Exception">Exception</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If database operations fail</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div><h3 id="append_graphs">append_graphs</h3>
+<p>Append additional KGX files to an existing graph database.</p>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="koza.graph_operations.append.append_graphs" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">append_graphs</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Append new KGX files to an existing DuckDB database with schema evolution.</p>
+<p>This operation adds records from new KGX files to an existing database,
+automatically handling schema differences. New columns in the input files
+are added to the existing tables, allowing incremental updates to a graph
+without re-processing all source files.</p>
+<p>The append process:
+1. Connects to an existing DuckDB database
+2. Records the initial schema and statistics
+3. For each new file, loads into a temp table and compares schema
+4. Adds any new columns to the main table (schema evolution)
+5. Inserts records using UNION ALL BY NAME for schema compatibility
+6. Optionally deduplicates after appending
+7. Generates a schema report if requested</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>config</code>
+            </td>
+            <td>
+                  <code><span title="koza.model.graph_operations.AppendConfig">AppendConfig</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>AppendConfig containing:
+- database_path: Path to the existing DuckDB database
+- node_files: List of FileSpec objects for new node files
+- edge_files: List of FileSpec objects for new edge files
+- deduplicate: Whether to remove duplicates after appending
+- schema_reporting: Whether to generate schema analysis report
+- quiet: Suppress console output
+- show_progress: Display progress bars during loading</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="koza.model.graph_operations.AppendResult">AppendResult</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>AppendResult containing:
+- database_path: Path to the updated database
+- files_loaded: List of FileLoadResult with per-file statistics
+- records_added: Net change in record count (nodes + edges)
+- new_columns_added: Count of new columns added via schema evolution
+- schema_changes: List of descriptions of schema changes
+- final_stats: DatabaseStats with updated counts
+- schema_report: Optional schema analysis if enabled
+- duplicates_handled: Count of duplicates removed (if deduplication enabled)
+- total_time_seconds: Operation duration</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/exceptions.html#Exception">Exception</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If database connection fails or file operations error</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div><h2 id="reporting-functions">Reporting Functions</h2>
+<p>These functions generate various reports and statistics about graph databases.</p>
+<h3 id="generate_qc_report">generate_qc_report</h3>
+<p>Generate a quality control report.</p>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="koza.graph_operations.report.generate_qc_report" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">generate_qc_report</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Generate a comprehensive quality control report for a graph database.</p>
+<p>This operation analyzes a graph database and produces a detailed QC report
+including node/edge counts by source, duplicate detection, dangling edge
+analysis, and singleton node counts. The report can be grouped by different
+columns (e.g., provided_by, file_source).</p>
+<p>The QC report includes:
+- Summary: Total nodes, edges, duplicates, dangling edges, singletons
+- Nodes by source: Count and category breakdown per source
+- Edges by source: Count and predicate breakdown per source
+- Dangling edges by source: Edges pointing to non-existent nodes
+- Duplicate analysis: Nodes/edges with duplicate IDs</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>config</code>
+            </td>
+            <td>
+                  <code><span title="koza.model.graph_operations.QCReportConfig">QCReportConfig</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>QCReportConfig containing:
+- database_path: Path to the DuckDB database to analyze
+- output_file: Optional path to write YAML report
+- group_by: Column to group statistics by (default: "provided_by")
+- quiet: Suppress console output</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="koza.model.graph_operations.QCReportResult">QCReportResult</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>QCReportResult containing:
+- qc_report: QCReport with all analysis data
+- output_file: Path where report was written (if specified)
+- total_time_seconds: Report generation duration</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/exceptions.html#FileNotFoundError">FileNotFoundError</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If database does not exist</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/exceptions.html#Exception">Exception</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If database analysis fails</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div><h3 id="generate_graph_stats">generate_graph_stats</h3>
+<p>Generate graph statistics.</p>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="koza.graph_operations.report.generate_graph_stats" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">generate_graph_stats</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Generate comprehensive statistical analysis of a graph database.</p>
+<p>This operation produces detailed statistics about a graph's structure,
+including node category distributions, edge predicate distributions,
+degree statistics, and biolink model compliance analysis.</p>
+<p>The statistics report includes:
+- Node statistics: Total count, unique categories, category distribution
+- Edge statistics: Total count, unique predicates, predicate distribution
+- Predicate details: Subject/object category pairs for each predicate
+- Biolink compliance: Validation against biolink model categories/predicates</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>config</code>
+            </td>
+            <td>
+                  <code><span title="koza.model.graph_operations.GraphStatsConfig">GraphStatsConfig</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>GraphStatsConfig containing:
+- database_path: Path to the DuckDB database to analyze
+- output_file: Optional path to write YAML report
+- quiet: Suppress console output</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="koza.model.graph_operations.GraphStatsResult">GraphStatsResult</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>GraphStatsResult containing:
+- stats_report: GraphStatsReport with all statistics
+- output_file: Path where report was written (if specified)
+- total_time_seconds: Report generation duration</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/exceptions.html#FileNotFoundError">FileNotFoundError</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If database does not exist</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/exceptions.html#Exception">Exception</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If database analysis fails</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div><h3 id="generate_schema_compliance_report">generate_schema_compliance_report</h3>
+<p>Generate a schema analysis and biolink compliance report.</p>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="koza.graph_operations.report.generate_schema_compliance_report" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">generate_schema_compliance_report</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Generate a schema analysis and biolink compliance report.</p>
+<p>This operation analyzes the schema (columns and data types) of the nodes
+and edges tables, comparing them against expected biolink model properties
+and identifying any non-standard or missing columns.</p>
+<p>The schema report includes:
+- Table schemas: Column names and DuckDB data types for nodes/edges
+- Biolink compliance: Which columns match biolink model slots
+- Non-standard columns: Columns not in the biolink model
+- Data type analysis: Column type distributions and potential issues</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>config</code>
+            </td>
+            <td>
+                  <code><span title="koza.model.graph_operations.SchemaReportConfig">SchemaReportConfig</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>SchemaReportConfig containing:
+- database_path: Path to the DuckDB database to analyze
+- output_file: Optional path to write YAML report
+- quiet: Suppress console output</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="koza.model.graph_operations.SchemaReportResult">SchemaReportResult</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>SchemaReportResult containing:
+- schema_report: SchemaAnalysisReport with all analysis
+- output_file: Path where report was written (if specified)
+- total_time_seconds: Report generation duration</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/exceptions.html#FileNotFoundError">FileNotFoundError</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If database does not exist</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/exceptions.html#Exception">Exception</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If schema analysis fails</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div><h3 id="generate_node_report">generate_node_report</h3>
+<p>Generate a tabular node report grouped by categorical columns.</p>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="koza.graph_operations.report.generate_node_report" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">generate_node_report</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Generate a tabular node report grouped by categorical columns.</p>
+<p>This operation creates a summary report of nodes grouped by specified
+categorical columns (e.g., category, provided_by, namespace), with counts
+for each unique combination. Useful for understanding the distribution
+and composition of nodes in a graph.</p>
+<p>Can operate on either an existing DuckDB database or load nodes directly
+from a KGX file into an in-memory database.</p>
+<p>Special handling:
+- "namespace" column: Extracts the CURIE prefix from the id column</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>config</code>
+            </td>
+            <td>
+                  <code><span title="koza.model.graph_operations.NodeReportConfig">NodeReportConfig</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>NodeReportConfig containing:
+- database_path: Path to existing database (or None to load from file)
+- node_file: FileSpec for direct file loading (if no database_path)
+- categorical_columns: List of columns to group by (e.g., ["category", "provided_by"])
+- output_file: Path to write the report (TSV, CSV, or Parquet)
+- output_format: Format for output file
+- quiet: Suppress console output</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="koza.model.graph_operations.NodeReportResult">NodeReportResult</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>NodeReportResult containing:
+- output_file: Path where report was written
+- total_rows: Number of unique combinations in the report
+- total_time_seconds: Report generation duration</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/exceptions.html#ValueError">ValueError</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If no valid columns found for the report</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/exceptions.html#Exception">Exception</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If database operations fail</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div><h3 id="generate_edge_report">generate_edge_report</h3>
+<p>Generate a tabular edge report with denormalized node information.</p>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="koza.graph_operations.report.generate_edge_report" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">generate_edge_report</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Generate a tabular edge report with denormalized node information.</p>
+<p>This operation creates a summary report of edges grouped by specified
+categorical columns, with counts for each unique combination. The report
+can include denormalized node information (subject_category, object_category)
+by joining edges with the nodes table.</p>
+<p>Creates a 'denormalized_edges' view that joins edges with nodes to provide
+subject and object category information alongside edge predicates.</p>
+<p>Special handling:
+- "subject_namespace" / "object_namespace": Extract CURIE prefixes from subject/object</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>config</code>
+            </td>
+            <td>
+                  <code><span title="koza.model.graph_operations.EdgeReportConfig">EdgeReportConfig</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>EdgeReportConfig containing:
+- database_path: Path to existing database (or None to load from files)
+- node_file: FileSpec for node file (if no database_path)
+- edge_file: FileSpec for edge file (if no database_path)
+- categorical_columns: List of columns to group by
+  (e.g., ["predicate", "subject_category", "object_category"])
+- output_file: Path to write the report (TSV, CSV, or Parquet)
+- output_format: Format for output file
+- quiet: Suppress console output</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="koza.model.graph_operations.EdgeReportResult">EdgeReportResult</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>EdgeReportResult containing:
+- output_file: Path where report was written
+- total_rows: Number of unique combinations in the report
+- total_time_seconds: Report generation duration</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/exceptions.html#ValueError">ValueError</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If no valid columns found for the report</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/exceptions.html#Exception">Exception</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If database operations fail</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div><h3 id="generate_node_examples">generate_node_examples</h3>
+<p>Generate sample nodes for each node type in the graph.</p>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="koza.graph_operations.report.generate_node_examples" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">generate_node_examples</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Generate sample nodes for each node type (category) in the graph.</p>
+<p>This operation extracts N representative examples for each unique value
+of the specified type column (typically "category"). Useful for data
+exploration, QC review, and documentation purposes.</p>
+<p>Uses DuckDB window functions to efficiently sample N rows per type:
+ROW_NUMBER() OVER (PARTITION BY type_column ORDER BY id) &lt;= sample_size</p>
+<p>Can operate on either an existing DuckDB database or load nodes directly
+from a KGX file into an in-memory database.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>config</code>
+            </td>
+            <td>
+                  <code><span title="koza.model.graph_operations.NodeExamplesConfig">NodeExamplesConfig</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>NodeExamplesConfig containing:
+- database_path: Path to existing database (or None to load from file)
+- node_file: FileSpec for direct file loading (if no database_path)
+- type_column: Column to partition by (default: "category")
+- sample_size: Number of examples per type (default: 5)
+- output_file: Path to write the examples (TSV, CSV, or Parquet)
+- output_format: Format for output file
+- quiet: Suppress console output</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="koza.model.graph_operations.NodeExamplesResult">NodeExamplesResult</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>NodeExamplesResult containing:
+- output_file: Path where examples were written
+- types_sampled: Number of unique types found
+- total_examples: Total number of example rows written
+- total_time_seconds: Report generation duration</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/exceptions.html#ValueError">ValueError</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If type_column not found in nodes table</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/exceptions.html#Exception">Exception</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If database operations fail</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div><h3 id="generate_edge_examples">generate_edge_examples</h3>
+<p>Generate sample edges for each edge type pattern in the graph.</p>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="koza.graph_operations.report.generate_edge_examples" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">generate_edge_examples</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Generate sample edges for each edge type pattern in the graph.</p>
+<p>This operation extracts N representative examples for each unique combination
+of (subject_category, predicate, object_category). Useful for data exploration,
+QC review, and understanding the relationship patterns in a knowledge graph.</p>
+<p>Creates a denormalized view joining edges with nodes to include subject and
+object category information, then uses DuckDB window functions to efficiently
+sample N rows per edge type pattern.</p>
+<p>Can operate on either an existing DuckDB database or load nodes and edges
+directly from KGX files into an in-memory database.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>config</code>
+            </td>
+            <td>
+                  <code><span title="koza.model.graph_operations.EdgeExamplesConfig">EdgeExamplesConfig</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>EdgeExamplesConfig containing:
+- database_path: Path to existing database (or None to load from files)
+- node_file: FileSpec for node file (if no database_path)
+- edge_file: FileSpec for edge file (if no database_path)
+- sample_size: Number of examples per edge type (default: 5)
+- output_file: Path to write the examples (TSV, CSV, or Parquet)
+- output_format: Format for output file
+- quiet: Suppress console output</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="koza.model.graph_operations.EdgeExamplesResult">EdgeExamplesResult</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>EdgeExamplesResult containing:
+- output_file: Path where examples were written
+- types_sampled: Number of unique edge type patterns found
+- total_examples: Total number of example rows written
+- total_time_seconds: Report generation duration</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/exceptions.html#Exception">Exception</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If database operations fail</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div><h2 id="helper-functions">Helper Functions</h2>
+<p>These utility functions simplify common tasks like converting file paths to FileSpec objects.</p>
+<h3 id="prepare_file_specs_from_paths">prepare_file_specs_from_paths</h3>
+<p>Convert file paths to FileSpec objects with format auto-detection.</p>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="koza.graph_operations.join.prepare_file_specs_from_paths" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">prepare_file_specs_from_paths</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Convert file paths to FileSpec objects with format auto-detection.</p>
+<p>This CLI helper expands glob patterns and creates FileSpec objects for each
+matched file. The file format (TSV, JSONL, Parquet) is auto-detected from
+the file extension. Each file's stem is used as its source_name for
+provenance tracking.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>node_paths</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of node file paths or glob patterns (e.g., "data/*.tsv")</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>edge_paths</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of edge file paths or glob patterns (e.g., "data/*_edges.jsonl")</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a>[<span title="koza.model.graph_operations.FileSpec">FileSpec</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Tuple of (node_file_specs, edge_file_specs) with FileSpec objects</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a>[<span title="koza.model.graph_operations.FileSpec">FileSpec</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>configured for the appropriate file type (NODES or EDGES)</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div><h3 id="prepare_merge_config_from_paths">prepare_merge_config_from_paths</h3>
+<p>Create a MergeConfig from file paths with automatic FileSpec generation.</p>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="koza.graph_operations.merge.prepare_merge_config_from_paths" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">prepare_merge_config_from_paths</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Create a MergeConfig from file paths with automatic FileSpec generation.</p>
+<p>This CLI helper converts Path objects to FileSpec objects and assembles
+a complete MergeConfig. File formats are auto-detected from extensions,
+and file stems are used as source names for provenance tracking.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>node_files</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a>[<a class="autorefs autorefs-external" title="pathlib.Path" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path">Path</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of Path objects for node KGX files</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>edge_files</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a>[<a class="autorefs autorefs-external" title="pathlib.Path" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path">Path</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of Path objects for edge KGX files</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>mapping_files</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a>[<a class="autorefs autorefs-external" title="pathlib.Path" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path">Path</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of Path objects for SSSOM mapping files</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>output_database</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" title="pathlib.Path" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path">Path</a> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional path for persistent output database</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>skip_normalize</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, skip the normalization step</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>skip_prune</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, skip the pruning step</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>**kwargs</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Additional MergeConfig parameters (e.g., quiet, show_progress,
+export_final, export_directory, archive, compress, graph_name)</p>
+              </div>
+            </td>
+            <td>
+                  <code>{}</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="koza.model.graph_operations.MergeConfig">MergeConfig</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Fully configured MergeConfig ready for merge_graphs()</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div><h3 id="prepare_mapping_file_specs_from_paths">prepare_mapping_file_specs_from_paths</h3>
+<p>Convert SSSOM mapping file paths to FileSpec objects.</p>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="koza.graph_operations.normalize.prepare_mapping_file_specs_from_paths" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">prepare_mapping_file_specs_from_paths</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Convert a list of SSSOM mapping file paths to FileSpec objects.</p>
+<p>This CLI helper creates FileSpec objects for SSSOM mapping files, which are
+always in TSV format. Each file's stem is used as its source_name for
+tracking which mappings came from which file.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>mapping_paths</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a>[<a class="autorefs autorefs-external" title="pathlib.Path" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path">Path</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of Path objects pointing to SSSOM mapping files</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>source_name</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional source name to apply to all files (overrides per-file names)</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a>[<span title="koza.model.graph_operations.FileSpec">FileSpec</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of FileSpec objects configured for SSSOM mapping files</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/exceptions.html#FileNotFoundError">FileNotFoundError</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If any mapping file does not exist</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://monarchinitiative.org" target="_blank" rel="noopener" title="monarchinitiative.org" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M277.8 8.6c-12.3-11.4-31.3-11.4-43.5 0l-224 208c-9.6 9-12.8 22.9-8 35.1S18.8 272 32 272h16v176c0 35.3 28.7 64 64 64h288c35.3 0 64-28.7 64-64V272h16c13.2 0 25-8.1 29.8-20.3s1.6-26.2-8-35.1zM240 320h32c26.5 0 48 21.5 48 48v96H192v-96c0-26.5 21.5-48 48-48"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/monarch-initiative/" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["content.code.copy", "navigation.expand", "navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
