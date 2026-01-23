@@ -1,8 +1,13 @@
 name: publish on pypi
 
 on:
+  workflow_dispatch:
+  pull_request:
   release:
     types: [published]
+
+env:
+  UV_VERSION: "0.7.x"
 
 jobs:
   publish:
@@ -11,23 +16,25 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
         with:
-          python-version: "3.10"
+          enable-cache: true
+          version: ${{ env.UV_VERSION }}
 
-      - name: Install dependencies
+      - name: Install
+        run: make install
+
+      - name: Verify lockfile is up-to-date
         run: |
-          pip install poetry && poetry install
+          uv lock --check
 
       - name: Build
-        run: |
-          poetry version $(git describe --tags --abbrev=0)
-          poetry build
+        run: make build
 
       - name: Publish to PyPi
+        if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
         env:
-          PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
         run: |
-          poetry config http-basic.pypi "__token__" "${PYPI_API_TOKEN}"
-          poetry publish
+          uv publish --token $UV_PUBLISH_TOKEN

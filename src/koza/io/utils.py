@@ -69,7 +69,7 @@ def open_resource(
 
     if isinstance(resource, str) and resource.startswith("http"):
         tmp_file = tempfile.NamedTemporaryFile("w+b")
-        request = requests.get(resource, timeout=10)
+        request = requests.get(resource, timeout=30)
         if request.status_code != 200:
             raise ValueError(f"Remote file returned {request.status_code}: {request.text}")
         tmp_file.write(request.content)

@@ -7,12 +7,38 @@ repo_url: 'https://github.com/monarch-initiative/koza'
 
 nav:
   - Welcome: 'index.md'
-  - Ingests: 
+  - Ingests:
     - Configuring an Ingest: 'Ingests/index.md'
     - Koza Config: 'Ingests/koza_config.md'
     - Mapping: 'Ingests/mapping.md'
     - Transform Code: 'Ingests/transform.md'
     - Testing: 'Ingests/testing.md'
+  - Graph Operations:
+    - Overview: 'graph-operations/index.md'
+    - Tutorials:
+      - 'graph-operations/tutorials/index.md'
+      - Build Your First Graph: 'graph-operations/tutorials/first-graph.md'
+      - Complete Merge Workflow: 'graph-operations/tutorials/merge-pipeline.md'
+    - How-to Guides:
+      - 'graph-operations/how-to/index.md'
+      - Join Files: 'graph-operations/how-to/join-files.md'
+      - Split Graphs: 'graph-operations/how-to/split-graph.md'
+      - Normalize IDs: 'graph-operations/how-to/normalize-ids.md'
+      - Clean Graphs: 'graph-operations/how-to/clean-graph.md'
+      - Incremental Updates: 'graph-operations/how-to/incremental-updates.md'
+      - Generate Reports: 'graph-operations/how-to/generate-reports.md'
+      - Export Formats: 'graph-operations/how-to/export-formats.md'
+    - Reference:
+      - 'graph-operations/reference/index.md'
+      - CLI Reference: 'graph-operations/reference/cli.md'
+      - Python API: 'graph-operations/reference/api.md'
+      - Configuration: 'graph-operations/reference/configuration.md'
+    - Explanation:
+      - 'graph-operations/explanation/index.md'
+      - Architecture: 'graph-operations/explanation/architecture.md'
+      - Schema Handling: 'graph-operations/explanation/schema-handling.md'
+      - Data Integrity: 'graph-operations/explanation/data-integrity.md'
+      - Biolink Compliance: 'graph-operations/explanation/biolink-compliance.md'
   - CLI: 'Usage/CLI.md'
   - Module: 'Usage/Module.md'
 
@@ -79,7 +105,11 @@ markdown_extensions:
   - pymdownx.emoji
   - pymdownx.keys
   - pymdownx.magiclink
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.tabbed
   - attr_list
   - pymdownx.betterem:
