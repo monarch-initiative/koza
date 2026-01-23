@@ -19,24 +19,41 @@ $ koza [OPTIONS] COMMAND [ARGS]...
 
 ## `koza transform`
 
-Transform a source file
+Transform a source file.
+
+Accepts either a config YAML file or a Python transform file directly.
 
 **Usage**:
 
 ```console
-$ koza transform [OPTIONS] CONFIGURATION_YAML
+# Config file mode (traditional)
+$ koza transform [OPTIONS] CONFIG.yaml
+
+# Config-free mode with Python transform (input files as positional args)
+$ koza transform [OPTIONS] TRANSFORM.py [INPUT_FILES]...
 ```
 
 **Arguments**:
 
-* `CONFIGURATION_YAML`: Configuration YAML file  [required]
+* `CONFIG_OR_TRANSFORM`: Configuration YAML file OR Python transform file  [required]
+* `INPUT_FILES`: Input files for config-free mode (supports shell glob expansion)
 
 **Options**:
 
-* `-i, --input-file TEXT`: Override input files
+* `--input-format`: Input format (auto-detected from extension if not specified)
 * `-o, --output-dir TEXT`: Path to output directory  [default: ./output]
-* `-f, --output-format [tsv|jsonl|kgx|passthrough]`: Output format  [default: tsv]
+* `-f, --output-format [tsv|jsonl|parquet]`: Output format  [default: tsv]
 * `-n, --limit INTEGER`: Number of rows to process (if skipped, processes entire source file)  [default: 0]
 * `-p, --progress`: Display progress of transform
 * `-q, --quiet`: Disable log output
 * `--help`: Show this message and exit.
+
+**Examples**:
+
+```console
+# Config file mode
+$ koza transform examples/string/protein-links-detailed.yaml
+
+# Config-free mode with Python transform
+$ koza transform transform.py -o ./output -f jsonl data/*.yaml
+```

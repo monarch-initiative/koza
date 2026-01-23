@@ -123,10 +123,6 @@ def transform(
         str,
         typer.Argument(help="Configuration YAML file OR Python transform file"),
     ],
-    input_files: Annotated[
-        list[str] | None,
-        typer.Option("--input-file", "-i", help="Input files (required for .py transforms, shell expansion supported)"),
-    ] = None,
     input_format: Annotated[
         InputFormat | None,
         typer.Option("--input-format", help="Input format (auto-detected if not specified)"),
@@ -151,6 +147,10 @@ def transform(
         bool,
         typer.Option("--quiet", "-q", help="Disable log output"),
     ] = False,
+    input_files: Annotated[
+        list[str] | None,
+        typer.Argument(help="Input files (required for .py transforms, supports shell glob expansion)"),
+    ] = None,
 ) -> None:
     """Transform a source file.
 
@@ -161,13 +161,13 @@ def transform(
         koza transform config.yaml
 
         # Config-free mode with transform file (shell expands the glob)
-        koza transform transform.py -i data/*.yaml
+        koza transform transform.py -o ./output -f jsonl data/*.yaml
 
         # With output options
-        koza transform transform.py -i data/*.yaml -f jsonl -o ./output
+        koza transform transform.py -f jsonl -o ./output data/*.yaml
 
         # Explicit input format
-        koza transform transform.py -i data/*.dat --input-format yaml
+        koza transform transform.py --input-format yaml data/*.dat
     """
     logger.remove()
 

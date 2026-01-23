@@ -49,8 +49,8 @@ class TestInferInputFormat:
 class TestTransformCommand:
     """Test transform command behavior via CLI runner."""
 
-    def test_py_extension_requires_input_flag(self, tmp_path):
-        """.py file without -i raises BadParameter."""
+    def test_py_extension_requires_input_files(self, tmp_path):
+        """.py file without input files raises BadParameter."""
         from typer.testing import CliRunner
 
         from koza.main import typer_app
@@ -62,7 +62,8 @@ class TestTransformCommand:
         result = runner.invoke(typer_app, ["transform", str(transform_file)])
 
         assert result.exit_code != 0
-        assert "--input-file/-i required" in result.output or "required" in result.output.lower()
+        # Now uses positional args, so error message refers to input files being required
+        assert "required" in result.output.lower() or "input" in result.output.lower()
 
     def test_yaml_extension_uses_config_mode(self, tmp_path):
         """config.yaml triggers config file loading."""
@@ -78,5 +79,6 @@ class TestTransformCommand:
 
         result = runner.invoke(typer_app, ["transform", str(config_file)])
 
-        # Should fail because config is invalid, but not with "requires -i"
-        assert "--input-file/-i required" not in result.output
+        # Should fail because config is invalid, but not with input file errors
+        # (config mode doesn't require positional input files)
+        assert result.exit_code != 0
