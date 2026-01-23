@@ -158,12 +158,10 @@ class TestConfigFreeTransform:
             [
                 "transform",
                 str(transform_file),
-                "-i",
-                str(data_dir / "entity_0.yaml"),
-                "-i",
-                str(data_dir / "entity_1.yaml"),
                 "-o",
                 str(output_dir),
+                str(data_dir / "entity_0.yaml"),
+                str(data_dir / "entity_1.yaml"),
             ],
         )
 
@@ -198,12 +196,11 @@ class TestConfigFreeTransform:
             [
                 "transform",
                 str(transform_file),
-                "-i",
-                str(data_dir / "entity.dat"),
                 "--input-format",
                 "yaml",
                 "-o",
                 str(output_dir),
+                str(data_dir / "entity.dat"),
             ],
         )
 
