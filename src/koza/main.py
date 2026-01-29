@@ -27,6 +27,7 @@ from koza.graph_operations import (
     prepare_merge_config_from_paths,
     prune_graph,
     split_graph,
+    validate_graph,
 )
 from koza.model.formats import OutputFormat
 from koza.model.graph_operations import (
@@ -45,6 +46,7 @@ from koza.model.graph_operations import (
     SchemaReportConfig,
     SplitConfig,
     TabularReportFormat,
+    ValidationConfig,
 )
 from koza.runner import KozaRunner
 
@@ -1174,6 +1176,97 @@ def edge_examples_cmd(
     except Exception as e:
         typer.echo(f"Error generating edge examples: {e}", err=True)
         raise typer.Exit(1)
+
+
+@typer_app.command()
+def validate(
+    database: Annotated[str, typer.Option("--database", "-d", help="Path to DuckDB database file")],
+    output: Annotated[
+        str | None, typer.Option("--output", "-o", help="Path to output validation report (YAML)")
+    ] = None,
+    schema: Annotated[
+        str | None, typer.Option("--schema", "-s", help="Path to custom LinkML schema (defaults to Biolink)")
+    ] = None,
+    sample_limit: Annotated[
+        int, typer.Option("--samples", "-n", help="Number of violation samples to include")
+    ] = 10,
+    errors_only: Annotated[
+        bool, typer.Option("--errors-only", help="Only report errors, not warnings")
+    ] = False,
+    quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress progress output")] = False,
+):
+    """
+    Validate a graph database against Biolink model constraints.
+
+    Runs declarative validation using SQL queries generated from LinkML schema
+    constraints. Reports violations with counts and sample records.
+
+    Validation includes:
+    - Schema structure (missing required/recommended columns)
+    - Required fields (NULL checks for existing columns)
+    - Recommended fields (NULL checks with warning severity)
+    - Referential integrity (edge subjects/objects exist in nodes)
+    - Biolink categories (valid category values)
+    - Biolink predicates (valid predicate values)
+    - ID prefix validation (IDs match expected prefixes for category)
+    - Predicate hierarchy (predicates exist in Biolink slot hierarchy)
+
+    Examples:
+
+        # Basic validation
+        koza validate -d merged.duckdb -o validation_report.yaml
+
+        # With custom schema
+        koza validate -d merged.duckdb -s custom-biolink.yaml
+
+        # Errors only, more samples
+        koza validate -d merged.duckdb --errors-only --samples 50
+    """
+    try:
+        database_path = Path(database)
+        if not database_path.exists():
+            raise typer.BadParameter(f"Database file not found: {database}")
+
+        if not quiet:
+            print(f"Validating {database_path.name} against Biolink model...")
+
+        config = ValidationConfig(
+            database_path=database_path,
+            output_file=Path(output) if output else None,
+            schema_path=schema,
+            sample_limit=sample_limit,
+            include_warnings=not errors_only,
+            include_info=False,
+            quiet=quiet,
+        )
+
+        result = validate_graph(config)
+
+        if not quiet:
+            _print_validation_summary(result)
+            if result.output_file:
+                print(f"Validation report written to {result.output_file}")
+
+    except Exception as e:
+        typer.echo(f"Error during validation: {e}", err=True)
+        raise typer.Exit(1)
+
+
+def _print_validation_summary(result):
+    """Print validation summary to console."""
+    report = result.validation_report
+    print(f"\nValidation Summary:")
+    print(f"  Compliance: {report.compliance_percentage:.1f}%")
+    print(f"  Errors: {report.error_count}")
+    print(f"  Warnings: {report.warning_count}")
+    print(f"  Tables validated: {', '.join(report.tables_validated)}")
+
+    if report.violations:
+        print(f"\nTop violations:")
+        sorted_violations = sorted(report.violations, key=lambda x: x.violation_count, reverse=True)[:5]
+        for v in sorted_violations:
+            print(f"  - [{v.severity}] {v.slot_name} ({v.table}): {v.violation_count} violations")
+            print(f"    {v.description}")
 
 
 if __name__ == "__main__":

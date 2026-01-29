@@ -2317,5 +2317,256 @@ class TestValidationResultPydanticModel:
         assert '"total_time_seconds"' in json_data
 
 
+class TestValidateCLI:
+    """Test validate CLI command and related functions."""
+
+    # Test that validate_graph function exists
+
+    def test_validate_graph_function_exists(self):
+        """Test that validate_graph function exists in graph_operations module."""
+        from koza.graph_operations import validate_graph
+        assert callable(validate_graph)
+
+    def test_validate_graph_accepts_validation_config(self):
+        """Test that validate_graph accepts a ValidationConfig parameter."""
+        import inspect
+        from koza.graph_operations import validate_graph
+        sig = inspect.signature(validate_graph)
+        assert "config" in sig.parameters
+
+    def test_validate_graph_returns_validation_result(self, tmp_path):
+        """Test that validate_graph returns a ValidationResult."""
+        from koza.graph_operations import validate_graph
+        from koza.model.graph_operations import ValidationConfig, ValidationResult
+        import duckdb
+
+        # Create a proper duckdb file directly
+        temp_db_path = tmp_path / "test.duckdb"
+        conn = duckdb.connect(str(temp_db_path))
+        conn.execute("""
+            CREATE TABLE nodes (id VARCHAR, name VARCHAR, category VARCHAR)
+        """)
+        conn.execute("""
+            INSERT INTO nodes VALUES ('node1', 'Test', 'biolink:Gene')
+        """)
+        conn.close()
+
+        config = ValidationConfig(database_path=temp_db_path)
+        result = validate_graph(config)
+        assert isinstance(result, ValidationResult)
+
+    # Test that it creates a ValidationEngine and runs validation
+
+    @pytest.fixture
+    def temp_db_with_data(self, tmp_path):
+        """Create a temporary DuckDB database with test data."""
+        import duckdb
+        db_path = tmp_path / "test_validate.duckdb"
+        conn = duckdb.connect(str(db_path))
+        conn.execute("""
+            CREATE TABLE nodes (id VARCHAR, name VARCHAR, category VARCHAR)
+        """)
+        conn.execute("""
+            INSERT INTO nodes VALUES
+            ('node1', 'Gene A', 'biolink:Gene'),
+            ('node2', NULL, 'biolink:Disease'),
+            ('node3', 'Gene C', 'biolink:Gene')
+        """)
+        conn.execute("""
+            CREATE TABLE edges (id VARCHAR, subject VARCHAR, predicate VARCHAR, object VARCHAR)
+        """)
+        conn.execute("""
+            INSERT INTO edges VALUES
+            ('edge1', 'node1', 'biolink:interacts_with', 'node2'),
+            ('edge2', 'orphan_subject', 'biolink:related_to', 'node3')
+        """)
+        conn.close()
+        return db_path
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_graph_creates_engine_and_validates(self, temp_db_with_data):
+        """Test that validate_graph creates a ValidationEngine and runs validation."""
+        from koza.graph_operations import validate_graph
+        from koza.model.graph_operations import ValidationConfig
+
+        config = ValidationConfig(database_path=temp_db_with_data)
+        result = validate_graph(config)
+
+        # Should have run validation and found violations
+        assert result.validation_report is not None
+        assert result.validation_report.tables_validated == ["nodes", "edges"]
+
+    # Test YAML output writing
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_graph_writes_yaml_output(self, temp_db_with_data, tmp_path):
+        """Test that validate_graph writes YAML output when output_file is provided."""
+        from koza.graph_operations import validate_graph
+        from koza.model.graph_operations import ValidationConfig
+        import yaml
+
+        output_file = tmp_path / "validation_report.yaml"
+        config = ValidationConfig(
+            database_path=temp_db_with_data,
+            output_file=output_file,
+        )
+        result = validate_graph(config)
+
+        # Check output file was written
+        assert output_file.exists()
+        assert result.output_file == output_file
+
+        # Check YAML content structure
+        with open(output_file) as f:
+            report_data = yaml.safe_load(f)
+
+        assert "metadata" in report_data
+        assert "summary" in report_data
+        assert "violations" in report_data
+        assert report_data["metadata"]["database"] == str(temp_db_with_data)
+
+    # Test filtering warnings when errors_only
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_graph_filters_warnings_when_errors_only(self, temp_db_with_data):
+        """Test that validate_graph filters out warnings when include_warnings=False."""
+        from koza.graph_operations import validate_graph
+        from koza.model.graph_operations import ValidationConfig
+
+        # Run with warnings included
+        config_with_warnings = ValidationConfig(
+            database_path=temp_db_with_data,
+            include_warnings=True,
+        )
+        result_with_warnings = validate_graph(config_with_warnings)
+
+        # Run without warnings
+        config_errors_only = ValidationConfig(
+            database_path=temp_db_with_data,
+            include_warnings=False,
+        )
+        result_errors_only = validate_graph(config_errors_only)
+
+        # Errors-only should have no warning violations
+        for v in result_errors_only.validation_report.violations:
+            assert v.severity != "warning"
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_graph_filters_info_by_default(self, temp_db_with_data):
+        """Test that validate_graph filters out info severity by default."""
+        from koza.graph_operations import validate_graph
+        from koza.model.graph_operations import ValidationConfig
+
+        config = ValidationConfig(
+            database_path=temp_db_with_data,
+            include_info=False,  # default
+        )
+        result = validate_graph(config)
+
+        # Should have no info violations
+        for v in result.validation_report.violations:
+            assert v.severity != "info"
+
+    # Test total_time_seconds is populated
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_graph_sets_total_time(self, temp_db_with_data):
+        """Test that validate_graph sets total_time_seconds in result."""
+        from koza.graph_operations import validate_graph
+        from koza.model.graph_operations import ValidationConfig
+
+        config = ValidationConfig(database_path=temp_db_with_data)
+        result = validate_graph(config)
+
+        assert result.total_time_seconds > 0
+
+
+class TestPrintValidationSummary:
+    """Test _print_validation_summary helper function."""
+
+    def test_print_validation_summary_exists_in_main(self):
+        """Test that _print_validation_summary function exists in main module."""
+        from koza.main import _print_validation_summary
+        assert callable(_print_validation_summary)
+
+    def test_print_validation_summary_accepts_validation_result(self):
+        """Test that _print_validation_summary accepts a ValidationResult parameter."""
+        import inspect
+        from koza.main import _print_validation_summary
+        sig = inspect.signature(_print_validation_summary)
+        assert "result" in sig.parameters
+
+    def test_print_validation_summary_outputs_to_console(self, capsys):
+        """Test that _print_validation_summary prints to console."""
+        from koza.main import _print_validation_summary
+        from koza.model.graph_operations import ValidationResult, ValidationReportModel
+
+        report = ValidationReportModel(
+            compliance_percentage=95.0,
+            error_count=5,
+            warning_count=10,
+            tables_validated=["nodes", "edges"],
+        )
+        result = ValidationResult(validation_report=report)
+
+        _print_validation_summary(result)
+
+        captured = capsys.readouterr()
+        assert "Compliance:" in captured.out or "compliance" in captured.out.lower()
+        assert "Errors:" in captured.out or "5" in captured.out
+        assert "Warnings:" in captured.out or "10" in captured.out
+
+    def test_print_validation_summary_shows_top_violations(self, capsys):
+        """Test that _print_validation_summary shows top violations."""
+        from koza.main import _print_validation_summary
+        from koza.model.graph_operations import (
+            ValidationResult,
+            ValidationReportModel,
+            ValidationViolationModel,
+        )
+
+        violation = ValidationViolationModel(
+            constraint_type="REQUIRED",
+            slot_name="name",
+            table="nodes",
+            severity="error",
+            description="Missing required field",
+            violation_count=100,
+            total_records=1000,
+            violation_percentage=10.0,
+        )
+        report = ValidationReportModel(
+            violations=[violation],
+            compliance_percentage=90.0,
+            error_count=100,
+            warning_count=0,
+            tables_validated=["nodes"],
+        )
+        result = ValidationResult(validation_report=report)
+
+        _print_validation_summary(result)
+
+        captured = capsys.readouterr()
+        # Should mention the violation slot name and count
+        assert "name" in captured.out or "100" in captured.out
+
+
+class TestValidateCLICommand:
+    """Test the validate CLI command in main.py."""
+
+    def test_validate_command_exists(self):
+        """Test that validate command exists in typer_app."""
+        from koza.main import typer_app
+        # Get command names from the typer app's registered commands
+        # Commands may have callback attributes with __name__
+        command_names = []
+        for cmd in typer_app.registered_commands:
+            if hasattr(cmd, "callback") and cmd.callback is not None:
+                command_names.append(cmd.callback.__name__)
+            elif hasattr(cmd, "name") and cmd.name is not None:
+                command_names.append(cmd.name)
+        assert "validate" in command_names
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
