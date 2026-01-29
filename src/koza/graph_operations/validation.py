@@ -305,6 +305,9 @@ class ValidationEngine:
             predicate_violations = self._validate_predicates()
             report.violations.extend(predicate_violations)
 
+            predicate_hierarchy_violations = self._validate_predicate_hierarchy()
+            report.violations.extend(predicate_hierarchy_violations)
+
         self._compute_summary(report)
         return report
 
@@ -754,6 +757,73 @@ class ValidationEngine:
         except Exception as e:
             from loguru import logger
             logger.warning(f"Predicate validation failed: {e}")
+
+        return violations
+
+    def _validate_predicate_hierarchy(self) -> list[ValidationViolation]:
+        """
+        Validate that edge predicates exist in the Biolink slot hierarchy.
+
+        Uses subproperty_of relationships to build valid predicate set.
+        This catches:
+        - Predicates that don't exist at all in Biolink
+        - Typos in predicate names
+        - Custom predicates not properly defined
+        """
+        violations = []
+
+        if self.schema_parser is None:
+            return violations
+
+        valid_predicates = self.schema_parser.get_all_valid_predicates_with_hierarchy()
+
+        if not valid_predicates:
+            return violations
+
+        total_edges = self._get_table_count("edges")
+
+        # Build SQL with valid predicates
+        predicate_list = ",".join([f"'{p}'" for p in valid_predicates])
+
+        count_query = f"""
+            SELECT COUNT(*) as violation_count
+            FROM edges
+            WHERE predicate IS NOT NULL
+              AND predicate NOT IN ({predicate_list})
+        """
+
+        sample_query = f"""
+            SELECT predicate as value, COUNT(*) as count
+            FROM edges
+            WHERE predicate IS NOT NULL
+              AND predicate NOT IN ({predicate_list})
+            GROUP BY predicate
+            ORDER BY count DESC
+            LIMIT {self.sample_limit}
+        """
+
+        try:
+            count_result = self.database.conn.execute(count_query).fetchone()
+            violation_count = count_result[0] if count_result else 0
+
+            if violation_count > 0:
+                sample_results = self.database.conn.execute(sample_query).fetchall()
+                samples = [ViolationSample(values=[row[0]], count=row[1]) for row in sample_results]
+
+                violations.append(ValidationViolation(
+                    constraint_type=ConstraintType.INVALID_SUBPROPERTY,
+                    slot_name="predicate",
+                    table="edges",
+                    severity="warning",
+                    description="Edge predicate not found in Biolink slot hierarchy",
+                    violation_count=violation_count,
+                    total_records=total_edges,
+                    violation_percentage=(violation_count / total_edges * 100) if total_edges > 0 else 0,
+                    samples=samples,
+                ))
+        except Exception as e:
+            from loguru import logger
+            logger.warning(f"Predicate hierarchy validation failed: {e}")
 
         return violations
 

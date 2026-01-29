@@ -1787,6 +1787,135 @@ class TestIdPrefixValidation:
         assert result == {}
 
 
+class TestPredicateHierarchyValidation:
+    """Test ValidationEngine._validate_predicate_hierarchy method."""
+
+    @pytest.fixture
+    def db_with_invalid_hierarchy_predicates(self):
+        """Create a GraphDatabase with edges having predicates not in Biolink slot hierarchy."""
+        db = GraphDatabase()
+        db.conn.execute("""
+            CREATE TABLE edges (
+                id VARCHAR,
+                subject VARCHAR,
+                predicate VARCHAR,
+                object VARCHAR
+            )
+        """)
+        db.conn.execute("""
+            INSERT INTO edges VALUES
+            ('edge1', 'node1', 'biolink:interacts_with', 'node2'),
+            ('edge2', 'node2', 'biolink:related_to', 'node3'),
+            ('edge3', 'node3', 'biolink:not_a_real_predicate', 'node1'),
+            ('edge4', 'node1', 'biolink:totally_fake_relation', 'node3'),
+            ('edge5', 'node2', 'biolink:not_a_real_predicate', 'node1')
+        """)
+        yield db
+        db.close()
+
+    @pytest.fixture
+    def db_with_valid_hierarchy_predicates(self):
+        """Create a GraphDatabase with all predicates in Biolink slot hierarchy."""
+        db = GraphDatabase()
+        db.conn.execute("""
+            CREATE TABLE edges (
+                id VARCHAR,
+                subject VARCHAR,
+                predicate VARCHAR,
+                object VARCHAR
+            )
+        """)
+        db.conn.execute("""
+            INSERT INTO edges VALUES
+            ('edge1', 'node1', 'biolink:interacts_with', 'node2'),
+            ('edge2', 'node2', 'biolink:related_to', 'node3')
+        """)
+        yield db
+        db.close()
+
+    @pytest.fixture
+    def engine_with_invalid_hierarchy_predicates(self, db_with_invalid_hierarchy_predicates):
+        """Create a ValidationEngine with predicates not in hierarchy."""
+        mock_parser = MagicMock(spec=SchemaParser)
+        # Return a set of valid predicates from hierarchy (includes subproperty_of relationships)
+        mock_parser.get_all_valid_predicates_with_hierarchy.return_value = {
+            "biolink:related_to",
+            "biolink:interacts_with",
+            "biolink:causes",
+            "biolink:treats",
+            "biolink:affects",
+        }
+        mock_parser.get_class_constraints.return_value = ClassConstraints(
+            class_name="association",
+            table_mapping="edges",
+            slots={},
+        )
+        return ValidationEngine(database=db_with_invalid_hierarchy_predicates, schema_parser=mock_parser)
+
+    @pytest.fixture
+    def engine_with_valid_hierarchy_predicates(self, db_with_valid_hierarchy_predicates):
+        """Create a ValidationEngine with all predicates in hierarchy."""
+        mock_parser = MagicMock(spec=SchemaParser)
+        mock_parser.get_all_valid_predicates_with_hierarchy.return_value = {
+            "biolink:related_to",
+            "biolink:interacts_with",
+            "biolink:causes",
+            "biolink:treats",
+        }
+        mock_parser.get_class_constraints.return_value = ClassConstraints(
+            class_name="association",
+            table_mapping="edges",
+            slots={},
+        )
+        return ValidationEngine(database=db_with_valid_hierarchy_predicates, schema_parser=mock_parser)
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_predicate_hierarchy_returns_list(self, engine_with_invalid_hierarchy_predicates):
+        """Test that _validate_predicate_hierarchy returns a list."""
+        result = engine_with_invalid_hierarchy_predicates._validate_predicate_hierarchy()
+        assert isinstance(result, list)
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_predicate_hierarchy_returns_empty_when_all_valid(self, engine_with_valid_hierarchy_predicates):
+        """Test that _validate_predicate_hierarchy returns empty list when all predicates in hierarchy."""
+        result = engine_with_valid_hierarchy_predicates._validate_predicate_hierarchy()
+        assert result == []
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_predicate_hierarchy_detects_invalid_predicates(self, engine_with_invalid_hierarchy_predicates):
+        """Test that _validate_predicate_hierarchy detects predicates not in Biolink slot hierarchy."""
+        result = engine_with_invalid_hierarchy_predicates._validate_predicate_hierarchy()
+        assert len(result) == 1
+        # Should find 3 violations (edge3, edge4, edge5)
+        assert result[0].violation_count == 3
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_predicate_hierarchy_has_invalid_subproperty_constraint_type(self, engine_with_invalid_hierarchy_predicates):
+        """Test that violations have constraint_type=ConstraintType.INVALID_SUBPROPERTY."""
+        result = engine_with_invalid_hierarchy_predicates._validate_predicate_hierarchy()
+        assert len(result) == 1
+        assert result[0].constraint_type == ConstraintType.INVALID_SUBPROPERTY
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_predicate_hierarchy_has_warning_severity(self, engine_with_invalid_hierarchy_predicates):
+        """Test that violations have severity='warning'."""
+        result = engine_with_invalid_hierarchy_predicates._validate_predicate_hierarchy()
+        assert len(result) == 1
+        assert result[0].severity == "warning"
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_predicate_hierarchy_includes_samples_with_counts(self, engine_with_invalid_hierarchy_predicates):
+        """Test that violations include samples showing invalid predicate values with counts."""
+        result = engine_with_invalid_hierarchy_predicates._validate_predicate_hierarchy()
+        assert len(result) == 1
+        assert len(result[0].samples) > 0
+        # Check samples have the invalid predicates with counts
+        sample_dict = {s.values[0]: s.count for s in result[0].samples}
+        # biolink:not_a_real_predicate appears twice, biolink:totally_fake_relation appears once
+        assert sample_dict.get("biolink:not_a_real_predicate") == 2
+        assert sample_dict.get("biolink:totally_fake_relation") == 1
+
+
 class TestBiolinkPredicateValidation:
     """Test ValidationEngine._validate_predicates method."""
 
