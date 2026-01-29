@@ -288,6 +288,11 @@ class ValidationEngine:
             report.violations.extend(edge_violations)
             report.tables_validated.append("edges")
 
+        # Phase 3: Referential integrity
+        if self._table_exists("nodes") and self._table_exists("edges"):
+            ref_violations = self._validate_referential_integrity()
+            report.violations.extend(ref_violations)
+
         self._compute_summary(report)
         return report
 
@@ -447,6 +452,94 @@ class ValidationEngine:
             except Exception as e:
                 from loguru import logger
                 logger.warning(f"Validation query failed for {constraint.slot_name}: {e}")
+
+        return violations
+
+    def _validate_referential_integrity(self) -> list[ValidationViolation]:
+        """
+        Validate that edge subjects/objects exist in nodes.
+
+        Returns:
+            List of ValidationViolation for dangling edge references
+        """
+        violations = []
+        total_edges = self._get_table_count("edges")
+
+        # Check subjects
+        subject_count_query = """
+            SELECT COUNT(*) as violation_count
+            FROM edges e
+            WHERE e.subject NOT IN (SELECT id FROM nodes)
+        """
+        subject_sample_query = """
+            SELECT e.subject as value, COUNT(*) as count
+            FROM edges e
+            WHERE e.subject NOT IN (SELECT id FROM nodes)
+            GROUP BY e.subject
+            ORDER BY count DESC
+            LIMIT 10
+        """
+
+        try:
+            count_result = self.database.conn.execute(subject_count_query).fetchone()
+            violation_count = count_result[0] if count_result else 0
+
+            if violation_count > 0:
+                sample_results = self.database.conn.execute(subject_sample_query).fetchall()
+                samples = [ViolationSample(values=[row[0]], count=row[1]) for row in sample_results]
+
+                violations.append(ValidationViolation(
+                    constraint_type=ConstraintType.RANGE_CLASS,
+                    slot_name="subject",
+                    table="edges",
+                    severity="error",
+                    description="Edge subject references non-existent node",
+                    violation_count=violation_count,
+                    total_records=total_edges,
+                    violation_percentage=(violation_count / total_edges * 100) if total_edges > 0 else 0,
+                    samples=samples,
+                ))
+        except Exception as e:
+            from loguru import logger
+            logger.warning(f"Referential integrity check failed for subject: {e}")
+
+        # Check objects
+        object_count_query = """
+            SELECT COUNT(*) as violation_count
+            FROM edges e
+            WHERE e.object NOT IN (SELECT id FROM nodes)
+        """
+        object_sample_query = """
+            SELECT e.object as value, COUNT(*) as count
+            FROM edges e
+            WHERE e.object NOT IN (SELECT id FROM nodes)
+            GROUP BY e.object
+            ORDER BY count DESC
+            LIMIT 10
+        """
+
+        try:
+            count_result = self.database.conn.execute(object_count_query).fetchone()
+            violation_count = count_result[0] if count_result else 0
+
+            if violation_count > 0:
+                sample_results = self.database.conn.execute(object_sample_query).fetchall()
+                samples = [ViolationSample(values=[row[0]], count=row[1]) for row in sample_results]
+
+                violations.append(ValidationViolation(
+                    constraint_type=ConstraintType.RANGE_CLASS,
+                    slot_name="object",
+                    table="edges",
+                    severity="error",
+                    description="Edge object references non-existent node",
+                    violation_count=violation_count,
+                    total_records=total_edges,
+                    violation_percentage=(violation_count / total_edges * 100) if total_edges > 0 else 0,
+                    samples=samples,
+                ))
+        except Exception as e:
+            from loguru import logger
+            logger.warning(f"Referential integrity check failed for object: {e}")
 
         return violations
 

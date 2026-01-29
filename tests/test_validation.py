@@ -1124,8 +1124,181 @@ class TestValidationEngineValidateTable:
         assert name_violation.violation_count == 3
 
 
+class TestReferentialIntegrityValidation:
+    """Test ValidationEngine referential integrity validation."""
+
+    @pytest.fixture
+    def db_with_dangling_edges(self):
+        """Create a GraphDatabase with edges referencing non-existent nodes."""
+        db = GraphDatabase()
+        # Create nodes table
+        db.conn.execute("""
+            CREATE TABLE nodes (
+                id VARCHAR,
+                name VARCHAR,
+                category VARCHAR
+            )
+        """)
+        db.conn.execute("""
+            INSERT INTO nodes VALUES
+            ('node1', 'Gene A', 'biolink:Gene'),
+            ('node2', 'Gene B', 'biolink:Gene'),
+            ('node3', 'Disease C', 'biolink:Disease')
+        """)
+        # Create edges table - some edges reference non-existent nodes
+        db.conn.execute("""
+            CREATE TABLE edges (
+                id VARCHAR,
+                subject VARCHAR,
+                predicate VARCHAR,
+                object VARCHAR
+            )
+        """)
+        db.conn.execute("""
+            INSERT INTO edges VALUES
+            ('edge1', 'node1', 'biolink:interacts_with', 'node2'),
+            ('edge2', 'node2', 'biolink:related_to', 'node3'),
+            ('edge3', 'orphan_subject_1', 'biolink:interacts_with', 'node1'),
+            ('edge4', 'orphan_subject_1', 'biolink:related_to', 'node2'),
+            ('edge5', 'orphan_subject_2', 'biolink:causes', 'node3'),
+            ('edge6', 'node1', 'biolink:treats', 'orphan_object_1'),
+            ('edge7', 'node2', 'biolink:treats', 'orphan_object_1'),
+            ('edge8', 'node3', 'biolink:treats', 'orphan_object_2')
+        """)
+        yield db
+        db.close()
+
+    @pytest.fixture
+    def engine_with_dangling_edges(self, db_with_dangling_edges):
+        """Create a ValidationEngine with dangling edge references."""
+        mock_parser = MagicMock(spec=SchemaParser)
+        mock_parser.get_class_constraints.return_value = ClassConstraints(
+            class_name="named thing",
+            table_mapping="nodes",
+            slots={},
+        )
+        return ValidationEngine(database=db_with_dangling_edges, schema_parser=mock_parser)
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_referential_integrity_returns_list(self, engine_with_dangling_edges):
+        """Test that _validate_referential_integrity returns a list."""
+        result = engine_with_dangling_edges._validate_referential_integrity()
+        assert isinstance(result, list)
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_referential_integrity_returns_validation_violations(self, engine_with_dangling_edges):
+        """Test that _validate_referential_integrity returns list of ValidationViolation."""
+        result = engine_with_dangling_edges._validate_referential_integrity()
+        for item in result:
+            assert isinstance(item, ValidationViolation)
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_referential_integrity_finds_dangling_subjects(self, engine_with_dangling_edges):
+        """Test that _validate_referential_integrity finds edges with non-existent subjects."""
+        result = engine_with_dangling_edges._validate_referential_integrity()
+        subject_violation = next((v for v in result if v.slot_name == "subject"), None)
+        assert subject_violation is not None
+        # 3 edges have orphan subjects (edge3, edge4, edge5)
+        assert subject_violation.violation_count == 3
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_referential_integrity_finds_dangling_objects(self, engine_with_dangling_edges):
+        """Test that _validate_referential_integrity finds edges with non-existent objects."""
+        result = engine_with_dangling_edges._validate_referential_integrity()
+        object_violation = next((v for v in result if v.slot_name == "object"), None)
+        assert object_violation is not None
+        # 3 edges have orphan objects (edge6, edge7, edge8)
+        assert object_violation.violation_count == 3
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_referential_integrity_has_range_class_constraint_type(self, engine_with_dangling_edges):
+        """Test that violations have constraint_type=ConstraintType.RANGE_CLASS."""
+        result = engine_with_dangling_edges._validate_referential_integrity()
+        for violation in result:
+            assert violation.constraint_type == ConstraintType.RANGE_CLASS
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_referential_integrity_has_error_severity(self, engine_with_dangling_edges):
+        """Test that violations have severity='error'."""
+        result = engine_with_dangling_edges._validate_referential_integrity()
+        for violation in result:
+            assert violation.severity == "error"
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_referential_integrity_includes_samples(self, engine_with_dangling_edges):
+        """Test that violations include samples of orphan values with counts."""
+        result = engine_with_dangling_edges._validate_referential_integrity()
+        subject_violation = next((v for v in result if v.slot_name == "subject"), None)
+        assert subject_violation is not None
+        assert len(subject_violation.samples) > 0
+        # Check samples have orphan values with counts
+        for sample in subject_violation.samples:
+            assert isinstance(sample, ViolationSample)
+            assert len(sample.values) == 1
+            assert sample.count > 0
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_referential_integrity_sample_counts_are_correct(self, engine_with_dangling_edges):
+        """Test that sample counts match actual occurrences of orphan values."""
+        result = engine_with_dangling_edges._validate_referential_integrity()
+        subject_violation = next((v for v in result if v.slot_name == "subject"), None)
+        assert subject_violation is not None
+        # orphan_subject_1 appears 2 times, orphan_subject_2 appears 1 time
+        sample_dict = {s.values[0]: s.count for s in subject_violation.samples}
+        assert sample_dict.get("orphan_subject_1") == 2
+        assert sample_dict.get("orphan_subject_2") == 1
+
+    @pytest.fixture
+    def db_with_valid_edges(self):
+        """Create a GraphDatabase where all edge references are valid."""
+        db = GraphDatabase()
+        db.conn.execute("""
+            CREATE TABLE nodes (
+                id VARCHAR,
+                name VARCHAR,
+                category VARCHAR
+            )
+        """)
+        db.conn.execute("""
+            INSERT INTO nodes VALUES
+            ('node1', 'Gene A', 'biolink:Gene'),
+            ('node2', 'Gene B', 'biolink:Gene')
+        """)
+        db.conn.execute("""
+            CREATE TABLE edges (
+                id VARCHAR,
+                subject VARCHAR,
+                predicate VARCHAR,
+                object VARCHAR
+            )
+        """)
+        db.conn.execute("""
+            INSERT INTO edges VALUES
+            ('edge1', 'node1', 'biolink:interacts_with', 'node2'),
+            ('edge2', 'node2', 'biolink:related_to', 'node1')
+        """)
+        yield db
+        db.close()
+
+    @pytest.fixture
+    def engine_with_valid_edges(self, db_with_valid_edges):
+        """Create a ValidationEngine with all valid edge references."""
+        mock_parser = MagicMock(spec=SchemaParser)
+        mock_parser.get_class_constraints.return_value = ClassConstraints(
+            class_name="named thing",
+            table_mapping="nodes",
+            slots={},
+        )
+        return ValidationEngine(database=db_with_valid_edges, schema_parser=mock_parser)
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_referential_integrity_empty_when_all_valid(self, engine_with_valid_edges):
+        """Test that _validate_referential_integrity returns empty list when all references valid."""
+        result = engine_with_valid_edges._validate_referential_integrity()
+        assert result == []
+
+
 class TestValidationEngineValidate:
-    """Test ValidationEngine.validate() method."""
 
     @pytest.fixture
     def db_full(self):
