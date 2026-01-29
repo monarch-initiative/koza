@@ -745,3 +745,60 @@ class EdgeExamplesResult(BaseModel):
     types_sampled: int = 0
     total_examples: int = 0
     total_time_seconds: float = 0.0
+
+
+# Validation Models
+
+
+class ViolationSampleModel(BaseModel):
+    """Sample of violating records."""
+
+    values: list[Any] = Field(default_factory=list)
+    count: int = 0
+
+
+class ValidationViolationModel(BaseModel):
+    """A validation violation with samples."""
+
+    constraint_type: str
+    slot_name: str
+    table: str
+    severity: str  # "error", "warning", "info"
+    description: str
+    violation_count: int
+    total_records: int
+    violation_percentage: float
+    samples: list[ViolationSampleModel] = Field(default_factory=list)
+
+
+class ValidationReportModel(BaseModel):
+    """Complete validation report structure."""
+
+    violations: list[ValidationViolationModel] = Field(default_factory=list)
+    total_violations: int = 0
+    error_count: int = 0
+    warning_count: int = 0
+    info_count: int = 0
+    compliance_percentage: float = 100.0
+    tables_validated: list[str] = Field(default_factory=list)
+    constraints_checked: int = 0
+
+
+class ValidationConfig(BaseModel):
+    """Configuration for validation operation."""
+
+    database_path: Path
+    output_file: Path | None = None
+    schema_path: str | None = None  # Custom LinkML schema, defaults to Biolink
+    sample_limit: int = 10
+    include_warnings: bool = True
+    include_info: bool = False
+    quiet: bool = False
+
+
+class ValidationResult(BaseModel):
+    """Result from validation operation."""
+
+    validation_report: ValidationReportModel
+    output_file: Path | None = None
+    total_time_seconds: float = 0.0

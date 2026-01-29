@@ -2043,5 +2043,279 @@ class TestBiolinkPredicateValidation:
         assert sample_dict.get("biolink:made_up_relation") == 1
 
 
+class TestViolationSamplePydanticModel:
+    """Test ViolationSampleModel Pydantic model."""
+
+    def test_violation_sample_model_is_pydantic_base_model(self):
+        """Test that ViolationSampleModel is a Pydantic BaseModel."""
+        from koza.model.graph_operations import ViolationSampleModel
+        from pydantic import BaseModel
+        assert issubclass(ViolationSampleModel, BaseModel)
+
+    def test_violation_sample_model_creation_with_defaults(self):
+        """Test creating ViolationSampleModel with default values."""
+        from koza.model.graph_operations import ViolationSampleModel
+        sample = ViolationSampleModel()
+        assert sample.values == []
+        assert sample.count == 0
+
+    def test_violation_sample_model_creation_with_values(self):
+        """Test creating ViolationSampleModel with provided values."""
+        from koza.model.graph_operations import ViolationSampleModel
+        sample = ViolationSampleModel(
+            values=["invalid_id_1", "invalid_id_2"],
+            count=2,
+        )
+        assert sample.values == ["invalid_id_1", "invalid_id_2"]
+        assert sample.count == 2
+
+    def test_violation_sample_model_json_serialization(self):
+        """Test that ViolationSampleModel can be serialized to JSON."""
+        from koza.model.graph_operations import ViolationSampleModel
+        sample = ViolationSampleModel(values=["test"], count=1)
+        json_data = sample.model_dump_json()
+        assert '"values"' in json_data
+        assert '"count"' in json_data
+
+
+class TestValidationViolationPydanticModel:
+    """Test ValidationViolationModel Pydantic model."""
+
+    def test_validation_violation_model_is_pydantic_base_model(self):
+        """Test that ValidationViolationModel is a Pydantic BaseModel."""
+        from koza.model.graph_operations import ValidationViolationModel
+        from pydantic import BaseModel
+        assert issubclass(ValidationViolationModel, BaseModel)
+
+    def test_validation_violation_model_creation(self):
+        """Test creating ValidationViolationModel with required fields."""
+        from koza.model.graph_operations import ValidationViolationModel, ViolationSampleModel
+        sample = ViolationSampleModel(values=["bad_id"], count=1)
+        violation = ValidationViolationModel(
+            constraint_type="REQUIRED",
+            slot_name="id",
+            table="nodes",
+            severity="error",
+            description="Missing required field 'id'",
+            violation_count=100,
+            total_records=1000,
+            violation_percentage=10.0,
+            samples=[sample],
+        )
+        assert violation.constraint_type == "REQUIRED"
+        assert violation.slot_name == "id"
+        assert violation.table == "nodes"
+        assert violation.severity == "error"
+        assert violation.description == "Missing required field 'id'"
+        assert violation.violation_count == 100
+        assert violation.total_records == 1000
+        assert violation.violation_percentage == 10.0
+        assert len(violation.samples) == 1
+
+    def test_validation_violation_model_default_samples(self):
+        """Test ValidationViolationModel with default empty samples."""
+        from koza.model.graph_operations import ValidationViolationModel
+        violation = ValidationViolationModel(
+            constraint_type="PATTERN",
+            slot_name="category",
+            table="nodes",
+            severity="warning",
+            description="Category does not match pattern",
+            violation_count=50,
+            total_records=500,
+            violation_percentage=10.0,
+        )
+        assert violation.samples == []
+
+    def test_validation_violation_model_json_serialization(self):
+        """Test that ValidationViolationModel can be serialized to JSON."""
+        from koza.model.graph_operations import ValidationViolationModel
+        violation = ValidationViolationModel(
+            constraint_type="REQUIRED",
+            slot_name="id",
+            table="nodes",
+            severity="error",
+            description="Test",
+            violation_count=1,
+            total_records=10,
+            violation_percentage=10.0,
+        )
+        json_data = violation.model_dump_json()
+        assert '"constraint_type"' in json_data
+        assert '"slot_name"' in json_data
+
+
+class TestValidationReportPydanticModel:
+    """Test ValidationReportModel Pydantic model."""
+
+    def test_validation_report_model_is_pydantic_base_model(self):
+        """Test that ValidationReportModel is a Pydantic BaseModel."""
+        from koza.model.graph_operations import ValidationReportModel
+        from pydantic import BaseModel
+        assert issubclass(ValidationReportModel, BaseModel)
+
+    def test_validation_report_model_creation_with_defaults(self):
+        """Test creating ValidationReportModel with default values."""
+        from koza.model.graph_operations import ValidationReportModel
+        report = ValidationReportModel()
+        assert report.violations == []
+        assert report.total_violations == 0
+        assert report.error_count == 0
+        assert report.warning_count == 0
+        assert report.info_count == 0
+        assert report.compliance_percentage == 100.0
+        assert report.tables_validated == []
+        assert report.constraints_checked == 0
+
+    def test_validation_report_model_with_violations(self):
+        """Test ValidationReportModel with violations."""
+        from koza.model.graph_operations import ValidationReportModel, ValidationViolationModel
+        violation = ValidationViolationModel(
+            constraint_type="REQUIRED",
+            slot_name="id",
+            table="nodes",
+            severity="error",
+            description="Missing required field 'id'",
+            violation_count=100,
+            total_records=1000,
+            violation_percentage=10.0,
+        )
+        report = ValidationReportModel(
+            violations=[violation],
+            total_violations=100,
+            error_count=100,
+            warning_count=0,
+            info_count=0,
+            compliance_percentage=90.0,
+            tables_validated=["nodes"],
+            constraints_checked=5,
+        )
+        assert len(report.violations) == 1
+        assert report.total_violations == 100
+        assert report.error_count == 100
+
+    def test_validation_report_model_json_serialization(self):
+        """Test that ValidationReportModel can be serialized to JSON."""
+        from koza.model.graph_operations import ValidationReportModel
+        report = ValidationReportModel(
+            tables_validated=["nodes", "edges"],
+            constraints_checked=10,
+        )
+        json_data = report.model_dump_json()
+        assert '"violations"' in json_data
+        assert '"total_violations"' in json_data
+
+
+class TestValidationConfigPydanticModel:
+    """Test ValidationConfig Pydantic model."""
+
+    def test_validation_config_is_pydantic_base_model(self):
+        """Test that ValidationConfig is a Pydantic BaseModel."""
+        from koza.model.graph_operations import ValidationConfig
+        from pydantic import BaseModel
+        assert issubclass(ValidationConfig, BaseModel)
+
+    def test_validation_config_creation_with_required_fields(self):
+        """Test creating ValidationConfig with required database_path."""
+        from pathlib import Path
+        from koza.model.graph_operations import ValidationConfig
+        config = ValidationConfig(database_path=Path("/tmp/test.db"))
+        assert config.database_path == Path("/tmp/test.db")
+
+    def test_validation_config_default_values(self):
+        """Test ValidationConfig default values."""
+        from pathlib import Path
+        from koza.model.graph_operations import ValidationConfig
+        config = ValidationConfig(database_path=Path("/tmp/test.db"))
+        assert config.output_file is None
+        assert config.schema_path is None
+        assert config.sample_limit == 10
+        assert config.include_warnings is True
+        assert config.include_info is False
+        assert config.quiet is False
+
+    def test_validation_config_with_all_fields(self):
+        """Test ValidationConfig with all fields specified."""
+        from pathlib import Path
+        from koza.model.graph_operations import ValidationConfig
+        config = ValidationConfig(
+            database_path=Path("/tmp/test.db"),
+            output_file=Path("/tmp/report.json"),
+            schema_path="custom_schema.yaml",
+            sample_limit=20,
+            include_warnings=False,
+            include_info=True,
+            quiet=True,
+        )
+        assert config.database_path == Path("/tmp/test.db")
+        assert config.output_file == Path("/tmp/report.json")
+        assert config.schema_path == "custom_schema.yaml"
+        assert config.sample_limit == 20
+        assert config.include_warnings is False
+        assert config.include_info is True
+        assert config.quiet is True
+
+    def test_validation_config_json_serialization(self):
+        """Test that ValidationConfig can be serialized to JSON."""
+        from pathlib import Path
+        from koza.model.graph_operations import ValidationConfig
+        config = ValidationConfig(database_path=Path("/tmp/test.db"))
+        json_data = config.model_dump_json()
+        assert '"database_path"' in json_data
+        assert '"sample_limit"' in json_data
+
+
+class TestValidationResultPydanticModel:
+    """Test ValidationResult Pydantic model."""
+
+    def test_validation_result_is_pydantic_base_model(self):
+        """Test that ValidationResult is a Pydantic BaseModel."""
+        from koza.model.graph_operations import ValidationResult
+        from pydantic import BaseModel
+        assert issubclass(ValidationResult, BaseModel)
+
+    def test_validation_result_creation(self):
+        """Test creating ValidationResult with required validation_report."""
+        from koza.model.graph_operations import ValidationResult, ValidationReportModel
+        report = ValidationReportModel()
+        result = ValidationResult(validation_report=report)
+        assert result.validation_report == report
+
+    def test_validation_result_default_values(self):
+        """Test ValidationResult default values."""
+        from koza.model.graph_operations import ValidationResult, ValidationReportModel
+        report = ValidationReportModel()
+        result = ValidationResult(validation_report=report)
+        assert result.output_file is None
+        assert result.total_time_seconds == 0.0
+
+    def test_validation_result_with_all_fields(self):
+        """Test ValidationResult with all fields specified."""
+        from pathlib import Path
+        from koza.model.graph_operations import ValidationResult, ValidationReportModel
+        report = ValidationReportModel(
+            total_violations=5,
+            compliance_percentage=95.0,
+        )
+        result = ValidationResult(
+            validation_report=report,
+            output_file=Path("/tmp/report.json"),
+            total_time_seconds=1.5,
+        )
+        assert result.validation_report.total_violations == 5
+        assert result.validation_report.compliance_percentage == 95.0
+        assert result.output_file == Path("/tmp/report.json")
+        assert result.total_time_seconds == 1.5
+
+    def test_validation_result_json_serialization(self):
+        """Test that ValidationResult can be serialized to JSON."""
+        from koza.model.graph_operations import ValidationResult, ValidationReportModel
+        report = ValidationReportModel()
+        result = ValidationResult(validation_report=report, total_time_seconds=2.5)
+        json_data = result.model_dump_json()
+        assert '"validation_report"' in json_data
+        assert '"total_time_seconds"' in json_data
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
