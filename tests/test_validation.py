@@ -1439,5 +1439,260 @@ class TestValidationEngineValidate:
         assert result.compliance_percentage == 60.0
 
 
+class TestBiolinkCategoryValidation:
+    """Test ValidationEngine._validate_categories method."""
+
+    @pytest.fixture
+    def db_with_invalid_categories(self):
+        """Create a GraphDatabase with nodes having invalid categories."""
+        db = GraphDatabase()
+        db.conn.execute("""
+            CREATE TABLE nodes (
+                id VARCHAR,
+                name VARCHAR,
+                category VARCHAR
+            )
+        """)
+        db.conn.execute("""
+            INSERT INTO nodes VALUES
+            ('node1', 'Gene A', 'biolink:Gene'),
+            ('node2', 'Gene B', 'biolink:Gene'),
+            ('node3', 'Disease C', 'biolink:Disease'),
+            ('node4', 'Invalid D', 'biolink:InvalidCategory'),
+            ('node5', 'Unknown E', 'biolink:MadeUpThing'),
+            ('node6', 'Another F', 'biolink:InvalidCategory')
+        """)
+        yield db
+        db.close()
+
+    @pytest.fixture
+    def db_with_valid_categories(self):
+        """Create a GraphDatabase with all valid categories."""
+        db = GraphDatabase()
+        db.conn.execute("""
+            CREATE TABLE nodes (
+                id VARCHAR,
+                name VARCHAR,
+                category VARCHAR
+            )
+        """)
+        db.conn.execute("""
+            INSERT INTO nodes VALUES
+            ('node1', 'Gene A', 'biolink:Gene'),
+            ('node2', 'Gene B', 'biolink:Gene'),
+            ('node3', 'Disease C', 'biolink:Disease')
+        """)
+        yield db
+        db.close()
+
+    @pytest.fixture
+    def engine_with_invalid_categories(self, db_with_invalid_categories):
+        """Create a ValidationEngine with invalid categories."""
+        mock_parser = MagicMock(spec=SchemaParser)
+        # Return a set of valid categories
+        mock_parser.get_valid_categories.return_value = {
+            "biolink:Gene",
+            "biolink:Disease",
+            "biolink:Protein",
+            "biolink:NamedThing",
+        }
+        mock_parser.get_class_constraints.return_value = ClassConstraints(
+            class_name="named thing",
+            table_mapping="nodes",
+            slots={},
+        )
+        return ValidationEngine(database=db_with_invalid_categories, schema_parser=mock_parser)
+
+    @pytest.fixture
+    def engine_with_valid_categories(self, db_with_valid_categories):
+        """Create a ValidationEngine with all valid categories."""
+        mock_parser = MagicMock(spec=SchemaParser)
+        mock_parser.get_valid_categories.return_value = {
+            "biolink:Gene",
+            "biolink:Disease",
+            "biolink:Protein",
+            "biolink:NamedThing",
+        }
+        mock_parser.get_class_constraints.return_value = ClassConstraints(
+            class_name="named thing",
+            table_mapping="nodes",
+            slots={},
+        )
+        return ValidationEngine(database=db_with_valid_categories, schema_parser=mock_parser)
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_categories_returns_list(self, engine_with_invalid_categories):
+        """Test that _validate_categories returns a list."""
+        result = engine_with_invalid_categories._validate_categories()
+        assert isinstance(result, list)
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_categories_returns_empty_when_all_valid(self, engine_with_valid_categories):
+        """Test that _validate_categories returns empty list when all categories valid."""
+        result = engine_with_valid_categories._validate_categories()
+        assert result == []
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_categories_detects_invalid_categories(self, engine_with_invalid_categories):
+        """Test that _validate_categories detects invalid categories."""
+        result = engine_with_invalid_categories._validate_categories()
+        assert len(result) == 1
+        # Should find 3 violations (node4, node5, node6)
+        assert result[0].violation_count == 3
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_categories_has_enum_constraint_type(self, engine_with_invalid_categories):
+        """Test that violations have constraint_type=ConstraintType.ENUM."""
+        result = engine_with_invalid_categories._validate_categories()
+        assert len(result) == 1
+        assert result[0].constraint_type == ConstraintType.ENUM
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_categories_has_warning_severity(self, engine_with_invalid_categories):
+        """Test that violations have severity='warning'."""
+        result = engine_with_invalid_categories._validate_categories()
+        assert len(result) == 1
+        assert result[0].severity == "warning"
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_categories_includes_samples_with_counts(self, engine_with_invalid_categories):
+        """Test that violations include samples showing invalid values with counts."""
+        result = engine_with_invalid_categories._validate_categories()
+        assert len(result) == 1
+        assert len(result[0].samples) > 0
+        # Check samples have the invalid categories with counts
+        sample_dict = {s.values[0]: s.count for s in result[0].samples}
+        # biolink:InvalidCategory appears twice, biolink:MadeUpThing appears once
+        assert sample_dict.get("biolink:InvalidCategory") == 2
+        assert sample_dict.get("biolink:MadeUpThing") == 1
+
+
+class TestBiolinkPredicateValidation:
+    """Test ValidationEngine._validate_predicates method."""
+
+    @pytest.fixture
+    def db_with_invalid_predicates(self):
+        """Create a GraphDatabase with edges having invalid predicates."""
+        db = GraphDatabase()
+        db.conn.execute("""
+            CREATE TABLE edges (
+                id VARCHAR,
+                subject VARCHAR,
+                predicate VARCHAR,
+                object VARCHAR
+            )
+        """)
+        db.conn.execute("""
+            INSERT INTO edges VALUES
+            ('edge1', 'node1', 'biolink:interacts_with', 'node2'),
+            ('edge2', 'node2', 'biolink:related_to', 'node3'),
+            ('edge3', 'node3', 'biolink:invalid_predicate', 'node1'),
+            ('edge4', 'node1', 'biolink:made_up_relation', 'node3'),
+            ('edge5', 'node2', 'biolink:invalid_predicate', 'node1')
+        """)
+        yield db
+        db.close()
+
+    @pytest.fixture
+    def db_with_valid_predicates(self):
+        """Create a GraphDatabase with all valid predicates."""
+        db = GraphDatabase()
+        db.conn.execute("""
+            CREATE TABLE edges (
+                id VARCHAR,
+                subject VARCHAR,
+                predicate VARCHAR,
+                object VARCHAR
+            )
+        """)
+        db.conn.execute("""
+            INSERT INTO edges VALUES
+            ('edge1', 'node1', 'biolink:interacts_with', 'node2'),
+            ('edge2', 'node2', 'biolink:related_to', 'node3')
+        """)
+        yield db
+        db.close()
+
+    @pytest.fixture
+    def engine_with_invalid_predicates(self, db_with_invalid_predicates):
+        """Create a ValidationEngine with invalid predicates."""
+        mock_parser = MagicMock(spec=SchemaParser)
+        mock_parser.get_valid_predicates.return_value = {
+            "biolink:related_to",
+            "biolink:interacts_with",
+            "biolink:causes",
+            "biolink:treats",
+        }
+        mock_parser.get_class_constraints.return_value = ClassConstraints(
+            class_name="association",
+            table_mapping="edges",
+            slots={},
+        )
+        return ValidationEngine(database=db_with_invalid_predicates, schema_parser=mock_parser)
+
+    @pytest.fixture
+    def engine_with_valid_predicates(self, db_with_valid_predicates):
+        """Create a ValidationEngine with all valid predicates."""
+        mock_parser = MagicMock(spec=SchemaParser)
+        mock_parser.get_valid_predicates.return_value = {
+            "biolink:related_to",
+            "biolink:interacts_with",
+            "biolink:causes",
+            "biolink:treats",
+        }
+        mock_parser.get_class_constraints.return_value = ClassConstraints(
+            class_name="association",
+            table_mapping="edges",
+            slots={},
+        )
+        return ValidationEngine(database=db_with_valid_predicates, schema_parser=mock_parser)
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_predicates_returns_list(self, engine_with_invalid_predicates):
+        """Test that _validate_predicates returns a list."""
+        result = engine_with_invalid_predicates._validate_predicates()
+        assert isinstance(result, list)
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_predicates_returns_empty_when_all_valid(self, engine_with_valid_predicates):
+        """Test that _validate_predicates returns empty list when all predicates valid."""
+        result = engine_with_valid_predicates._validate_predicates()
+        assert result == []
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_predicates_detects_invalid_predicates(self, engine_with_invalid_predicates):
+        """Test that _validate_predicates detects invalid predicates."""
+        result = engine_with_invalid_predicates._validate_predicates()
+        assert len(result) == 1
+        # Should find 3 violations (edge3, edge4, edge5)
+        assert result[0].violation_count == 3
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_predicates_has_enum_constraint_type(self, engine_with_invalid_predicates):
+        """Test that violations have constraint_type=ConstraintType.ENUM."""
+        result = engine_with_invalid_predicates._validate_predicates()
+        assert len(result) == 1
+        assert result[0].constraint_type == ConstraintType.ENUM
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_predicates_has_warning_severity(self, engine_with_invalid_predicates):
+        """Test that violations have severity='warning'."""
+        result = engine_with_invalid_predicates._validate_predicates()
+        assert len(result) == 1
+        assert result[0].severity == "warning"
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_predicates_includes_samples_with_counts(self, engine_with_invalid_predicates):
+        """Test that violations include samples showing invalid values with counts."""
+        result = engine_with_invalid_predicates._validate_predicates()
+        assert len(result) == 1
+        assert len(result[0].samples) > 0
+        # Check samples have the invalid predicates with counts
+        sample_dict = {s.values[0]: s.count for s in result[0].samples}
+        # biolink:invalid_predicate appears twice, biolink:made_up_relation appears once
+        assert sample_dict.get("biolink:invalid_predicate") == 2
+        assert sample_dict.get("biolink:made_up_relation") == 1
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

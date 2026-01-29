@@ -293,6 +293,15 @@ class ValidationEngine:
             ref_violations = self._validate_referential_integrity()
             report.violations.extend(ref_violations)
 
+        # Phase 4: Biolink-specific validations (warnings)
+        if self._table_exists("nodes"):
+            category_violations = self._validate_categories()
+            report.violations.extend(category_violations)
+
+        if self._table_exists("edges"):
+            predicate_violations = self._validate_predicates()
+            report.violations.extend(predicate_violations)
+
         self._compute_summary(report)
         return report
 
@@ -540,6 +549,124 @@ class ValidationEngine:
         except Exception as e:
             from loguru import logger
             logger.warning(f"Referential integrity check failed for object: {e}")
+
+        return violations
+
+    def _validate_categories(self) -> list[ValidationViolation]:
+        """Validate node categories against Biolink model."""
+        violations = []
+
+        if self.schema_parser is None:
+            return violations
+
+        valid_categories = self.schema_parser.get_valid_categories()
+
+        if not valid_categories:
+            return violations
+
+        total_nodes = self._get_table_count("nodes")
+
+        # Build SQL with valid categories (limit to first 100 for query size)
+        categories_list = ",".join([f"'{c}'" for c in list(valid_categories)[:100]])
+
+        count_query = f"""
+            SELECT COUNT(*) as violation_count
+            FROM nodes
+            WHERE category IS NOT NULL
+              AND category NOT IN ({categories_list})
+        """
+
+        sample_query = f"""
+            SELECT category as value, COUNT(*) as count
+            FROM nodes
+            WHERE category IS NOT NULL
+              AND category NOT IN ({categories_list})
+            GROUP BY category
+            ORDER BY count DESC
+            LIMIT {self.sample_limit}
+        """
+
+        try:
+            count_result = self.database.conn.execute(count_query).fetchone()
+            violation_count = count_result[0] if count_result else 0
+
+            if violation_count > 0:
+                sample_results = self.database.conn.execute(sample_query).fetchall()
+                samples = [ViolationSample(values=[row[0]], count=row[1]) for row in sample_results]
+
+                violations.append(ValidationViolation(
+                    constraint_type=ConstraintType.ENUM,
+                    slot_name="category",
+                    table="nodes",
+                    severity="warning",
+                    description="Node category not in Biolink model",
+                    violation_count=violation_count,
+                    total_records=total_nodes,
+                    violation_percentage=(violation_count / total_nodes * 100) if total_nodes > 0 else 0,
+                    samples=samples,
+                ))
+        except Exception as e:
+            from loguru import logger
+            logger.warning(f"Category validation failed: {e}")
+
+        return violations
+
+    def _validate_predicates(self) -> list[ValidationViolation]:
+        """Validate edge predicates against Biolink model."""
+        violations = []
+
+        if self.schema_parser is None:
+            return violations
+
+        valid_predicates = self.schema_parser.get_valid_predicates()
+
+        if not valid_predicates:
+            return violations
+
+        total_edges = self._get_table_count("edges")
+
+        # Build SQL with valid predicates (limit to first 100 for query size)
+        predicates_list = ",".join([f"'{p}'" for p in list(valid_predicates)[:100]])
+
+        count_query = f"""
+            SELECT COUNT(*) as violation_count
+            FROM edges
+            WHERE predicate IS NOT NULL
+              AND predicate NOT IN ({predicates_list})
+        """
+
+        sample_query = f"""
+            SELECT predicate as value, COUNT(*) as count
+            FROM edges
+            WHERE predicate IS NOT NULL
+              AND predicate NOT IN ({predicates_list})
+            GROUP BY predicate
+            ORDER BY count DESC
+            LIMIT {self.sample_limit}
+        """
+
+        try:
+            count_result = self.database.conn.execute(count_query).fetchone()
+            violation_count = count_result[0] if count_result else 0
+
+            if violation_count > 0:
+                sample_results = self.database.conn.execute(sample_query).fetchall()
+                samples = [ViolationSample(values=[row[0]], count=row[1]) for row in sample_results]
+
+                violations.append(ValidationViolation(
+                    constraint_type=ConstraintType.ENUM,
+                    slot_name="predicate",
+                    table="edges",
+                    severity="warning",
+                    description="Edge predicate not in Biolink model",
+                    violation_count=violation_count,
+                    total_records=total_edges,
+                    violation_percentage=(violation_count / total_edges * 100) if total_edges > 0 else 0,
+                    samples=samples,
+                ))
+        except Exception as e:
+            from loguru import logger
+            logger.warning(f"Predicate validation failed: {e}")
 
         return violations
 
