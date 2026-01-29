@@ -572,8 +572,8 @@ class ValidationEngine:
 
         total_nodes = self._get_table_count("nodes")
 
-        # Build SQL with valid categories (limit to first 100 for query size)
-        categories_list = ",".join([f"'{c}'" for c in list(valid_categories)[:100]])
+        # Build SQL with valid categories
+        categories_list = ",".join([f"'{c}'" for c in valid_categories])
 
         count_query = f"""
             SELECT COUNT(*) as violation_count
@@ -715,8 +715,8 @@ class ValidationEngine:
 
         total_edges = self._get_table_count("edges")
 
-        # Build SQL with valid predicates (limit to first 100 for query size)
-        predicates_list = ",".join([f"'{p}'" for p in list(valid_predicates)[:100]])
+        # Build SQL with valid predicates
+        predicates_list = ",".join([f"'{p}'" for p in valid_predicates])
 
         count_query = f"""
             SELECT COUNT(*) as violation_count
