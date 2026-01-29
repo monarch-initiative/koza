@@ -336,6 +336,13 @@ class MergeConfig(BaseModel):
     show_progress: bool = True
     schema_reporting: bool = True
 
+    # Validation options
+    skip_validation: bool = False  # Skip validation step entirely
+    validation_errors_halt: bool = False  # Stop pipeline on validation errors
+    validation_schema_path: str | None = None  # Custom LinkML schema
+    validation_sample_limit: int = 10  # Samples per violation
+    validation_include_warnings: bool = True  # Include warnings in report
+
     @model_validator(mode="after")
     def validate_files_provided(self):
         """Ensure at least some input files are provided"""
@@ -382,6 +389,7 @@ class MergeResult(BaseModel):
     deduplicate_result: Optional["DeduplicateResult"] = None
     normalize_result: Optional["NormalizeResult"] = None
     prune_result: Optional["PruneResult"] = None
+    validation_result: Optional["ValidationResult"] = None
 
     # Pipeline summary
     operations_completed: list[str] = Field(default_factory=list)

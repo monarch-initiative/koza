@@ -229,7 +229,10 @@ def generate_schema_compliance_report(config: SchemaReportConfig) -> SchemaRepor
                 print(f" Generating schema report for {config.database_path.name}...")
 
             # Generate schema analysis report
-            schema_report = _create_schema_analysis_report(db)
+            schema_report = _create_schema_analysis_report(
+                db,
+                include_biolink_compliance=config.include_biolink_compliance
+            )
 
             # Write to output file if specified
             if config.output_file:
@@ -974,14 +977,25 @@ def _generate_edge_stats(db: GraphDatabase, total_edges: int) -> EdgeStats:
     )
 
 
-def _create_schema_analysis_report(db: GraphDatabase) -> SchemaAnalysisReport:
-    """Create schema analysis report."""
+def _create_schema_analysis_report(
+    db: GraphDatabase,
+    include_biolink_compliance: bool = True,
+) -> SchemaAnalysisReport:
+    """Create schema analysis report.
+
+    Args:
+        db: GraphDatabase instance to analyze
+        include_biolink_compliance: Whether to run biolink compliance analysis
+
+    Returns:
+        SchemaAnalysisReport with table schemas and biolink compliance
+    """
 
     try:
         # Get table schemas
         tables_info = db.conn.execute("""
-            SELECT table_name 
-            FROM information_schema.tables 
+            SELECT table_name
+            FROM information_schema.tables
             WHERE table_schema = 'main' AND table_name IN ('nodes', 'edges')
         """).fetchall()
 
@@ -990,8 +1004,8 @@ def _create_schema_analysis_report(db: GraphDatabase) -> SchemaAnalysisReport:
         for (table_name,) in tables_info:
             # Get column information
             columns = db.conn.execute(f"""
-                SELECT column_name, data_type 
-                FROM information_schema.columns 
+                SELECT column_name, data_type
+                FROM information_schema.columns
                 WHERE table_name = '{table_name}'
                 ORDER BY ordinal_position
             """).fetchall()
@@ -1007,10 +1021,42 @@ def _create_schema_analysis_report(db: GraphDatabase) -> SchemaAnalysisReport:
 
             tables[table_name] = table_schema
 
-        # Add biolink compliance placeholder
-        biolink_compliance = BiolinkCompliance(
-            status="not_implemented", message="Biolink compliance analysis will be implemented in Phase 1"
-        )
+        # Generate biolink compliance analysis
+        if include_biolink_compliance:
+            from .schema import analyze_biolink_compliance
+
+            compliance_result = analyze_biolink_compliance(db)
+
+            # Extract missing required fields from violations
+            missing_fields = [
+                f"{v['table']}.{v['slot_name']}"
+                for v in compliance_result.get("violations", [])
+                if v["constraint_type"] == "missing_column" and v["severity"] == "error"
+            ]
+
+            # Generate human-readable message
+            status = compliance_result["status"]
+            if status == "passed":
+                message = "All biolink model constraints passed"
+            elif status == "warnings":
+                message = f"Passed with {compliance_result['warning_count']} warnings"
+            elif status == "failed":
+                message = f"{compliance_result['error_count']} errors, {compliance_result['warning_count']} warnings"
+            else:
+                message = compliance_result.get("message", "Analysis failed")
+
+            biolink_compliance = BiolinkCompliance(
+                status=status,
+                message=message,
+                compliance_percentage=compliance_result.get("compliance_percentage"),
+                missing_fields=missing_fields,
+                extension_fields=[],
+            )
+        else:
+            biolink_compliance = BiolinkCompliance(
+                status="skipped",
+                message="Biolink compliance analysis was skipped",
+            )
 
         return SchemaAnalysisReport(tables=tables, analysis={}, biolink_compliance=biolink_compliance)
 
