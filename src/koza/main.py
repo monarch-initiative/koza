@@ -1193,6 +1193,9 @@ def validate(
     errors_only: Annotated[
         bool, typer.Option("--errors-only", help="Only report errors, not warnings")
     ] = False,
+    profile: Annotated[
+        str, typer.Option("--profile", "-p", help="Validation profile: minimal, standard, or full")
+    ] = "standard",
     quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress progress output")] = False,
 ):
     """
@@ -1238,6 +1241,7 @@ def validate(
             include_warnings=not errors_only,
             include_info=False,
             quiet=quiet,
+            profile=profile,
         )
 
         result = validate_graph(config)

@@ -9,7 +9,7 @@ import yaml
 
 from koza.graph_operations.schema_utils import SchemaParser
 from koza.graph_operations.utils import GraphDatabase
-from koza.graph_operations.validation import ValidationEngine
+from koza.graph_operations.validation import ValidationContext, ValidationEngine, ValidationProfile
 from koza.model.graph_operations import (
     ValidationConfig,
     ValidationReportModel,
@@ -33,8 +33,18 @@ def validate_graph(config: ValidationConfig) -> ValidationResult:
 
     with GraphDatabase(config.database_path, read_only=True) as db:
         schema_parser = SchemaParser(config.schema_path)
-        engine = ValidationEngine(db, schema_parser, config.sample_limit)
-        report = engine.validate()
+        engine = ValidationEngine(db, schema_parser, sample_limit=config.sample_limit)
+
+        # Create ValidationContext with profile from config (Phase 3)
+        profile_map = {
+            "minimal": ValidationProfile.MINIMAL,
+            "standard": ValidationProfile.STANDARD,
+            "full": ValidationProfile.FULL,
+        }
+        profile = profile_map.get(config.profile, ValidationProfile.STANDARD)
+        context = ValidationContext(profile=profile)
+
+        report = engine.validate(context=context)
 
         # Filter to errors only if requested
         if not config.include_warnings:

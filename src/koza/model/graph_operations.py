@@ -802,6 +802,7 @@ class ValidationConfig(BaseModel):
     include_warnings: bool = True
     include_info: bool = False
     quiet: bool = False
+    profile: str = "standard"  # Phase 3: minimal, standard, or full
 
 
 class ValidationResult(BaseModel):

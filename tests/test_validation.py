@@ -14,7 +14,9 @@ from koza.graph_operations.validation import (
     ClassConstraints,
     ConstraintType,
     SlotConstraint,
+    ValidationContext,
     ValidationEngine,
+    ValidationProfile,
     ValidationQueryGenerator,
     ValidationReport,
     ValidationViolation,
@@ -96,6 +98,88 @@ class TestConstraintType:
         """Test INVALID_SUBPROPERTY constraint type exists."""
         assert hasattr(ConstraintType, "INVALID_SUBPROPERTY")
         assert ConstraintType.INVALID_SUBPROPERTY.value is not None
+
+    # Phase 3 ConstraintTypes
+    def test_constraint_type_minimum_cardinality(self):
+        """Test MINIMUM_CARDINALITY constraint type exists."""
+        assert hasattr(ConstraintType, "MINIMUM_CARDINALITY")
+        assert ConstraintType.MINIMUM_CARDINALITY.value == "minimum_cardinality"
+
+    def test_constraint_type_maximum_cardinality(self):
+        """Test MAXIMUM_CARDINALITY constraint type exists."""
+        assert hasattr(ConstraintType, "MAXIMUM_CARDINALITY")
+        assert ConstraintType.MAXIMUM_CARDINALITY.value == "maximum_cardinality"
+
+    def test_constraint_type_exact_cardinality(self):
+        """Test EXACT_CARDINALITY constraint type exists."""
+        assert hasattr(ConstraintType, "EXACT_CARDINALITY")
+        assert ConstraintType.EXACT_CARDINALITY.value == "exact_cardinality"
+
+    def test_constraint_type_unique_key(self):
+        """Test UNIQUE_KEY constraint type exists."""
+        assert hasattr(ConstraintType, "UNIQUE_KEY")
+        assert ConstraintType.UNIQUE_KEY.value == "unique_key"
+
+    def test_constraint_type_subproperty_of(self):
+        """Test SUBPROPERTY_OF constraint type exists."""
+        assert hasattr(ConstraintType, "SUBPROPERTY_OF")
+        assert ConstraintType.SUBPROPERTY_OF.value == "subproperty_of"
+
+
+class TestValidationProfile:
+    """Test ValidationProfile enum for controlling validation levels."""
+
+    def test_validation_profile_is_enum(self):
+        """Test that ValidationProfile is an Enum."""
+        assert issubclass(ValidationProfile, Enum)
+
+    def test_validation_profile_minimal(self):
+        """Test MINIMAL profile exists."""
+        assert hasattr(ValidationProfile, "MINIMAL")
+        assert ValidationProfile.MINIMAL.value == "minimal"
+
+    def test_validation_profile_standard(self):
+        """Test STANDARD profile exists."""
+        assert hasattr(ValidationProfile, "STANDARD")
+        assert ValidationProfile.STANDARD.value == "standard"
+
+    def test_validation_profile_full(self):
+        """Test FULL profile exists."""
+        assert hasattr(ValidationProfile, "FULL")
+        assert ValidationProfile.FULL.value == "full"
+
+
+class TestValidationContext:
+    """Test ValidationContext dataclass for incremental validation."""
+
+    def test_validation_context_has_categories_field(self):
+        """Test that ValidationContext has categories field."""
+        ctx = ValidationContext()
+        assert hasattr(ctx, 'categories')
+        assert ctx.categories is None
+
+    def test_validation_context_has_profile_field(self):
+        """Test that ValidationContext has profile field."""
+        ctx = ValidationContext()
+        assert hasattr(ctx, 'profile')
+        assert ctx.profile == ValidationProfile.STANDARD
+
+    def test_validation_context_has_parallel_field(self):
+        """Test that ValidationContext has parallel field."""
+        ctx = ValidationContext()
+        assert hasattr(ctx, 'parallel')
+        assert ctx.parallel is False
+
+    def test_validation_context_custom_values(self):
+        """Test ValidationContext with custom values."""
+        ctx = ValidationContext(
+            categories=["biolink:Gene", "biolink:Disease"],
+            profile=ValidationProfile.FULL,
+            parallel=True
+        )
+        assert ctx.categories == ["biolink:Gene", "biolink:Disease"]
+        assert ctx.profile == ValidationProfile.FULL
+        assert ctx.parallel is True
 
 
 class TestSlotConstraint:
@@ -371,6 +455,82 @@ class TestValidationEngine:
         report = engine.validate()
         assert report.total_violations == 0
         assert report.violations == []
+
+    # Phase 3: SchemaView support
+    def test_validation_engine_accepts_schema_view(self, mock_database):
+        """Test that ValidationEngine can be initialized with SchemaView directly."""
+        mock_schema_view = MagicMock()
+        mock_schema_view.all_classes.return_value = []
+
+        engine = ValidationEngine(
+            database=mock_database,
+            schema_view=mock_schema_view,
+            sample_limit=10
+        )
+
+        assert engine.schema_view is mock_schema_view
+
+    def test_validation_engine_accepts_schema_path(self, mock_database):
+        """Test that ValidationEngine can load SchemaView from path."""
+        from unittest.mock import patch
+
+        with patch('koza.graph_operations.validation.SchemaView') as mock_sv_class:
+            mock_sv_instance = MagicMock()
+            mock_sv_class.return_value = mock_sv_instance
+
+            engine = ValidationEngine(
+                database=mock_database,
+                schema_path="https://example.com/schema.yaml",
+                sample_limit=10
+            )
+
+            mock_sv_class.assert_called_once_with("https://example.com/schema.yaml")
+            assert engine.schema_view is mock_sv_instance
+
+    def test_validation_engine_schema_view_takes_precedence(self, mock_database):
+        """Test that schema_view takes precedence over schema_parser."""
+        from koza.graph_operations.schema_utils import SchemaParser
+
+        mock_schema_view = MagicMock()
+        mock_parser = MagicMock(spec=SchemaParser)
+
+        engine = ValidationEngine(
+            database=mock_database,
+            schema_parser=mock_parser,
+            schema_view=mock_schema_view
+        )
+
+        # schema_view should be set, schema_parser should still be accessible
+        assert engine.schema_view is mock_schema_view
+        assert engine.schema_parser == mock_parser
+
+    # Phase 3: validate() with ValidationContext
+    def test_validate_accepts_validation_context(self, mock_database):
+        """Test that validate() accepts a ValidationContext."""
+        engine = ValidationEngine(database=mock_database)
+
+        ctx = ValidationContext(
+            categories=["biolink:Gene"],
+            profile=ValidationProfile.MINIMAL,
+            parallel=False
+        )
+
+        report = engine.validate(context=ctx)
+        assert isinstance(report, ValidationReport)
+
+    def test_validate_with_category_filter(self, mock_database):
+        """Test that validate() can filter by category."""
+        # Mock database with category data
+        mock_database.conn = MagicMock()
+        mock_database.conn.execute.return_value.fetchall.return_value = []
+        mock_database.conn.execute.return_value.fetchone.return_value = (0,)
+
+        engine = ValidationEngine(database=mock_database)
+
+        ctx = ValidationContext(categories=["biolink:Gene", "biolink:Disease"])
+
+        report = engine.validate(context=ctx)
+        assert isinstance(report, ValidationReport)
 
 
 class TestSchemaParserConstraintExtraction:
@@ -696,6 +856,90 @@ class TestValidationQueryGenerator:
         assert "FROM edges" in count_query
         assert "FROM edges" in sample_query
 
+    # Phase 3: Cardinality query generation tests
+    def test_query_generator_minimum_cardinality(self, query_generator):
+        """Test SQL query generation for minimum_cardinality constraint."""
+        constraint = SlotConstraint(
+            slot_name="publications",
+            constraint_type=ConstraintType.MINIMUM_CARDINALITY,
+            value=1,
+            class_context="association",
+            severity="error",
+            description="Field 'publications' requires at least 1 value(s)"
+        )
+
+        count_query, sample_query = query_generator._generate_query_pair(
+            constraint, "edges", sample_limit=10
+        )
+
+        assert count_query is not None
+        assert "array_length" in count_query.lower()
+        assert "< 1" in count_query
+        assert sample_query is not None
+
+    def test_query_generator_maximum_cardinality(self, query_generator):
+        """Test SQL query generation for maximum_cardinality constraint."""
+        constraint = SlotConstraint(
+            slot_name="aliases",
+            constraint_type=ConstraintType.MAXIMUM_CARDINALITY,
+            value=5,
+            class_context="named thing",
+            severity="error",
+            description="Field 'aliases' allows at most 5 value(s)"
+        )
+
+        count_query, sample_query = query_generator._generate_query_pair(
+            constraint, "nodes", sample_limit=10
+        )
+
+        assert count_query is not None
+        assert "array_length" in count_query.lower()
+        assert "> 5" in count_query
+        assert sample_query is not None
+
+    def test_query_generator_exact_cardinality(self, query_generator):
+        """Test SQL query generation for exact_cardinality constraint."""
+        constraint = SlotConstraint(
+            slot_name="coordinates",
+            constraint_type=ConstraintType.EXACT_CARDINALITY,
+            value=2,
+            class_context="named thing",
+            severity="error",
+            description="Field 'coordinates' requires exactly 2 value(s)"
+        )
+
+        count_query, sample_query = query_generator._generate_query_pair(
+            constraint, "nodes", sample_limit=10
+        )
+
+        assert count_query is not None
+        assert "array_length" in count_query.lower()
+        assert "!= 2" in count_query or "<> 2" in count_query
+        assert sample_query is not None
+
+    def test_query_generator_unique_key(self, query_generator):
+        """Test SQL query generation for unique_key constraint."""
+        constraint = SlotConstraint(
+            slot_name="edge_triple",
+            constraint_type=ConstraintType.UNIQUE_KEY,
+            value=["subject", "object", "predicate"],
+            class_context="association",
+            severity="error",
+            description="Combination must be unique"
+        )
+
+        count_query, sample_query = query_generator._generate_query_pair(
+            constraint, "edges", sample_limit=10
+        )
+
+        assert count_query is not None
+        assert "GROUP BY" in count_query
+        assert "HAVING COUNT(*) > 1" in count_query
+        assert '"subject"' in count_query
+        assert '"object"' in count_query
+        assert '"predicate"' in count_query
+        assert sample_query is not None
+
 
 class TestValidationQueryGeneratorIntegration:
     """Integration tests for ValidationQueryGenerator with real DuckDB."""
@@ -801,6 +1045,238 @@ class TestValidationQueryGeneratorIntegration:
 
         samples = conn.execute(sample_query).fetchall()
         assert len(samples) == 3
+
+        conn.close()
+
+
+class TestCardinalityConstraintExtraction:
+    """Test cardinality constraint extraction from slots."""
+
+    @pytest.fixture
+    def mock_database(self):
+        """Create a mock GraphDatabase."""
+        mock_db = MagicMock(spec=GraphDatabase)
+        return mock_db
+
+    def test_extract_cardinality_from_slot(self, mock_database):
+        """Test extracting cardinality constraints directly from slot objects."""
+        mock_schema_view = MagicMock()
+
+        # Create mock slot with cardinality
+        mock_slot = MagicMock()
+        mock_slot.name = "publications"
+        mock_slot.minimum_cardinality = 1
+        mock_slot.maximum_cardinality = 10
+        mock_slot.exact_cardinality = None
+        mock_slot.multivalued = True
+        mock_slot.required = False
+        mock_slot.recommended = False
+        mock_slot.pattern = None
+        mock_slot.identifier = False
+        mock_slot.subproperty_of = None
+
+        mock_schema_view.class_induced_slots.return_value = [mock_slot]
+
+        engine = ValidationEngine(database=mock_database, schema_view=mock_schema_view)
+
+        constraints = engine._extract_slot_constraints(mock_slot, "association")
+
+        # Should extract both min and max cardinality
+        min_card = [c for c in constraints if c.constraint_type == ConstraintType.MINIMUM_CARDINALITY]
+        max_card = [c for c in constraints if c.constraint_type == ConstraintType.MAXIMUM_CARDINALITY]
+
+        assert len(min_card) == 1
+        assert min_card[0].value == 1
+        assert len(max_card) == 1
+        assert max_card[0].value == 10
+
+    def test_extract_exact_cardinality_from_slot(self, mock_database):
+        """Test extracting exact_cardinality constraint from slot."""
+        mock_schema_view = MagicMock()
+
+        mock_slot = MagicMock()
+        mock_slot.name = "coordinates"
+        mock_slot.minimum_cardinality = None
+        mock_slot.maximum_cardinality = None
+        mock_slot.exact_cardinality = 3
+        mock_slot.multivalued = True
+        mock_slot.required = False
+        mock_slot.recommended = False
+        mock_slot.pattern = None
+        mock_slot.identifier = False
+        mock_slot.subproperty_of = None
+
+        engine = ValidationEngine(database=mock_database, schema_view=mock_schema_view)
+
+        constraints = engine._extract_slot_constraints(mock_slot, "named thing")
+
+        exact_card = [c for c in constraints if c.constraint_type == ConstraintType.EXACT_CARDINALITY]
+        assert len(exact_card) == 1
+        assert exact_card[0].value == 3
+
+    def test_extract_required_constraint_from_slot(self, mock_database):
+        """Test extracting required constraint from slot."""
+        mock_schema_view = MagicMock()
+
+        mock_slot = MagicMock()
+        mock_slot.name = "id"
+        mock_slot.minimum_cardinality = None
+        mock_slot.maximum_cardinality = None
+        mock_slot.exact_cardinality = None
+        mock_slot.multivalued = False
+        mock_slot.required = True
+        mock_slot.recommended = False
+        mock_slot.pattern = None
+        mock_slot.identifier = True
+        mock_slot.subproperty_of = None
+
+        engine = ValidationEngine(database=mock_database, schema_view=mock_schema_view)
+
+        constraints = engine._extract_slot_constraints(mock_slot, "named thing")
+
+        required = [c for c in constraints if c.constraint_type == ConstraintType.REQUIRED]
+        assert len(required) == 1
+        assert required[0].severity == "error"
+
+    def test_extract_recommended_constraint_from_slot(self, mock_database):
+        """Test extracting recommended constraint from slot."""
+        mock_schema_view = MagicMock()
+
+        mock_slot = MagicMock()
+        mock_slot.name = "description"
+        mock_slot.minimum_cardinality = None
+        mock_slot.maximum_cardinality = None
+        mock_slot.exact_cardinality = None
+        mock_slot.multivalued = False
+        mock_slot.required = False
+        mock_slot.recommended = True
+        mock_slot.pattern = None
+        mock_slot.identifier = False
+        mock_slot.subproperty_of = None
+
+        engine = ValidationEngine(database=mock_database, schema_view=mock_schema_view)
+
+        constraints = engine._extract_slot_constraints(mock_slot, "named thing")
+
+        recommended = [c for c in constraints if c.constraint_type == ConstraintType.RECOMMENDED]
+        assert len(recommended) == 1
+        assert recommended[0].severity == "warning"
+
+    def test_extract_subproperty_of_from_slot(self, mock_database):
+        """Test extracting subproperty_of constraint from slot."""
+        mock_schema_view = MagicMock()
+        mock_schema_view.slot_descendants.return_value = ["object_closure", "object"]
+
+        mock_slot = MagicMock()
+        mock_slot.name = "object"
+        mock_slot.minimum_cardinality = None
+        mock_slot.maximum_cardinality = None
+        mock_slot.exact_cardinality = None
+        mock_slot.multivalued = False
+        mock_slot.required = True
+        mock_slot.recommended = False
+        mock_slot.pattern = None
+        mock_slot.identifier = False
+        mock_slot.subproperty_of = "related to"
+
+        engine = ValidationEngine(database=mock_database, schema_view=mock_schema_view)
+
+        constraints = engine._extract_slot_constraints(mock_slot, "association")
+
+        subprop = [c for c in constraints if c.constraint_type == ConstraintType.SUBPROPERTY_OF]
+        assert len(subprop) == 1
+        assert subprop[0].value == "related to"
+        assert subprop[0].severity == "info"
+
+
+class TestUniqueKeyExtraction:
+    """Test unique key extraction from SchemaView."""
+
+    @pytest.fixture
+    def mock_database(self):
+        """Create a mock GraphDatabase."""
+        mock_db = MagicMock(spec=GraphDatabase)
+        return mock_db
+
+    def test_get_unique_keys_from_schema_view(self, mock_database):
+        """Test extracting unique_keys directly from SchemaView class definition."""
+        mock_schema_view = MagicMock()
+
+        # Mock class with unique_keys
+        mock_class = MagicMock()
+        mock_unique_key = MagicMock()
+        mock_unique_key.unique_key_slots = ["subject", "object", "predicate"]
+        mock_class.unique_keys = {"edge_triple": mock_unique_key}
+
+        mock_schema_view.get_class.return_value = mock_class
+
+        engine = ValidationEngine(database=mock_database, schema_view=mock_schema_view)
+
+        unique_keys = engine._get_unique_keys("association")
+
+        assert "edge_triple" in unique_keys
+        assert unique_keys["edge_triple"] == ["subject", "object", "predicate"]
+
+    def test_get_unique_keys_handles_missing(self, mock_database):
+        """Test that _get_unique_keys handles classes without unique_keys."""
+        mock_schema_view = MagicMock()
+
+        mock_class = MagicMock()
+        mock_class.unique_keys = None
+
+        mock_schema_view.get_class.return_value = mock_class
+
+        engine = ValidationEngine(database=mock_database, schema_view=mock_schema_view)
+
+        unique_keys = engine._get_unique_keys("named thing")
+
+        assert unique_keys == {}
+
+    def test_get_unique_keys_handles_no_schema_view(self, mock_database):
+        """Test that _get_unique_keys returns empty dict when no schema_view."""
+        engine = ValidationEngine(database=mock_database, schema_view=None)
+
+        unique_keys = engine._get_unique_keys("association")
+
+        assert unique_keys == {}
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not available")
+    def test_validate_unique_keys_finds_duplicates(self):
+        """Test _validate_unique_keys detects duplicate key combinations."""
+        conn = duckdb.connect(":memory:")
+        conn.execute("""
+            CREATE TABLE edges (
+                id VARCHAR,
+                subject VARCHAR,
+                object VARCHAR,
+                predicate VARCHAR
+            )
+        """)
+        conn.execute("""
+            INSERT INTO edges VALUES
+                ('e1', 'GENE:1', 'DISEASE:1', 'biolink:associated_with'),
+                ('e2', 'GENE:1', 'DISEASE:1', 'biolink:associated_with'),
+                ('e3', 'GENE:2', 'DISEASE:2', 'biolink:causes')
+        """)
+
+        mock_db = MagicMock()
+        mock_db.conn = conn
+
+        mock_schema_view = MagicMock()
+        mock_class = MagicMock()
+        mock_uk = MagicMock()
+        mock_uk.unique_key_slots = ["subject", "object", "predicate"]
+        mock_class.unique_keys = {"edge_triple": mock_uk}
+        mock_schema_view.get_class.return_value = mock_class
+
+        engine = ValidationEngine(database=mock_db, schema_view=mock_schema_view)
+
+        violations = engine._validate_unique_keys("edges", "association")
+
+        assert len(violations) == 1
+        assert violations[0].constraint_type == ConstraintType.UNIQUE_KEY
+        assert violations[0].violation_count == 1  # 2 rows - 1 = 1 duplicate
+        assert violations[0].severity == "error"
 
         conn.close()
 
