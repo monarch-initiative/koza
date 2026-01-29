@@ -20,6 +20,7 @@ from koza.graph_operations.validation import (
     ViolationSample,
 )
 from koza.graph_operations.utils import GraphDatabase
+from koza.graph_operations.schema_utils import SchemaParser
 
 
 class TestConstraintType:
@@ -363,6 +364,194 @@ class TestValidationEngine:
         report = engine.validate()
         assert report.total_violations == 0
         assert report.violations == []
+
+
+class TestSchemaParserConstraintExtraction:
+    """Test SchemaParser constraint extraction extensions."""
+
+    @pytest.fixture
+    def schema_parser(self):
+        """Create a SchemaParser with the Biolink Model."""
+        return SchemaParser()
+
+    @pytest.fixture
+    def schema_parser_no_schema(self):
+        """Create a SchemaParser without a schema (schema_view is None)."""
+        parser = SchemaParser()
+        parser.schema_view = None
+        return parser
+
+    # Tests for get_class_constraints
+
+    def test_get_class_constraints_returns_class_constraints(self, schema_parser):
+        """Test that get_class_constraints returns a ClassConstraints object."""
+        result = schema_parser.get_class_constraints("named thing", "nodes")
+        assert isinstance(result, ClassConstraints)
+
+    def test_get_class_constraints_has_correct_class_name(self, schema_parser):
+        """Test that get_class_constraints sets the correct class_name."""
+        result = schema_parser.get_class_constraints("named thing", "nodes")
+        assert result.class_name == "named thing"
+
+    def test_get_class_constraints_has_correct_table_mapping(self, schema_parser):
+        """Test that get_class_constraints sets the correct table_mapping."""
+        result = schema_parser.get_class_constraints("named thing", "nodes")
+        assert result.table_mapping == "nodes"
+
+    def test_get_class_constraints_with_no_schema_returns_empty(self, schema_parser_no_schema):
+        """Test that get_class_constraints returns empty ClassConstraints when schema_view is None."""
+        result = schema_parser_no_schema.get_class_constraints("named thing", "nodes")
+        assert isinstance(result, ClassConstraints)
+        assert result.class_name == "named thing"
+        assert result.table_mapping == "nodes"
+        assert result.slots == {}
+
+    def test_get_class_constraints_has_slots_dict(self, schema_parser):
+        """Test that get_class_constraints returns ClassConstraints with slots dict."""
+        result = schema_parser.get_class_constraints("named thing", "nodes")
+        assert isinstance(result.slots, dict)
+
+    # Tests for get_node_constraints
+
+    def test_get_node_constraints_returns_class_constraints(self, schema_parser):
+        """Test that get_node_constraints returns a ClassConstraints object."""
+        result = schema_parser.get_node_constraints()
+        assert isinstance(result, ClassConstraints)
+
+    def test_get_node_constraints_has_named_thing_class(self, schema_parser):
+        """Test that get_node_constraints has class_name 'named thing'."""
+        result = schema_parser.get_node_constraints()
+        assert result.class_name == "named thing"
+
+    def test_get_node_constraints_has_nodes_table_mapping(self, schema_parser):
+        """Test that get_node_constraints has table_mapping 'nodes'."""
+        result = schema_parser.get_node_constraints()
+        assert result.table_mapping == "nodes"
+
+    # Tests for get_edge_constraints
+
+    def test_get_edge_constraints_returns_class_constraints(self, schema_parser):
+        """Test that get_edge_constraints returns a ClassConstraints object."""
+        result = schema_parser.get_edge_constraints()
+        assert isinstance(result, ClassConstraints)
+
+    def test_get_edge_constraints_has_association_class(self, schema_parser):
+        """Test that get_edge_constraints has class_name 'association'."""
+        result = schema_parser.get_edge_constraints()
+        assert result.class_name == "association"
+
+    def test_get_edge_constraints_has_edges_table_mapping(self, schema_parser):
+        """Test that get_edge_constraints has table_mapping 'edges'."""
+        result = schema_parser.get_edge_constraints()
+        assert result.table_mapping == "edges"
+
+    # Tests for get_valid_categories
+
+    def test_get_valid_categories_returns_set(self, schema_parser):
+        """Test that get_valid_categories returns a set."""
+        result = schema_parser.get_valid_categories()
+        assert isinstance(result, set)
+
+    def test_get_valid_categories_contains_biolink_format(self, schema_parser):
+        """Test that get_valid_categories returns categories in biolink:ClassName format."""
+        result = schema_parser.get_valid_categories()
+        # Should contain at least one category in biolink: format
+        assert len(result) > 0
+        # Check that categories have the biolink: prefix
+        sample_category = next(iter(result))
+        assert sample_category.startswith("biolink:")
+
+    def test_get_valid_categories_contains_gene(self, schema_parser):
+        """Test that get_valid_categories includes biolink:Gene."""
+        result = schema_parser.get_valid_categories()
+        assert "biolink:Gene" in result
+
+    def test_get_valid_categories_empty_when_no_schema(self, schema_parser_no_schema):
+        """Test that get_valid_categories returns empty set when schema_view is None."""
+        result = schema_parser_no_schema.get_valid_categories()
+        assert isinstance(result, set)
+        assert len(result) == 0
+
+    # Tests for get_valid_predicates
+
+    def test_get_valid_predicates_returns_set(self, schema_parser):
+        """Test that get_valid_predicates returns a set."""
+        result = schema_parser.get_valid_predicates()
+        assert isinstance(result, set)
+
+    def test_get_valid_predicates_contains_biolink_format(self, schema_parser):
+        """Test that get_valid_predicates returns predicates in biolink:predicate_name format."""
+        result = schema_parser.get_valid_predicates()
+        # Should contain at least one predicate in biolink: format
+        assert len(result) > 0
+        # Check that predicates have the biolink: prefix
+        sample_predicate = next(iter(result))
+        assert sample_predicate.startswith("biolink:")
+
+    def test_get_valid_predicates_contains_related_to(self, schema_parser):
+        """Test that get_valid_predicates includes biolink:related_to."""
+        result = schema_parser.get_valid_predicates()
+        assert "biolink:related_to" in result
+
+    def test_get_valid_predicates_empty_when_no_schema(self, schema_parser_no_schema):
+        """Test that get_valid_predicates returns empty set when schema_view is None."""
+        result = schema_parser_no_schema.get_valid_predicates()
+        assert isinstance(result, set)
+        assert len(result) == 0
+
+    # Tests for get_class_id_prefixes
+
+    def test_get_class_id_prefixes_returns_tuple(self, schema_parser):
+        """Test that get_class_id_prefixes returns a tuple."""
+        result = schema_parser.get_class_id_prefixes("gene")
+        assert isinstance(result, tuple)
+
+    def test_get_class_id_prefixes_tuple_has_list_and_bool(self, schema_parser):
+        """Test that get_class_id_prefixes returns (list, bool) tuple."""
+        prefixes, is_closed = schema_parser.get_class_id_prefixes("gene")
+        assert isinstance(prefixes, list)
+        assert isinstance(is_closed, bool)
+
+    def test_get_class_id_prefixes_empty_when_no_schema(self, schema_parser_no_schema):
+        """Test that get_class_id_prefixes returns empty list when schema_view is None."""
+        prefixes, is_closed = schema_parser_no_schema.get_class_id_prefixes("gene")
+        assert prefixes == []
+        assert is_closed is False
+
+    # Tests for get_all_valid_predicates_with_hierarchy
+
+    def test_get_all_valid_predicates_with_hierarchy_returns_set(self, schema_parser):
+        """Test that get_all_valid_predicates_with_hierarchy returns a set."""
+        result = schema_parser.get_all_valid_predicates_with_hierarchy()
+        assert isinstance(result, set)
+
+    def test_get_all_valid_predicates_with_hierarchy_contains_predicates(self, schema_parser):
+        """Test that get_all_valid_predicates_with_hierarchy contains predicates."""
+        result = schema_parser.get_all_valid_predicates_with_hierarchy()
+        assert len(result) > 0
+
+    def test_get_all_valid_predicates_with_hierarchy_empty_when_no_schema(self, schema_parser_no_schema):
+        """Test that get_all_valid_predicates_with_hierarchy returns empty set when schema_view is None."""
+        result = schema_parser_no_schema.get_all_valid_predicates_with_hierarchy()
+        assert isinstance(result, set)
+        assert len(result) == 0
+
+    # Tests for slot constraint extraction (via get_class_constraints)
+
+    def test_slot_constraints_have_correct_slot_names(self, schema_parser):
+        """Test that extracted slot constraints have correct slot names with underscores."""
+        result = schema_parser.get_class_constraints("named thing", "nodes")
+        # Check that slot names use underscores (not spaces)
+        for slot_name in result.slots.keys():
+            assert " " not in slot_name
+
+    def test_slot_constraints_have_constraint_type(self, schema_parser):
+        """Test that extracted slot constraints have valid constraint types."""
+        result = schema_parser.get_class_constraints("named thing", "nodes")
+        for slot_name, constraints in result.slots.items():
+            for constraint in constraints:
+                assert isinstance(constraint, SlotConstraint)
+                assert isinstance(constraint.constraint_type, ConstraintType)
 
 
 if __name__ == "__main__":
