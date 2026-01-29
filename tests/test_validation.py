@@ -1337,6 +1337,7 @@ class TestValidationEngineValidate:
     def engine_full(self, db_full):
         """Create a ValidationEngine with both tables."""
         mock_parser = MagicMock(spec=SchemaParser)
+        mock_parser.schema_view = None  # No schema view - disables ID prefix validation
 
         def mock_get_class_constraints(class_name, table_mapping):
             if class_name == "named thing":
@@ -1387,6 +1388,8 @@ class TestValidationEngineValidate:
                 )
 
         mock_parser.get_class_constraints.side_effect = mock_get_class_constraints
+        mock_parser.get_valid_categories.return_value = set()
+        mock_parser.get_valid_predicates.return_value = set()
         return ValidationEngine(database=db_full, schema_parser=mock_parser)
 
     @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
@@ -1565,6 +1568,223 @@ class TestBiolinkCategoryValidation:
         # biolink:InvalidCategory appears twice, biolink:MadeUpThing appears once
         assert sample_dict.get("biolink:InvalidCategory") == 2
         assert sample_dict.get("biolink:MadeUpThing") == 1
+
+
+class TestIdPrefixValidation:
+    """Test ValidationEngine ID prefix validation."""
+
+    @pytest.fixture
+    def db_with_mixed_prefixes(self):
+        """Create a GraphDatabase with nodes having various ID prefixes."""
+        db = GraphDatabase()
+        db.conn.execute("""
+            CREATE TABLE nodes (
+                id VARCHAR,
+                name VARCHAR,
+                category VARCHAR
+            )
+        """)
+        db.conn.execute("""
+            INSERT INTO nodes VALUES
+            ('HGNC:1234', 'Gene A', 'biolink:Gene'),
+            ('NCBIGene:5678', 'Gene B', 'biolink:Gene'),
+            ('INVALID:9999', 'Gene C', 'biolink:Gene'),
+            ('MONDO:0001234', 'Disease A', 'biolink:Disease'),
+            ('HP:0000001', 'Disease B', 'biolink:Disease'),
+            ('BADPREFIX:123', 'Disease C', 'biolink:Disease')
+        """)
+        yield db
+        db.close()
+
+    @pytest.fixture
+    def db_with_valid_prefixes(self):
+        """Create a GraphDatabase with all valid ID prefixes."""
+        db = GraphDatabase()
+        db.conn.execute("""
+            CREATE TABLE nodes (
+                id VARCHAR,
+                name VARCHAR,
+                category VARCHAR
+            )
+        """)
+        db.conn.execute("""
+            INSERT INTO nodes VALUES
+            ('HGNC:1234', 'Gene A', 'biolink:Gene'),
+            ('NCBIGene:5678', 'Gene B', 'biolink:Gene'),
+            ('MONDO:0001234', 'Disease A', 'biolink:Disease')
+        """)
+        yield db
+        db.close()
+
+    @pytest.fixture
+    def engine_with_mixed_prefixes(self, db_with_mixed_prefixes):
+        """Create a ValidationEngine with mixed ID prefixes."""
+        mock_parser = MagicMock(spec=SchemaParser)
+        mock_parser.schema_view = MagicMock()
+
+        # Mock all_classes to return Gene and Disease
+        mock_parser.schema_view.all_classes.return_value = ["Gene", "Disease"]
+
+        # Mock get_class_id_prefixes
+        def mock_get_prefixes(class_name):
+            if class_name == "Gene":
+                return (["HGNC", "NCBIGene", "ENSEMBL"], True)  # closed list
+            elif class_name == "Disease":
+                return (["MONDO", "OMIM", "DOID"], True)  # closed list
+            return ([], False)
+
+        mock_parser.get_class_id_prefixes.side_effect = mock_get_prefixes
+        mock_parser.get_valid_categories.return_value = {"biolink:Gene", "biolink:Disease"}
+        mock_parser.get_class_constraints.return_value = ClassConstraints(
+            class_name="named thing",
+            table_mapping="nodes",
+            slots={},
+        )
+        return ValidationEngine(database=db_with_mixed_prefixes, schema_parser=mock_parser)
+
+    @pytest.fixture
+    def engine_with_valid_prefixes(self, db_with_valid_prefixes):
+        """Create a ValidationEngine with all valid ID prefixes."""
+        mock_parser = MagicMock(spec=SchemaParser)
+        mock_parser.schema_view = MagicMock()
+        mock_parser.schema_view.all_classes.return_value = ["Gene", "Disease"]
+
+        def mock_get_prefixes(class_name):
+            if class_name == "Gene":
+                return (["HGNC", "NCBIGene", "ENSEMBL"], True)
+            elif class_name == "Disease":
+                return (["MONDO", "OMIM", "DOID"], True)
+            return ([], False)
+
+        mock_parser.get_class_id_prefixes.side_effect = mock_get_prefixes
+        mock_parser.get_valid_categories.return_value = {"biolink:Gene", "biolink:Disease"}
+        mock_parser.get_class_constraints.return_value = ClassConstraints(
+            class_name="named thing",
+            table_mapping="nodes",
+            slots={},
+        )
+        return ValidationEngine(database=db_with_valid_prefixes, schema_parser=mock_parser)
+
+    @pytest.fixture
+    def engine_with_open_prefixes(self, db_with_mixed_prefixes):
+        """Create a ValidationEngine where prefixes are NOT closed (open list)."""
+        mock_parser = MagicMock(spec=SchemaParser)
+        mock_parser.schema_view = MagicMock()
+        mock_parser.schema_view.all_classes.return_value = ["Gene", "Disease"]
+
+        def mock_get_prefixes(class_name):
+            if class_name == "Gene":
+                return (["HGNC", "NCBIGene"], False)  # open list - should NOT validate
+            elif class_name == "Disease":
+                return (["MONDO"], False)  # open list - should NOT validate
+            return ([], False)
+
+        mock_parser.get_class_id_prefixes.side_effect = mock_get_prefixes
+        mock_parser.get_valid_categories.return_value = {"biolink:Gene", "biolink:Disease"}
+        mock_parser.get_class_constraints.return_value = ClassConstraints(
+            class_name="named thing",
+            table_mapping="nodes",
+            slots={},
+        )
+        return ValidationEngine(database=db_with_mixed_prefixes, schema_parser=mock_parser)
+
+    @pytest.fixture
+    def engine_no_prefixes(self, db_with_mixed_prefixes):
+        """Create a ValidationEngine with no id_prefixes defined."""
+        mock_parser = MagicMock(spec=SchemaParser)
+        mock_parser.schema_view = None  # No schema loaded
+        mock_parser.get_class_id_prefixes.return_value = ([], False)
+        mock_parser.get_valid_categories.return_value = set()
+        mock_parser.get_class_constraints.return_value = ClassConstraints(
+            class_name="named thing",
+            table_mapping="nodes",
+            slots={},
+        )
+        return ValidationEngine(database=db_with_mixed_prefixes, schema_parser=mock_parser)
+
+    # Tests for _validate_id_prefixes
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_id_prefixes_returns_list(self, engine_with_mixed_prefixes):
+        """Test that _validate_id_prefixes returns a list."""
+        result = engine_with_mixed_prefixes._validate_id_prefixes()
+        assert isinstance(result, list)
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_id_prefixes_returns_empty_when_no_prefixes_defined(self, engine_no_prefixes):
+        """Test that _validate_id_prefixes returns empty list when no id_prefixes defined."""
+        result = engine_no_prefixes._validate_id_prefixes()
+        assert result == []
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_id_prefixes_returns_empty_when_all_valid(self, engine_with_valid_prefixes):
+        """Test that _validate_id_prefixes returns empty list when all IDs match prefixes."""
+        result = engine_with_valid_prefixes._validate_id_prefixes()
+        assert result == []
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_id_prefixes_detects_invalid_prefixes(self, engine_with_mixed_prefixes):
+        """Test that _validate_id_prefixes detects IDs with invalid prefixes."""
+        result = engine_with_mixed_prefixes._validate_id_prefixes()
+        assert len(result) > 0
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_id_prefixes_has_id_prefix_constraint_type(self, engine_with_mixed_prefixes):
+        """Test that violations have constraint_type=ConstraintType.ID_PREFIX."""
+        result = engine_with_mixed_prefixes._validate_id_prefixes()
+        for violation in result:
+            assert violation.constraint_type == ConstraintType.ID_PREFIX
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_id_prefixes_has_warning_severity(self, engine_with_mixed_prefixes):
+        """Test that violations have severity='warning'."""
+        result = engine_with_mixed_prefixes._validate_id_prefixes()
+        for violation in result:
+            assert violation.severity == "warning"
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_id_prefixes_only_validates_closed_lists(self, engine_with_open_prefixes):
+        """Test that _validate_id_prefixes only validates categories with is_closed=True."""
+        result = engine_with_open_prefixes._validate_id_prefixes()
+        # Should return empty because all prefixes are open (not closed)
+        assert result == []
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_id_prefixes_includes_samples_with_id_and_prefix(self, engine_with_mixed_prefixes):
+        """Test that violations include samples showing ID and extracted prefix."""
+        result = engine_with_mixed_prefixes._validate_id_prefixes()
+        assert len(result) > 0
+        for violation in result:
+            assert len(violation.samples) > 0
+            for sample in violation.samples:
+                assert isinstance(sample, ViolationSample)
+                # Sample should have ID and prefix
+                assert len(sample.values) >= 1
+
+    # Tests for _build_category_prefix_map
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_build_category_prefix_map_returns_dict(self, engine_with_mixed_prefixes):
+        """Test that _build_category_prefix_map returns a dict."""
+        result = engine_with_mixed_prefixes._build_category_prefix_map()
+        assert isinstance(result, dict)
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_build_category_prefix_map_maps_category_to_prefixes(self, engine_with_mixed_prefixes):
+        """Test that _build_category_prefix_map maps category to (prefixes, is_closed) tuple."""
+        result = engine_with_mixed_prefixes._build_category_prefix_map()
+        # Should have Gene and Disease mappings
+        assert "biolink:Gene" in result
+        prefixes, is_closed = result["biolink:Gene"]
+        assert isinstance(prefixes, list)
+        assert isinstance(is_closed, bool)
+        assert "HGNC" in prefixes
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_build_category_prefix_map_empty_when_no_schema(self, engine_no_prefixes):
+        """Test that _build_category_prefix_map returns empty dict when no schema."""
+        result = engine_no_prefixes._build_category_prefix_map()
+        assert result == {}
 
 
 class TestBiolinkPredicateValidation:

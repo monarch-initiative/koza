@@ -298,6 +298,9 @@ class ValidationEngine:
             category_violations = self._validate_categories()
             report.violations.extend(category_violations)
 
+            id_prefix_violations = self._validate_id_prefixes()
+            report.violations.extend(id_prefix_violations)
+
         if self._table_exists("edges"):
             predicate_violations = self._validate_predicates()
             report.violations.extend(predicate_violations)
@@ -608,6 +611,90 @@ class ValidationEngine:
         except Exception as e:
             from loguru import logger
             logger.warning(f"Category validation failed: {e}")
+
+        return violations
+
+    def _build_category_prefix_map(self) -> dict[str, tuple[list[str], bool]]:
+        """Build mapping of category -> (prefixes, is_closed)."""
+        category_prefixes = {}
+
+        if not self.schema_parser or not self.schema_parser.schema_view:
+            return category_prefixes
+
+        try:
+            for cls_name in self.schema_parser.schema_view.all_classes():
+                prefixes, is_closed = self.schema_parser.get_class_id_prefixes(cls_name)
+                if prefixes:
+                    category = f"biolink:{cls_name.replace(' ', '')}"
+                    category_prefixes[category] = (prefixes, is_closed)
+        except Exception as e:
+            from loguru import logger
+            logger.warning(f"Failed to build category prefix map: {e}")
+
+        return category_prefixes
+
+    def _validate_id_prefixes(self) -> list[ValidationViolation]:
+        """
+        Validate node IDs match expected prefixes for their category.
+
+        Uses id_prefixes defined on Biolink classes to check that IDs
+        use appropriate prefixes (e.g., Gene IDs should start with HGNC:, NCBIGene:, etc.)
+        """
+        violations = []
+        category_prefixes = self._build_category_prefix_map()
+
+        if not category_prefixes:
+            return violations
+
+        total_nodes = self._get_table_count("nodes")
+
+        # Validate each category with closed prefix lists
+        for category, (prefixes, is_closed) in category_prefixes.items():
+            if not prefixes or not is_closed:
+                continue  # Only validate closed prefix lists
+
+            # Build regex pattern for valid prefixes
+            prefix_pattern = "|".join([f"^{p}:" for p in prefixes])
+
+            count_query = f"""
+                SELECT COUNT(*) as violation_count
+                FROM nodes
+                WHERE category = '{category}'
+                  AND id IS NOT NULL
+                  AND NOT regexp_matches(id, '{prefix_pattern}')
+            """
+
+            sample_query = f"""
+                SELECT id, split_part(id, ':', 1) as prefix
+                FROM nodes
+                WHERE category = '{category}'
+                  AND id IS NOT NULL
+                  AND NOT regexp_matches(id, '{prefix_pattern}')
+                LIMIT {self.sample_limit}
+            """
+
+            try:
+                count_result = self.database.conn.execute(count_query).fetchone()
+                violation_count = count_result[0] if count_result else 0
+
+                if violation_count > 0:
+                    sample_results = self.database.conn.execute(sample_query).fetchall()
+                    samples = [ViolationSample(values=list(row), count=1) for row in sample_results]
+
+                    violations.append(ValidationViolation(
+                        constraint_type=ConstraintType.ID_PREFIX,
+                        slot_name="id",
+                        table="nodes",
+                        severity="warning",
+                        description=f"ID prefix not in allowed list for {category}: {prefixes}",
+                        violation_count=violation_count,
+                        total_records=total_nodes,
+                        violation_percentage=(violation_count / total_nodes * 100) if total_nodes > 0 else 0,
+                        samples=samples,
+                    ))
+            except Exception as e:
+                from loguru import logger
+                logger.warning(f"ID prefix validation failed for {category}: {e}")
 
         return violations
 
