@@ -121,7 +121,7 @@ class ValidationReport:
         warning_count: Number of warning-severity violations
         info_count: Number of info-severity violations
         compliance_percentage: Percentage of constraints that passed
-        tables_validated: Number of tables that were validated
+        tables_validated: List of tables that were validated
         constraints_checked: Number of constraints that were checked
     """
 
@@ -131,7 +131,7 @@ class ValidationReport:
     warning_count: int = 0
     info_count: int = 0
     compliance_percentage: float = 100.0
-    tables_validated: int = 0
+    tables_validated: list[str] = field(default_factory=list)
     constraints_checked: int = 0
 
 
@@ -244,6 +244,7 @@ class ValidationEngine:
         self,
         database: GraphDatabase,
         schema_parser: Optional["SchemaParser"] = None,
+        sample_limit: int = 10,
     ):
         """
         Initialize the ValidationEngine.
@@ -251,9 +252,12 @@ class ValidationEngine:
         Args:
             database: GraphDatabase instance to validate
             schema_parser: Optional SchemaParser for biolink model constraints
+            sample_limit: Maximum number of sample violations to return per constraint
         """
         self.database = database
         self.schema_parser = schema_parser
+        self.sample_limit = sample_limit
+        self.query_generator = ValidationQueryGenerator(self.schema_parser)
 
     def validate(self) -> ValidationReport:
         """
@@ -262,14 +266,203 @@ class ValidationEngine:
         Returns:
             ValidationReport containing all violations found
         """
-        # Skeleton implementation - returns empty report
-        return ValidationReport(
-            violations=[],
-            total_violations=0,
-            error_count=0,
-            warning_count=0,
-            info_count=0,
-            compliance_percentage=100.0,
-            tables_validated=0,
-            constraints_checked=0,
+        report = ValidationReport()
+
+        # Phase 1: Schema structure validation (missing columns)
+        if self._table_exists("nodes"):
+            schema_violations = self._validate_schema_structure("nodes", "named thing")
+            report.violations.extend(schema_violations)
+
+        if self._table_exists("edges"):
+            schema_violations = self._validate_schema_structure("edges", "association")
+            report.violations.extend(schema_violations)
+
+        # Phase 2: Value-level validation
+        if self._table_exists("nodes"):
+            node_violations = self._validate_table("nodes", "named thing")
+            report.violations.extend(node_violations)
+            report.tables_validated.append("nodes")
+
+        if self._table_exists("edges"):
+            edge_violations = self._validate_table("edges", "association")
+            report.violations.extend(edge_violations)
+            report.tables_validated.append("edges")
+
+        self._compute_summary(report)
+        return report
+
+    def _table_exists(self, table_name: str) -> bool:
+        """
+        Check if a table exists in the database.
+
+        Args:
+            table_name: Name of the table to check
+
+        Returns:
+            True if the table exists, False otherwise
+        """
+        try:
+            self.database.conn.execute(f"SELECT 1 FROM {table_name} LIMIT 1")
+            return True
+        except Exception:
+            return False
+
+    def _get_table_columns(self, table_name: str) -> set[str]:
+        """
+        Get the column names for a table.
+
+        Args:
+            table_name: Name of the table
+
+        Returns:
+            Set of column names
+        """
+        try:
+            result = self.database.conn.execute(f"""
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_name = '{table_name}'
+            """).fetchall()
+            return {row[0] for row in result}
+        except Exception:
+            return set()
+
+    def _get_table_count(self, table_name: str) -> int:
+        """
+        Get the number of records in a table.
+
+        Args:
+            table_name: Name of the table
+
+        Returns:
+            Number of records
+        """
+        try:
+            result = self.database.conn.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()
+            return result[0] if result else 0
+        except Exception:
+            return 0
+
+    def _validate_schema_structure(self, table_name: str, class_name: str) -> list[ValidationViolation]:
+        """
+        Validate that required/recommended columns exist in the table.
+
+        Args:
+            table_name: Name of the table to validate
+            class_name: Name of the class to validate against
+
+        Returns:
+            List of ValidationViolation for missing columns
+        """
+        violations = []
+
+        if self.schema_parser is None:
+            return violations
+
+        constraints = self.schema_parser.get_class_constraints(class_name, table_name)
+        available_columns = self._get_table_columns(table_name)
+        total_records = self._get_table_count(table_name)
+
+        for slot_name, slot_constraints in constraints.slots.items():
+            if slot_name in available_columns:
+                continue
+
+            is_required = any(c.constraint_type == ConstraintType.REQUIRED for c in slot_constraints)
+            is_recommended = any(c.constraint_type == ConstraintType.RECOMMENDED for c in slot_constraints)
+
+            if is_required:
+                violations.append(ValidationViolation(
+                    constraint_type=ConstraintType.MISSING_COLUMN,
+                    slot_name=slot_name,
+                    table=table_name,
+                    severity="error",
+                    description=f"Required column '{slot_name}' does not exist in table",
+                    violation_count=total_records,
+                    total_records=total_records,
+                    violation_percentage=100.0,
+                    samples=[],
+                ))
+            elif is_recommended:
+                violations.append(ValidationViolation(
+                    constraint_type=ConstraintType.MISSING_COLUMN,
+                    slot_name=slot_name,
+                    table=table_name,
+                    severity="warning",
+                    description=f"Recommended column '{slot_name}' does not exist in table",
+                    violation_count=total_records,
+                    total_records=total_records,
+                    violation_percentage=100.0,
+                    samples=[],
+                ))
+
+        return violations
+
+    def _validate_table(self, table_name: str, class_name: str) -> list[ValidationViolation]:
+        """
+        Validate a table against class constraints.
+
+        Args:
+            table_name: Name of the table to validate
+            class_name: Name of the class to validate against
+
+        Returns:
+            List of ValidationViolation for value-level violations
+        """
+        violations = []
+
+        if self.schema_parser is None:
+            return violations
+
+        constraints = self.schema_parser.get_class_constraints(class_name, table_name)
+        available_columns = self._get_table_columns(table_name)
+        total_records = self._get_table_count(table_name)
+
+        queries = self.query_generator.generate_queries(
+            constraints, available_columns, self.sample_limit
         )
+
+        for constraint, count_query, sample_query in queries:
+            try:
+                count_result = self.database.conn.execute(count_query).fetchone()
+                violation_count = count_result[0] if count_result and count_result[0] else 0
+
+                if violation_count > 0:
+                    samples = []
+                    if sample_query:
+                        sample_results = self.database.conn.execute(sample_query).fetchall()
+                        samples = [ViolationSample(values=list(row), count=1) for row in sample_results]
+
+                    violation = ValidationViolation(
+                        constraint_type=constraint.constraint_type,
+                        slot_name=constraint.slot_name,
+                        table=table_name,
+                        severity=constraint.severity,
+                        description=constraint.description,
+                        violation_count=violation_count,
+                        total_records=total_records,
+                        violation_percentage=(violation_count / total_records * 100) if total_records > 0 else 0,
+                        samples=samples,
+                    )
+                    violations.append(violation)
+            except Exception as e:
+                from loguru import logger
+                logger.warning(f"Validation query failed for {constraint.slot_name}: {e}")
+
+        return violations
+
+    def _compute_summary(self, report: ValidationReport) -> None:
+        """
+        Compute summary statistics for the report.
+
+        Args:
+            report: ValidationReport to update with summary statistics
+        """
+        report.total_violations = sum(v.violation_count for v in report.violations)
+        report.error_count = sum(v.violation_count for v in report.violations if v.severity == "error")
+        report.warning_count = sum(v.violation_count for v in report.violations if v.severity == "warning")
+        report.info_count = sum(v.violation_count for v in report.violations if v.severity == "info")
+        report.constraints_checked = len(report.violations)
+
+        total_records = sum(self._get_table_count(table) for table in report.tables_validated)
+        if total_records > 0:
+            report.compliance_percentage = (total_records - report.error_count) / total_records * 100

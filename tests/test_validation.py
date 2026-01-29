@@ -297,7 +297,7 @@ class TestValidationReport:
             warning_count=0,
             info_count=0,
             compliance_percentage=100.0,
-            tables_validated=2,
+            tables_validated=["nodes", "edges"],
             constraints_checked=10,
         )
         assert report.violations == []
@@ -306,7 +306,7 @@ class TestValidationReport:
         assert report.warning_count == 0
         assert report.info_count == 0
         assert report.compliance_percentage == 100.0
-        assert report.tables_validated == 2
+        assert report.tables_validated == ["nodes", "edges"]
         assert report.constraints_checked == 10
 
     def test_validation_report_with_violations(self):
@@ -329,7 +329,7 @@ class TestValidationReport:
             warning_count=0,
             info_count=0,
             compliance_percentage=90.0,
-            tables_validated=1,
+            tables_validated=["nodes"],
             constraints_checked=5,
         )
         assert len(report.violations) == 1
@@ -803,6 +803,467 @@ class TestValidationQueryGeneratorIntegration:
         assert len(samples) == 3
 
         conn.close()
+
+
+class TestValidationEngineHelpers:
+    """Test ValidationEngine helper methods with real DuckDB."""
+
+    @pytest.fixture
+    def db_with_data(self):
+        """Create a GraphDatabase with test data."""
+        db = GraphDatabase()
+        # Create nodes table with test data
+        db.conn.execute("""
+            CREATE TABLE nodes (
+                id VARCHAR,
+                name VARCHAR,
+                category VARCHAR
+            )
+        """)
+        db.conn.execute("""
+            INSERT INTO nodes VALUES
+            ('node1', 'Gene A', 'biolink:Gene'),
+            ('node2', 'Gene B', 'biolink:Gene'),
+            ('node3', NULL, 'biolink:Disease')
+        """)
+        # Create edges table with test data
+        db.conn.execute("""
+            CREATE TABLE edges (
+                id VARCHAR,
+                subject VARCHAR,
+                predicate VARCHAR,
+                object VARCHAR
+            )
+        """)
+        db.conn.execute("""
+            INSERT INTO edges VALUES
+            ('edge1', 'node1', 'biolink:interacts_with', 'node2'),
+            ('edge2', 'node2', 'biolink:related_to', 'node3')
+        """)
+        yield db
+        db.close()
+
+    @pytest.fixture
+    def engine(self, db_with_data):
+        """Create a ValidationEngine with the test database."""
+        mock_parser = MagicMock(spec=SchemaParser)
+        return ValidationEngine(database=db_with_data, schema_parser=mock_parser)
+
+    # Tests for _table_exists
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_table_exists_returns_true_for_existing_table(self, engine):
+        """Test that _table_exists returns True for existing tables."""
+        assert engine._table_exists("nodes") is True
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_table_exists_returns_false_for_nonexistent_table(self, engine):
+        """Test that _table_exists returns False for non-existing tables."""
+        assert engine._table_exists("nonexistent_table") is False
+
+    # Tests for _get_table_columns
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_get_table_columns_returns_set(self, engine):
+        """Test that _get_table_columns returns a set."""
+        result = engine._get_table_columns("nodes")
+        assert isinstance(result, set)
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_get_table_columns_returns_correct_columns(self, engine):
+        """Test that _get_table_columns returns the correct column names."""
+        result = engine._get_table_columns("nodes")
+        assert result == {"id", "name", "category"}
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_get_table_columns_returns_empty_for_nonexistent(self, engine):
+        """Test that _get_table_columns returns empty set for non-existing table."""
+        result = engine._get_table_columns("nonexistent_table")
+        assert result == set()
+
+    # Tests for _get_table_count
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_get_table_count_returns_int(self, engine):
+        """Test that _get_table_count returns an int."""
+        result = engine._get_table_count("nodes")
+        assert isinstance(result, int)
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_get_table_count_returns_correct_count(self, engine):
+        """Test that _get_table_count returns the correct count."""
+        result = engine._get_table_count("nodes")
+        assert result == 3
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_get_table_count_returns_zero_for_nonexistent(self, engine):
+        """Test that _get_table_count returns 0 for non-existing table."""
+        result = engine._get_table_count("nonexistent_table")
+        assert result == 0
+
+    # Tests for _validate_schema_structure
+
+    @pytest.fixture
+    def db_missing_column(self):
+        """Create a GraphDatabase with a table missing required columns."""
+        db = GraphDatabase()
+        # Create nodes table missing the 'name' column
+        db.conn.execute("""
+            CREATE TABLE nodes (
+                id VARCHAR,
+                category VARCHAR
+            )
+        """)
+        db.conn.execute("""
+            INSERT INTO nodes VALUES
+            ('node1', 'biolink:Gene'),
+            ('node2', 'biolink:Disease')
+        """)
+        yield db
+        db.close()
+
+    @pytest.fixture
+    def engine_with_real_parser(self, db_missing_column):
+        """Create a ValidationEngine with real SchemaParser but missing columns."""
+        # Use a mock parser that returns specific constraints
+        mock_parser = MagicMock(spec=SchemaParser)
+        # Return constraints that include required and recommended columns
+        mock_parser.get_class_constraints.return_value = ClassConstraints(
+            class_name="named thing",
+            table_mapping="nodes",
+            slots={
+                "id": [SlotConstraint(
+                    slot_name="id",
+                    constraint_type=ConstraintType.REQUIRED,
+                    value=True,
+                    class_context="named thing",
+                    severity="error",
+                    description="Field 'id' is required",
+                )],
+                "name": [SlotConstraint(
+                    slot_name="name",
+                    constraint_type=ConstraintType.RECOMMENDED,
+                    value=True,
+                    class_context="named thing",
+                    severity="warning",
+                    description="Field 'name' is recommended",
+                )],
+                "category": [SlotConstraint(
+                    slot_name="category",
+                    constraint_type=ConstraintType.REQUIRED,
+                    value=True,
+                    class_context="named thing",
+                    severity="error",
+                    description="Field 'category' is required",
+                )],
+                "description": [SlotConstraint(
+                    slot_name="description",
+                    constraint_type=ConstraintType.REQUIRED,
+                    value=True,
+                    class_context="named thing",
+                    severity="error",
+                    description="Field 'description' is required",
+                )],
+            },
+        )
+        return ValidationEngine(database=db_missing_column, schema_parser=mock_parser)
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_schema_structure_returns_list(self, engine_with_real_parser):
+        """Test that _validate_schema_structure returns a list."""
+        result = engine_with_real_parser._validate_schema_structure("nodes", "named thing")
+        assert isinstance(result, list)
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_schema_structure_returns_empty_when_all_columns_exist(self, engine):
+        """Test that _validate_schema_structure returns empty list when all required columns exist."""
+        # Configure mock to return constraints only for existing columns
+        engine.schema_parser.get_class_constraints.return_value = ClassConstraints(
+            class_name="named thing",
+            table_mapping="nodes",
+            slots={
+                "id": [SlotConstraint(
+                    slot_name="id",
+                    constraint_type=ConstraintType.REQUIRED,
+                    value=True,
+                    class_context="named thing",
+                    severity="error",
+                    description="Field 'id' is required",
+                )],
+            },
+        )
+        result = engine._validate_schema_structure("nodes", "named thing")
+        assert result == []
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_schema_structure_returns_violation_for_missing_required_column(self, engine_with_real_parser):
+        """Test that _validate_schema_structure returns ValidationViolation when required column missing."""
+        result = engine_with_real_parser._validate_schema_structure("nodes", "named thing")
+        # Should have violations for 'name' (recommended) and 'description' (required)
+        assert len(result) >= 1
+        # Check that all results are ValidationViolation
+        for violation in result:
+            assert isinstance(violation, ValidationViolation)
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_schema_structure_missing_required_has_error_severity(self, engine_with_real_parser):
+        """Test that missing required column has severity='error'."""
+        result = engine_with_real_parser._validate_schema_structure("nodes", "named thing")
+        # Find the violation for 'description' (required column that's missing)
+        description_violation = next((v for v in result if v.slot_name == "description"), None)
+        assert description_violation is not None
+        assert description_violation.severity == "error"
+        assert description_violation.constraint_type == ConstraintType.MISSING_COLUMN
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_schema_structure_missing_recommended_has_warning_severity(self, engine_with_real_parser):
+        """Test that missing recommended column has severity='warning'."""
+        result = engine_with_real_parser._validate_schema_structure("nodes", "named thing")
+        # Find the violation for 'name' (recommended column that's missing)
+        name_violation = next((v for v in result if v.slot_name == "name"), None)
+        assert name_violation is not None
+        assert name_violation.severity == "warning"
+        assert name_violation.constraint_type == ConstraintType.MISSING_COLUMN
+
+
+class TestValidationEngineValidateTable:
+    """Test ValidationEngine._validate_table method."""
+
+    @pytest.fixture
+    def db_with_violations(self):
+        """Create a GraphDatabase with data that has validation violations."""
+        db = GraphDatabase()
+        db.conn.execute("""
+            CREATE TABLE nodes (
+                id VARCHAR,
+                name VARCHAR,
+                category VARCHAR
+            )
+        """)
+        db.conn.execute("""
+            INSERT INTO nodes VALUES
+            ('node1', 'Gene A', 'biolink:Gene'),
+            ('node2', NULL, 'biolink:Disease'),
+            ('node3', '', 'biolink:Gene'),
+            ('node4', '  ', 'biolink:Protein'),
+            ('node5', 'Valid Name', 'biolink:Gene')
+        """)
+        yield db
+        db.close()
+
+    @pytest.fixture
+    def engine_with_violations(self, db_with_violations):
+        """Create a ValidationEngine with data that has violations."""
+        mock_parser = MagicMock(spec=SchemaParser)
+        mock_parser.get_class_constraints.return_value = ClassConstraints(
+            class_name="named thing",
+            table_mapping="nodes",
+            slots={
+                "id": [SlotConstraint(
+                    slot_name="id",
+                    constraint_type=ConstraintType.REQUIRED,
+                    value=True,
+                    class_context="named thing",
+                    severity="error",
+                    description="Field 'id' is required",
+                )],
+                "name": [SlotConstraint(
+                    slot_name="name",
+                    constraint_type=ConstraintType.REQUIRED,
+                    value=True,
+                    class_context="named thing",
+                    severity="error",
+                    description="Field 'name' is required",
+                )],
+            },
+        )
+        return ValidationEngine(database=db_with_violations, schema_parser=mock_parser)
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_table_returns_list(self, engine_with_violations):
+        """Test that _validate_table returns a list."""
+        result = engine_with_violations._validate_table("nodes", "named thing")
+        assert isinstance(result, list)
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_table_returns_validation_violations(self, engine_with_violations):
+        """Test that _validate_table returns list of ValidationViolation."""
+        result = engine_with_violations._validate_table("nodes", "named thing")
+        for item in result:
+            assert isinstance(item, ValidationViolation)
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_table_finds_null_required_fields(self, engine_with_violations):
+        """Test that _validate_table finds violations for rows with NULL required fields."""
+        result = engine_with_violations._validate_table("nodes", "named thing")
+        # Find violation for 'name' field
+        name_violation = next((v for v in result if v.slot_name == "name"), None)
+        assert name_violation is not None
+        # Should find 3 violations (NULL, empty string, whitespace-only)
+        assert name_violation.violation_count == 3
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_table_includes_samples(self, engine_with_violations):
+        """Test that _validate_table includes samples of violating records."""
+        result = engine_with_violations._validate_table("nodes", "named thing")
+        name_violation = next((v for v in result if v.slot_name == "name"), None)
+        assert name_violation is not None
+        assert len(name_violation.samples) > 0
+        for sample in name_violation.samples:
+            assert isinstance(sample, ViolationSample)
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_table_calculates_violation_percentage(self, engine_with_violations):
+        """Test that _validate_table calculates violation_percentage correctly."""
+        result = engine_with_violations._validate_table("nodes", "named thing")
+        name_violation = next((v for v in result if v.slot_name == "name"), None)
+        assert name_violation is not None
+        # 3 violations out of 5 records = 60%
+        assert name_violation.violation_percentage == 60.0
+        assert name_violation.total_records == 5
+        assert name_violation.violation_count == 3
+
+
+class TestValidationEngineValidate:
+    """Test ValidationEngine.validate() method."""
+
+    @pytest.fixture
+    def db_full(self):
+        """Create a GraphDatabase with both nodes and edges tables."""
+        db = GraphDatabase()
+        db.conn.execute("""
+            CREATE TABLE nodes (
+                id VARCHAR,
+                name VARCHAR,
+                category VARCHAR
+            )
+        """)
+        db.conn.execute("""
+            INSERT INTO nodes VALUES
+            ('node1', 'Gene A', 'biolink:Gene'),
+            ('node2', NULL, 'biolink:Disease'),
+            ('node3', 'Gene C', 'biolink:Gene')
+        """)
+        db.conn.execute("""
+            CREATE TABLE edges (
+                id VARCHAR,
+                subject VARCHAR,
+                predicate VARCHAR,
+                object VARCHAR
+            )
+        """)
+        db.conn.execute("""
+            INSERT INTO edges VALUES
+            ('edge1', 'node1', 'biolink:interacts_with', 'node2'),
+            ('edge2', NULL, 'biolink:related_to', 'node3')
+        """)
+        yield db
+        db.close()
+
+    @pytest.fixture
+    def engine_full(self, db_full):
+        """Create a ValidationEngine with both tables."""
+        mock_parser = MagicMock(spec=SchemaParser)
+
+        def mock_get_class_constraints(class_name, table_mapping):
+            if class_name == "named thing":
+                return ClassConstraints(
+                    class_name="named thing",
+                    table_mapping="nodes",
+                    slots={
+                        "id": [SlotConstraint(
+                            slot_name="id",
+                            constraint_type=ConstraintType.REQUIRED,
+                            value=True,
+                            class_context="named thing",
+                            severity="error",
+                            description="Field 'id' is required",
+                        )],
+                        "name": [SlotConstraint(
+                            slot_name="name",
+                            constraint_type=ConstraintType.REQUIRED,
+                            value=True,
+                            class_context="named thing",
+                            severity="error",
+                            description="Field 'name' is required",
+                        )],
+                    },
+                )
+            else:  # association
+                return ClassConstraints(
+                    class_name="association",
+                    table_mapping="edges",
+                    slots={
+                        "subject": [SlotConstraint(
+                            slot_name="subject",
+                            constraint_type=ConstraintType.REQUIRED,
+                            value=True,
+                            class_context="association",
+                            severity="error",
+                            description="Field 'subject' is required",
+                        )],
+                        "predicate": [SlotConstraint(
+                            slot_name="predicate",
+                            constraint_type=ConstraintType.REQUIRED,
+                            value=True,
+                            class_context="association",
+                            severity="error",
+                            description="Field 'predicate' is required",
+                        )],
+                    },
+                )
+
+        mock_parser.get_class_constraints.side_effect = mock_get_class_constraints
+        return ValidationEngine(database=db_full, schema_parser=mock_parser)
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_returns_validation_report(self, engine_full):
+        """Test that validate() returns a ValidationReport."""
+        result = engine_full.validate()
+        assert isinstance(result, ValidationReport)
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_validates_nodes_table(self, engine_full):
+        """Test that validate() validates the nodes table when it exists."""
+        result = engine_full.validate()
+        # Should have validated nodes table
+        assert "nodes" in result.tables_validated
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_validates_edges_table(self, engine_full):
+        """Test that validate() validates the edges table when it exists."""
+        result = engine_full.validate()
+        # Should have validated edges table
+        assert "edges" in result.tables_validated
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_computes_total_violations(self, engine_full):
+        """Test that validate() computes total_violations correctly."""
+        result = engine_full.validate()
+        # Should have violations: 1 for nodes (NULL name), 1 for edges (NULL subject)
+        assert result.total_violations == 2
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_computes_error_count(self, engine_full):
+        """Test that validate() computes error_count correctly."""
+        result = engine_full.validate()
+        # All violations have severity="error"
+        assert result.error_count == 2
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_computes_warning_count(self, engine_full):
+        """Test that validate() computes warning_count correctly."""
+        result = engine_full.validate()
+        # No warnings in our test data
+        assert result.warning_count == 0
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_validate_sets_compliance_percentage(self, engine_full):
+        """Test that validate() sets compliance_percentage correctly."""
+        result = engine_full.validate()
+        # 5 total records (3 nodes + 2 edges), 2 error violations
+        # compliance = (5 - 2) / 5 * 100 = 60%
+        assert result.compliance_percentage == 60.0
 
 
 if __name__ == "__main__":
