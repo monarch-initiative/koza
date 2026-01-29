@@ -135,6 +135,102 @@ class ValidationReport:
     constraints_checked: int = 0
 
 
+class ValidationQueryGenerator:
+    """Generates DuckDB SQL queries for LinkML constraint validation."""
+
+    def __init__(self, schema_parser: Optional["SchemaParser"] = None):
+        """
+        Initialize the ValidationQueryGenerator.
+
+        Args:
+            schema_parser: SchemaParser instance for constraint extraction
+        """
+        self.schema_parser = schema_parser
+
+    def generate_queries(
+        self,
+        constraints: ClassConstraints,
+        available_columns: set[str],
+        sample_limit: int = 10,
+    ) -> list[tuple[SlotConstraint, str, str]]:
+        """
+        Generate SQL validation queries for constraints.
+
+        Args:
+            constraints: ClassConstraints containing slot constraints
+            available_columns: Set of column names available in the table
+            sample_limit: Maximum number of sample violations to return
+
+        Returns:
+            List of (constraint, count_query, sample_query) tuples
+        """
+        queries = []
+        table = constraints.table_mapping
+
+        for slot_name, slot_constraints in constraints.slots.items():
+            if slot_name not in available_columns:
+                continue
+
+            for constraint in slot_constraints:
+                count_query, sample_query = self._generate_query_pair(
+                    constraint, table, sample_limit
+                )
+                if count_query:
+                    queries.append((constraint, count_query, sample_query))
+
+        return queries
+
+    def _generate_query_pair(
+        self,
+        constraint: SlotConstraint,
+        table: str,
+        sample_limit: int,
+    ) -> tuple[str | None, str | None]:
+        """
+        Generate count and sample queries for a single constraint.
+
+        Args:
+            constraint: SlotConstraint to generate queries for
+            table: Table name to query
+            sample_limit: Maximum number of samples to return
+
+        Returns:
+            Tuple of (count_query, sample_query) or (None, None) if not supported
+        """
+        slot = constraint.slot_name
+
+        if constraint.constraint_type in (ConstraintType.REQUIRED, ConstraintType.RECOMMENDED):
+            return self._required_queries(table, slot, sample_limit)
+
+        # Add other constraint types later
+        return None, None
+
+    def _required_queries(self, table: str, slot: str, limit: int) -> tuple[str, str]:
+        """
+        Generate queries for required field validation.
+
+        Args:
+            table: Table name to query
+            slot: Slot/column name to check
+            limit: Maximum number of sample violations to return
+
+        Returns:
+            Tuple of (count_query, sample_query)
+        """
+        count_query = f"""
+            SELECT COUNT(*) as violation_count
+            FROM {table}
+            WHERE "{slot}" IS NULL OR TRIM(CAST("{slot}" AS VARCHAR)) = ''
+        """
+        sample_query = f"""
+            SELECT id, "{slot}"
+            FROM {table}
+            WHERE "{slot}" IS NULL OR TRIM(CAST("{slot}" AS VARCHAR)) = ''
+            LIMIT {limit}
+        """
+        return count_query.strip(), sample_query.strip()
+
+
 class ValidationEngine:
     """
     Engine for running validation against a graph database.

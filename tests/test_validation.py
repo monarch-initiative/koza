@@ -15,12 +15,19 @@ from koza.graph_operations.validation import (
     ConstraintType,
     SlotConstraint,
     ValidationEngine,
+    ValidationQueryGenerator,
     ValidationReport,
     ValidationViolation,
     ViolationSample,
 )
 from koza.graph_operations.utils import GraphDatabase
 from koza.graph_operations.schema_utils import SchemaParser
+
+try:
+    import duckdb
+    HAS_DUCKDB = True
+except ImportError:
+    HAS_DUCKDB = False
 
 
 class TestConstraintType:
@@ -552,6 +559,250 @@ class TestSchemaParserConstraintExtraction:
             for constraint in constraints:
                 assert isinstance(constraint, SlotConstraint)
                 assert isinstance(constraint.constraint_type, ConstraintType)
+
+
+class TestValidationQueryGenerator:
+    """Test ValidationQueryGenerator class."""
+
+    @pytest.fixture
+    def mock_schema_parser(self):
+        """Create a mock SchemaParser."""
+        return MagicMock(spec=SchemaParser)
+
+    @pytest.fixture
+    def query_generator(self, mock_schema_parser):
+        """Create a ValidationQueryGenerator with mock schema parser."""
+        return ValidationQueryGenerator(schema_parser=mock_schema_parser)
+
+    @pytest.fixture
+    def sample_constraints(self):
+        """Create sample ClassConstraints for testing."""
+        required_constraint = SlotConstraint(
+            slot_name="id",
+            constraint_type=ConstraintType.REQUIRED,
+            value=True,
+            class_context="named thing",
+            severity="error",
+            description="Field 'id' is required",
+        )
+        recommended_constraint = SlotConstraint(
+            slot_name="name",
+            constraint_type=ConstraintType.RECOMMENDED,
+            value=True,
+            class_context="named thing",
+            severity="warning",
+            description="Field 'name' is recommended",
+        )
+        return ClassConstraints(
+            class_name="named thing",
+            table_mapping="nodes",
+            slots={
+                "id": [required_constraint],
+                "name": [recommended_constraint],
+            },
+        )
+
+    # Tests for __init__
+
+    def test_query_generator_stores_schema_parser(self, mock_schema_parser):
+        """Test that ValidationQueryGenerator stores the schema_parser."""
+        generator = ValidationQueryGenerator(schema_parser=mock_schema_parser)
+        assert generator.schema_parser == mock_schema_parser
+
+    # Tests for generate_queries
+
+    def test_generate_queries_returns_list(self, query_generator, sample_constraints):
+        """Test that generate_queries returns a list."""
+        available_columns = {"id", "name", "category"}
+        result = query_generator.generate_queries(sample_constraints, available_columns)
+        assert isinstance(result, list)
+
+    def test_generate_queries_returns_tuples(self, query_generator, sample_constraints):
+        """Test that generate_queries returns tuples of (constraint, count_query, sample_query)."""
+        available_columns = {"id", "name", "category"}
+        result = query_generator.generate_queries(sample_constraints, available_columns)
+        assert len(result) > 0
+        for item in result:
+            assert isinstance(item, tuple)
+            assert len(item) == 3
+            constraint, count_query, sample_query = item
+            assert isinstance(constraint, SlotConstraint)
+            assert isinstance(count_query, str)
+            assert isinstance(sample_query, str)
+
+    def test_generate_queries_only_includes_available_columns(self, query_generator):
+        """Test that generate_queries only generates queries for available columns."""
+        constraint = SlotConstraint(
+            slot_name="missing_field",
+            constraint_type=ConstraintType.REQUIRED,
+            value=True,
+            class_context="named thing",
+        )
+        constraints = ClassConstraints(
+            class_name="named thing",
+            table_mapping="nodes",
+            slots={"missing_field": [constraint]},
+        )
+        available_columns = {"id", "name"}  # missing_field not available
+        result = query_generator.generate_queries(constraints, available_columns)
+        assert len(result) == 0
+
+    def test_generate_queries_respects_sample_limit(self, query_generator, sample_constraints):
+        """Test that generate_queries uses the provided sample_limit."""
+        available_columns = {"id", "name"}
+        result = query_generator.generate_queries(sample_constraints, available_columns, sample_limit=5)
+        for constraint, count_query, sample_query in result:
+            assert "LIMIT 5" in sample_query
+
+    # Tests for _required_queries
+
+    def test_required_queries_returns_tuple(self, query_generator):
+        """Test that _required_queries returns a tuple of (count_query, sample_query)."""
+        result = query_generator._required_queries("nodes", "id", 10)
+        assert isinstance(result, tuple)
+        assert len(result) == 2
+
+    def test_required_queries_count_query_has_select_count(self, query_generator):
+        """Test that _required_queries count_query contains SELECT COUNT(*)."""
+        count_query, sample_query = query_generator._required_queries("nodes", "id", 10)
+        assert "SELECT COUNT(*)" in count_query
+
+    def test_required_queries_count_query_checks_null(self, query_generator):
+        """Test that _required_queries count_query checks for NULL values."""
+        count_query, sample_query = query_generator._required_queries("nodes", "id", 10)
+        assert "IS NULL" in count_query
+
+    def test_required_queries_count_query_checks_empty_string(self, query_generator):
+        """Test that _required_queries count_query checks for empty string."""
+        count_query, sample_query = query_generator._required_queries("nodes", "id", 10)
+        # Should check for trimmed empty string
+        assert "TRIM" in count_query or "= ''" in count_query
+
+    def test_required_queries_sample_query_has_limit(self, query_generator):
+        """Test that _required_queries sample_query has LIMIT clause."""
+        count_query, sample_query = query_generator._required_queries("nodes", "id", 10)
+        assert "LIMIT 10" in sample_query
+
+    def test_required_queries_sample_query_selects_id_and_field(self, query_generator):
+        """Test that _required_queries sample_query selects id and the field."""
+        count_query, sample_query = query_generator._required_queries("nodes", "name", 10)
+        assert "SELECT" in sample_query
+        assert "id" in sample_query
+        assert '"name"' in sample_query
+
+    def test_required_queries_uses_correct_table(self, query_generator):
+        """Test that _required_queries uses the correct table name."""
+        count_query, sample_query = query_generator._required_queries("edges", "subject", 5)
+        assert "FROM edges" in count_query
+        assert "FROM edges" in sample_query
+
+
+class TestValidationQueryGeneratorIntegration:
+    """Integration tests for ValidationQueryGenerator with real DuckDB."""
+
+    @pytest.fixture
+    def mock_schema_parser(self):
+        """Create a mock SchemaParser."""
+        return MagicMock(spec=SchemaParser)
+
+    @pytest.fixture
+    def query_generator(self, mock_schema_parser):
+        """Create a ValidationQueryGenerator with mock schema parser."""
+        return ValidationQueryGenerator(schema_parser=mock_schema_parser)
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_generated_queries_are_valid_duckdb_sql(self, query_generator):
+        """Test that generated queries execute successfully in DuckDB."""
+        conn = duckdb.connect(":memory:")
+
+        # Create a test table
+        conn.execute("""
+            CREATE TABLE nodes (
+                id VARCHAR,
+                name VARCHAR,
+                category VARCHAR
+            )
+        """)
+
+        # Insert test data - some with NULL/empty values
+        conn.execute("""
+            INSERT INTO nodes VALUES
+            ('node1', 'Gene A', 'biolink:Gene'),
+            ('node2', NULL, 'biolink:Disease'),
+            ('node3', '', 'biolink:Gene'),
+            (NULL, 'Gene D', 'biolink:Gene')
+        """)
+
+        # Generate queries
+        count_query, sample_query = query_generator._required_queries("nodes", "name", 10)
+
+        # Execute count query - should not raise
+        result = conn.execute(count_query).fetchone()
+        assert result is not None
+        violation_count = result[0]
+        assert violation_count == 2  # NULL and empty string
+
+        # Execute sample query - should not raise
+        samples = conn.execute(sample_query).fetchall()
+        assert len(samples) == 2  # Should get both violations
+
+        conn.close()
+
+    @pytest.mark.skipif(not HAS_DUCKDB, reason="DuckDB not installed")
+    def test_generated_queries_with_full_workflow(self, query_generator):
+        """Test full workflow: constraints -> queries -> execution -> results."""
+        conn = duckdb.connect(":memory:")
+
+        # Create a test table
+        conn.execute("""
+            CREATE TABLE nodes (
+                id VARCHAR,
+                name VARCHAR,
+                category VARCHAR
+            )
+        """)
+
+        # Insert test data
+        conn.execute("""
+            INSERT INTO nodes VALUES
+            ('node1', 'Valid Name', 'biolink:Gene'),
+            ('node2', NULL, 'biolink:Disease'),
+            ('node3', '', 'biolink:Gene'),
+            ('node4', '  ', 'biolink:Gene'),
+            ('node5', 'Another Name', 'biolink:Protein')
+        """)
+
+        # Create constraints
+        required_constraint = SlotConstraint(
+            slot_name="name",
+            constraint_type=ConstraintType.REQUIRED,
+            value=True,
+            class_context="named thing",
+            severity="error",
+        )
+        constraints = ClassConstraints(
+            class_name="named thing",
+            table_mapping="nodes",
+            slots={"name": [required_constraint]},
+        )
+
+        # Generate queries
+        available_columns = {"id", "name", "category"}
+        queries = query_generator.generate_queries(constraints, available_columns, sample_limit=5)
+
+        assert len(queries) == 1
+        constraint, count_query, sample_query = queries[0]
+
+        # Execute and verify
+        result = conn.execute(count_query).fetchone()
+        violation_count = result[0]
+        # Should catch NULL, empty string, and whitespace-only
+        assert violation_count == 3
+
+        samples = conn.execute(sample_query).fetchall()
+        assert len(samples) == 3
+
+        conn.close()
 
 
 if __name__ == "__main__":
