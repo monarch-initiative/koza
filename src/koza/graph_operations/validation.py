@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Optional
 
+import duckdb
 from linkml_runtime.utils.schemaview import SchemaView
 from loguru import logger
 
@@ -416,7 +417,7 @@ class ValidationEngine:
         elif schema_path is not None:
             try:
                 self.schema_view = SchemaView(schema_path)
-            except Exception as e:
+            except (FileNotFoundError, OSError, ValueError) as e:
                 logger.warning(f"Could not load schema from {schema_path}: {e}")
                 self.schema_view = None
         elif schema_parser is not None and hasattr(schema_parser, 'schema_view'):
@@ -518,7 +519,7 @@ class ValidationEngine:
         try:
             self.database.conn.execute(f"SELECT 1 FROM {table_name} LIMIT 1")
             return True
-        except Exception:
+        except duckdb.Error:
             return False
 
     def _get_table_columns(self, table_name: str) -> set[str]:
@@ -538,7 +539,7 @@ class ValidationEngine:
                 WHERE table_name = '{table_name}'
             """).fetchall()
             return {row[0] for row in result}
-        except Exception:
+        except duckdb.Error:
             return set()
 
     def _get_table_count(self, table_name: str) -> int:
@@ -554,7 +555,7 @@ class ValidationEngine:
         try:
             result = self.database.conn.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()
             return result[0] if result else 0
-        except Exception:
+        except duckdb.Error:
             return 0
 
     def _extract_slot_constraints(self, slot, class_context: str) -> list[SlotConstraint]:
@@ -703,7 +704,7 @@ class ValidationEngine:
                 result[uk_name] = [s.replace(" ", "_") for s in slots]
 
             return result
-        except Exception as e:
+        except (KeyError, AttributeError) as e:
             logger.debug(f"Could not get unique_keys for {class_name}: {e}")
             return {}
 
@@ -777,7 +778,7 @@ class ValidationEngine:
                         violation_percentage=(violation_count / total_records * 100) if total_records > 0 else 0,
                         samples=samples
                     ))
-            except Exception as e:
+            except duckdb.Error as e:
                 logger.warning(f"Unique key validation failed for {uk_name}: {e}")
 
         return violations
@@ -883,8 +884,7 @@ class ValidationEngine:
                         samples=samples,
                     )
                     violations.append(violation)
-            except Exception as e:
-                from loguru import logger
+            except duckdb.Error as e:
                 logger.warning(f"Validation query failed for {constraint.slot_name}: {e}")
 
         return violations
@@ -933,8 +933,7 @@ class ValidationEngine:
                     violation_percentage=(violation_count / total_edges * 100) if total_edges > 0 else 0,
                     samples=samples,
                 ))
-        except Exception as e:
-            from loguru import logger
+        except duckdb.Error as e:
             logger.warning(f"Referential integrity check failed for subject: {e}")
 
         # Check objects
@@ -971,8 +970,7 @@ class ValidationEngine:
                     violation_percentage=(violation_count / total_edges * 100) if total_edges > 0 else 0,
                     samples=samples,
                 ))
-        except Exception as e:
-            from loguru import logger
+        except duckdb.Error as e:
             logger.warning(f"Referential integrity check failed for object: {e}")
 
         return violations
@@ -1030,8 +1028,7 @@ class ValidationEngine:
                     violation_percentage=(violation_count / total_nodes * 100) if total_nodes > 0 else 0,
                     samples=samples,
                 ))
-        except Exception as e:
-            from loguru import logger
+        except duckdb.Error as e:
             logger.warning(f"Category validation failed: {e}")
 
         return violations
@@ -1049,8 +1046,7 @@ class ValidationEngine:
                 if prefixes:
                     category = f"biolink:{cls_name.replace(' ', '')}"
                     category_prefixes[category] = (prefixes, is_closed)
-        except Exception as e:
-            from loguru import logger
+        except (KeyError, AttributeError, ValueError) as e:
             logger.warning(f"Failed to build category prefix map: {e}")
 
         return category_prefixes
@@ -1114,8 +1110,7 @@ class ValidationEngine:
                         violation_percentage=(violation_count / total_nodes * 100) if total_nodes > 0 else 0,
                         samples=samples,
                     ))
-            except Exception as e:
-                from loguru import logger
+            except duckdb.Error as e:
                 logger.warning(f"ID prefix validation failed for {category}: {e}")
 
         return violations
@@ -1173,8 +1168,7 @@ class ValidationEngine:
                     violation_percentage=(violation_count / total_edges * 100) if total_edges > 0 else 0,
                     samples=samples,
                 ))
-        except Exception as e:
-            from loguru import logger
+        except duckdb.Error as e:
             logger.warning(f"Predicate validation failed: {e}")
 
         return violations
@@ -1240,8 +1234,7 @@ class ValidationEngine:
                     violation_percentage=(violation_count / total_edges * 100) if total_edges > 0 else 0,
                     samples=samples,
                 ))
-        except Exception as e:
-            from loguru import logger
+        except duckdb.Error as e:
             logger.warning(f"Predicate hierarchy validation failed: {e}")
 
         return violations
