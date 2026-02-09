@@ -17,6 +17,7 @@ from koza.model.graph_operations import (
     NormalizeConfig,
     OperationSummary,
     PruneConfig,
+    ValidationConfig,
 )
 
 from .deduplicate import deduplicate_graph
@@ -24,6 +25,7 @@ from .join import join_graphs
 from .normalize import normalize_graph
 from .prune import prune_graph
 from .utils import GraphDatabase, print_operation_summary
+from .validate import validate_graph
 
 
 def merge_graphs(config: MergeConfig) -> MergeResult:
@@ -91,6 +93,7 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
     deduplicate_result = None
     normalize_result = None
     prune_result = None
+    validation_result = None
 
     # Determine database path (temporary if not specified)
     if config.output_database:
@@ -256,15 +259,53 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
             if not config.quiet:
                 print("Step 4: Prune - Skipped")
 
+        # Step 5: Validate - Check biolink compliance (if not skipped)
+        if not config.skip_validation:
+            if not config.quiet:
+                print("Step 5: Validate - Checking biolink compliance...")
+
+            validation_config = ValidationConfig(
+                database_path=database_path,
+                schema_path=config.validation_schema_path,
+                sample_limit=config.validation_sample_limit,
+                include_warnings=config.validation_include_warnings,
+                include_info=False,
+                quiet=config.quiet,
+            )
+
+            validation_result = validate_graph(validation_config)
+
+            # Check if validation passed
+            report = validation_result.validation_report
+            has_errors = report.error_count > 0
+
+            if has_errors:
+                if config.validation_errors_halt:
+                    errors.append(f"Validation failed with {report.error_count} errors")
+                    raise ValueError(f"Validation failed with {report.error_count} errors. Aborting pipeline.")
+                else:
+                    warnings.append(f"Validation found {report.error_count} errors (continuing)")
+
+            operations_completed.append("validate")
+
+            if not config.quiet:
+                status = "PASSED" if not has_errors else "FAILED"
+                print(f"Validate completed: {status} | {report.compliance_percentage:.1f}% compliance | "
+                      f"{report.error_count} errors | {report.warning_count} warnings")
+        else:
+            operations_skipped.append("validate")
+            if not config.quiet:
+                print("Step 5: Validate - Skipped")
+
         # Get final database statistics
         with GraphDatabase(database_path) as db:
             final_stats = db.get_stats()
 
-        # Step 5: Export final data (if requested)
+        # Step 6: Export final data (if requested)
         exported_files = []
         if config.export_final and config.export_directory:
             if not config.quiet:
-                print(f"Step 5: Export - Exporting to {config.export_directory}...")
+                print(f"Step 6: Export - Exporting to {config.export_directory}...")
 
             config.export_directory.mkdir(parents=True, exist_ok=True)
 
@@ -362,6 +403,7 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
             deduplicate_result=deduplicate_result,
             normalize_result=normalize_result,
             prune_result=prune_result,
+            validation_result=validation_result,
             operations_completed=operations_completed,
             operations_skipped=operations_skipped,
             final_stats=final_stats,
@@ -406,6 +448,7 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
             deduplicate_result=deduplicate_result,
             normalize_result=normalize_result,
             prune_result=prune_result,
+            validation_result=validation_result,
             operations_completed=operations_completed,
             operations_skipped=operations_skipped,
             final_stats=None,

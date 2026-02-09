@@ -336,6 +336,13 @@ class MergeConfig(BaseModel):
     show_progress: bool = True
     schema_reporting: bool = True
 
+    # Validation options
+    skip_validation: bool = False  # Skip validation step entirely
+    validation_errors_halt: bool = False  # Stop pipeline on validation errors
+    validation_schema_path: str | None = None  # Custom LinkML schema
+    validation_sample_limit: int = 10  # Samples per violation
+    validation_include_warnings: bool = True  # Include warnings in report
+
     @model_validator(mode="after")
     def validate_files_provided(self):
         """Ensure at least some input files are provided"""
@@ -382,6 +389,7 @@ class MergeResult(BaseModel):
     deduplicate_result: Optional["DeduplicateResult"] = None
     normalize_result: Optional["NormalizeResult"] = None
     prune_result: Optional["PruneResult"] = None
+    validation_result: Optional["ValidationResult"] = None
 
     # Pipeline summary
     operations_completed: list[str] = Field(default_factory=list)
@@ -744,4 +752,62 @@ class EdgeExamplesResult(BaseModel):
     output_file: Path | None = None
     types_sampled: int = 0
     total_examples: int = 0
+    total_time_seconds: float = 0.0
+
+
+# Validation Models
+
+
+class ViolationSampleModel(BaseModel):
+    """Sample of violating records."""
+
+    values: list[Any] = Field(default_factory=list)
+    count: int = 0
+
+
+class ValidationViolationModel(BaseModel):
+    """A validation violation with samples."""
+
+    constraint_type: str
+    slot_name: str
+    table: str
+    severity: str  # "error", "warning", "info"
+    description: str
+    violation_count: int
+    total_records: int
+    violation_percentage: float
+    samples: list[ViolationSampleModel] = Field(default_factory=list)
+
+
+class ValidationReportModel(BaseModel):
+    """Complete validation report structure."""
+
+    violations: list[ValidationViolationModel] = Field(default_factory=list)
+    total_violations: int = 0
+    error_count: int = 0
+    warning_count: int = 0
+    info_count: int = 0
+    compliance_percentage: float = 100.0
+    tables_validated: list[str] = Field(default_factory=list)
+    constraints_checked: int = 0
+
+
+class ValidationConfig(BaseModel):
+    """Configuration for validation operation."""
+
+    database_path: Path
+    output_file: Path | None = None
+    schema_path: str | None = None  # Custom LinkML schema, defaults to Biolink
+    sample_limit: int = 10
+    include_warnings: bool = True
+    include_info: bool = False
+    quiet: bool = False
+    profile: str = "standard"  # Phase 3: minimal, standard, or full
+
+
+class ValidationResult(BaseModel):
+    """Result from validation operation."""
+
+    validation_report: ValidationReportModel
+    output_file: Path | None = None
     total_time_seconds: float = 0.0
