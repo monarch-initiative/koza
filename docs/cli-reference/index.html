@@ -2358,11 +2358,18 @@ Display the current Koza version and exit.</p>
 <h3 id="transform">transform</h3>
 <p>Transform biomedical data sources into KGX format using semi-declarative Python transforms.</p>
 <h4 id="synopsis">Synopsis</h4>
-<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>transform<span class="w"> </span>CONFIGURATION_YAML<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><span class="c1"># Config file mode (traditional)</span>
+koza<span class="w"> </span>transform<span class="w"> </span>CONFIG.yaml<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+
+<span class="c1"># Config-free mode with Python transform (input files as positional args)</span>
+koza<span class="w"> </span>transform<span class="w"> </span>TRANSFORM.py<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span><span class="o">[</span>INPUT_FILES<span class="o">]</span>...
 </code></pre></div>
 <h4 id="arguments">Arguments</h4>
 <ul>
-<li><code>CONFIGURATION_YAML</code> (required) - Path to the transform configuration YAML file</li>
+<li><code>CONFIG_OR_TRANSFORM</code> (required) - Configuration YAML file OR Python transform file</li>
+<li><code>INPUT_FILES</code> (optional, variadic) - Input files (supports shell glob expansion)</li>
+<li><strong>Config-free mode</strong> (<code>.py</code> file): Required. These files are processed by the transform.</li>
+<li><strong>Config file mode</strong> (<code>.yaml</code> file): Optional. If provided, overrides the <code>files</code> list in the config's reader section.</li>
 </ul>
 <h4 id="options">Options</h4>
 <table>
@@ -2377,13 +2384,6 @@ Display the current Koza version and exit.</p>
 </thead>
 <tbody>
 <tr>
-<td><code>--input-file</code></td>
-<td><code>-i</code></td>
-<td>List[str]</td>
-<td>None</td>
-<td>Override input files specified in configuration</td>
-</tr>
-<tr>
 <td><code>--output-dir</code></td>
 <td><code>-o</code></td>
 <td>str</td>
@@ -2396,6 +2396,20 @@ Display the current Koza version and exit.</p>
 <td>OutputFormat</td>
 <td><code>tsv</code></td>
 <td>Output format (<code>tsv</code>, <code>jsonl</code>, <code>parquet</code>)</td>
+</tr>
+<tr>
+<td><code>--input-format</code></td>
+<td></td>
+<td>InputFormat</td>
+<td>auto</td>
+<td>Input format (auto-detected from extension if not specified)</td>
+</tr>
+<tr>
+<td><code>--delimiter</code></td>
+<td><code>-d</code></td>
+<td>str</td>
+<td>auto</td>
+<td>Field delimiter for CSV/TSV (default: tab for .tsv, comma for .csv)</td>
 </tr>
 <tr>
 <td><code>--limit</code></td>
@@ -2418,38 +2432,10 @@ Display the current Koza version and exit.</p>
 <td>False</td>
 <td>Suppress output except errors</td>
 </tr>
-<tr>
-<td><code>--global-table</code></td>
-<td></td>
-<td>str</td>
-<td>None</td>
-<td>Path to global translation table YAML</td>
-</tr>
-<tr>
-<td><code>--local-table</code></td>
-<td></td>
-<td>str</td>
-<td>None</td>
-<td>Path to local translation table YAML</td>
-</tr>
-<tr>
-<td><code>--log-level</code></td>
-<td></td>
-<td>str</td>
-<td><code>WARNING</code></td>
-<td>Set logging level</td>
-</tr>
-<tr>
-<td><code>--log-conf</code></td>
-<td></td>
-<td>str</td>
-<td>None</td>
-<td>Path to logging configuration file</td>
-</tr>
 </tbody>
 </table>
 <h4 id="examples">Examples</h4>
-<div class="highlight"><pre><span></span><code><span class="c1"># Basic transform</span>
+<div class="highlight"><pre><span></span><code><span class="c1"># Basic transform with config file</span>
 koza<span class="w"> </span>transform<span class="w"> </span>examples/string/protein-links-detailed.yaml
 
 <span class="c1"># Transform with custom output directory and format</span>
@@ -2458,8 +2444,11 @@ koza<span class="w"> </span>transform<span class="w"> </span>config.yaml<span cl
 <span class="c1"># Transform with progress and row limit</span>
 koza<span class="w"> </span>transform<span class="w"> </span>config.yaml<span class="w"> </span>--progress<span class="w"> </span>--limit<span class="w"> </span><span class="m">1000</span>
 
-<span class="c1"># Transform with global translation table</span>
-koza<span class="w"> </span>transform<span class="w"> </span>config.yaml<span class="w"> </span>--global-table<span class="w"> </span>translation.yaml
+<span class="c1"># Config-free mode with Python transform file (input files at end)</span>
+koza<span class="w"> </span>transform<span class="w"> </span>transform.py<span class="w"> </span>-o<span class="w"> </span>./output<span class="w"> </span>-f<span class="w"> </span>jsonl<span class="w"> </span>data/*.yaml
+
+<span class="c1"># Config-free mode with explicit input format</span>
+koza<span class="w"> </span>transform<span class="w"> </span>transform.py<span class="w"> </span>--input-format<span class="w"> </span>yaml<span class="w"> </span>data/*.dat
 </code></pre></div>
 <hr />
 <h3 id="join">join</h3>

@@ -1898,7 +1898,7 @@
 </ul>
 <p><strong>Commands</strong>:</p>
 <ul>
-<li><code>transform</code>: Transform a source file</li>
+<li><code>transform</code>: Transform a source file.</li>
 <li><code>join</code>: Join multiple KGX files into a unified...</li>
 <li><code>split</code>: Split a KGX file by specified fields with...</li>
 <li><code>prune</code>: Prune graph by removing dangling edges and...</li>
@@ -1912,22 +1912,43 @@
 <li><code>edge-examples</code>: Generate sample rows per edge type.</li>
 </ul>
 <h2 id="koza-transform"><code>koza transform</code></h2>
-<p>Transform a source file</p>
+<p>Transform a source file.</p>
+<p>Accepts either a config YAML file or a Python transform file directly.</p>
+<p>Examples:
+    # With config file (existing behavior)
+    koza transform config.yaml</p>
+<pre><code># Config-free mode with transform file (shell expands the glob)
+koza transform transform.py -o ./output -f jsonl data/*.yaml
+
+# With output options
+koza transform transform.py -f jsonl -o ./output data/*.yaml
+
+# Explicit input format
+koza transform transform.py --input-format yaml data/*.dat
+
+# CSV with comma delimiter (default for .csv files)
+koza transform transform.py data/*.csv
+
+# TSV with explicit delimiter
+koza transform transform.py -d &amp;#x27;\t&amp;#x27; data/*.txt
+</code></pre>
 <p><strong>Usage</strong>:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>transform<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>CONFIGURATION_YAML
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>transform<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>CONFIG_OR_TRANSFORM<span class="w"> </span><span class="o">[</span>INPUT_FILES<span class="o">]</span>...
 </code></pre></div>
 <p><strong>Arguments</strong>:</p>
 <ul>
-<li><code>CONFIGURATION_YAML</code>: Configuration YAML file  [required]</li>
+<li><code>CONFIG_OR_TRANSFORM</code>: Configuration YAML file OR Python transform file  [required]</li>
+<li><code>[INPUT_FILES]...</code>: Input files (required for .py transforms, supports shell glob expansion)</li>
 </ul>
 <p><strong>Options</strong>:</p>
 <ul>
-<li><code>-i, --input-file TEXT</code>: Override input files</li>
+<li><code>--input-format [csv|jsonl|json|yaml]</code>: Input format (auto-detected if not specified)</li>
 <li><code>-o, --output-dir TEXT</code>: Path to output directory  [default: ./output]</li>
 <li><code>-f, --output-format [tsv|jsonl|kgx|passthrough]</code>: Output format  [default: tsv]</li>
 <li><code>-n, --limit INTEGER</code>: Number of rows to process (if skipped, processes entire source file)  [default: 0]</li>
 <li><code>-p, --progress</code>: Display progress of transform</li>
 <li><code>-q, --quiet</code>: Disable log output</li>
+<li><code>-d, --delimiter TEXT</code>: Field delimiter for CSV/TSV files (default: tab for .tsv, comma for .csv)</li>
 <li><code>--help</code>: Show this message and exit.</li>
 </ul>
 <h2 id="koza-join"><code>koza join</code></h2>
