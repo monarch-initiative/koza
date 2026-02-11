@@ -328,6 +328,12 @@ class KozaRunner:
             config_dict = yaml.load(fh, Loader=UniqueIncludeLoader.with_file_base(str(config_path)))  # noqa: S506
             config = KozaConfig(**config_dict)
 
+        # Set base_directory for SSSOM file resolution if not already set
+        if config.sssom_config and config.sssom_config.base_directory is None:
+            config.sssom_config.base_directory = config_path.parent
+            # Re-run __post_init__ to resolve file paths with the new base_directory
+            config.sssom_config.__post_init__()
+
         if not config.transform.code and not config.transform.module:
             # If config file is named:
             #   /path/to/transform_name.yaml
