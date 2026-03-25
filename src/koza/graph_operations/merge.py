@@ -134,6 +134,8 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
             quiet=config.quiet,
             show_progress=config.show_progress,
             generate_provided_by=config.generate_provided_by,
+            required_node_fields=config.required_node_fields,
+            required_edge_fields=config.required_edge_fields,
         )
 
         join_result = join_graphs(join_config)

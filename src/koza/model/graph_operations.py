@@ -104,6 +104,8 @@ class JoinConfig(GraphOperationConfig):
     schema_reporting: bool = True
     preserve_duplicates: bool = False
     generate_provided_by: bool = True  # Add provided_by column from filename (like cat-merge)
+    required_node_fields: list[str] = Field(default_factory=list)
+    required_edge_fields: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def set_database_path_from_output_database(self):
@@ -317,6 +319,8 @@ class MergeConfig(BaseModel):
     skip_prune: bool = False  # Skip pruning step
     generate_provided_by: bool = True  # Add provided_by column from filename (like cat-merge)
     continue_on_pipeline_step_error: bool = True # If there is an error for a non-critical pipeline step, append a warning and continue the merge.
+    required_node_fields: list[str] = Field(default_factory=list)
+    required_edge_fields: list[str] = Field(default_factory=list)
 
     # Prune-specific options
     keep_singletons: bool = True

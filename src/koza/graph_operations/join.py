@@ -2,6 +2,7 @@
 Join operation for combining multiple KGX files into a unified DuckDB database.
 """
 
+import re
 import time
 from pathlib import Path
 
@@ -12,6 +13,68 @@ from koza.model.graph_operations import FileLoadResult, FileSpec, JoinConfig, Jo
 
 from .schema import generate_schema_report, print_schema_summary, write_schema_report_yaml
 from .utils import GraphDatabase, print_operation_summary
+
+
+def _check_required_fields(
+    db: GraphDatabase,
+    file_result: FileLoadResult,
+    required_fields: list[str],
+) -> None:
+    """
+    Validate that required fields exist and are non-empty in a loaded file's temp table.
+
+    Checks two things for each required field:
+    1. The column exists in the temp table
+    2. No rows have NULL or empty string values for that column
+
+    Args:
+        db: GraphDatabase instance with active connection
+        file_result: FileLoadResult from loading the file (must have temp_table_name)
+        required_fields: List of field names that must be present and non-empty
+
+    Raises:
+        ValueError: If any required field is missing or has NULL/empty values,
+            with a message identifying the file and the specific violations
+    """
+    if not required_fields or not file_result.temp_table_name or file_result.errors:
+        return
+
+    # Validate field names to prevent SQL injection
+    _IDENTIFIER_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
+    invalid_names = [f for f in required_fields if not _IDENTIFIER_RE.match(f)]
+    if invalid_names:
+        raise ValueError(
+            f"Invalid required field name(s): {', '.join(repr(n) for n in invalid_names)}. "
+            f"Field names must contain only letters, digits, and underscores."
+        )
+
+    temp_table = file_result.temp_table_name
+    file_name = file_result.file_spec.source_name or file_result.file_spec.path.name
+
+    # Get columns present in the temp table
+    columns_result = db.conn.execute(f"DESCRIBE {temp_table}").fetchall()
+    existing_columns = {row[0] for row in columns_result}
+
+    missing_columns = [f for f in required_fields if f not in existing_columns]
+    if missing_columns:
+        raise ValueError(
+            f"Required field(s) missing from {file_name}: {', '.join(missing_columns)}"
+        )
+
+    # Check for NULL or empty values in required fields
+    for field in required_fields:
+        count_result = db.conn.execute(
+            f"""SELECT COUNT(*) FROM {temp_table}
+                WHERE "{field}" IS NULL OR TRIM(CAST("{field}" AS VARCHAR)) = ''"""
+        ).fetchone()
+        null_count = count_result[0] if count_result else 0
+        if null_count > 0:
+            total_result = db.conn.execute(f"SELECT COUNT(*) FROM {temp_table}").fetchone()
+            total_count = total_result[0] if total_result else 0
+            raise ValueError(
+                f"Required field '{field}' has {null_count} empty/null values "
+                f"(out of {total_count} rows) in {file_name}"
+            )
 
 
 def join_graphs(config: JoinConfig) -> JoinResult:
@@ -70,6 +133,9 @@ def join_graphs(config: JoinConfig) -> JoinResult:
                 result = db.load_file(file_spec, generate_provided_by=config.generate_provided_by)
                 files_loaded.append(result)
 
+                if config.required_node_fields:
+                    _check_required_fields(db, result, config.required_node_fields)
+
                 if not config.quiet and not config.show_progress:
                     print(
                         f"  - {file_spec.path.name}: {result.records_loaded:,} records "
@@ -88,6 +154,9 @@ def join_graphs(config: JoinConfig) -> JoinResult:
 
                 result = db.load_file(file_spec, generate_provided_by=config.generate_provided_by)
                 files_loaded.append(result)
+
+                if config.required_edge_fields:
+                    _check_required_fields(db, result, config.required_edge_fields)
 
                 if not config.quiet and not config.show_progress:
                     print(

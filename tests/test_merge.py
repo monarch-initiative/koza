@@ -412,6 +412,45 @@ class TestMergeOperationConfiguration:
 
     @patch("koza.graph_operations.merge.join_graphs")
     @patch("koza.graph_operations.merge.GraphDatabase")
+    def test_required_fields_passed_to_join(
+        self, mock_graph_db, mock_join, sample_file_specs, mock_join_result
+    ):
+        """Test that required_node_fields and required_edge_fields are passed through to JoinConfig."""
+        node_specs, edge_specs, mapping_specs = sample_file_specs
+
+        # Setup mocks
+        mock_join.return_value = mock_join_result
+
+        # Mock database
+        mock_db = MagicMock()
+        mock_db.get_stats.return_value = DatabaseStats(nodes=100, edges=200)
+        mock_graph_db.return_value.__enter__.return_value = mock_db
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_db = Path(temp_dir) / "test.duckdb"
+            output_db.touch()
+
+            config = MergeConfig(
+                node_files=node_specs,
+                edge_files=edge_specs,
+                mapping_files=mapping_specs,
+                output_database=output_db,
+                skip_normalize=True,
+                skip_prune=True,
+                required_node_fields=["id", "category"],
+                required_edge_fields=["primary_knowledge_source"],
+                quiet=True,
+            )
+
+            merge_graphs(config)
+
+            # Verify required fields were passed through to join config
+            join_call_args = mock_join.call_args[0][0]
+            assert join_call_args.required_node_fields == ["id", "category"]
+            assert join_call_args.required_edge_fields == ["primary_knowledge_source"]
+
+    @patch("koza.graph_operations.merge.join_graphs")
+    @patch("koza.graph_operations.merge.GraphDatabase")
     def test_temporary_database_when_no_output_specified(
         self, mock_graph_db, mock_join, sample_file_specs, mock_join_result
     ):
