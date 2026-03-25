@@ -1976,6 +1976,8 @@ koza join -n file1.tsv -n file2.tsv -e edges.tsv -o graph.duckdb
 <li><code>-o, --output TEXT</code>: Path to output database file (default: in-memory)</li>
 <li><code>-f, --format [tsv|jsonl|parquet]</code>: Output format for any exported files  [default: tsv]</li>
 <li><code>--schema-report</code>: Generate schema compliance report</li>
+<li><code>--required-node-field TEXT</code>: Node fields that must be present and non-empty (can specify multiple)</li>
+<li><code>--required-edge-field TEXT</code>: Edge fields that must be present and non-empty (can specify multiple)</li>
 <li><code>-q, --quiet</code>: Suppress output</li>
 <li><code>-p, --progress</code>: Show progress bars  [default: True]</li>
 <li><code>--help</code>: Show this message and exit.</li>
@@ -2124,6 +2126,8 @@ koza merge --input-dir ./data/ -m &amp;quot;*.sssom.tsv&amp;quot; --remove-singl
 <li><code>--skip-prune</code>: Skip pruning step</li>
 <li><code>--keep-singletons</code>: Keep singleton nodes (default)  [default: True]</li>
 <li><code>--remove-singletons</code>: Move singleton nodes to separate table</li>
+<li><code>--required-node-field TEXT</code>: Node fields that must be present and non-empty (can specify multiple)</li>
+<li><code>--required-edge-field TEXT</code>: Edge fields that must be present and non-empty (can specify multiple)</li>
 <li><code>-q, --quiet</code>: Suppress output</li>
 <li><code>-p, --progress</code>: Show progress bars  [default: True]</li>
 <li><code>--help</code>: Show this message and exit.</li>
