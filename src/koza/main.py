@@ -319,6 +319,14 @@ def join(
     schema_reporting: Annotated[
         bool, typer.Option("--schema-report", help="Generate schema compliance report")
     ] = False,
+    required_node_fields: Annotated[
+        list[str] | None,
+        typer.Option("--required-node-field", help="Node fields that must be present and non-empty (can specify multiple)"),
+    ] = None,
+    required_edge_fields: Annotated[
+        list[str] | None,
+        typer.Option("--required-edge-field", help="Edge fields that must be present and non-empty (can specify multiple)"),
+    ] = None,
     quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress output")] = False,
     show_progress: Annotated[bool, typer.Option("--progress", "-p", help="Show progress bars")] = True,
 ) -> None:
@@ -391,6 +399,8 @@ def join(
             database_path=Path(output_database) if output_database else None,
             output_format=output_format,
             schema_reporting=schema_reporting,
+            required_node_fields=required_node_fields or [],
+            required_edge_fields=required_edge_fields or [],
             quiet=quiet,
             show_progress=show_progress,
         )
@@ -748,6 +758,14 @@ def merge(
     remove_singletons: Annotated[
         bool, typer.Option("--remove-singletons", help="Move singleton nodes to separate table")
     ] = False,
+    required_node_fields: Annotated[
+        list[str] | None,
+        typer.Option("--required-node-field", help="Node fields that must be present and non-empty (can specify multiple)"),
+    ] = None,
+    required_edge_fields: Annotated[
+        list[str] | None,
+        typer.Option("--required-edge-field", help="Edge fields that must be present and non-empty (can specify multiple)"),
+    ] = None,
     quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress output")] = False,
     show_progress: Annotated[bool, typer.Option("--progress", "-p", help="Show progress bars")] = True,
 ) -> None:
@@ -870,6 +888,8 @@ def merge(
             archive=archive,
             compress=compress,
             graph_name=graph_name,
+            required_node_fields=required_node_fields or [],
+            required_edge_fields=required_edge_fields or [],
             quiet=quiet,
             show_progress=show_progress,
         )

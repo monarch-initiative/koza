@@ -750,5 +750,233 @@ MONDO:001\tbiolink:Disease\tdisease1
         conn.close()
 
 
+class TestRequiredFieldsValidation:
+    """Test required field validation during join."""
+
+    def test_required_edge_field_present_passes(self, temp_dir):
+        """Test that validation passes when required edge field is present and non-empty."""
+        edges_content = """subject\tpredicate\tobject\tprimary_knowledge_source
+HGNC:123\tbiolink:related_to\tMONDO:001\tinfores:hgnc
+HGNC:456\tbiolink:causes\tMONDO:001\tinfores:hgnc
+"""
+        edges_file = temp_dir / "test_edges.tsv"
+        edges_file.write_text(edges_content)
+
+        output_db = temp_dir / "output.duckdb"
+
+        config = JoinConfig(
+            node_files=[],
+            edge_files=[FileSpec(path=edges_file, format=KGXFormat.TSV, file_type=KGXFileType.EDGES)],
+            output_database=output_db,
+            required_edge_fields=["primary_knowledge_source"],
+            quiet=True,
+            show_progress=False,
+            schema_reporting=False,
+        )
+
+        result = join_graphs(config)
+
+        assert result is not None
+        assert result.final_stats.edges == 2
+
+    def test_required_edge_field_missing_column_raises(self, temp_dir):
+        """Test that validation raises when required edge field column is missing entirely."""
+        edges_content = """subject\tpredicate\tobject
+HGNC:123\tbiolink:related_to\tMONDO:001
+HGNC:456\tbiolink:causes\tMONDO:001
+"""
+        edges_file = temp_dir / "test_edges.tsv"
+        edges_file.write_text(edges_content)
+
+        output_db = temp_dir / "output.duckdb"
+
+        config = JoinConfig(
+            node_files=[],
+            edge_files=[FileSpec(path=edges_file, format=KGXFormat.TSV, file_type=KGXFileType.EDGES)],
+            output_database=output_db,
+            required_edge_fields=["primary_knowledge_source"],
+            quiet=True,
+            show_progress=False,
+            schema_reporting=False,
+        )
+
+        with pytest.raises(ValueError, match="Required field.*missing.*primary_knowledge_source"):
+            join_graphs(config)
+
+    def test_required_edge_field_has_null_values_raises(self, temp_dir):
+        """Test that validation raises when required edge field has null/empty values."""
+        edges_content = """subject\tpredicate\tobject\tprimary_knowledge_source
+HGNC:123\tbiolink:related_to\tMONDO:001\tinfores:hgnc
+HGNC:456\tbiolink:causes\tMONDO:001\t
+"""
+        edges_file = temp_dir / "test_edges.tsv"
+        edges_file.write_text(edges_content)
+
+        output_db = temp_dir / "output.duckdb"
+
+        config = JoinConfig(
+            node_files=[],
+            edge_files=[FileSpec(path=edges_file, format=KGXFormat.TSV, file_type=KGXFileType.EDGES)],
+            output_database=output_db,
+            required_edge_fields=["primary_knowledge_source"],
+            quiet=True,
+            show_progress=False,
+            schema_reporting=False,
+        )
+
+        with pytest.raises(ValueError, match="Required field 'primary_knowledge_source' has 1 empty/null values"):
+            join_graphs(config)
+
+    def test_required_node_field_present_passes(self, temp_dir):
+        """Test that validation passes when required node field is present."""
+        nodes_content = """id\tcategory\tname
+HGNC:123\tbiolink:Gene\tgene1
+"""
+        nodes_file = temp_dir / "test_nodes.tsv"
+        nodes_file.write_text(nodes_content)
+
+        output_db = temp_dir / "output.duckdb"
+
+        config = JoinConfig(
+            node_files=[FileSpec(path=nodes_file, format=KGXFormat.TSV, file_type=KGXFileType.NODES)],
+            edge_files=[],
+            output_database=output_db,
+            required_node_fields=["category"],
+            quiet=True,
+            show_progress=False,
+            schema_reporting=False,
+        )
+
+        result = join_graphs(config)
+
+        assert result is not None
+        assert result.final_stats.nodes == 1
+
+    def test_required_node_field_missing_raises(self, temp_dir):
+        """Test that validation raises when required node field is missing."""
+        nodes_content = """id\tname
+HGNC:123\tgene1
+"""
+        nodes_file = temp_dir / "test_nodes.tsv"
+        nodes_file.write_text(nodes_content)
+
+        output_db = temp_dir / "output.duckdb"
+
+        config = JoinConfig(
+            node_files=[FileSpec(path=nodes_file, format=KGXFormat.TSV, file_type=KGXFileType.NODES)],
+            edge_files=[],
+            output_database=output_db,
+            required_node_fields=["category"],
+            quiet=True,
+            show_progress=False,
+            schema_reporting=False,
+        )
+
+        with pytest.raises(ValueError, match="Required field.*missing.*category"):
+            join_graphs(config)
+
+    def test_required_field_fails_fast_on_first_bad_file(self, temp_dir):
+        """Test that validation fails on the first file that violates, not after loading all."""
+        good_edges = """subject\tpredicate\tobject\tprimary_knowledge_source
+HGNC:123\tbiolink:related_to\tMONDO:001\tinfores:good
+"""
+        bad_edges = """subject\tpredicate\tobject
+HGNC:456\tbiolink:causes\tMONDO:001
+"""
+        good_file = temp_dir / "good_edges.tsv"
+        good_file.write_text(good_edges)
+        bad_file = temp_dir / "bad_edges.tsv"
+        bad_file.write_text(bad_edges)
+
+        output_db = temp_dir / "output.duckdb"
+
+        # Bad file is listed first — should fail immediately
+        config = JoinConfig(
+            node_files=[],
+            edge_files=[
+                FileSpec(path=bad_file, format=KGXFormat.TSV, file_type=KGXFileType.EDGES),
+                FileSpec(path=good_file, format=KGXFormat.TSV, file_type=KGXFileType.EDGES),
+            ],
+            output_database=output_db,
+            required_edge_fields=["primary_knowledge_source"],
+            quiet=True,
+            show_progress=False,
+            schema_reporting=False,
+        )
+
+        with pytest.raises(ValueError, match="bad_edges"):
+            join_graphs(config)
+
+    def test_no_required_fields_skips_validation(self, temp_dir):
+        """Test that no required fields means no validation (default behavior)."""
+        edges_content = """subject\tpredicate\tobject
+HGNC:123\tbiolink:related_to\tMONDO:001
+"""
+        edges_file = temp_dir / "test_edges.tsv"
+        edges_file.write_text(edges_content)
+
+        output_db = temp_dir / "output.duckdb"
+
+        config = JoinConfig(
+            node_files=[],
+            edge_files=[FileSpec(path=edges_file, format=KGXFormat.TSV, file_type=KGXFileType.EDGES)],
+            output_database=output_db,
+            # No required fields — default
+            quiet=True,
+            show_progress=False,
+            schema_reporting=False,
+        )
+
+        result = join_graphs(config)
+        assert result is not None
+        assert result.final_stats.edges == 1
+
+    def test_required_edge_field_jsonl_missing_raises(self, temp_dir):
+        """Test required field validation works with JSONL files too."""
+        jsonl_content = """{"subject": "HGNC:123", "predicate": "biolink:related_to", "object": "MONDO:001"}
+{"subject": "HGNC:456", "predicate": "biolink:causes", "object": "MONDO:001"}
+"""
+        edges_file = temp_dir / "test_edges.jsonl"
+        edges_file.write_text(jsonl_content)
+
+        output_db = temp_dir / "output.duckdb"
+
+        config = JoinConfig(
+            node_files=[],
+            edge_files=[FileSpec(path=edges_file, format=KGXFormat.JSONL, file_type=KGXFileType.EDGES)],
+            output_database=output_db,
+            required_edge_fields=["primary_knowledge_source"],
+            quiet=True,
+            show_progress=False,
+            schema_reporting=False,
+        )
+
+        with pytest.raises(ValueError, match="Required field.*missing.*primary_knowledge_source"):
+            join_graphs(config)
+
+    def test_error_message_includes_source_name(self, temp_dir):
+        """Test that the error message includes the source name for identification."""
+        edges_content = """subject\tpredicate\tobject
+HGNC:123\tbiolink:related_to\tMONDO:001
+"""
+        edges_file = temp_dir / "omim_disease_phenotype_edges.tsv"
+        edges_file.write_text(edges_content)
+
+        output_db = temp_dir / "output.duckdb"
+
+        config = JoinConfig(
+            node_files=[],
+            edge_files=[FileSpec(path=edges_file, format=KGXFormat.TSV, file_type=KGXFileType.EDGES)],
+            output_database=output_db,
+            required_edge_fields=["primary_knowledge_source"],
+            quiet=True,
+            show_progress=False,
+            schema_reporting=False,
+        )
+
+        with pytest.raises(ValueError, match="omim_disease_phenotype_edges"):
+            join_graphs(config)
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
