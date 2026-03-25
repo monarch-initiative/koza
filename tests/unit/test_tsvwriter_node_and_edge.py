@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from biolink_model.datamodel.pydanticmodel_v2 import Disease, Gene, GeneToDiseaseAssociation
+from biolink_model.datamodel.pydanticmodel_v2 import Disease, Gene, VariantToPopulationAssociation
 
 from koza.io.writer.tsv_writer import TSVWriter
 from koza.model.writer import WriterConfig
@@ -36,7 +36,7 @@ def test_tsv_writer():
 
     gene = Gene(id="HGNC:11603", in_taxon=["NCBITaxon:9606"], symbol="TBX4")
     disease = Disease(id="MONDO:0005002", name="chronic obstructive pulmonary disease")
-    association = GeneToDiseaseAssociation(
+    association = VariantToPopulationAssociation(
         id="uuid:5b06e86f-d768-4cd9-ac27-abe31e95ab1e",
         subject=gene.id,
         object=disease.id,
@@ -81,7 +81,7 @@ def test_tsv_writer():
             "HGNC:11603",
             "biolink:contributes_to",
             "MONDO:0005002",
-            "biolink:GeneToDiseaseAssociation",
+            "biolink:VariantToPopulationAssociation",
             "",
             "0",
             "20",
