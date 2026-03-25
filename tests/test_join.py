@@ -954,6 +954,78 @@ HGNC:123\tbiolink:related_to\tMONDO:001
         with pytest.raises(ValueError, match="Required field.*missing.*primary_knowledge_source"):
             join_graphs(config)
 
+    def test_multiple_required_fields_first_passes_second_fails(self, temp_dir):
+        """Test validation with multiple required fields where one passes and the next fails."""
+        edges_content = """subject\tpredicate\tobject\tcategory
+HGNC:123\tbiolink:related_to\tMONDO:001\tbiolink:Association
+HGNC:456\tbiolink:causes\tMONDO:001\tbiolink:Association
+"""
+        edges_file = temp_dir / "test_edges.tsv"
+        edges_file.write_text(edges_content)
+
+        output_db = temp_dir / "output.duckdb"
+
+        config = JoinConfig(
+            node_files=[],
+            edge_files=[FileSpec(path=edges_file, format=KGXFormat.TSV, file_type=KGXFileType.EDGES)],
+            output_database=output_db,
+            required_edge_fields=["category", "primary_knowledge_source"],
+            quiet=True,
+            show_progress=False,
+            schema_reporting=False,
+        )
+
+        with pytest.raises(ValueError, match="Required field.*missing.*primary_knowledge_source"):
+            join_graphs(config)
+
+    def test_multiple_required_fields_all_present_passes(self, temp_dir):
+        """Test validation passes when all multiple required fields are present and non-empty."""
+        edges_content = """subject\tpredicate\tobject\tcategory\tprimary_knowledge_source
+HGNC:123\tbiolink:related_to\tMONDO:001\tbiolink:Association\tinfores:hgnc
+HGNC:456\tbiolink:causes\tMONDO:001\tbiolink:Association\tinfores:hgnc
+"""
+        edges_file = temp_dir / "test_edges.tsv"
+        edges_file.write_text(edges_content)
+
+        output_db = temp_dir / "output.duckdb"
+
+        config = JoinConfig(
+            node_files=[],
+            edge_files=[FileSpec(path=edges_file, format=KGXFormat.TSV, file_type=KGXFileType.EDGES)],
+            output_database=output_db,
+            required_edge_fields=["category", "primary_knowledge_source"],
+            quiet=True,
+            show_progress=False,
+            schema_reporting=False,
+        )
+
+        result = join_graphs(config)
+        assert result is not None
+        assert result.final_stats.edges == 2
+
+    def test_invalid_field_name_raises(self, temp_dir):
+        """Test that invalid field names (potential SQL injection) are rejected."""
+        edges_content = """subject\tpredicate\tobject
+HGNC:123\tbiolink:related_to\tMONDO:001
+"""
+        edges_file = temp_dir / "test_edges.tsv"
+        edges_file.write_text(edges_content)
+
+        output_db = temp_dir / "output.duckdb"
+
+        config = JoinConfig(
+            node_files=[],
+            edge_files=[FileSpec(path=edges_file, format=KGXFormat.TSV, file_type=KGXFileType.EDGES)],
+            output_database=output_db,
+            required_edge_fields=['"; DROP TABLE nodes; --'],
+            quiet=True,
+            show_progress=False,
+            schema_reporting=False,
+        )
+
+        with pytest.raises(ValueError, match="Invalid required field name"):
+            join_graphs(config)
+
     def test_error_message_includes_source_name(self, temp_dir):
         """Test that the error message includes the source name for identification."""
         edges_content = """subject\tpredicate\tobject

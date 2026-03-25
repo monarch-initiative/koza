@@ -2,13 +2,14 @@
 Join operation for combining multiple KGX files into a unified DuckDB database.
 """
 
+import re
 import time
 from pathlib import Path
 
 from loguru import logger
 from tqdm import tqdm
 
-from koza.model.graph_operations import FileLoadResult, FileSpec, JoinConfig, JoinResult, KGXFileType, KGXFormat, OperationSummary
+from koza.model.graph_operations import FileLoadResult, FileSpec, JoinConfig, JoinResult, KGXFileType, OperationSummary
 
 from .schema import generate_schema_report, print_schema_summary, write_schema_report_yaml
 from .utils import GraphDatabase, print_operation_summary
@@ -37,6 +38,15 @@ def _check_required_fields(
     """
     if not required_fields or not file_result.temp_table_name or file_result.errors:
         return
+
+    # Validate field names to prevent SQL injection
+    _IDENTIFIER_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
+    invalid_names = [f for f in required_fields if not _IDENTIFIER_RE.match(f)]
+    if invalid_names:
+        raise ValueError(
+            f"Invalid required field name(s): {', '.join(repr(n) for n in invalid_names)}. "
+            f"Field names must contain only letters, digits, and underscores."
+        )
 
     temp_table = file_result.temp_table_name
     file_name = file_result.file_spec.source_name or file_result.file_spec.path.name
