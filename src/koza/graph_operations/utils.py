@@ -16,7 +16,7 @@ from koza.model.graph_operations import (
     KGXFormat,
     OperationSummary,
 )
-from koza.graph_operations.schema_utils import get_multivalued_columns
+from koza.graph_operations.schema_utils import get_multivalued_columns, FORCE_SINGLE_VALUED_FIELDS
 
 
 def _generate_multivalued_select(
@@ -41,7 +41,15 @@ def _generate_multivalued_select(
     # Build SELECT clause with conditional column transformation
     select_parts = []
     for col_name, col_type, *_ in columns_result:
-        if col_name in multivalued_columns and col_type == "VARCHAR":
+        if col_name in FORCE_SINGLE_VALUED_FIELDS and col_type == "VARCHAR[]":
+            # Flatten array to single value for fields forced to be single-valued
+            # (e.g., JSONL has category as ["biolink:X"] but we need it as "biolink:X")
+            select_parts.append(f"""
+                CASE
+                    WHEN "{col_name}" IS NULL OR len("{col_name}") = 0 THEN NULL
+                    ELSE "{col_name}"[1]
+                END as "{col_name}" """.strip())
+        elif col_name in multivalued_columns and col_type == "VARCHAR":
             # Split pipe-delimited values into arrays, handle empty/null values
             select_parts.append(f"""
                 CASE
@@ -256,7 +264,8 @@ class GraphDatabase:
 
     def _transform_multivalued_columns(self, temp_table_name: str, skip_columns: set[str] | None = None):
         """
-        Transform pipe-delimited VARCHAR columns to VARCHAR[] arrays for known multivalued fields.
+        Transform pipe-delimited VARCHAR columns to VARCHAR[] arrays for known multivalued fields,
+        and flatten VARCHAR[] columns to VARCHAR for force-single-valued fields (e.g. from JSONL input).
 
         Args:
             temp_table_name: Name of the temporary table to transform
@@ -265,14 +274,21 @@ class GraphDatabase:
         skip_columns = skip_columns or set()
 
         try:
-            # Get column names from the temp table
+            # Get column info from the temp table
             describe_result = self.conn.execute(f"DESCRIBE {temp_table_name}").fetchall()
             column_names = [row[0] for row in describe_result if row[0] not in skip_columns]
+            column_types = {row[0]: row[1] for row in describe_result if row[0] not in skip_columns}
 
             # Identify which columns are multivalued
             multivalued_cols = get_multivalued_columns(column_names)
 
-            if not multivalued_cols:
+            # Check if any force-single-valued fields arrived as arrays (e.g. from JSONL)
+            needs_flattening = any(
+                col in FORCE_SINGLE_VALUED_FIELDS and column_types.get(col) == "VARCHAR[]"
+                for col in column_names
+            )
+
+            if not multivalued_cols and not needs_flattening:
                 return
 
             # Generate SELECT with transformations
