@@ -12,6 +12,7 @@ from tqdm import tqdm
 
 from koza.graph_operations import (
     append_graphs,
+    generate_connectivity_report,
     generate_edge_examples,
     generate_edge_report,
     generate_graph_stats,
@@ -31,6 +32,7 @@ from koza.graph_operations import (
 from koza.model.formats import InputFormat, OutputFormat
 from koza.model.graph_operations import (
     AppendConfig,
+    ConnectivityReportConfig,
     EdgeExamplesConfig,
     EdgeReportConfig,
     FileSpec,
@@ -917,10 +919,16 @@ def merge(
 
 @typer_app.command(name="report")
 def report_cmd(
-    report_type: Annotated[str, typer.Argument(help="Type of report to generate: qc, graph-stats, or schema")],
+    report_type: Annotated[
+        str, typer.Argument(help="Type of report: qc, graph-stats, schema, or connectivity")
+    ],
     database: Annotated[str, typer.Option("--database", "-d", help="Path to DuckDB database file")],
     output: Annotated[
         str | None, typer.Option("--output", "-o", help="Path to output report file (YAML format)")
+    ] = None,
+    output_dir: Annotated[
+        str | None,
+        typer.Option("--output-dir", help="Directory for sidecar output files (used by connectivity report)"),
     ] = None,
     quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress progress output")] = False,
 ):
@@ -935,6 +943,8 @@ def report_cmd(
 
     • schema: Database schema analysis and biolink compliance
 
+    • connectivity: Connected component analysis (requires koza[grape])
+
     Examples:
 
         # Generate QC report
@@ -945,6 +955,9 @@ def report_cmd(
 
         # Generate schema report
         koza report schema -d merged.duckdb -o schema_report.yaml
+
+        # Generate connectivity report with parquet sidecars
+        koza report connectivity -d merged.duckdb --output-dir cc_output/ -o cc_summary.yaml
 
         # Quick QC analysis (console output only)
         koza report qc -d merged.duckdb
@@ -984,8 +997,26 @@ def report_cmd(
                 if result.output_file:
                     typer.echo(f"Report saved to: {result.output_file}")
 
+        elif report_type == "connectivity":
+            connectivity_config = ConnectivityReportConfig(
+                database_path=database_path,
+                output_dir=Path(output_dir) if output_dir else None,
+                output_file=output_path,
+                quiet=quiet,
+            )
+            result = generate_connectivity_report(connectivity_config)
+
+            if not quiet:
+                typer.echo("✓ Connectivity report generated successfully")
+                if result.output_file:
+                    typer.echo(f"YAML summary: {result.output_file}")
+                for name, path in result.parquet_files.items():
+                    typer.echo(f"  {name}: {path}")
+
         else:
-            raise typer.BadParameter(f"Unknown report type: {report_type}. Choose from: qc, graph-stats, schema")
+            raise typer.BadParameter(
+                f"Unknown report type: {report_type}. Choose from: qc, graph-stats, schema, connectivity"
+            )
 
     except Exception as e:
         typer.echo(f"Error generating {report_type} report: {e}", err=True)

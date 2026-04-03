@@ -6,6 +6,7 @@ including join, split, normalize, dedupe, prune, and other graph analysis operat
 """
 
 from .append import append_graphs
+from .connectivity import generate_connectivity_report
 from .deduplicate import deduplicate_graph
 from .join import join_graphs, prepare_file_specs_from_paths
 from .merge import merge_graphs, prepare_merge_config_from_paths
@@ -43,6 +44,8 @@ __all__ = [
     "generate_qc_report",
     "generate_graph_stats",
     "generate_schema_compliance_report",
+    # Connectivity (requires ensmallen)
+    "generate_connectivity_report",
     # Tabular reports
     "generate_node_report",
     "generate_edge_report",
