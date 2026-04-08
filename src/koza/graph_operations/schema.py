@@ -122,22 +122,81 @@ def print_schema_summary(schema_report: dict[str, Any]) -> None:
         print(f"   Schema summary failed: {e}")
 
 
-def analyze_biolink_compliance(schema_report: dict[str, Any]) -> dict[str, Any]:
+def analyze_biolink_compliance(
+    db: GraphDatabase,
+    schema_path: str | None = None,
+    sample_limit: int = 10,
+) -> dict[str, Any]:
     """
-    Analyze schema compliance against biolink model.
-
-    This is a placeholder for Phase 1 biolink compliance analysis.
+    Analyze graph compliance against biolink model using ValidationEngine.
 
     Args:
-        schema_report: Schema report dictionary
+        db: GraphDatabase instance with loaded data
+        schema_path: Optional custom LinkML schema path (defaults to Biolink)
+        sample_limit: Maximum number of sample violations per constraint
 
     Returns:
-        Biolink compliance analysis
+        Biolink compliance analysis dict with:
+        - status: "passed", "failed", "warnings", or "error"
+        - compliance_percentage: float
+        - error_count: int
+        - warning_count: int
+        - violations: list of violation summaries
+        - tables_validated: list of table names
+        - constraints_checked: int
     """
-    # TODO: Implement biolink model comparison
-    # - Load biolink model definitions
-    # - Compare against required slots
-    # - Calculate compliance percentages
-    # - Identify missing/extra fields
+    from .schema_utils import SchemaParser
+    from .validation import ValidationEngine
 
-    return {"status": "not_implemented", "message": "Biolink compliance analysis will be implemented in Phase 1"}
+    try:
+        # Initialize schema parser and validation engine
+        schema_parser = SchemaParser(schema_path)
+        engine = ValidationEngine(db, schema_parser, sample_limit)
+
+        # Run validation
+        report = engine.validate()
+
+        # Determine overall status
+        if report.error_count > 0:
+            status = "failed"
+        elif report.warning_count > 0:
+            status = "warnings"
+        else:
+            status = "passed"
+
+        # Convert violations to serializable format
+        violation_summaries = [
+            {
+                "constraint_type": v.constraint_type.value,
+                "slot_name": v.slot_name,
+                "table": v.table,
+                "severity": v.severity,
+                "description": v.description,
+                "violation_count": v.violation_count,
+                "violation_percentage": round(v.violation_percentage, 2),
+            }
+            for v in report.violations
+        ]
+
+        return {
+            "status": status,
+            "compliance_percentage": round(report.compliance_percentage, 2),
+            "error_count": report.error_count,
+            "warning_count": report.warning_count,
+            "constraints_checked": report.constraints_checked,
+            "tables_validated": report.tables_validated,
+            "violations": violation_summaries,
+        }
+
+    except Exception as e:
+        logger.error(f"Biolink compliance analysis failed: {e}")
+        return {
+            "status": "error",
+            "message": str(e),
+            "compliance_percentage": None,
+            "error_count": 0,
+            "warning_count": 0,
+            "constraints_checked": 0,
+            "tables_validated": [],
+            "violations": [],
+        }
