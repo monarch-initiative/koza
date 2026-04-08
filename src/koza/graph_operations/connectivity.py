@@ -7,14 +7,16 @@ Computes connected components and produces parquet sidecar tables:
   - cc_component_sources.parquet — component x source x predicate edge counts
 
 Requires: ensmallen (install via ``pip install koza[grape]``)
+
+Pandas is used only at the ensmallen boundary (``_build_grape_graph`` and
+``_register_components``); everything else is plain DuckDB SQL, matching the
+rest of ``koza.graph_operations``.
 """
 
 import time
 from pathlib import Path
 
-import pandas as pd
 import yaml
-from loguru import logger
 
 from koza.model.graph_operations import (
     ComponentDetail,
@@ -38,93 +40,85 @@ def _check_ensmallen_available() -> bool:
 
 
 # ---------------------------------------------------------------------------
-# Graph loading
+# Schema helpers
 # ---------------------------------------------------------------------------
 
 
-def _get_available_columns(db: GraphDatabase, table_name: str) -> set[str]:
-    """Return the set of column names present in *table_name*."""
+def _get_column_types(db: GraphDatabase, table_name: str) -> dict[str, str]:
+    """Return mapping of column name to DuckDB data_type for *table_name*."""
     rows = db.conn.execute(
-        f"SELECT column_name FROM information_schema.columns WHERE table_name = '{table_name}'"
+        "SELECT column_name, data_type FROM information_schema.columns WHERE table_name = ?",
+        [table_name],
     ).fetchall()
-    return {r[0] for r in rows}
+    return {r[0]: r[1] for r in rows}
 
 
-def _cast_array_columns_to_varchar(df: pd.DataFrame) -> pd.DataFrame:
-    """Cast any list/array columns to pipe-delimited VARCHAR strings.
+def _scalar_cast(col: str, col_type: str, alias: str | None = None) -> str:
+    """Return a SQL expression rendering *col* as a scalar VARCHAR.
 
-    GRAPE's ``Graph.from_pd`` expects simple scalar columns.  KGX databases
-    produced by Koza's join operation store multivalued fields (e.g. category,
-    provided_by) as ``VARCHAR[]``.  DuckDB surfaces these as Python lists in
-    the pandas DataFrame, which GRAPE cannot handle.
+    Array-typed columns are collapsed into pipe-delimited strings so that
+    ensmallen's ``Graph.from_pd`` (and our flat parquet sidecars) can consume
+    them. Pass ``alias`` to qualify the column with a table alias (e.g.
+    ``n`` → ``n."col"``).
     """
-    for col in df.columns:
-        if df[col].dtype == object and len(df) > 0:
-            sample = df[col].dropna().iloc[0] if not df[col].dropna().empty else None
-            if isinstance(sample, list):
-                df[col] = df[col].apply(lambda v: "|".join(str(x) for x in v) if isinstance(v, list) else v)
-    return df
+    qualified = f'{alias}."{col}"' if alias else f'"{col}"'
+    if col_type.endswith("[]"):
+        return f"array_to_string({qualified}, '|')"
+    return qualified
 
 
-def _load_grape_graph(
-    db: GraphDatabase,
-    config: ConnectivityReportConfig,
-) -> tuple:
-    """Load nodes/edges from DuckDB, build a GRAPE graph, return wide DataFrames.
+# ---------------------------------------------------------------------------
+# Ensmallen boundary — pandas is confined to this section
+# ---------------------------------------------------------------------------
 
-    Returns
-    -------
-    graph : ensmallen.Graph
-    nodes_wide : pd.DataFrame   (all available node columns)
-    edges_wide : pd.DataFrame   (all available edge columns)
+
+def _build_grape_graph(db: GraphDatabase, config: ConnectivityReportConfig):
+    """Load a minimal nodes/edges slice and build an ensmallen ``Graph``.
+
+    This is the only place pandas is used for graph construction, because
+    ``Graph.from_pd`` requires pandas DataFrames. The DataFrames are dropped
+    as soon as the graph is built.
     """
     from ensmallen import Graph
 
-    node_cols = _get_available_columns(db, "nodes")
-    edge_cols = _get_available_columns(db, "edges")
+    node_types = _get_column_types(db, "nodes")
+    edge_types = _get_column_types(db, "edges")
 
-    # -- nodes: always need the name column; grab everything useful --------
-    want_node_cols = [config.node_name_column]
-    for col in ["name", "category", "provided_by", "in_taxon"]:
-        if col in node_cols and col not in want_node_cols:
-            want_node_cols.append(col)
-    # Add any remaining columns that exist (for richer sidecar tables)
-    select_node = ", ".join(want_node_cols)
+    def _aliased(col: str, types: dict[str, str]) -> str:
+        return f'{_scalar_cast(col, types[col])} AS "{col}"'
 
-    if not config.quiet:
-        print("Loading nodes...")
-    nodes_wide = db.conn.execute(f"SELECT {select_node} FROM nodes").df()
-    nodes_wide = _cast_array_columns_to_varchar(nodes_wide)
-    if not config.quiet:
-        print(f"  {len(nodes_wide):,} nodes")
-
-    # -- edges: always need src/dst; grab useful metadata ------------------
-    want_edge_cols = [config.edge_src_column, config.edge_dst_column]
-    for col in ["predicate", "primary_knowledge_source", "provided_by"]:
-        if col in edge_cols and col not in want_edge_cols:
-            want_edge_cols.append(col)
-    select_edge = ", ".join(want_edge_cols)
-
-    if not config.quiet:
-        print("Loading edges...")
-    edges_wide = db.conn.execute(f"SELECT {select_edge} FROM edges").df()
-    edges_wide = _cast_array_columns_to_varchar(edges_wide)
-    if not config.quiet:
-        print(f"  {len(edges_wide):,} edges")
-
-    # -- Build GRAPE graph -------------------------------------------------
+    # --- nodes slice (only the columns ensmallen needs) --------------------
+    node_select = [_aliased(config.node_name_column, node_types)]
     grape_node_cols = [config.node_name_column]
-    grape_kwargs: dict = {
-        "node_name_column": config.node_name_column,
-    }
-    if config.node_type_column and config.node_type_column in nodes_wide.columns:
+    grape_kwargs: dict = {"node_name_column": config.node_name_column}
+
+    if config.node_type_column and config.node_type_column in node_types:
+        node_select.append(_aliased(config.node_type_column, node_types))
         grape_node_cols.append(config.node_type_column)
         grape_kwargs["node_type_column"] = config.node_type_column
 
+    if not config.quiet:
+        print("Loading nodes...")
+    nodes_df = db.conn.execute(f"SELECT {', '.join(node_select)} FROM nodes").df()
+    if not config.quiet:
+        print(f"  {len(nodes_df):,} nodes")
+
+    # --- edges slice (only the columns ensmallen needs) --------------------
+    edge_select = [
+        _aliased(config.edge_src_column, edge_types),
+        _aliased(config.edge_dst_column, edge_types),
+    ]
     grape_edge_cols = [config.edge_src_column, config.edge_dst_column]
-    if config.edge_type_column and config.edge_type_column in edges_wide.columns:
+    if config.edge_type_column and config.edge_type_column in edge_types:
+        edge_select.append(_aliased(config.edge_type_column, edge_types))
         grape_edge_cols.append(config.edge_type_column)
         grape_kwargs["edge_type_column"] = config.edge_type_column
+
+    if not config.quiet:
+        print("Loading edges...")
+    edges_df = db.conn.execute(f"SELECT {', '.join(edge_select)} FROM edges").df()
+    if not config.quiet:
+        print(f"  {len(edges_df):,} edges")
 
     if not config.quiet:
         direction = "directed" if config.directed else "undirected"
@@ -132,8 +126,8 @@ def _load_grape_graph(
 
     graph = Graph.from_pd(
         directed=config.directed,
-        edges_df=edges_wide[grape_edge_cols],
-        nodes_df=nodes_wide[grape_node_cols],
+        edges_df=edges_df[grape_edge_cols],
+        nodes_df=nodes_df[grape_node_cols],
         name=config.graph_name,
         **grape_kwargs,
     )
@@ -141,7 +135,55 @@ def _load_grape_graph(
     if not config.quiet:
         print(f"  Graph: {graph.get_number_of_nodes():,} nodes, {graph.get_number_of_edges():,} edges")
 
-    return graph, nodes_wide, edges_wide
+    return graph
+
+
+def _register_components(db: GraphDatabase, node_names: list[str], raw_ids: list[int]) -> None:
+    """Bridge the ensmallen CC result into DuckDB as temp tables.
+
+    Pandas is used here as a fast zero-config way to move a numpy array from
+    ensmallen into DuckDB (``executemany`` is ~1000x slower for large graphs).
+    The DataFrame is dropped immediately after registration.
+
+    Creates two TEMP TABLEs:
+      - ``node_components(node_id, component_id)`` — component_id ranked by
+        descending size (LCC = 0).
+      - ``component_sizes(component_id, component_size)``.
+    """
+    import pandas as pd
+
+    df = pd.DataFrame({"node_id": node_names, "raw_component_id": raw_ids})
+    db.conn.register("_raw_components_df", df)
+
+    db.conn.execute(
+        """
+        CREATE TEMP TABLE _component_rank AS
+        SELECT
+            raw_component_id,
+            CAST(ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC, raw_component_id) - 1 AS UINTEGER) AS component_id,
+            CAST(COUNT(*) AS UINTEGER) AS component_size
+        FROM _raw_components_df
+        GROUP BY raw_component_id
+        """
+    )
+    db.conn.execute(
+        """
+        CREATE TEMP TABLE node_components AS
+        SELECT r.node_id, cr.component_id
+        FROM _raw_components_df r
+        JOIN _component_rank cr USING (raw_component_id)
+        """
+    )
+    db.conn.execute(
+        """
+        CREATE TEMP TABLE component_sizes AS
+        SELECT component_id, component_size FROM _component_rank
+        """
+    )
+
+    db.conn.unregister("_raw_components_df")
+    db.conn.execute("DROP TABLE _component_rank")
+    del df
 
 
 # ---------------------------------------------------------------------------
@@ -149,14 +191,14 @@ def _load_grape_graph(
 # ---------------------------------------------------------------------------
 
 
-def _compute_components(graph, quiet: bool = False) -> tuple[pd.DataFrame, float]:
-    """Run GRAPE's connected-component algorithm.
+def _compute_components(graph, quiet: bool = False) -> tuple[list[str], list[int], float]:
+    """Run GRAPE's CC algorithm.
 
     Returns
     -------
-    node_components : DataFrame with columns ``[node_id, component_id]``
-        ``component_id`` 0 is the LCC (ranked by descending size).
-    elapsed : computation time in seconds
+    node_names : list of node name strings, indexed by ensmallen node id
+    raw_ids    : raw component id per node (pre-ranking)
+    elapsed    : computation time in seconds (rounded)
     """
     if not quiet:
         print("\nComputing connected components...")
@@ -170,30 +212,21 @@ def _compute_components(graph, quiet: bool = False) -> tuple[pd.DataFrame, float
 
     num_nodes = graph.get_number_of_nodes()
     node_names = [graph.get_node_name_from_node_id(i) for i in range(num_nodes)]
-
-    node_components = pd.DataFrame(
-        {
-            "node_id": node_names,
-            "raw_component_id": [int(c) for c in component_ids],
-        }
-    )
-
-    # Rank by descending size so LCC = 0
-    size_counts = node_components["raw_component_id"].value_counts()
-    ranked_ids = {old_id: rank for rank, old_id in enumerate(size_counts.index)}
-    node_components["component_id"] = node_components["raw_component_id"].map(ranked_ids).astype("uint32")
-    node_components = node_components.drop(columns=["raw_component_id"])
-
-    return node_components, round(elapsed, 2)
+    raw_ids = [int(c) for c in component_ids]
+    return node_names, raw_ids, round(elapsed, 2)
 
 
 # ---------------------------------------------------------------------------
-# Parquet sidecar tables
+# Sidecar tables (pure DuckDB SQL)
 # ---------------------------------------------------------------------------
 
 
 def _size_bucket(size: int, lcc_size: int) -> str:
-    """Assign a component to a human-readable size bucket."""
+    """Assign a component to a human-readable size bucket.
+
+    Kept as a pure Python helper for unit testing; the main pipeline performs
+    bucketing in SQL inside ``_build_sidecar_tables``.
+    """
     if size == lcc_size:
         return "LCC"
     if size >= 100:
@@ -205,162 +238,212 @@ def _size_bucket(size: int, lcc_size: int) -> str:
     return "Isolated"
 
 
-def _build_parquet_tables(
-    graph,
-    nodes_wide: pd.DataFrame,
-    edges_wide: pd.DataFrame,
-    node_components: pd.DataFrame,
-    config: ConnectivityReportConfig,
-    quiet: bool = False,
-) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Build the three sidecar DataFrames from the CC result.
+def _build_sidecar_tables(
+    db: GraphDatabase, config: ConnectivityReportConfig, quiet: bool = False
+) -> None:
+    """Create TEMP TABLEs ``cc_nodes``, ``cc_component_sources``, ``cc_components``.
 
-    Returns ``(cc_nodes, cc_components, cc_component_sources)``.
+    All transformations are performed in DuckDB SQL against the pre-existing
+    ``nodes``/``edges`` tables plus the ``node_components`` / ``component_sizes``
+    temp tables produced by ``_register_components``.
     """
-    # ── 1. cc_nodes ──────────────────────────────────────────────────────
+    node_types = _get_column_types(db, "nodes")
+    edge_types = _get_column_types(db, "edges")
+    node_cols = set(node_types)
+    edge_cols = set(edge_types)
+    has_category = "category" in node_cols
+    has_provided_by_nodes = "provided_by" in node_cols
+    has_pks = "primary_knowledge_source" in edge_cols
+    has_name = "name" in node_cols
+
+    # ── 1. cc_nodes ─────────────────────────────────────────────────────────
+    #
+    # Every non-name column from the nodes table is carried over, with arrays
+    # cast to pipe-delimited strings for a flat parquet layout.
+    deprecated_expr = (
+        "CASE WHEN n.\"name\" LIKE 'obsolete%' THEN TRUE ELSE FALSE END"
+        if has_name
+        else "FALSE"
+    )
+    extra_node_sql_parts: list[str] = [
+        f'{_scalar_cast(col, node_types[col], alias="n")} AS "{col}"'
+        for col in node_cols
+        if col != config.node_name_column
+    ]
+    extras_joined = (", " + ", ".join(extra_node_sql_parts)) if extra_node_sql_parts else ""
+
     if not quiet:
         print("\nBuilding cc_nodes table...")
 
-    cc_nodes = node_components.merge(
-        nodes_wide.rename(columns={config.node_name_column: "node_id"}),
-        on="node_id",
-        how="left",
+    db.conn.execute(
+        f"""
+        CREATE TEMP TABLE cc_nodes AS
+        SELECT
+            nc.node_id,
+            nc.component_id{extras_joined},
+            {deprecated_expr} AS deprecated
+        FROM node_components nc
+        LEFT JOIN nodes n ON n."{config.node_name_column}" = nc.node_id
+        """
     )
 
-    # Put node_id and component_id first, then everything else
-    front_cols = ["node_id", "component_id"]
-    rest = [c for c in cc_nodes.columns if c not in front_cols]
-    cc_nodes = cc_nodes[front_cols + rest]
-
-    # Mark deprecated/obsolete nodes if name column is available
-    if "name" in cc_nodes.columns:
-        cc_nodes["deprecated"] = cc_nodes["name"].str.startswith("obsolete", na=False)
-    else:
-        cc_nodes["deprecated"] = False
-
     if not quiet:
-        print(f"  {len(cc_nodes):,} rows ({cc_nodes['deprecated'].sum():,} deprecated)")
+        n_rows = db.conn.execute("SELECT COUNT(*) FROM cc_nodes").fetchone()[0]
+        n_dep = (
+            db.conn.execute(
+                "SELECT SUM(CASE WHEN deprecated THEN 1 ELSE 0 END) FROM cc_nodes"
+            ).fetchone()[0]
+            or 0
+        )
+        print(f"  {n_rows:,} rows ({int(n_dep):,} deprecated)")
 
-    # ── 2. cc_component_sources ──────────────────────────────────────────
+    # ── 2. cc_component_sources ─────────────────────────────────────────────
+    #
+    # Edges joined to their subject's component, grouped by component +
+    # (predicate, primary_knowledge_source, provided_by) — whichever exist.
+    # Components of size 1 (true singletons) are excluded.
+    edge_group_cols: list[str] = [
+        c for c in ("primary_knowledge_source", "provided_by", "predicate") if c in edge_cols
+    ]
+    edge_group_raw = [_scalar_cast(c, edge_types[c], alias="e") for c in edge_group_cols]
+    edge_group_exprs = [f'{expr} AS "{col}"' for col, expr in zip(edge_group_cols, edge_group_raw, strict=True)]
+
+    extras_edge_sql = (", " + ", ".join(edge_group_exprs)) if edge_group_exprs else ""
+    group_by_sql = ", ".join(["nc.component_id", *edge_group_raw])
+
     if not quiet:
         print("Building cc_component_sources table...")
 
-    subject_comp = node_components.rename(columns={"node_id": config.edge_src_column})
-    edges_with_comp = edges_wide.merge(subject_comp, on=config.edge_src_column, how="inner")
-
-    # Group-by columns: always component_id + predicate; add source cols if available
-    groupby_cols = ["component_id"]
-    if "primary_knowledge_source" in edges_with_comp.columns:
-        groupby_cols.append("primary_knowledge_source")
-    if "provided_by" in edges_with_comp.columns:
-        groupby_cols.append("provided_by")
-    if "predicate" in edges_with_comp.columns:
-        groupby_cols.append("predicate")
-
-    cc_component_sources = (
-        edges_with_comp.groupby(groupby_cols, dropna=False).size().reset_index(name="edge_count")
+    db.conn.execute(
+        f"""
+        CREATE TEMP TABLE cc_component_sources AS
+        SELECT
+            nc.component_id{extras_edge_sql},
+            CAST(COUNT(*) AS UINTEGER) AS edge_count
+        FROM edges e
+        JOIN node_components nc ON nc.node_id = e."{config.edge_src_column}"
+        JOIN component_sizes cs ON cs.component_id = nc.component_id
+        WHERE cs.component_size > 1
+        GROUP BY {group_by_sql}
+        """
     )
-    cc_component_sources["edge_count"] = cc_component_sources["edge_count"].astype("uint32")
-    cc_component_sources["component_id"] = cc_component_sources["component_id"].astype("uint32")
-
-    # Exclude singletons (they have 0 internal edges)
-    singleton_components = cc_nodes.groupby("component_id").size().reset_index(name="n")
-    singleton_ids = set(singleton_components.loc[singleton_components["n"] == 1, "component_id"])
-    cc_component_sources = cc_component_sources[
-        ~cc_component_sources["component_id"].isin(singleton_ids)
-    ].reset_index(drop=True)
 
     if not quiet:
-        print(f"  {len(cc_component_sources):,} rows")
+        n_rows = db.conn.execute("SELECT COUNT(*) FROM cc_component_sources").fetchone()[0]
+        print(f"  {n_rows:,} rows")
 
-    # ── 3. cc_components ─────────────────────────────────────────────────
+    # ── 3. cc_components ────────────────────────────────────────────────────
+    #
+    # Per-component roll-up. All summary/print queries expect a stable set of
+    # columns so we emit defaults (0 / NULL) when source data isn't available.
+    node_agg_parts: list[str] = [
+        "component_id",
+        "CAST(COUNT(*) AS UINTEGER) AS component_size",
+        "CAST(SUM(CASE WHEN deprecated THEN 1 ELSE 0 END) AS UINTEGER) AS num_deprecated",
+    ]
+    if has_category:
+        node_agg_parts.extend(
+            [
+                "CAST(COUNT(DISTINCT category) AS UINTEGER) AS num_categories",
+                "mode(category) AS top_category",
+                "BOOL_OR(category = 'biolink:Disease') AS has_disease",
+                "BOOL_OR(category = 'biolink:Gene') AS has_gene",
+            ]
+        )
+    else:
+        node_agg_parts.extend(
+            [
+                "CAST(0 AS UINTEGER) AS num_categories",
+                "CAST(NULL AS VARCHAR) AS top_category",
+            ]
+        )
+    if has_provided_by_nodes:
+        node_agg_parts.append("CAST(COUNT(DISTINCT provided_by) AS UINTEGER) AS num_provided_by")
+    node_agg_parts.append("array_to_string(list(node_id)[1:5], '|') AS sample_node_ids")
+
+    ctes = [
+        f"node_agg AS (SELECT {', '.join(node_agg_parts)} FROM cc_nodes GROUP BY component_id)",
+        (
+            "edge_agg AS (SELECT component_id, "
+            "CAST(SUM(edge_count) AS UINTEGER) AS num_edges "
+            "FROM cc_component_sources GROUP BY component_id)"
+        ),
+    ]
+    if has_pks:
+        ctes.append(
+            "ks AS (SELECT component_id, "
+            "CAST(COUNT(DISTINCT primary_knowledge_source) AS UINTEGER) AS num_knowledge_sources "
+            "FROM cc_component_sources GROUP BY component_id)"
+        )
+
+    select_parts: list[str] = [
+        "na.*",
+        "COALESCE(ea.num_edges, CAST(0 AS UINTEGER)) AS num_edges",
+    ]
+    if has_pks:
+        select_parts.append(
+            "COALESCE(ks.num_knowledge_sources, CAST(0 AS UINTEGER)) AS num_knowledge_sources"
+        )
+    else:
+        select_parts.append("CAST(0 AS UINTEGER) AS num_knowledge_sources")
+
+    lcc_size = (
+        db.conn.execute("SELECT MAX(component_size) FROM component_sizes").fetchone()[0] or 0
+    )
+    select_parts.append(
+        f"""CASE
+            WHEN na.component_size = {int(lcc_size)} THEN 'LCC'
+            WHEN na.component_size >= 100 THEN '100+'
+            WHEN na.component_size >= 10 THEN '10-99'
+            WHEN na.component_size >= 2 THEN '2-9'
+            ELSE 'Isolated'
+        END AS size_bucket"""
+    )
+
+    ks_join = "LEFT JOIN ks ON ks.component_id = na.component_id" if has_pks else ""
+
     if not quiet:
         print("Building cc_components table...")
 
-    agg_dict: dict = {
-        "component_size": ("node_id", "size"),
-        "num_deprecated": ("deprecated", "sum"),
-    }
-    if "category" in cc_nodes.columns:
-        agg_dict["num_categories"] = ("category", "nunique")
-        agg_dict["top_category"] = ("category", lambda x: x.value_counts().index[0] if len(x) > 0 else None)
-        agg_dict["has_disease"] = ("category", lambda x: (x == "biolink:Disease").any())
-        agg_dict["has_gene"] = ("category", lambda x: (x == "biolink:Gene").any())
-    if "provided_by" in cc_nodes.columns:
-        agg_dict["num_provided_by"] = ("provided_by", "nunique")
-
-    comp_agg = cc_nodes.groupby("component_id").agg(**agg_dict).reset_index()
-
-    # Edge counts per component
-    edge_counts = (
-        cc_component_sources.groupby("component_id")["edge_count"].sum().reset_index().rename(columns={"edge_count": "num_edges"})
+    db.conn.execute(
+        f"""
+        CREATE TEMP TABLE cc_components AS
+        WITH {', '.join(ctes)}
+        SELECT {', '.join(select_parts)}
+        FROM node_agg na
+        LEFT JOIN edge_agg ea ON ea.component_id = na.component_id
+        {ks_join}
+        ORDER BY na.component_id
+        """
     )
-    comp_agg = comp_agg.merge(edge_counts, on="component_id", how="left")
-    comp_agg["num_edges"] = comp_agg["num_edges"].fillna(0).astype("uint32")
-
-    # Knowledge source count per component
-    if "primary_knowledge_source" in cc_component_sources.columns:
-        ks_counts = (
-            cc_component_sources.groupby("component_id")["primary_knowledge_source"]
-            .nunique()
-            .reset_index()
-            .rename(columns={"primary_knowledge_source": "num_knowledge_sources"})
-        )
-        comp_agg = comp_agg.merge(ks_counts, on="component_id", how="left")
-        comp_agg["num_knowledge_sources"] = comp_agg["num_knowledge_sources"].fillna(0).astype("uint16")
-
-    # Size bucket
-    lcc_size = int(comp_agg.loc[comp_agg["component_id"] == 0, "component_size"].iloc[0])
-    comp_agg["size_bucket"] = comp_agg["component_size"].apply(lambda s: _size_bucket(int(s), lcc_size))
-
-    # Sample node IDs (up to 5, pipe-delimited)
-    sample_nodes = (
-        cc_nodes.groupby("component_id")["node_id"]
-        .apply(lambda x: "|".join(x.head(5)))
-        .reset_index()
-        .rename(columns={"node_id": "sample_node_ids"})
-    )
-    comp_agg = comp_agg.merge(sample_nodes, on="component_id", how="left")
-
-    # Sort and finalize types
-    cc_components = comp_agg.sort_values("component_id").reset_index(drop=True)
-    cc_components["component_id"] = cc_components["component_id"].astype("uint32")
-    cc_components["component_size"] = cc_components["component_size"].astype("uint32")
-    cc_components["num_deprecated"] = cc_components["num_deprecated"].astype("uint32")
 
     if not quiet:
-        print(f"  {len(cc_components):,} rows")
-
-    return cc_nodes, cc_components, cc_component_sources
+        n_rows = db.conn.execute("SELECT COUNT(*) FROM cc_components").fetchone()[0]
+        print(f"  {n_rows:,} rows")
 
 
 def _write_parquet_sidecars(
-    cc_nodes: pd.DataFrame,
-    cc_components: pd.DataFrame,
-    cc_component_sources: pd.DataFrame,
+    db: GraphDatabase,
     output_dir: Path,
     quiet: bool = False,
 ) -> dict[str, Path]:
-    """Write the three parquet sidecar files. Returns name→path mapping."""
+    """Write the three sidecar tables to parquet via DuckDB's native writer."""
     output_dir.mkdir(parents=True, exist_ok=True)
 
     files: dict[str, Path] = {}
-    for name, df in [
-        ("cc_nodes", cc_nodes),
-        ("cc_components", cc_components),
-        ("cc_component_sources", cc_component_sources),
-    ]:
+    for name in ("cc_nodes", "cc_components", "cc_component_sources"):
         path = output_dir / f"{name}.parquet"
-        df.to_parquet(path, index=False)
+        # DuckDB COPY handles parquet natively — no pandas/pyarrow on this path.
+        db.conn.execute(
+            f"COPY (SELECT * FROM {name}) TO '{path}' (FORMAT PARQUET)"
+        )
         files[name] = path
 
     if not quiet:
         print(f"\nParquet files written to {output_dir}/:")
         for name, path in files.items():
-            df = {"cc_nodes": cc_nodes, "cc_components": cc_components, "cc_component_sources": cc_component_sources}[
-                name
-            ]
-            print(f"  {path.name:<35} {len(df):>10,} rows")
+            n = db.conn.execute(f"SELECT COUNT(*) FROM {name}").fetchone()[0]
+            print(f"  {path.name:<35} {n:>10,} rows")
 
     return files
 
@@ -371,56 +454,79 @@ def _write_parquet_sidecars(
 
 
 def _build_connectivity_summary(
+    db: GraphDatabase,
     graph,
-    cc_nodes: pd.DataFrame,
-    cc_components: pd.DataFrame,
     config: ConnectivityReportConfig,
 ) -> ConnectivitySummary:
-    """Construct a ``ConnectivitySummary`` from the computed DataFrames."""
+    """Construct a ``ConnectivitySummary`` from the DuckDB sidecar tables."""
     num_nodes = graph.get_number_of_nodes()
-    num_components = len(cc_components)
-    lcc_size = int(cc_components.iloc[0]["component_size"])
+    num_edges = graph.get_number_of_edges()
+
+    comp_row = db.conn.execute(
+        """
+        SELECT
+            COUNT(*),
+            MAX(component_size),
+            SUM(CASE WHEN component_size = 1 THEN 1 ELSE 0 END)
+        FROM component_sizes
+        """
+    ).fetchone()
+    num_components = int(comp_row[0])
+    lcc_size = int(comp_row[1] or 0)
+    num_singletons = int(comp_row[2] or 0)
+
     lcc_fraction = lcc_size / num_nodes if num_nodes > 0 else 0.0
-    num_singletons = int((cc_components["component_size"] == 1).sum())
 
-    # Size distribution
-    bucket_order = ["LCC", "100+", "10-99", "2-9", "Isolated"]
-    bucket_stats = cc_components.groupby("size_bucket").agg(
-        num_components=("component_id", "size"),
-        total_nodes=("component_size", "sum"),
+    total_deprecated = int(
+        db.conn.execute(
+            "SELECT COALESCE(SUM(CASE WHEN deprecated THEN 1 ELSE 0 END), 0) FROM cc_nodes"
+        ).fetchone()[0]
     )
-    size_dist = []
-    for b in bucket_order:
-        if b in bucket_stats.index:
-            row = bucket_stats.loc[b]
-            size_dist.append(
-                ComponentSizeDistribution(
-                    bucket=b,
-                    num_components=int(row["num_components"]),
-                    total_nodes=int(row["total_nodes"]),
-                )
-            )
 
-    # Top minor components
-    top_minor = []
-    for _, comp in cc_components.iloc[1 : config.top_components + 1].iterrows():
-        detail = ComponentDetail(
-            component_id=int(comp["component_id"]),
-            component_size=int(comp["component_size"]),
-            num_edges=int(comp.get("num_edges", 0)),
-            top_category=comp.get("top_category"),
-            num_categories=int(comp["num_categories"]) if "num_categories" in comp.index else 0,
-            num_knowledge_sources=int(comp["num_knowledge_sources"]) if "num_knowledge_sources" in comp.index else 0,
-            sample_node_ids=comp["sample_node_ids"].split("|") if comp.get("sample_node_ids") else [],
+    bucket_rows = db.conn.execute(
+        """
+        SELECT size_bucket, COUNT(*), CAST(SUM(component_size) AS BIGINT)
+        FROM cc_components
+        GROUP BY size_bucket
+        """
+    ).fetchall()
+    bucket_map = {r[0]: (int(r[1]), int(r[2])) for r in bucket_rows}
+    size_dist = [
+        ComponentSizeDistribution(
+            bucket=b, num_components=bucket_map[b][0], total_nodes=bucket_map[b][1]
         )
-        top_minor.append(detail)
+        for b in ("LCC", "100+", "10-99", "2-9", "Isolated")
+        if b in bucket_map
+    ]
 
-    total_deprecated = int(cc_nodes["deprecated"].sum()) if "deprecated" in cc_nodes.columns else 0
+    top_minor_rows = db.conn.execute(
+        """
+        SELECT component_id, component_size, num_edges, top_category,
+               num_categories, num_knowledge_sources, sample_node_ids
+        FROM cc_components
+        WHERE component_id > 0
+        ORDER BY component_id
+        LIMIT ?
+        """,
+        [int(config.top_components)],
+    ).fetchall()
+    top_minor = [
+        ComponentDetail(
+            component_id=int(r[0]),
+            component_size=int(r[1]),
+            num_edges=int(r[2] or 0),
+            top_category=r[3],
+            num_categories=int(r[4] or 0),
+            num_knowledge_sources=int(r[5] or 0),
+            sample_node_ids=(r[6].split("|") if r[6] else []),
+        )
+        for r in top_minor_rows
+    ]
 
     return ConnectivitySummary(
         graph_name=config.graph_name,
         num_nodes=num_nodes,
-        num_edges=graph.get_number_of_edges(),
+        num_edges=num_edges,
         directed=graph.is_directed(),
         num_components=num_components,
         lcc_size=lcc_size,
@@ -440,13 +546,16 @@ def _build_connectivity_summary(
 
 
 def _print_connectivity_report(
+    db: GraphDatabase,
     summary: ConnectivitySummary,
-    cc_nodes: pd.DataFrame,
-    cc_components: pd.DataFrame,
-    cc_component_sources: pd.DataFrame,
+    has_category: bool,
+    has_pks: bool,
     elapsed: float,
 ) -> None:
-    """Print a structured console report."""
+    """Print a structured console report.
+
+    All tabular slices come from DuckDB SQL against the temp sidecar tables.
+    """
     print("\n" + "=" * 70)
     print(f"  CONNECTED COMPONENT REPORT: {summary.graph_name}")
     print("=" * 70)
@@ -454,7 +563,7 @@ def _print_connectivity_report(
     print(f"\n  Graph: {summary.num_nodes:,} nodes, {summary.num_edges:,} edges")
     print(f"  Directed: {summary.directed}")
 
-    print(f"\n--- Overview ---")
+    print("\n--- Overview ---")
     print(f"  Connected components:       {summary.num_components:,}")
     print(f"  LCC size:                   {summary.lcc_size:,} ({summary.lcc_fraction:.2%} of all nodes)")
     print(f"  Disconnected fragments:     {summary.num_components - 1:,}")
@@ -462,63 +571,89 @@ def _print_connectivity_report(
     print(f"  Non-singleton components:   {summary.num_non_singleton_components:,}")
     print(f"  Nodes outside LCC:          {summary.nodes_outside_lcc:,}")
 
-    # Deprecated nodes
     if summary.total_deprecated > 0:
-        dep_in_lcc = int(cc_nodes.loc[cc_nodes["component_id"] == 0, "deprecated"].sum())
-        dep_singleton = int(
-            cc_nodes.loc[
-                cc_nodes["component_id"].isin(
-                    cc_components.loc[cc_components["component_size"] == 1, "component_id"]
-                ),
-                "deprecated",
-            ].sum()
+        dep_in_lcc = int(
+            db.conn.execute(
+                "SELECT COUNT(*) FROM cc_nodes WHERE component_id = 0 AND deprecated"
+            ).fetchone()[0]
         )
-        print(f"\n--- Deprecated (obsolete) Nodes ---")
+        dep_singleton = int(
+            db.conn.execute(
+                """
+                SELECT COUNT(*)
+                FROM cc_nodes cn
+                JOIN component_sizes cs ON cs.component_id = cn.component_id
+                WHERE cn.deprecated AND cs.component_size = 1
+                """
+            ).fetchone()[0]
+        )
+        print("\n--- Deprecated (obsolete) Nodes ---")
         print(f"  Total deprecated:           {summary.total_deprecated:,}")
         print(f"    in LCC:                   {dep_in_lcc:,}")
         print(f"    singletons:               {dep_singleton:,}")
         print(f"    minor components:         {summary.total_deprecated - dep_in_lcc - dep_singleton:,}")
 
-    # Size distribution
-    print(f"\n--- Component Size Distribution ---")
+    print("\n--- Component Size Distribution ---")
     print(f"  {'Bucket':<16} {'Components':>12} {'Total Nodes':>14}")
     print(f"  {'-' * 16} {'-' * 12} {'-' * 14}")
     for dist in summary.size_distribution:
         print(f"  {dist.bucket:<16} {dist.num_components:>12,} {dist.total_nodes:>14,}")
 
-    # Category breakdown if available
-    if "category" in cc_nodes.columns:
-        print(f"\n--- Top Categories in LCC (top 20) ---")
-        lcc_cats = cc_nodes.loc[cc_nodes["component_id"] == 0, "category"].value_counts().head(20)
-        for cat, count in lcc_cats.items():
+    if has_category:
+        print("\n--- Top Categories in LCC (top 20) ---")
+        lcc_cats = db.conn.execute(
+            """
+            SELECT category, COUNT(*)
+            FROM cc_nodes
+            WHERE component_id = 0 AND category IS NOT NULL
+            GROUP BY category
+            ORDER BY COUNT(*) DESC
+            LIMIT 20
+            """
+        ).fetchall()
+        for cat, count in lcc_cats:
             print(f"  {cat:<45} {count:>10,}")
 
-        print(f"\n--- Top Categories Outside LCC (top 20) ---")
-        non_lcc_cats = cc_nodes.loc[cc_nodes["component_id"] != 0, "category"].value_counts().head(20)
-        for cat, count in non_lcc_cats.items():
+        print("\n--- Top Categories Outside LCC (top 20) ---")
+        non_lcc_cats = db.conn.execute(
+            """
+            SELECT category, COUNT(*)
+            FROM cc_nodes
+            WHERE component_id != 0 AND category IS NOT NULL
+            GROUP BY category
+            ORDER BY COUNT(*) DESC
+            LIMIT 20
+            """
+        ).fetchall()
+        for cat, count in non_lcc_cats:
             print(f"  {cat:<45} {count:>10,}")
 
-    # Top minor components
     if summary.top_minor_components:
-        print(f"\n--- Top Minor Components (excluding LCC) ---")
+        print("\n--- Top Minor Components (excluding LCC) ---")
         for comp in summary.top_minor_components:
-            cat_info = f"top: {comp.top_category} ({comp.num_categories} categories)" if comp.top_category else ""
+            cat_info = (
+                f"top: {comp.top_category} ({comp.num_categories} categories)"
+                if comp.top_category
+                else ""
+            )
             print(f"  Component {comp.component_id:>5}: {comp.component_size:>8,} nodes | {cat_info}")
             if comp.sample_node_ids:
                 print(f"    Sample: {', '.join(comp.sample_node_ids[:5])}")
 
-    # Top knowledge sources in minor components
-    if "primary_knowledge_source" in cc_component_sources.columns and len(cc_component_sources) > 0:
-        minor_sources = (
-            cc_component_sources[cc_component_sources["component_id"] != 0]
-            .groupby("primary_knowledge_source")["edge_count"]
-            .sum()
-            .sort_values(ascending=False)
-            .head(15)
-        )
-        if len(minor_sources) > 0:
-            print(f"\n--- Top Knowledge Sources in Minor Components (by edge count) ---")
-            for src, count in minor_sources.items():
+    if has_pks:
+        minor_src = db.conn.execute(
+            """
+            SELECT primary_knowledge_source, SUM(edge_count)
+            FROM cc_component_sources
+            WHERE component_id != 0 AND primary_knowledge_source IS NOT NULL
+            GROUP BY primary_knowledge_source
+            ORDER BY SUM(edge_count) DESC
+            LIMIT 15
+            """
+        ).fetchall()
+        if minor_src:
+            print("\n--- Top Knowledge Sources in Minor Components (by edge count) ---")
+            for src, count in minor_src:
                 print(f"  {src:<50} {int(count):>10,}")
 
     print(f"\n  Computed in {elapsed:.2f}s")
@@ -534,8 +669,8 @@ def generate_connectivity_report(config: ConnectivityReportConfig) -> Connectivi
     """
     Generate a connectivity/topology report for a KGX DuckDB database.
 
-    Computes connected components using GRAPE/ensmallen and produces
-    parquet sidecar tables with component assignments and summary statistics.
+    Computes connected components using GRAPE/ensmallen and produces parquet
+    sidecar tables with component assignments and summary statistics.
 
     Requires ensmallen: ``pip install koza[grape]``
 
@@ -564,39 +699,44 @@ def generate_connectivity_report(config: ConnectivityReportConfig) -> Connectivi
         if not config.quiet:
             print(f"Generating connectivity report for {config.database_path.name}...")
 
-        # 1. Load GRAPE graph
-        graph, nodes_wide, edges_wide = _load_grape_graph(db, config)
+        node_types = _get_column_types(db, "nodes")
+        edge_types = _get_column_types(db, "edges")
+        has_category = "category" in node_types
+        has_pks = "primary_knowledge_source" in edge_types
+
+        # 1. Build GRAPE graph (pandas slice #1)
+        graph = _build_grape_graph(db, config)
 
         # 2. Compute connected components
-        node_components, cc_elapsed = _compute_components(graph, quiet=config.quiet)
+        node_names, raw_ids, cc_elapsed = _compute_components(graph, quiet=config.quiet)
 
-        # 3. Build parquet tables
-        cc_nodes, cc_components, cc_component_sources = _build_parquet_tables(
-            graph, nodes_wide, edges_wide, node_components, config, quiet=config.quiet
-        )
+        # 3. Bridge CC result into DuckDB (pandas slice #2 — ensmallen boundary)
+        _register_components(db, node_names, raw_ids)
 
-        # 4. Build summary
-        summary = _build_connectivity_summary(graph, cc_nodes, cc_components, config)
+        # 4. Build sidecar tables in pure SQL
+        _build_sidecar_tables(db, config, quiet=config.quiet)
 
-        # 5. Write parquet sidecars
+        # 5. Write parquet sidecars via DuckDB's native writer
         parquet_files: dict[str, Path] = {}
         if config.output_dir:
             parquet_files = _write_parquet_sidecars(
-                cc_nodes, cc_components, cc_component_sources, config.output_dir, quiet=config.quiet
+                db, config.output_dir, quiet=config.quiet
             )
 
-        # 6. Write YAML summary
+        # 6. Build summary from SQL queries against the sidecar tables
+        summary = _build_connectivity_summary(db, graph, config)
+
+        # 7. Write YAML summary
         if config.output_file:
             config.output_file.parent.mkdir(parents=True, exist_ok=True)
-            report_dict = summary.model_dump()
             with open(config.output_file, "w") as f:
-                yaml.dump(report_dict, f, default_flow_style=False, sort_keys=False)
+                yaml.dump(summary.model_dump(), f, default_flow_style=False, sort_keys=False)
             if not config.quiet:
                 print(f"\nYAML summary written to {config.output_file}")
 
-        # 7. Console report
+        # 8. Console report
         if not config.quiet:
-            _print_connectivity_report(summary, cc_nodes, cc_components, cc_component_sources, cc_elapsed)
+            _print_connectivity_report(db, summary, has_category, has_pks, cc_elapsed)
 
         total_time = time.time() - start_time
 
