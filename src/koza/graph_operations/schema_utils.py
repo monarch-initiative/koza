@@ -85,6 +85,14 @@ FORCE_SINGLE_VALUED_FIELDS: Set[str] = {
     "type",
 }
 
+# Fields that should be treated as multivalued regardless of schema definition.
+# Use this for KGX/OBO conventions that the reference schema (Biolink Model) does not define.
+# Without this override, pipe-delimited values land in downstream tables as a single VARCHAR
+# with literal '|' characters instead of being split into a VARCHAR[] array.
+FORCE_MULTIVALUED_FIELDS: Set[str] = {
+    "subsets",
+}
+
 # Fallback multivalued fields for KGX format (used only when schema unavailable)
 KGX_MULTIVALUED_FIELDS_FALLBACK: Set[str] = {
     # Node properties
@@ -149,6 +157,10 @@ def is_field_multivalued(field_name: str, schema_path: Optional[str] = None) -> 
     # Check if field is forced to be single-valued
     if field_name in FORCE_SINGLE_VALUED_FIELDS:
         return False
+
+    # Check if field is forced to be multivalued (overrides schema)
+    if field_name in FORCE_MULTIVALUED_FIELDS:
+        return True
 
     # Try to get from schema first
     parser = get_schema_parser(schema_path)
