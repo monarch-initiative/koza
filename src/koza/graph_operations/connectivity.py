@@ -17,6 +17,7 @@ import time
 from pathlib import Path
 
 import yaml
+from loguru import logger
 
 from koza.model.graph_operations import (
     ComponentDetail,
@@ -686,65 +687,74 @@ def generate_connectivity_report(config: ConnectivityReportConfig) -> Connectivi
     """
     start_time = time.time()
 
-    if not _check_ensmallen_available():
-        raise ImportError(
-            "The connectivity report requires ensmallen. "
-            "Install it with: pip install koza[grape]"
-        )
-
-    if not config.database_path.exists():
-        raise FileNotFoundError(f"Database not found: {config.database_path}")
-
-    with GraphDatabase(config.database_path, read_only=True) as db:
-        if not config.quiet:
-            print(f"Generating connectivity report for {config.database_path.name}...")
-
-        node_types = _get_column_types(db, "nodes")
-        edge_types = _get_column_types(db, "edges")
-        has_category = "category" in node_types
-        has_pks = "primary_knowledge_source" in edge_types
-
-        # 1. Build GRAPE graph (pandas slice #1)
-        graph = _build_grape_graph(db, config)
-
-        # 2. Compute connected components
-        node_names, raw_ids, cc_elapsed = _compute_components(graph, quiet=config.quiet)
-
-        # 3. Bridge CC result into DuckDB (pandas slice #2 — ensmallen boundary)
-        _register_components(db, node_names, raw_ids)
-
-        # 4. Build sidecar tables in pure SQL
-        _build_sidecar_tables(db, config, quiet=config.quiet)
-
-        # 5. Write parquet sidecars via DuckDB's native writer
-        parquet_files: dict[str, Path] = {}
-        if config.output_dir:
-            parquet_files = _write_parquet_sidecars(
-                db, config.output_dir, quiet=config.quiet
+    try:
+        if not _check_ensmallen_available():
+            raise ImportError(
+                "The connectivity report requires ensmallen. "
+                "Install it with: pip install koza[grape]"
             )
 
-        # 6. Build summary from SQL queries against the sidecar tables
-        summary = _build_connectivity_summary(db, graph, config)
+        if not config.database_path.exists():
+            raise FileNotFoundError(f"Database not found: {config.database_path}")
 
-        # 7. Write YAML summary
-        if config.output_file:
-            config.output_file.parent.mkdir(parents=True, exist_ok=True)
-            with open(config.output_file, "w") as f:
-                yaml.dump(summary.model_dump(), f, default_flow_style=False, sort_keys=False)
+        with GraphDatabase(config.database_path, read_only=True) as db:
             if not config.quiet:
-                print(f"\nYAML summary written to {config.output_file}")
+                print(f"Generating connectivity report for {config.database_path.name}...")
 
-        # 8. Console report
+            node_types = _get_column_types(db, "nodes")
+            edge_types = _get_column_types(db, "edges")
+            has_category = "category" in node_types
+            has_pks = "primary_knowledge_source" in edge_types
+
+            # 1. Build GRAPE graph (pandas slice #1)
+            graph = _build_grape_graph(db, config)
+
+            # 2. Compute connected components
+            node_names, raw_ids, cc_elapsed = _compute_components(graph, quiet=config.quiet)
+
+            # 3. Bridge CC result into DuckDB (pandas slice #2 — ensmallen boundary)
+            _register_components(db, node_names, raw_ids)
+
+            # 4. Build sidecar tables in pure SQL
+            _build_sidecar_tables(db, config, quiet=config.quiet)
+
+            # 5. Write parquet sidecars via DuckDB's native writer
+            parquet_files: dict[str, Path] = {}
+            if config.output_dir:
+                parquet_files = _write_parquet_sidecars(
+                    db, config.output_dir, quiet=config.quiet
+                )
+
+            # 6. Build summary from SQL queries against the sidecar tables
+            summary = _build_connectivity_summary(db, graph, config)
+
+            # 7. Write YAML summary
+            if config.output_file:
+                config.output_file.parent.mkdir(parents=True, exist_ok=True)
+                with open(config.output_file, "w") as f:
+                    yaml.dump(summary.model_dump(), f, default_flow_style=False, sort_keys=False)
+                if not config.quiet:
+                    print(f"\nYAML summary written to {config.output_file}")
+
+            # 8. Console report
+            if not config.quiet:
+                _print_connectivity_report(db, summary, has_category, has_pks, cc_elapsed)
+
+            total_time = time.time() - start_time
+
+            return ConnectivityReportResult(
+                summary=summary,
+                output_dir=config.output_dir,
+                output_file=config.output_file,
+                parquet_files=parquet_files,
+                computation_seconds=cc_elapsed,
+                total_time_seconds=total_time,
+            )
+
+    except Exception as e:
+        logger.error(f"Connectivity report generation failed: {e}")
+
         if not config.quiet:
-            _print_connectivity_report(db, summary, has_category, has_pks, cc_elapsed)
+            print(f"Connectivity report generation failed: {e}")
 
-        total_time = time.time() - start_time
-
-        return ConnectivityReportResult(
-            summary=summary,
-            output_dir=config.output_dir,
-            output_file=config.output_file,
-            parquet_files=parquet_files,
-            computation_seconds=cc_elapsed,
-            total_time_seconds=total_time,
-        )
+        raise
