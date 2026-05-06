@@ -749,3 +749,82 @@ class EdgeExamplesResult(BaseModel):
     types_sampled: int = 0
     total_examples: int = 0
     total_time_seconds: float = 0.0
+
+
+# Connectivity Report Models
+
+
+class ConnectivityReportConfig(BaseModel):
+    """Configuration for connectivity/topology report generation.
+
+    Requires ensmallen (install via `pip install koza[grape]`).
+    """
+
+    database_path: Path
+    output_dir: Path | None = None  # Directory for parquet sidecar tables
+    output_file: Path | None = None  # YAML summary file
+    graph_name: str = "KnowledgeGraph"
+    node_name_column: str = "id"
+    node_type_column: str | None = "category"
+    edge_src_column: str = "subject"
+    edge_dst_column: str = "object"
+    edge_type_column: str | None = "predicate"
+    directed: bool = False  # Undirected for connectivity analysis
+    top_components: int = 20  # Number of top minor components to include in summary
+    quiet: bool = False
+
+    @field_validator("database_path")
+    @classmethod
+    def validate_database_exists(cls, v: Path) -> Path:
+        if not v.exists():
+            raise ValueError(f"Database file not found: {v}")
+        return v
+
+
+class ComponentSizeDistribution(BaseModel):
+    """Size distribution bucket for connected components."""
+
+    bucket: str  # "LCC", "100+", "10-99", "2-9", "Isolated"
+    num_components: int
+    total_nodes: int
+
+
+class ComponentDetail(BaseModel):
+    """Summary of a single connected component."""
+
+    component_id: int
+    component_size: int
+    num_edges: int = 0
+    top_category: str | None = None
+    num_categories: int = 0
+    num_knowledge_sources: int = 0
+    sample_node_ids: list[str] = Field(default_factory=list)
+
+
+class ConnectivitySummary(BaseModel):
+    """Summary statistics for connected component analysis."""
+
+    graph_name: str
+    num_nodes: int
+    num_edges: int
+    directed: bool
+    num_components: int
+    lcc_size: int
+    lcc_fraction: float
+    num_singletons: int
+    num_non_singleton_components: int
+    nodes_outside_lcc: int
+    total_deprecated: int = 0
+    size_distribution: list[ComponentSizeDistribution] = Field(default_factory=list)
+    top_minor_components: list[ComponentDetail] = Field(default_factory=list)
+
+
+class ConnectivityReportResult(BaseModel):
+    """Result from connectivity report generation."""
+
+    summary: ConnectivitySummary
+    output_dir: Path | None = None
+    output_file: Path | None = None
+    parquet_files: dict[str, Path] = Field(default_factory=dict)
+    computation_seconds: float = 0.0
+    total_time_seconds: float = 0.0
