@@ -2138,6 +2138,7 @@ koza merge --input-dir ./data/ -m &amp;quot;*.sssom.tsv&amp;quot; --remove-singl
 <p>• qc: Quality control analysis by data source</p>
 <p>• graph-stats: Comprehensive graph statistics (similar to merged_graph_stats.yaml)</p>
 <p>• schema: Database schema analysis and biolink compliance</p>
+<p>• connectivity: Connected component analysis (requires koza)</p>
 <p>Examples:</p>
 <pre><code># Generate QC report
 koza report qc -d merged.duckdb -o qc_report.yaml
@@ -2148,6 +2149,9 @@ koza report graph-stats -d merged.duckdb -o graph_stats.yaml
 # Generate schema report
 koza report schema -d merged.duckdb -o schema_report.yaml
 
+# Generate connectivity report with parquet sidecars
+koza report connectivity -d merged.duckdb --output-dir cc_output/ -o cc_summary.yaml
+
 # Quick QC analysis (console output only)
 koza report qc -d merged.duckdb
 </code></pre>
@@ -2156,12 +2160,13 @@ koza report qc -d merged.duckdb
 </code></pre></div>
 <p><strong>Arguments</strong>:</p>
 <ul>
-<li><code>REPORT_TYPE</code>: Type of report to generate: qc, graph-stats, or schema  [required]</li>
+<li><code>REPORT_TYPE</code>: Type of report: qc, graph-stats, schema, or connectivity  [required]</li>
 </ul>
 <p><strong>Options</strong>:</p>
 <ul>
 <li><code>-d, --database TEXT</code>: Path to DuckDB database file  [required]</li>
 <li><code>-o, --output TEXT</code>: Path to output report file (YAML format)</li>
+<li><code>--output-dir TEXT</code>: Directory for sidecar output files (used by connectivity report)</li>
 <li><code>-q, --quiet</code>: Suppress progress output</li>
 <li><code>--help</code>: Show this message and exit.</li>
 </ul>
