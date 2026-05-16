@@ -200,6 +200,25 @@ def test_ensure_slots_is_idempotent(biolink_schemaview, tmp_path):
     assert cols.count("original_subject") == 1
 
 
+def test_ensure_slots_tolerates_unseeded_database(tmp_path):
+    """ensure_slots should still work on a graph that predates the schema
+    feature: ALTER TABLE happens, but the missing _koza_schema metadata
+    table is silently ignored. The column type falls back to VARCHAR."""
+    db_path = tmp_path / "legacy.duckdb"
+    conn = duckdb.connect(str(db_path))
+    try:
+        conn.execute("CREATE TABLE edges (subject VARCHAR, predicate VARCHAR, object VARCHAR)")
+
+        ensure_slots(conn, "edges", ["original_subject"])
+
+        cols = {r[0]: r[1] for r in conn.execute("DESCRIBE edges").fetchall()}
+    finally:
+        conn.close()
+
+    assert "original_subject" in cols
+    assert cols["original_subject"] == "VARCHAR"
+
+
 def test_prune_against_seeded_database(biolink_schemaview, tmp_path):
     """Proof point. A graph seeded via the schema module satisfies prune's
     contract: file_source exists, so prune drops its DESCRIBE/try-except

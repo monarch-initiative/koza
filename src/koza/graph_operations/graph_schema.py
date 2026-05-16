@@ -160,9 +160,13 @@ def _write_metadata(
 
 
 def _read_metadata(conn: duckdb.DuckDBPyConnection, kind: str) -> str | None:
-    row = conn.execute(
-        f"SELECT content FROM {_KOZA_SCHEMA_TABLE} WHERE kind = ?", [kind]
-    ).fetchone()
+    try:
+        row = conn.execute(
+            f"SELECT content FROM {_KOZA_SCHEMA_TABLE} WHERE kind = ?", [kind]
+        ).fetchone()
+    except duckdb.CatalogException:
+        # Table doesn't exist — DB predates the schema feature.
+        return None
     return row[0] if row else None
 
 
@@ -222,26 +226,35 @@ def ensure_slots(
     as needed. Idempotent: slots already present as columns are skipped.
 
     Called by operations before they write columns they declared via
-    DECLARED_OUTPUTS. Keeps the stored schema in sync.
+    DECLARED_OUTPUTS. If the DuckDB has a seeded schema, this also keeps the
+    stored schema in sync (adding the slot to the relevant class). On an
+    unseeded DB it gracefully degrades to a plain ALTER TABLE so operations
+    still work on graphs that predate the schema feature; the column type
+    falls back to VARCHAR since multivalued-ness is unknown without a schema.
     """
     if table not in _TABLE_TO_CLASS:
         raise ValueError(
             f"Unknown table {table!r} — known tables: {sorted(_TABLE_TO_CLASS)}"
         )
 
-    schema = current_schema(conn)
-    class_name = _TABLE_TO_CLASS[table]
-    class_def = schema.classes[class_name]
+    try:
+        schema: SchemaDefinition | None = current_schema(conn)
+    except RuntimeError:
+        schema = None
 
     existing_cols = {r[0] for r in conn.execute(f"DESCRIBE {table}").fetchall()}
     schema_dirty = False
     for slot in slot_names:
         if slot not in existing_cols:
-            sql_type = _duckdb_type_for(schema.slots.get(slot))
-            conn.execute(f"ALTER TABLE {table} ADD COLUMN {slot} {sql_type}")
-        if slot not in class_def.slots:
-            class_def.slots.append(slot)
-            schema_dirty = True
+            slot_def = schema.slots.get(slot) if schema is not None else None
+            conn.execute(
+                f"ALTER TABLE {table} ADD COLUMN {slot} {_duckdb_type_for(slot_def)}"
+            )
+        if schema is not None:
+            class_def = schema.classes[_TABLE_TO_CLASS[table]]
+            if slot not in class_def.slots:
+                class_def.slots.append(slot)
+                schema_dirty = True
 
-    if schema_dirty:
+    if schema is not None and schema_dirty:
         _write_metadata(conn, _KIND_DERIVED_SCHEMA, yaml_dumper.dumps(schema))
