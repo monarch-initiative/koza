@@ -1,0 +1,247 @@
+"""Graph schema — the seam between operations and the LinkML-derived schema
+that lives in each koza-built DuckDB.
+
+See GRAPH_SCHEMA_DESIGN_V2.md, docs/adr/0001-graph-schema-strict-derivation.md,
+and docs/adr/0002-schema-lives-with-database.md.
+"""
+
+from __future__ import annotations
+
+import duckdb
+from linkml_runtime.dumpers import yaml_dumper
+from linkml_runtime.linkml_model.meta import (
+    ClassDefinition,
+    SchemaDefinition,
+    SlotDefinition,
+)
+from linkml_runtime.loaders import yaml_loader
+from linkml_runtime.utils.schemaview import SchemaView
+
+
+ENTITY_ROOT = "named thing"
+ASSOCIATION_ROOT = "association"
+
+_KOZA_SCHEMA_TABLE = "_koza_schema"
+_KIND_DERIVED_SCHEMA = "derived_schema"
+_KIND_BIOLINK = "biolink"
+
+# Table → schema-class mapping. Driven by the same convention as
+# CONTEXT.md: `nodes` ↔ Entity, `edges` ↔ Association. The denormalized_*
+# tables join in when closurizer lands in phase 2.
+_TABLE_TO_CLASS: dict[str, str] = {
+    "nodes": "Entity",
+    "edges": "Association",
+}
+
+# Koza ingest-stage extras: slots koza injects at load time that are NOT in
+# Biolink. These are added to every class in the derived schema regardless of
+# whether they appear in input file headers.
+KOZA_INGEST_EXTRAS: dict[str, dict] = {
+    "file_source": {
+        "description": "Source file stem injected by koza at load time.",
+        "range": "string",
+        "multivalued": False,
+    },
+}
+
+
+class UnknownSlotsError(ValueError):
+    """Raised when input file headers contain columns that match no Biolink
+    slot and no koza extra. The strict-reject contract from ADR-0001."""
+
+
+def _snake_case(biolink_name: str) -> str:
+    return biolink_name.replace(" ", "_")
+
+
+def _biolink_slot_pool(sv: SchemaView, root_class: str) -> set[str]:
+    """All slots defined on the root class or any descendant, snake_cased."""
+    classes = [root_class] + list(sv.class_descendants(root_class))
+    names: set[str] = set()
+    for c in classes:
+        try:
+            names.update(sv.class_slots(c))
+        except Exception:
+            continue
+    return {_snake_case(n) for n in names}
+
+
+def _flatten(
+    sv: SchemaView,
+    root_class: str,
+    headers: list[str],
+    class_label: str,
+    declared_outputs: dict[str, dict],
+) -> tuple[dict[str, SlotDefinition], list[str]]:
+    pool = _biolink_slot_pool(sv, root_class)
+    slots: dict[str, SlotDefinition] = {}
+    rejected: list[str] = []
+    for col in headers:
+        if col in pool:
+            slots[col] = SlotDefinition(name=col)
+        elif col in declared_outputs:
+            slots[col] = SlotDefinition(name=col, **declared_outputs[col])
+        else:
+            rejected.append(col)
+    for name, spec in declared_outputs.items():
+        slots.setdefault(name, SlotDefinition(name=name, **spec))
+    return slots, rejected
+
+
+def _with_ingest_extras(slots: dict[str, SlotDefinition]) -> dict[str, SlotDefinition]:
+    merged: dict[str, SlotDefinition] = {}
+    for name, spec in KOZA_INGEST_EXTRAS.items():
+        merged[name] = SlotDefinition(name=name, **spec)
+    merged.update(slots)
+    return merged
+
+
+def derive_schema(
+    nodes_headers: list[str],
+    edges_headers: list[str],
+    biolink_schemaview: SchemaView,
+    declared_outputs: dict[str, dict[str, dict]] | None = None,
+) -> SchemaDefinition:
+    declared_outputs = declared_outputs or {}
+    entity_outputs = declared_outputs.get("Entity", {})
+    association_outputs = declared_outputs.get("Association", {})
+
+    entity_slots, entity_rejected = _flatten(
+        biolink_schemaview, ENTITY_ROOT, nodes_headers, "Entity", entity_outputs
+    )
+    association_slots, association_rejected = _flatten(
+        biolink_schemaview,
+        ASSOCIATION_ROOT,
+        edges_headers,
+        "Association",
+        association_outputs,
+    )
+    entity_slots = _with_ingest_extras(entity_slots)
+    association_slots = _with_ingest_extras(association_slots)
+
+    rejected = [(c, "Entity") for c in entity_rejected] + [
+        (c, "Association") for c in association_rejected
+    ]
+    if rejected:
+        details = ", ".join(f"{col} (in {cls})" for col, cls in rejected)
+        raise UnknownSlotsError(
+            f"Input headers contain {len(rejected)} column(s) that match no "
+            f"Biolink slot and no koza extra: {details}"
+        )
+
+    schema = SchemaDefinition(
+        id="https://w3id.org/monarch-initiative/koza/graph-schema",
+        name="koza-graph-schema",
+    )
+    schema.slots = {**entity_slots, **association_slots}
+    schema.classes = {
+        "Entity": ClassDefinition(name="Entity", slots=list(entity_slots.keys())),
+        "Association": ClassDefinition(
+            name="Association", slots=list(association_slots.keys())
+        ),
+    }
+    return schema
+
+
+def _ensure_metadata_table(conn: duckdb.DuckDBPyConnection) -> None:
+    conn.execute(
+        f"CREATE TABLE IF NOT EXISTS {_KOZA_SCHEMA_TABLE} "
+        f"(kind VARCHAR PRIMARY KEY, content VARCHAR)"
+    )
+
+
+def _write_metadata(
+    conn: duckdb.DuckDBPyConnection, kind: str, content: str
+) -> None:
+    conn.execute(
+        f"INSERT OR REPLACE INTO {_KOZA_SCHEMA_TABLE} (kind, content) VALUES (?, ?)",
+        [kind, content],
+    )
+
+
+def _read_metadata(conn: duckdb.DuckDBPyConnection, kind: str) -> str | None:
+    row = conn.execute(
+        f"SELECT content FROM {_KOZA_SCHEMA_TABLE} WHERE kind = ?", [kind]
+    ).fetchone()
+    return row[0] if row else None
+
+
+def seed_schema(
+    conn: duckdb.DuckDBPyConnection,
+    nodes_headers: list[str],
+    edges_headers: list[str],
+    biolink_schemaview: SchemaView,
+    declared_outputs: dict[str, dict[str, dict]] | None = None,
+) -> SchemaDefinition:
+    """Derive a graph schema and persist it as metadata in the DuckDB.
+
+    Called once at graph creation. After this, operations read and evolve the
+    stored schema rather than re-deriving from Biolink.
+    """
+    schema = derive_schema(
+        nodes_headers=nodes_headers,
+        edges_headers=edges_headers,
+        biolink_schemaview=biolink_schemaview,
+        declared_outputs=declared_outputs,
+    )
+    _ensure_metadata_table(conn)
+    _write_metadata(conn, _KIND_DERIVED_SCHEMA, yaml_dumper.dumps(schema))
+    _write_metadata(
+        conn, _KIND_BIOLINK, yaml_dumper.dumps(biolink_schemaview.schema)
+    )
+    return schema
+
+
+def current_schema(conn: duckdb.DuckDBPyConnection) -> SchemaDefinition:
+    """Read the stored graph schema from this DuckDB's metadata."""
+    content = _read_metadata(conn, _KIND_DERIVED_SCHEMA)
+    if content is None:
+        raise RuntimeError(
+            f"No graph schema found in {_KOZA_SCHEMA_TABLE} — was seed_schema called?"
+        )
+    return yaml_loader.loads(content, target_class=SchemaDefinition)
+
+
+def stored_biolink_yaml(conn: duckdb.DuckDBPyConnection) -> str | None:
+    """Read the Biolink YAML stored at seed time. Routine operations should
+    not need this — the derived schema is the operation-facing contract.
+    Used by `koza schema rebase` to diff stored vs. fresh Biolink."""
+    return _read_metadata(conn, _KIND_BIOLINK)
+
+
+def _duckdb_type_for(slot_def: SlotDefinition | None) -> str:
+    if slot_def is not None and slot_def.multivalued:
+        return "VARCHAR[]"
+    return "VARCHAR"
+
+
+def ensure_slots(
+    conn: duckdb.DuckDBPyConnection, table: str, slot_names: list[str]
+) -> None:
+    """Make sure `table` has columns for each slot in `slot_names`, ALTERing
+    as needed. Idempotent: slots already present as columns are skipped.
+
+    Called by operations before they write columns they declared via
+    DECLARED_OUTPUTS. Keeps the stored schema in sync.
+    """
+    if table not in _TABLE_TO_CLASS:
+        raise ValueError(
+            f"Unknown table {table!r} — known tables: {sorted(_TABLE_TO_CLASS)}"
+        )
+
+    schema = current_schema(conn)
+    class_name = _TABLE_TO_CLASS[table]
+    class_def = schema.classes[class_name]
+
+    existing_cols = {r[0] for r in conn.execute(f"DESCRIBE {table}").fetchall()}
+    schema_dirty = False
+    for slot in slot_names:
+        if slot not in existing_cols:
+            sql_type = _duckdb_type_for(schema.slots.get(slot))
+            conn.execute(f"ALTER TABLE {table} ADD COLUMN {slot} {sql_type}")
+        if slot not in class_def.slots:
+            class_def.slots.append(slot)
+            schema_dirty = True
+
+    if schema_dirty:
+        _write_metadata(conn, _KIND_DERIVED_SCHEMA, yaml_dumper.dumps(schema))
