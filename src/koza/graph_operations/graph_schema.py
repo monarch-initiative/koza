@@ -113,6 +113,12 @@ def _flatten(
             slots[col] = SlotDefinition(name=col)
         elif col in declared_outputs:
             slots[col] = SlotDefinition(name=col, **declared_outputs[col])
+        elif col in KOZA_INGEST_EXTRAS:
+            # File header includes a koza extra (e.g. file_source). Honor it
+            # — the slot is still injected unconditionally by
+            # `_with_ingest_extras`, but presence in headers must not trip
+            # strict-reject.
+            slots[col] = SlotDefinition(name=col, **KOZA_INGEST_EXTRAS[col])
         else:
             rejected.append(col)
     for name, spec in declared_outputs.items():

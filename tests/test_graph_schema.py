@@ -76,6 +76,19 @@ def test_operation_declared_outputs_are_valid_slots(biolink_schemaview):
     assert "mapping_source" in schema.classes["Association"].slots
 
 
+def test_file_source_in_headers_is_accepted_not_rejected(biolink_schemaview):
+    """`load_file` always injects file_source, so when join seeds the schema
+    against final-table headers the column is present. file_source must not
+    trip strict-reject since it's a known koza extra."""
+    schema = derive_schema(
+        nodes_headers=["id", "category", "file_source"],
+        edges_headers=["subject", "predicate", "object", "file_source"],
+        biolink_schemaview=biolink_schemaview,
+    )
+    assert "file_source" in schema.classes["Entity"].slots
+    assert "file_source" in schema.classes["Association"].slots
+
+
 def test_derive_schema_rejects_unknown_columns(biolink_schemaview):
     with pytest.raises(UnknownSlotsError) as exc_info:
         derive_schema(
