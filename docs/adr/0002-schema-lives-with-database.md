@@ -6,4 +6,6 @@ We rejected "schema derived per CLI invocation" because koza's longer-term shape
 
 Biolink updates land in an existing graph only via an explicit `koza schema rebase` operation that pulls a fresh Biolink from the env, replaces the stored copy, and surfaces deprecations, renames, and newly-admissible slots from existing data. `derived-schema.yaml` becomes an export-on-demand artifact rather than a per-run output, regenerable from the stored schema for inspection or diffing.
 
+`ensure_slots` gracefully degrades on unseeded DuckDBs (graphs created before the schema feature existed): it falls back to a plain `ALTER TABLE` without updating schema metadata, and the column type defaults to `VARCHAR` because multivalued-ness is unknown without a schema. This preserves a migration path for existing graphs — operations refactored to consume the seam still work on them — without forcing a one-shot rebuild.
+
 This supersedes the "derived per CLI invocation" framing in ADR-0001 while leaving the strict-reject decision intact.

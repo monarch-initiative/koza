@@ -21,7 +21,7 @@ The process that runs at graph creation: read input headers, intersect with Biol
 _Avoid_: schema build (covers two distinct moments now — be specific), schema derivation, schema generation.
 
 **Schema evolution**:
-The process that runs when an operation produces new slots: operation declares output slots via its `DECLARED_OUTPUTS`, the schema module `ALTER TABLE`s the relevant DuckDB tables and updates the stored schema metadata in the same transaction.
+The process that runs when an operation produces new slots: operation declares output slots via its `DECLARED_OUTPUTS`, the schema module `ALTER TABLE`s the relevant DuckDB tables and updates the stored schema metadata in the same transaction. On unseeded databases (graphs from before the schema feature existed), `ensure_slots` gracefully degrades to a plain `ALTER TABLE` so operations remain usable — see ADR-0002.
 _Avoid_: schema migration, schema mutation.
 
 **Schema rebase**:
