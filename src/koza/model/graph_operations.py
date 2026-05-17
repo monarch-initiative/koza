@@ -106,6 +106,7 @@ class JoinConfig(GraphOperationConfig):
     generate_provided_by: bool = True  # Add provided_by column from filename (like cat-merge)
     required_node_fields: list[str] = Field(default_factory=list)
     required_edge_fields: list[str] = Field(default_factory=list)
+    seed_schema: bool = True  # Seed the koza graph schema (derived-schema.yaml + Biolink) into DuckDB metadata
 
     @model_validator(mode="after")
     def set_database_path_from_output_database(self):

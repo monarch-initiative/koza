@@ -7,6 +7,10 @@ and docs/adr/0002-schema-lives-with-database.md.
 
 from __future__ import annotations
 
+import functools
+import importlib
+import importlib.resources as ir
+
 import duckdb
 from linkml_runtime.dumpers import yaml_dumper
 from linkml_runtime.linkml_model.meta import (
@@ -32,6 +36,34 @@ _TABLE_TO_CLASS: dict[str, str] = {
     "nodes": "Entity",
     "edges": "Association",
 }
+
+# Operation modules that may export a DECLARED_OUTPUTS constant. Hardcoded
+# import list rather than entry-point discovery — koza ships a fixed set of
+# operations. Add new operation modules here when they declare outputs.
+_OPERATION_MODULES_WITH_OUTPUTS = ("koza.graph_operations.normalize",)
+
+
+@functools.cache
+def load_biolink_schemaview() -> SchemaView:
+    """Load the Biolink SchemaView from the pinned biolink-model python
+    package. Cached process-wide — Biolink load is ~13s, so this matters."""
+    with ir.as_file(ir.files("biolink_model.schema") / "biolink_model.yaml") as p:
+        return SchemaView(str(p))
+
+
+def discover_declared_outputs() -> dict[str, dict[str, dict]]:
+    """Union DECLARED_OUTPUTS across all operation modules that export one.
+
+    Returns a dict shaped like `{"Entity": {slot_name: spec, ...}, "Association": {...}}`
+    — the shape `derive_schema` expects for its `declared_outputs` kwarg.
+    """
+    merged: dict[str, dict[str, dict]] = {}
+    for module_name in _OPERATION_MODULES_WITH_OUTPUTS:
+        module = importlib.import_module(module_name)
+        outputs = getattr(module, "DECLARED_OUTPUTS", {})
+        for cls_name, slots in outputs.items():
+            merged.setdefault(cls_name, {}).update(slots)
+    return merged
 
 # Koza ingest-stage extras: slots koza injects at load time that are NOT in
 # Biolink. These are added to every class in the derived schema regardless of

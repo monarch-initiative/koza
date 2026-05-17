@@ -17,6 +17,7 @@ from koza.graph_operations.graph_schema import (
     UnknownSlotsError,
     current_schema,
     derive_schema,
+    discover_declared_outputs,
     ensure_slots,
     seed_schema,
     stored_biolink_yaml,
@@ -198,6 +199,17 @@ def test_ensure_slots_is_idempotent(biolink_schemaview, tmp_path):
         conn.close()
 
     assert cols.count("original_subject") == 1
+
+
+def test_discover_declared_outputs_unions_known_operations():
+    """The hardcoded operation-module list in graph_schema gets walked and
+    each module's DECLARED_OUTPUTS is unioned. normalize is the only
+    operation that currently declares outputs (original_subject /
+    original_object on Association)."""
+    outputs = discover_declared_outputs()
+    assert "Association" in outputs
+    assert "original_subject" in outputs["Association"]
+    assert "original_object" in outputs["Association"]
 
 
 def test_ensure_slots_tolerates_unseeded_database(tmp_path):
