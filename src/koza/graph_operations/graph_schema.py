@@ -92,14 +92,13 @@ def _snake_case(biolink_name: str) -> str:
 
 
 def _biolink_slot_pool(sv: SchemaView, root_class: str) -> set[str]:
-    """Slots Biolink considers valid for this class.
+    """All slots defined on the root class or any descendant, snake_cased.
 
-    Combines class-applicable slots (the strict pool: root + descendants
-    via `class_slots`) with the broader set of all slot definitions in the
-    schema. Real KGX data uses Biolink slots that aren't always attached to
-    a specific class via `class_slots` (e.g. `exact synonym`, `subsets`);
-    rejecting those would be too strict. We still snake_case so the pool
-    matches the schema's canonical form.
+    Walks `class_slots` only — slots that Biolink defines but doesn't
+    attach to any class (e.g. `exact synonym` and other SKOS variants;
+    biolink-model issue #1737) won't be here. The permissive `seed_schema`
+    path records such columns as opaque slots, surfacing the divergence
+    in the stored schema rather than masking it.
     """
     classes = [root_class] + list(sv.class_descendants(root_class))
     names: set[str] = set()
@@ -108,8 +107,6 @@ def _biolink_slot_pool(sv: SchemaView, root_class: str) -> set[str]:
             names.update(sv.class_slots(c))
         except Exception:
             continue
-    # Broaden: any slot Biolink defines is fair game.
-    names.update(sv.all_slots())
     return {_snake_case(n) for n in names}
 
 
