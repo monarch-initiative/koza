@@ -63,6 +63,33 @@ def _generate_multivalued_select(
     return ", ".join(select_parts)
 
 
+def _build_injected_columns_exclude(
+    conn: duckdb.DuckDBPyConnection,
+    read_stmt: str,
+    file_path: Path,
+    generate_provided_by: bool,
+) -> str:
+    """Return a DuckDB EXCLUDE clause stripping any columns the loader is
+    about to inject (`file_source`, optionally `provided_by`). Without this
+    UNION ALL BY NAME ends up with auto-renamed duplicates (file_source_1
+    etc.) when an upstream ingest already supplies the column.
+    """
+    injected = {"file_source"}
+    if generate_provided_by:
+        injected.add("provided_by")
+    try:
+        schema_result = conn.execute(f"DESCRIBE SELECT * FROM {read_stmt}").fetchall()
+        present = {row[0] for row in schema_result} & injected
+    except Exception as e:
+        logger.debug(f"Could not detect schema for {file_path}: {e}")
+        return ""
+    if not present:
+        return ""
+    for col in sorted(present):
+        logger.debug(f"Excluding existing {col!r} column from {file_path}")
+    return f" EXCLUDE ({', '.join(sorted(present))})"
+
+
 def get_duckdb_read_statement(file_spec: FileSpec, sample_size: int | None = None) -> str:
     """
     Generate DuckDB read statement for the given file spec.
@@ -160,18 +187,12 @@ class GraphDatabase:
             if generate_provided_by:
                 extra_columns.append(f"'{source_name}' as provided_by")
 
-            # Check if input file has a provided_by column that we need to exclude
-            # (to avoid duplicate column names when we add our own)
-            exclude_clause = ""
-            if generate_provided_by:
-                try:
-                    schema_result = self.conn.execute(f"DESCRIBE SELECT * FROM {read_stmt}").fetchall()
-                    input_columns = {row[0] for row in schema_result}
-                    if "provided_by" in input_columns:
-                        exclude_clause = " EXCLUDE (provided_by)"
-                        logger.debug(f"Excluding existing 'provided_by' column from {file_spec.path}")
-                except Exception as e:
-                    logger.debug(f"Could not detect schema for {file_spec.path}: {e}")
+            # Strip any pre-existing file_source / provided_by from the input
+            # so our injected versions don't collide (DuckDB UNION ALL BY NAME
+            # would otherwise auto-rename to file_source_1 etc).
+            exclude_clause = _build_injected_columns_exclude(
+                self.conn, read_stmt, file_spec.path, generate_provided_by
+            )
 
             # Load into temp table with source tracking and optional provided_by
             extra_cols_str = ", " + ", ".join(extra_columns) if extra_columns else ""
@@ -198,16 +219,10 @@ class GraphDatabase:
                     )
                     read_stmt = get_duckdb_read_statement(file_spec, sample_size=-1)
 
-                    # Re-check for provided_by column with full scan
-                    exclude_clause = ""
-                    if generate_provided_by:
-                        try:
-                            schema_result = self.conn.execute(f"DESCRIBE SELECT * FROM {read_stmt}").fetchall()
-                            input_columns = {row[0] for row in schema_result}
-                            if "provided_by" in input_columns:
-                                exclude_clause = " EXCLUDE (provided_by)"
-                        except Exception:
-                            pass
+                    # Re-detect collisions against the full-scan schema
+                    exclude_clause = _build_injected_columns_exclude(
+                        self.conn, read_stmt, file_spec.path, generate_provided_by
+                    )
 
                     create_sql = f"""
                         CREATE TEMP TABLE {temp_table_name} AS
