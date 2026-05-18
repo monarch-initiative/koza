@@ -74,6 +74,11 @@ KOZA_INGEST_EXTRAS: dict[str, dict] = {
         "range": "string",
         "multivalued": False,
     },
+    "provided_by": {
+        "description": "Source file stem injected by koza at load time (KGX convention).",
+        "range": "string",
+        "multivalued": False,
+    },
 }
 
 
@@ -87,7 +92,15 @@ def _snake_case(biolink_name: str) -> str:
 
 
 def _biolink_slot_pool(sv: SchemaView, root_class: str) -> set[str]:
-    """All slots defined on the root class or any descendant, snake_cased."""
+    """Slots Biolink considers valid for this class.
+
+    Combines class-applicable slots (the strict pool: root + descendants
+    via `class_slots`) with the broader set of all slot definitions in the
+    schema. Real KGX data uses Biolink slots that aren't always attached to
+    a specific class via `class_slots` (e.g. `exact synonym`, `subsets`);
+    rejecting those would be too strict. We still snake_case so the pool
+    matches the schema's canonical form.
+    """
     classes = [root_class] + list(sv.class_descendants(root_class))
     names: set[str] = set()
     for c in classes:
@@ -95,6 +108,8 @@ def _biolink_slot_pool(sv: SchemaView, root_class: str) -> set[str]:
             names.update(sv.class_slots(c))
         except Exception:
             continue
+    # Broaden: any slot Biolink defines is fair game.
+    names.update(sv.all_slots())
     return {_snake_case(n) for n in names}
 
 
@@ -139,7 +154,19 @@ def derive_schema(
     edges_headers: list[str],
     biolink_schemaview: SchemaView,
     declared_outputs: dict[str, dict[str, dict]] | None = None,
+    strict: bool = True,
 ) -> SchemaDefinition:
+    """Derive a flat LinkML schema from input file headers + Biolink.
+
+    With `strict=True` (default), columns that match no Biolink slot, no
+    koza extra, and no declared output raise UnknownSlotsError — the
+    contract from ADR-0001.
+
+    With `strict=False`, unknown columns are added as minimal VARCHAR
+    slots so the resulting schema reflects whatever's in the data. Used
+    by `seed_schema` to record the schema of an already-loaded graph
+    rather than enforce validation against it.
+    """
     declared_outputs = declared_outputs or {}
     entity_outputs = declared_outputs.get("Entity", {})
     association_outputs = declared_outputs.get("Association", {})
@@ -161,11 +188,17 @@ def derive_schema(
         (c, "Association") for c in association_rejected
     ]
     if rejected:
-        details = ", ".join(f"{col} (in {cls})" for col, cls in rejected)
-        raise UnknownSlotsError(
-            f"Input headers contain {len(rejected)} column(s) that match no "
-            f"Biolink slot and no koza extra: {details}"
-        )
+        if strict:
+            details = ", ".join(f"{col} (in {cls})" for col, cls in rejected)
+            raise UnknownSlotsError(
+                f"Input headers contain {len(rejected)} column(s) that match no "
+                f"Biolink slot and no koza extra: {details}"
+            )
+        # Permissive: record unknowns as minimal slots so the schema
+        # reflects what's actually in the database.
+        for col, cls in rejected:
+            target = entity_slots if cls == "Entity" else association_slots
+            target.setdefault(col, SlotDefinition(name=col))
 
     schema = SchemaDefinition(
         id="https://w3id.org/monarch-initiative/koza/graph-schema",
@@ -220,11 +253,14 @@ def seed_schema(
     Called once at graph creation. After this, operations read and evolve the
     stored schema rather than re-deriving from Biolink.
     """
+    # Permissive — the data already exists; the schema should reflect it.
+    # Strict-reject is for future load/append validation through the seam.
     schema = derive_schema(
         nodes_headers=nodes_headers,
         edges_headers=edges_headers,
         biolink_schemaview=biolink_schemaview,
         declared_outputs=declared_outputs,
+        strict=False,
     )
     _ensure_metadata_table(conn)
     _write_metadata(conn, _KIND_DERIVED_SCHEMA, yaml_dumper.dumps(schema))

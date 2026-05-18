@@ -12,7 +12,6 @@ from tqdm import tqdm
 from koza.model.graph_operations import FileLoadResult, FileSpec, JoinConfig, JoinResult, KGXFileType, OperationSummary
 
 from .graph_schema import (
-    UnknownSlotsError,
     discover_declared_outputs,
     load_biolink_schemaview,
     seed_schema,
@@ -234,19 +233,13 @@ def _seed_graph_schema(db: GraphDatabase, files_loaded: list[FileLoadResult]) ->
     if not nodes_headers and not edges_headers:
         # Nothing to seed against — e.g. a join that produced no tables.
         return
-    try:
-        seed_schema(
-            conn=db.conn,
-            nodes_headers=nodes_headers,
-            edges_headers=edges_headers,
-            biolink_schemaview=load_biolink_schemaview(),
-            declared_outputs=discover_declared_outputs(),
-        )
-    except UnknownSlotsError as e:
-        # Don't fail the load — log and skip. Downstream operations use the
-        # tolerant `ensure_slots` path so the graph remains usable; the
-        # rejected columns surface as a clear warning instead of a crash.
-        logger.warning(f"Skipping schema seeding due to unknown slots: {e}")
+    seed_schema(
+        conn=db.conn,
+        nodes_headers=nodes_headers,
+        edges_headers=edges_headers,
+        biolink_schemaview=load_biolink_schemaview(),
+        declared_outputs=discover_declared_outputs(),
+    )
 
 
 def _headers_for_table(db: GraphDatabase, table: str) -> list[str]:

@@ -99,6 +99,19 @@ def test_derive_schema_rejects_unknown_columns(biolink_schemaview):
     assert "bogus_column" in str(exc_info.value)
 
 
+def test_derive_schema_permissive_records_unknowns_as_minimal_slots(biolink_schemaview):
+    """With strict=False, unknown columns become VARCHAR slots so the
+    derived schema reflects whatever's in the data — used by seed_schema
+    to record an already-loaded graph rather than enforce validation."""
+    schema = derive_schema(
+        nodes_headers=["id", "name", "bogus_column"],
+        edges_headers=["subject", "predicate", "object"],
+        biolink_schemaview=biolink_schemaview,
+        strict=False,
+    )
+    assert "bogus_column" in schema.classes["Entity"].slots
+
+
 def test_seed_and_read_schema_round_trip(biolink_schemaview, tmp_path):
     db_path = tmp_path / "test.duckdb"
     conn = duckdb.connect(str(db_path))
