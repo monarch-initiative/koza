@@ -5,8 +5,8 @@ attributes (`edges.file_source`, `nodes.id`). Typos surface as
 `AttributeError` rather than as SQL "column not found" errors at execution
 time.
 
-Hand-written for phase 1. A follow-up will generate this module from the
-stored graph schema in each DuckDB — see GRAPH_SCHEMA_DESIGN_V2.md.
+Hand-written for now. A follow-up will generate this module from the
+stored graph schema in each DuckDB.
 
 Slot names match the snake_case form in the derived schema (the canonical
 form throughout koza.graph_operations).

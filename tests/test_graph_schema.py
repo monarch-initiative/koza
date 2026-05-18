@@ -1,7 +1,7 @@
 """Tests for the graph_schema module — the seam between operations and the
 LinkML-derived schema that lives in each koza-built DuckDB.
 
-See GRAPH_SCHEMA_DESIGN_V2.md and docs/adr/0002-schema-lives-with-database.md.
+See decisions/0002-schema-lives-with-database.md.
 """
 
 from __future__ import annotations

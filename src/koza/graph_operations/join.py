@@ -180,7 +180,7 @@ def join_graphs(config: JoinConfig) -> JoinResult:
 
             # Seed the koza graph schema into DuckDB metadata so downstream
             # operations can consult `current_schema(conn)` instead of
-            # falling back to DESCRIBE. ADR-0002 + GRAPH_SCHEMA_DESIGN_V2.md.
+            # falling back to DESCRIBE. See decisions/0002-schema-lives-with-database.md.
             if config.seed_schema:
                 _seed_graph_schema(db, files_loaded)
 
