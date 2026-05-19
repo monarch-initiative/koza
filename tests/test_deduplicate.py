@@ -189,35 +189,6 @@ def database_with_edges_no_id_column(temp_dir):
     return db_path
 
 
-@pytest.fixture
-def database_with_provided_by_ordering(temp_dir):
-    """Create a database using provided_by column instead of file_source."""
-    db_path = temp_dir / "provided_by.duckdb"
-
-    with GraphDatabase(db_path) as db:
-        # Create nodes with duplicates, using provided_by for ordering
-        db.conn.execute("""
-            CREATE TABLE nodes (id VARCHAR, category VARCHAR, name VARCHAR, provided_by VARCHAR);
-            INSERT INTO nodes VALUES
-                ('HGNC:123', 'biolink:Gene', 'gene1_from_b', 'source_b'),
-                ('HGNC:123', 'biolink:Gene', 'gene1_from_a', 'source_a'),
-                ('HGNC:456', 'biolink:Gene', 'gene2', 'source_a');
-        """)
-
-        db.conn.execute("""
-            CREATE TABLE edges (id VARCHAR, subject VARCHAR, predicate VARCHAR, object VARCHAR, provided_by VARCHAR);
-            INSERT INTO edges VALUES
-                ('edge1', 'HGNC:123', 'biolink:related_to', 'HGNC:456', 'source_a');
-        """)
-
-        db.conn.execute("""
-            CREATE TABLE duplicate_nodes (id VARCHAR, category VARCHAR, name VARCHAR, provided_by VARCHAR);
-            CREATE TABLE duplicate_edges (id VARCHAR, subject VARCHAR, predicate VARCHAR, object VARCHAR, provided_by VARCHAR);
-        """)
-
-    return db_path
-
-
 class TestDeduplicateOperation:
     """Test deduplicate operation functionality (ID-based deduplication)."""
 
@@ -440,31 +411,6 @@ class TestDeduplicateOperation:
             assert kept_node[0] == "biolink:Gene"  # First source's category
             assert kept_node[1] == "BRCA1"  # First source's name
 
-    def test_deduplicate_order_by_provided_by(self, database_with_provided_by_ordering):
-        """Test that deduplication uses provided_by for ordering when file_source is absent."""
-        config = DeduplicateConfig(
-            database_path=database_with_provided_by_ordering,
-            deduplicate_nodes=True,
-            deduplicate_edges=True,
-            quiet=True,
-            show_progress=False,
-        )
-
-        result = deduplicate_graph(config)
-
-        assert result is not None
-        assert result.success is True
-        assert result.duplicate_nodes_found == 2
-        assert result.duplicate_nodes_removed == 1
-        assert result.final_stats.nodes == 2
-
-        # Verify the first occurrence (ordered by provided_by) was kept
-        with GraphDatabase(database_with_provided_by_ordering) as db:
-            node = db.conn.execute("SELECT name FROM nodes WHERE id = 'HGNC:123'").fetchone()
-            # source_a comes before source_b alphabetically, so gene1_from_a should be kept
-            assert node[0] == "gene1_from_a"
-
-
 class TestDeduplicateConfigValidation:
     """Test DeduplicateConfig validation."""
 
@@ -636,38 +582,6 @@ class TestDeduplicateEdgeCases:
         assert result.duplicate_nodes_found == 100  # All 100 rows for HGNC:123
         assert result.duplicate_nodes_removed == 99  # Keep 1, remove 99
         assert result.final_stats.nodes == 51  # 1 HGNC:123 + 50 unique nodes
-
-    def test_deduplicate_no_ordering_column(self, temp_dir):
-        """Test deduplication when neither file_source nor provided_by exists."""
-        db_path = temp_dir / "no_order.duckdb"
-
-        with GraphDatabase(db_path) as db:
-            db.conn.execute("""
-                CREATE TABLE nodes (id VARCHAR, category VARCHAR, name VARCHAR);
-                INSERT INTO nodes VALUES
-                    ('HGNC:123', 'biolink:Gene', 'gene1_v1'),
-                    ('HGNC:123', 'biolink:Gene', 'gene1_v2'),
-                    ('HGNC:456', 'biolink:Gene', 'gene2');
-                CREATE TABLE edges (id VARCHAR, subject VARCHAR, predicate VARCHAR, object VARCHAR);
-                CREATE TABLE duplicate_nodes (id VARCHAR, category VARCHAR, name VARCHAR);
-                CREATE TABLE duplicate_edges (id VARCHAR, subject VARCHAR, predicate VARCHAR, object VARCHAR);
-            """)
-
-        config = DeduplicateConfig(
-            database_path=db_path,
-            deduplicate_nodes=True,
-            deduplicate_edges=True,
-            quiet=True,
-            show_progress=False,
-        )
-
-        result = deduplicate_graph(config)
-
-        assert result is not None
-        assert result.success is True
-        assert result.duplicate_nodes_found == 2
-        assert result.duplicate_nodes_removed == 1
-        assert result.final_stats.nodes == 2  # Only 2 unique nodes
 
     def test_deduplicate_result_summary(self, database_with_duplicates_nodes_and_edges):
         """Test that result summary is correctly populated."""

@@ -3,6 +3,7 @@ Utilities for parsing LinkML schemas to identify multivalued fields.
 Supports KGX format and Biolink Model schema definitions.
 """
 
+import importlib.resources as ir
 from typing import Optional, Set
 
 from loguru import logger
@@ -16,7 +17,9 @@ class SchemaParser:
         Initialize the schema parser.
 
         Args:
-            schema_path: Path to LinkML YAML schema file. If None, uses latest Biolink Model.
+            schema_path: Path to LinkML YAML schema file. If None, uses the
+                Biolink Model bundled with the `biolink-model` python package
+                (pinned via pyproject.toml, no runtime fetch).
         """
         self.schema_path = schema_path
         self.schema_view = None
@@ -27,10 +30,10 @@ class SchemaParser:
             if schema_path:
                 self.schema_view = SchemaView(schema_path)
             else:
-                # Default to latest Biolink Model
-                self.schema_view = SchemaView(
-                    "https://raw.githubusercontent.com/biolink/biolink-model/master/biolink-model.yaml"
-                )
+                with ir.as_file(
+                    ir.files("biolink_model.schema") / "biolink_model.yaml"
+                ) as p:
+                    self.schema_view = SchemaView(str(p))
         except Exception as e:
             logger.debug(f"Could not load schema: {e}")
             self.schema_view = None
@@ -85,34 +88,6 @@ FORCE_SINGLE_VALUED_FIELDS: Set[str] = {
     "type",
 }
 
-# Fallback multivalued fields for KGX format (used only when schema unavailable)
-KGX_MULTIVALUED_FIELDS_FALLBACK: Set[str] = {
-    # Node properties
-    "type",
-    "xref",
-    "synonym",
-    "in_taxon",
-    "in_taxon_label",
-    "provided_by",
-    "publications",
-    "same_as",
-    # Edge properties
-    "qualifiers",
-    "knowledge_source",
-    "aggregator_knowledge_source",
-    "supporting_data_source",
-    "has_evidence",
-    "supporting_studies",
-    "supporting_study_method_types",
-    "publications_from_studies",
-    # Additional common multivalued fields
-    "xrefs",
-    "synonyms",
-    "categories",
-    "types",
-}
-
-
 # Global schema parser instance (lazy loaded)
 _global_schema_parser: Optional[SchemaParser] = None
 
@@ -150,13 +125,11 @@ def is_field_multivalued(field_name: str, schema_path: Optional[str] = None) -> 
     if field_name in FORCE_SINGLE_VALUED_FIELDS:
         return False
 
-    # Try to get from schema first
     parser = get_schema_parser(schema_path)
     if parser.schema_view:
         return parser.is_field_multivalued(field_name)
 
-    # Fall back to hardcoded list only if schema unavailable
-    return field_name in KGX_MULTIVALUED_FIELDS_FALLBACK
+    return False
 
 
 def get_multivalued_columns(column_names: list[str], schema_path: Optional[str] = None) -> Set[str]:

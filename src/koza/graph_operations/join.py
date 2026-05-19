@@ -11,6 +11,11 @@ from tqdm import tqdm
 
 from koza.model.graph_operations import FileLoadResult, FileSpec, JoinConfig, JoinResult, KGXFileType, OperationSummary
 
+from .graph_schema import (
+    discover_declared_outputs,
+    load_biolink_schemaview,
+    seed_schema,
+)
 from .schema import generate_schema_report, print_schema_summary, write_schema_report_yaml
 from .utils import GraphDatabase, print_operation_summary
 
@@ -173,6 +178,12 @@ def join_graphs(config: JoinConfig) -> JoinResult:
             # Create final tables using UNION ALL BY NAME
             db.create_final_tables(files_loaded)
 
+            # Seed the koza graph schema into DuckDB metadata so downstream
+            # operations can consult `current_schema(conn)` instead of
+            # falling back to DESCRIBE. See decisions/0002-schema-lives-with-database.md.
+            if config.seed_schema:
+                _seed_graph_schema(db, files_loaded)
+
             # Get final statistics
             final_stats = db.get_stats()
 
@@ -212,6 +223,30 @@ def join_graphs(config: JoinConfig) -> JoinResult:
             print_operation_summary(summary)
 
         raise
+
+
+def _seed_graph_schema(db: GraphDatabase, files_loaded: list[FileLoadResult]) -> None:
+    """Read the column lists from the final nodes/edges tables and seed the
+    derived schema + Biolink YAML into the DuckDB's _koza_schema metadata."""
+    nodes_headers = _headers_for_table(db, "nodes")
+    edges_headers = _headers_for_table(db, "edges")
+    if not nodes_headers and not edges_headers:
+        # Nothing to seed against — e.g. a join that produced no tables.
+        return
+    seed_schema(
+        conn=db.conn,
+        nodes_headers=nodes_headers,
+        edges_headers=edges_headers,
+        biolink_schemaview=load_biolink_schemaview(),
+        declared_outputs=discover_declared_outputs(),
+    )
+
+
+def _headers_for_table(db: GraphDatabase, table: str) -> list[str]:
+    try:
+        return [r[0] for r in db.conn.execute(f"DESCRIBE {table}").fetchall()]
+    except Exception:
+        return []
 
 
 def _print_join_summary(result: JoinResult):

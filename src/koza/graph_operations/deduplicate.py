@@ -19,6 +19,7 @@ from koza.model.graph_operations import (
     OperationSummary,
 )
 
+from .slots import edges, nodes
 from .utils import GraphDatabase, print_operation_summary
 
 
@@ -177,17 +178,12 @@ def _deduplicate_nodes(db: GraphDatabase, config: DeduplicateConfig) -> dict:
     # Get count before deduplication
     original_count = db.conn.execute("SELECT COUNT(*) FROM nodes").fetchone()[0]
 
-    # Check which ordering column exists (file_source or provided_by)
-    order_column = _get_order_column(db, "nodes")
-
-    # Step 1: Create duplicate_nodes table with ALL rows that have duplicate IDs
-    # This preserves all duplicates for QC tracking
-    db.conn.execute("""
+    db.conn.execute(f"""
         CREATE OR REPLACE TABLE duplicate_nodes AS
         SELECT * FROM nodes
-        WHERE id IN (
-            SELECT id FROM nodes
-            GROUP BY id
+        WHERE {nodes.id} IN (
+            SELECT {nodes.id} FROM nodes
+            GROUP BY {nodes.id}
             HAVING COUNT(*) > 1
         )
     """)
@@ -198,19 +194,16 @@ def _deduplicate_nodes(db: GraphDatabase, config: DeduplicateConfig) -> dict:
         logger.info("No duplicate nodes found")
         return {"found": 0, "removed": 0}
 
-    # Count unique IDs that have duplicates
-    duplicate_ids = db.conn.execute("""
-        SELECT COUNT(DISTINCT id) FROM duplicate_nodes
+    duplicate_ids = db.conn.execute(f"""
+        SELECT COUNT(DISTINCT {nodes.id}) FROM duplicate_nodes
     """).fetchone()[0]
 
     logger.info(f"Found {duplicate_rows} rows with {duplicate_ids} duplicate node IDs")
 
-    # Step 2: Clean nodes table - keep first occurrence ordered by file_source/provided_by
-    # Use CREATE OR REPLACE TABLE to avoid issues with temp table renaming in DuckDB
     db.conn.execute(f"""
         CREATE OR REPLACE TABLE nodes AS
         SELECT * EXCLUDE (rn) FROM (
-            SELECT *, ROW_NUMBER() OVER (PARTITION BY id ORDER BY {order_column}) as rn
+            SELECT *, ROW_NUMBER() OVER (PARTITION BY {nodes.id} ORDER BY {nodes.file_source}) as rn
             FROM nodes
         ) WHERE rn = 1
     """)
@@ -255,24 +248,16 @@ def _deduplicate_edges(db: GraphDatabase, config: DeduplicateConfig) -> dict:
         logger.debug("No edges table found, skipping edge deduplication")
         return {"found": 0, "removed": 0}
 
-    # Check if edges have an id column
+    # Edges may legitimately lack an id column — KGX files often key on
+    # (subject, predicate, object) instead. Skip dedup in that case.
     try:
         db.conn.execute("SELECT id FROM edges LIMIT 1")
-        has_id_column = True
     except Exception:
-        has_id_column = False
-
-    if not has_id_column:
         logger.warning("Edges table has no 'id' column, skipping edge deduplication")
         return {"found": 0, "removed": 0}
 
-    # Get count before deduplication
     original_count = db.conn.execute("SELECT COUNT(*) FROM edges").fetchone()[0]
 
-    # Check which ordering column exists
-    order_column = _get_order_column(db, "edges")
-
-    # Step 1: Create duplicate_edges table with ALL rows that have duplicate IDs
     db.conn.execute("""
         CREATE OR REPLACE TABLE duplicate_edges AS
         SELECT * FROM edges
@@ -289,19 +274,16 @@ def _deduplicate_edges(db: GraphDatabase, config: DeduplicateConfig) -> dict:
         logger.info("No duplicate edges found")
         return {"found": 0, "removed": 0}
 
-    # Count unique IDs that have duplicates
     duplicate_ids = db.conn.execute("""
         SELECT COUNT(DISTINCT id) FROM duplicate_edges
     """).fetchone()[0]
 
     logger.info(f"Found {duplicate_rows} rows with {duplicate_ids} duplicate edge IDs")
 
-    # Step 2: Clean edges table - keep first occurrence
-    # Use CREATE OR REPLACE TABLE to avoid issues with temp table renaming in DuckDB
     db.conn.execute(f"""
         CREATE OR REPLACE TABLE edges AS
         SELECT * EXCLUDE (rn) FROM (
-            SELECT *, ROW_NUMBER() OVER (PARTITION BY id ORDER BY {order_column}) as rn
+            SELECT *, ROW_NUMBER() OVER (PARTITION BY id ORDER BY {edges.file_source}) as rn
             FROM edges
         ) WHERE rn = 1
     """)
@@ -315,32 +297,3 @@ def _deduplicate_edges(db: GraphDatabase, config: DeduplicateConfig) -> dict:
     return {"found": duplicate_rows, "removed": removed}
 
 
-def _get_order_column(db: GraphDatabase, table: str) -> str:
-    """
-    Determine which column to use for ordering when keeping the first occurrence.
-
-    For deterministic deduplication, we need a column to order by when deciding
-    which duplicate to keep. This function checks for common provenance columns.
-
-    Priority order:
-    1. file_source - Added by koza during file loading
-    2. provided_by - Standard KGX provenance column
-    3. "1" (constant) - Fallback when no ordering column exists
-
-    Args:
-        db: GraphDatabase instance with active connection
-        table: Name of the table to check ("nodes" or "edges")
-
-    Returns:
-        Column name to use in ORDER BY clause, or "1" if no suitable column exists
-    """
-    columns = db.conn.execute(f"DESCRIBE {table}").fetchall()
-    column_names = {col[0] for col in columns}
-
-    if "file_source" in column_names:
-        return "file_source"
-    elif "provided_by" in column_names:
-        return "provided_by"
-    else:
-        # No ordering column available, use a constant (arbitrary but deterministic)
-        return "1"

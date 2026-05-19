@@ -25,27 +25,22 @@ def database_with_clean_graph(temp_dir):
     db_path = temp_dir / "clean.duckdb"
 
     with GraphDatabase(db_path) as db:
-        # Create nodes
         db.conn.execute("""
-            CREATE TABLE nodes (id VARCHAR, category VARCHAR, name VARCHAR);
-            INSERT INTO nodes VALUES 
-                ('HGNC:123', 'biolink:Gene', 'gene1'),
-                ('HGNC:456', 'biolink:Gene', 'gene2'),
-                ('MONDO:001', 'biolink:Disease', 'disease1');
+            CREATE TABLE nodes (id VARCHAR, category VARCHAR, name VARCHAR, file_source VARCHAR);
+            INSERT INTO nodes VALUES
+                ('HGNC:123', 'biolink:Gene', 'gene1', 'nodes_src'),
+                ('HGNC:456', 'biolink:Gene', 'gene2', 'nodes_src'),
+                ('MONDO:001', 'biolink:Disease', 'disease1', 'nodes_src');
         """)
 
-        # Create edges with all valid references
         db.conn.execute("""
-            CREATE TABLE edges (subject VARCHAR, predicate VARCHAR, object VARCHAR);
-            INSERT INTO edges VALUES 
-                ('HGNC:123', 'biolink:related_to', 'MONDO:001'),
-                ('HGNC:456', 'biolink:causes', 'MONDO:001');
+            CREATE TABLE edges (subject VARCHAR, predicate VARCHAR, object VARCHAR, file_source VARCHAR);
+            INSERT INTO edges VALUES
+                ('HGNC:123', 'biolink:related_to', 'MONDO:001', 'edges_src'),
+                ('HGNC:456', 'biolink:causes', 'MONDO:001', 'edges_src');
         """)
 
-        # Create empty QC tables (file_schemas is created automatically by GraphDatabase)
         db.conn.execute("""
-            CREATE TABLE dangling_edges (subject VARCHAR, predicate VARCHAR, object VARCHAR);
-            CREATE TABLE singleton_nodes (id VARCHAR, category VARCHAR, name VARCHAR);
             CREATE TABLE duplicate_nodes (id VARCHAR, category VARCHAR, name VARCHAR);
         """)
 
@@ -58,28 +53,23 @@ def database_with_dangling_edges(temp_dir):
     db_path = temp_dir / "dangling.duckdb"
 
     with GraphDatabase(db_path) as db:
-        # Create nodes
         db.conn.execute("""
-            CREATE TABLE nodes (id VARCHAR, category VARCHAR, name VARCHAR);
-            INSERT INTO nodes VALUES 
-                ('HGNC:123', 'biolink:Gene', 'gene1'),
-                ('HGNC:456', 'biolink:Gene', 'gene2');
+            CREATE TABLE nodes (id VARCHAR, category VARCHAR, name VARCHAR, file_source VARCHAR);
+            INSERT INTO nodes VALUES
+                ('HGNC:123', 'biolink:Gene', 'gene1', 'nodes_src'),
+                ('HGNC:456', 'biolink:Gene', 'gene2', 'nodes_src');
         """)
 
-        # Create edges with some dangling references
         db.conn.execute("""
-            CREATE TABLE edges (subject VARCHAR, predicate VARCHAR, object VARCHAR);
-            INSERT INTO edges VALUES 
-                ('HGNC:123', 'biolink:related_to', 'HGNC:456'),  -- Valid
-                ('HGNC:123', 'biolink:related_to', 'MISSING:001'),  -- Dangling object
-                ('MISSING:002', 'biolink:causes', 'HGNC:456'),  -- Dangling subject
-                ('MISSING:003', 'biolink:related_to', 'MISSING:004');  -- Both dangling
+            CREATE TABLE edges (subject VARCHAR, predicate VARCHAR, object VARCHAR, file_source VARCHAR);
+            INSERT INTO edges VALUES
+                ('HGNC:123', 'biolink:related_to', 'HGNC:456', 'edges_src'),  -- Valid
+                ('HGNC:123', 'biolink:related_to', 'MISSING:001', 'edges_src'),  -- Dangling object
+                ('MISSING:002', 'biolink:causes', 'HGNC:456', 'edges_src'),  -- Dangling subject
+                ('MISSING:003', 'biolink:related_to', 'MISSING:004', 'edges_src');  -- Both dangling
         """)
 
-        # Create empty QC tables (file_schemas is created automatically by GraphDatabase)
         db.conn.execute("""
-            CREATE TABLE dangling_edges (subject VARCHAR, predicate VARCHAR, object VARCHAR);
-            CREATE TABLE singleton_nodes (id VARCHAR, category VARCHAR, name VARCHAR);
             CREATE TABLE duplicate_nodes (id VARCHAR, category VARCHAR, name VARCHAR);
         """)
 
@@ -92,28 +82,23 @@ def database_with_singletons(temp_dir):
     db_path = temp_dir / "singletons.duckdb"
 
     with GraphDatabase(db_path) as db:
-        # Create nodes including singletons
         db.conn.execute("""
-            CREATE TABLE nodes (id VARCHAR, category VARCHAR, name VARCHAR);
-            INSERT INTO nodes VALUES 
-                ('HGNC:123', 'biolink:Gene', 'gene1'),  -- Connected
-                ('HGNC:456', 'biolink:Gene', 'gene2'),  -- Connected
-                ('HGNC:789', 'biolink:Gene', 'gene3'),  -- Singleton
-                ('MONDO:001', 'biolink:Disease', 'disease1');  -- Connected
+            CREATE TABLE nodes (id VARCHAR, category VARCHAR, name VARCHAR, file_source VARCHAR);
+            INSERT INTO nodes VALUES
+                ('HGNC:123', 'biolink:Gene', 'gene1', 'nodes_src'),  -- Connected
+                ('HGNC:456', 'biolink:Gene', 'gene2', 'nodes_src'),  -- Connected
+                ('HGNC:789', 'biolink:Gene', 'gene3', 'nodes_src'),  -- Singleton
+                ('MONDO:001', 'biolink:Disease', 'disease1', 'nodes_src');  -- Connected
         """)
 
-        # Create edges that don't reference all nodes
         db.conn.execute("""
-            CREATE TABLE edges (subject VARCHAR, predicate VARCHAR, object VARCHAR);
-            INSERT INTO edges VALUES 
-                ('HGNC:123', 'biolink:related_to', 'MONDO:001'),
-                ('HGNC:456', 'biolink:causes', 'MONDO:001');
+            CREATE TABLE edges (subject VARCHAR, predicate VARCHAR, object VARCHAR, file_source VARCHAR);
+            INSERT INTO edges VALUES
+                ('HGNC:123', 'biolink:related_to', 'MONDO:001', 'edges_src'),
+                ('HGNC:456', 'biolink:causes', 'MONDO:001', 'edges_src');
         """)
 
-        # Create empty QC tables (file_schemas is created automatically by GraphDatabase)
         db.conn.execute("""
-            CREATE TABLE dangling_edges (subject VARCHAR, predicate VARCHAR, object VARCHAR);
-            CREATE TABLE singleton_nodes (id VARCHAR, category VARCHAR, name VARCHAR);
             CREATE TABLE duplicate_nodes (id VARCHAR, category VARCHAR, name VARCHAR);
         """)
 
@@ -126,38 +111,28 @@ def database_with_edges_having_original_columns(temp_dir):
     db_path = temp_dir / "normalized.duckdb"
 
     with GraphDatabase(db_path) as db:
-        # Create nodes
         db.conn.execute("""
-            CREATE TABLE nodes (id VARCHAR, category VARCHAR, name VARCHAR);
-            INSERT INTO nodes VALUES 
-                ('CANONICAL:123', 'biolink:Gene', 'gene1'),
-                ('CANONICAL:456', 'biolink:Gene', 'gene2');
+            CREATE TABLE nodes (id VARCHAR, category VARCHAR, name VARCHAR, file_source VARCHAR);
+            INSERT INTO nodes VALUES
+                ('CANONICAL:123', 'biolink:Gene', 'gene1', 'nodes_src'),
+                ('CANONICAL:456', 'biolink:Gene', 'gene2', 'nodes_src');
         """)
 
-        # Create edges with original columns (as if normalized)
         db.conn.execute("""
             CREATE TABLE edges (
-                subject VARCHAR, 
-                predicate VARCHAR, 
+                subject VARCHAR,
+                predicate VARCHAR,
                 object VARCHAR,
                 original_subject VARCHAR,
-                original_object VARCHAR
+                original_object VARCHAR,
+                file_source VARCHAR
             );
-            INSERT INTO edges VALUES 
-                ('CANONICAL:123', 'biolink:related_to', 'CANONICAL:456', 'ORIG:123', 'ORIG:456'),
-                ('CANONICAL:123', 'biolink:causes', 'MISSING:001', 'ORIG:123', 'ORIG:MISSING');
+            INSERT INTO edges VALUES
+                ('CANONICAL:123', 'biolink:related_to', 'CANONICAL:456', 'ORIG:123', 'ORIG:456', 'edges_src'),
+                ('CANONICAL:123', 'biolink:causes', 'MISSING:001', 'ORIG:123', 'ORIG:MISSING', 'edges_src');
         """)
 
-        # Create empty QC tables
         db.conn.execute("""
-            CREATE TABLE dangling_edges (
-                subject VARCHAR, 
-                predicate VARCHAR, 
-                object VARCHAR,
-                original_subject VARCHAR,
-                original_object VARCHAR
-            );
-            CREATE TABLE singleton_nodes (id VARCHAR, category VARCHAR, name VARCHAR);
             CREATE TABLE duplicate_nodes (id VARCHAR, category VARCHAR, name VARCHAR);
         """)
 
@@ -213,7 +188,7 @@ class TestPruneOperation:
             # Verify remaining edge is valid
             remaining_edges = db.conn.execute("SELECT * FROM edges").fetchall()
             assert len(remaining_edges) == 1
-            assert remaining_edges[0] == ("HGNC:123", "biolink:related_to", "HGNC:456")
+            assert remaining_edges[0] == ("HGNC:123", "biolink:related_to", "HGNC:456", "edges_src")
 
     def test_prune_singleton_nodes_keep(self, database_with_singletons):
         """Test pruning with singleton nodes kept."""
@@ -296,12 +271,9 @@ class TestPruneOperation:
         db_path = temp_dir / "empty.duckdb"
 
         with GraphDatabase(db_path) as db:
-            # Create empty tables (file_schemas is created automatically by GraphDatabase)
             db.conn.execute("""
-                CREATE TABLE nodes (id VARCHAR, category VARCHAR, name VARCHAR);
-                CREATE TABLE edges (subject VARCHAR, predicate VARCHAR, object VARCHAR);
-                CREATE TABLE dangling_edges (subject VARCHAR, predicate VARCHAR, object VARCHAR);
-                CREATE TABLE singleton_nodes (id VARCHAR, category VARCHAR, name VARCHAR);
+                CREATE TABLE nodes (id VARCHAR, category VARCHAR, name VARCHAR, file_source VARCHAR);
+                CREATE TABLE edges (subject VARCHAR, predicate VARCHAR, object VARCHAR, file_source VARCHAR);
                 CREATE TABLE duplicate_nodes (id VARCHAR, category VARCHAR, name VARCHAR);
             """)
 
@@ -323,25 +295,20 @@ class TestPruneOperation:
         db_path = temp_dir / "multi_source.duckdb"
 
         with GraphDatabase(db_path) as db:
-            # Create nodes
             db.conn.execute("""
-                CREATE TABLE nodes (id VARCHAR, category VARCHAR, name VARCHAR);
-                INSERT INTO nodes VALUES ('HGNC:123', 'biolink:Gene', 'gene1');
+                CREATE TABLE nodes (id VARCHAR, category VARCHAR, name VARCHAR, file_source VARCHAR);
+                INSERT INTO nodes VALUES ('HGNC:123', 'biolink:Gene', 'gene1', 'nodes_src');
             """)
 
-            # Create edges from different sources with dangling references
             db.conn.execute("""
-                CREATE TABLE edges (subject VARCHAR, predicate VARCHAR, object VARCHAR, source VARCHAR);
-                INSERT INTO edges VALUES 
+                CREATE TABLE edges (subject VARCHAR, predicate VARCHAR, object VARCHAR, file_source VARCHAR);
+                INSERT INTO edges VALUES
                     ('HGNC:123', 'biolink:related_to', 'MISSING:001', 'source1'),
                     ('MISSING:002', 'biolink:causes', 'HGNC:123', 'source1'),
                     ('MISSING:003', 'biolink:related_to', 'MISSING:004', 'source2');
             """)
 
-            # Create QC tables
             db.conn.execute("""
-                CREATE TABLE dangling_edges (subject VARCHAR, predicate VARCHAR, object VARCHAR, source VARCHAR);
-                CREATE TABLE singleton_nodes (id VARCHAR, category VARCHAR, name VARCHAR);
                 CREATE TABLE duplicate_nodes (id VARCHAR, category VARCHAR, name VARCHAR);
                 """)
 
@@ -421,25 +388,20 @@ class TestPruneEdgeCases:
         db_path = temp_dir / "malformed.duckdb"
 
         with GraphDatabase(db_path) as db:
-            # Create nodes
             db.conn.execute("""
-                CREATE TABLE nodes (id VARCHAR, category VARCHAR);
-                INSERT INTO nodes VALUES ('HGNC:123', 'biolink:Gene');
+                CREATE TABLE nodes (id VARCHAR, category VARCHAR, file_source VARCHAR);
+                INSERT INTO nodes VALUES ('HGNC:123', 'biolink:Gene', 'nodes_src');
             """)
 
-            # Create edges with NULL values
             db.conn.execute("""
-                CREATE TABLE edges (subject VARCHAR, predicate VARCHAR, object VARCHAR);
-                INSERT INTO edges VALUES 
-                    ('HGNC:123', 'biolink:related_to', 'HGNC:456'),
-                    (NULL, 'biolink:causes', 'HGNC:123'),
-                    ('HGNC:123', NULL, 'HGNC:999');
+                CREATE TABLE edges (subject VARCHAR, predicate VARCHAR, object VARCHAR, file_source VARCHAR);
+                INSERT INTO edges VALUES
+                    ('HGNC:123', 'biolink:related_to', 'HGNC:456', 'edges_src'),
+                    (NULL, 'biolink:causes', 'HGNC:123', 'edges_src'),
+                    ('HGNC:123', NULL, 'HGNC:999', 'edges_src');
             """)
 
-            # Create QC tables
             db.conn.execute("""
-                CREATE TABLE dangling_edges (subject VARCHAR, predicate VARCHAR, object VARCHAR);
-                CREATE TABLE singleton_nodes (id VARCHAR, category VARCHAR);
                 CREATE TABLE duplicate_nodes (id VARCHAR, category VARCHAR);
                 """)
 
@@ -458,32 +420,25 @@ class TestPruneEdgeCases:
         db_path = temp_dir / "large.duckdb"
 
         with GraphDatabase(db_path) as db:
-            # Create one valid node
             db.conn.execute("""
-                CREATE TABLE nodes (id VARCHAR, category VARCHAR);
-                INSERT INTO nodes VALUES ('HGNC:123', 'biolink:Gene');
+                CREATE TABLE nodes (id VARCHAR, category VARCHAR, file_source VARCHAR);
+                INSERT INTO nodes VALUES ('HGNC:123', 'biolink:Gene', 'nodes_src');
             """)
 
-            # Create many dangling edges
             db.conn.execute("""
-                CREATE TABLE edges (subject VARCHAR, predicate VARCHAR, object VARCHAR);
+                CREATE TABLE edges (subject VARCHAR, predicate VARCHAR, object VARCHAR, file_source VARCHAR);
             """)
 
-            # Insert many dangling edges
             for i in range(100):
                 db.conn.execute(f"""
-                    INSERT INTO edges VALUES ('MISSING:{i}', 'biolink:related_to', 'MISSING:{i + 1000}')
+                    INSERT INTO edges VALUES ('MISSING:{i}', 'biolink:related_to', 'MISSING:{i + 1000}', 'edges_src')
                 """)
 
-            # Add one valid edge
             db.conn.execute("""
-                INSERT INTO edges VALUES ('HGNC:123', 'biolink:related_to', 'HGNC:123')
+                INSERT INTO edges VALUES ('HGNC:123', 'biolink:related_to', 'HGNC:123', 'edges_src')
             """)
 
-            # Create QC tables
             db.conn.execute("""
-                CREATE TABLE dangling_edges (subject VARCHAR, predicate VARCHAR, object VARCHAR);
-                CREATE TABLE singleton_nodes (id VARCHAR, category VARCHAR);
                 CREATE TABLE duplicate_nodes (id VARCHAR, category VARCHAR);
                 """)
 

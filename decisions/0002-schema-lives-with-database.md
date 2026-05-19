@@ -1,0 +1,11 @@
+# Graph schema is a property of the database, evolved by operations
+
+The graph schema and a full snapshot of the Biolink YAML are stored as metadata inside each koza-built DuckDB. The schema module is the only writer. At graph creation (schema seeding), the schema is derived from Biolink (env-installed) ∪ input file headers ∪ koza extras ∪ all operations' declared outputs, and both it and the Biolink YAML are written into a `_koza_schema` metadata table in the same DuckDB. After creation, operations evolve the schema as they run: declare output slots, ensure columns exist via `ALTER TABLE`, update the stored schema in the same transaction. Routine operations never re-read Biolink from the environment — the stored copy is authoritative.
+
+We rejected "schema derived per CLI invocation" because koza's longer-term shape is agent-driven, with operations running in any order and repeatedly; a frozen-at-invocation-start schema doesn't model that. We rejected "store only a Biolink version string and re-read the schema from env at need" because it leaves an implicit environment coupling that breaks reproducibility across machines and time. We rejected "vendor Biolink inside koza" as overshooting — koza is not a Biolink fork and tracking Biolink releases manually is a maintenance burden we don't want.
+
+Biolink updates land in an existing graph only via an explicit `koza schema rebase` operation that pulls a fresh Biolink from the env, replaces the stored copy, and surfaces deprecations, renames, and newly-admissible slots from existing data. `derived-schema.yaml` becomes an export-on-demand artifact rather than a per-run output, regenerable from the stored schema for inspection or diffing.
+
+`ensure_slots` gracefully degrades on unseeded DuckDBs (graphs created before the schema feature existed): it falls back to a plain `ALTER TABLE` without updating schema metadata, and the column type defaults to `VARCHAR` because multivalued-ness is unknown without a schema. This preserves a migration path for existing graphs — operations refactored to consume the seam still work on them — without forcing a one-shot rebuild.
+
+This supersedes the "derived per CLI invocation" framing in ADR-0001 while leaving the strict-reject decision intact.

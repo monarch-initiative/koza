@@ -17,7 +17,25 @@ from koza.model.graph_operations import (
     OperationSummary,
 )
 
+from .graph_schema import ensure_slots
+from .slots import edges
 from .utils import GraphDatabase, print_operation_summary
+
+
+DECLARED_OUTPUTS: dict[str, dict[str, dict]] = {
+    "Association": {
+        "original_subject": {
+            "description": "Subject ID before normalization (SSSOM-applied).",
+            "range": "string",
+            "multivalued": False,
+        },
+        "original_object": {
+            "description": "Object ID before normalization (SSSOM-applied).",
+            "range": "string",
+            "multivalued": False,
+        },
+    },
+}
 
 
 def normalize_graph(config: NormalizeConfig) -> NormalizeResult:
@@ -372,154 +390,51 @@ def _normalize_edges_table(db: GraphDatabase, config: NormalizeConfig) -> int:
     Returns:
         Number of edge references (subject or object) that were actually changed
     """
-    # Check if original_subject and original_object columns already exist
-    edge_columns_result = db.conn.execute("DESCRIBE edges").fetchall()
-    existing_columns = {col[0] for col in edge_columns_result}
-    has_original_subject = "original_subject" in existing_columns
-    has_original_object = "original_object" in existing_columns
+    # Guarantee the original_* columns exist before we reference them. After
+    # this, the SQL has a single shape that preserves existing original values
+    # (if non-NULL) and computes new ones only when normalization actually
+    # changes the identifier.
+    ensure_slots(db.conn, "edges", [edges.original_subject, edges.original_object])
 
-    # Build the query to preserve existing original columns while applying mappings
-    if has_original_subject and has_original_object:
-        # Both original columns exist - preserve them, only update if they're NULL
-        create_temp_query = """
-            CREATE TEMP TABLE edges_with_mappings AS
-            SELECT 
-                e.*,
-                e.subject as current_subject,
-                e.object as current_object,
-                COALESCE(m_subj.subject_id, e.subject) as normalized_subject,
-                COALESCE(m_obj.subject_id, e.object) as normalized_object,
-                -- Preserve existing original values, set new ones only if currently NULL
-                CASE WHEN e.original_subject IS NOT NULL THEN e.original_subject
-                     WHEN COALESCE(m_subj.subject_id, e.subject) != e.subject THEN e.subject
-                     ELSE NULL END as final_original_subject,
-                CASE WHEN e.original_object IS NOT NULL THEN e.original_object
-                     WHEN COALESCE(m_obj.subject_id, e.object) != e.object THEN e.object
-                     ELSE NULL END as final_original_object
-            FROM edges e
-            LEFT JOIN mappings m_subj ON e.subject = m_subj.object_id
-            LEFT JOIN mappings m_obj ON e.object = m_obj.object_id
-        """
+    db.conn.execute(f"""
+        CREATE TEMP TABLE edges_with_mappings AS
+        SELECT
+            e.*,
+            e.{edges.subject} as current_subject,
+            e.{edges.object} as current_object,
+            COALESCE(m_subj.subject_id, e.{edges.subject}) as normalized_subject,
+            COALESCE(m_obj.subject_id, e.{edges.object}) as normalized_object,
+            CASE WHEN e.{edges.original_subject} IS NOT NULL THEN e.{edges.original_subject}
+                 WHEN COALESCE(m_subj.subject_id, e.{edges.subject}) != e.{edges.subject} THEN e.{edges.subject}
+                 ELSE NULL END as final_original_subject,
+            CASE WHEN e.{edges.original_object} IS NOT NULL THEN e.{edges.original_object}
+                 WHEN COALESCE(m_obj.subject_id, e.{edges.object}) != e.{edges.object} THEN e.{edges.object}
+                 ELSE NULL END as final_original_object
+        FROM edges e
+        LEFT JOIN mappings m_subj ON e.{edges.subject} = m_subj.object_id
+        LEFT JOIN mappings m_obj ON e.{edges.object} = m_obj.object_id
+    """)
 
-        update_query = """
-            CREATE OR REPLACE TABLE edges AS
-            SELECT 
-                * EXCLUDE (subject, object, original_subject, original_object,
-                          current_subject, current_object, normalized_subject, normalized_object,
-                          final_original_subject, final_original_object),
-                normalized_subject as subject,
-                normalized_object as object,
-                final_original_subject as original_subject,
-                final_original_object as original_object
-            FROM edges_with_mappings
-        """
-
-    elif has_original_subject or has_original_object:
-        # Only one original column exists - handle both cases
-        original_subject_expr = (
-            "CASE WHEN e.original_subject IS NOT NULL THEN e.original_subject"
-            "     WHEN COALESCE(m_subj.subject_id, e.subject) != e.subject THEN e.subject"
-            "     ELSE NULL END"
-            if has_original_subject
-            else "CASE WHEN COALESCE(m_subj.subject_id, e.subject) != e.subject THEN e.subject ELSE NULL END"
-        )
-
-        original_object_expr = (
-            "CASE WHEN e.original_object IS NOT NULL THEN e.original_object"
-            "     WHEN COALESCE(m_obj.subject_id, e.object) != e.object THEN e.object"
-            "     ELSE NULL END"
-            if has_original_object
-            else "CASE WHEN COALESCE(m_obj.subject_id, e.object) != e.object THEN e.object ELSE NULL END"
-        )
-
-        create_temp_query = f"""
-            CREATE TEMP TABLE edges_with_mappings AS
-            SELECT 
-                e.*,
-                e.subject as current_subject,
-                e.object as current_object,
-                COALESCE(m_subj.subject_id, e.subject) as normalized_subject,
-                COALESCE(m_obj.subject_id, e.object) as normalized_object,
-                {original_subject_expr} as final_original_subject,
-                {original_object_expr} as final_original_object
-            FROM edges e
-            LEFT JOIN mappings m_subj ON e.subject = m_subj.object_id
-            LEFT JOIN mappings m_obj ON e.object = m_obj.object_id
-        """
-
-        exclude_cols = [
-            "subject",
-            "object",
-            "current_subject",
-            "current_object",
-            "normalized_subject",
-            "normalized_object",
-            "final_original_subject",
-            "final_original_object",
-        ]
-        if has_original_subject:
-            exclude_cols.append("original_subject")
-        if has_original_object:
-            exclude_cols.append("original_object")
-
-        update_query = f"""
-            CREATE OR REPLACE TABLE edges AS
-            SELECT 
-                * EXCLUDE ({", ".join(exclude_cols)}),
-                normalized_subject as subject,
-                normalized_object as object,
-                final_original_subject as original_subject,
-                final_original_object as original_object
-            FROM edges_with_mappings
-        """
-
-    else:
-        # No original columns exist - use the original logic
-        create_temp_query = """
-            CREATE TEMP TABLE edges_with_mappings AS
-            SELECT 
-                e.*,
-                e.subject as current_subject,
-                e.object as current_object,
-                COALESCE(m_subj.subject_id, e.subject) as normalized_subject,
-                COALESCE(m_obj.subject_id, e.object) as normalized_object
-            FROM edges e
-            LEFT JOIN mappings m_subj ON e.subject = m_subj.object_id
-            LEFT JOIN mappings m_obj ON e.object = m_obj.object_id
-        """
-
-        update_query = """
-            CREATE OR REPLACE TABLE edges AS
-            SELECT 
-                * EXCLUDE (subject, object, current_subject, current_object,
-                          normalized_subject, normalized_object),
-                normalized_subject as subject,
-                normalized_object as object,
-                CASE WHEN normalized_subject != current_subject 
-                     THEN current_subject ELSE NULL END as original_subject,
-                CASE WHEN normalized_object != current_object 
-                     THEN current_object ELSE NULL END as original_object
-            FROM edges_with_mappings
-        """
-
-    # Execute the queries
-    db.conn.execute(create_temp_query)
-
-    # Count how many edge references will be normalized (only count actual changes)
-    normalize_count_result = db.conn.execute("""
-        SELECT COUNT(*) FROM edges_with_mappings 
-        WHERE normalized_subject != current_subject 
+    edges_normalized = db.conn.execute("""
+        SELECT COUNT(*) FROM edges_with_mappings
+        WHERE normalized_subject != current_subject
            OR normalized_object != current_object
-    """).fetchone()
-    edges_normalized = normalize_count_result[0] if normalize_count_result else 0
+    """).fetchone()[0]
 
-    # Update edges table
-    db.conn.execute(update_query)
+    db.conn.execute(f"""
+        CREATE OR REPLACE TABLE edges AS
+        SELECT
+            * EXCLUDE ({edges.subject}, {edges.object}, {edges.original_subject}, {edges.original_object},
+                       current_subject, current_object, normalized_subject, normalized_object,
+                       final_original_subject, final_original_object),
+            normalized_subject as {edges.subject},
+            normalized_object as {edges.object},
+            final_original_subject as {edges.original_subject},
+            final_original_object as {edges.original_object}
+        FROM edges_with_mappings
+    """)
 
     logger.info(f"Normalized {edges_normalized} edge subject/object references")
-    if has_original_subject or has_original_object:
-        logger.info("Preserved existing original_subject/original_object columns")
-
     return edges_normalized
 
 

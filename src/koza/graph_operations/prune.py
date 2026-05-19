@@ -6,11 +6,13 @@ with configurable strategies for preservation or removal.
 """
 
 import time
+from collections import defaultdict
 
 from loguru import logger
 
 from koza.model.graph_operations import OperationSummary, PruneConfig, PruneResult
 
+from .slots import edges, nodes
 from .utils import GraphDatabase, print_operation_summary
 
 
@@ -132,127 +134,75 @@ def _handle_dangling_edges(db: GraphDatabase, config: PruneConfig) -> tuple[int,
             - edges_by_source: Dict mapping file_source to count of dangling edges
             - missing_nodes_by_source: Dict mapping file_source to count of unique missing node IDs
     """
-    # Check if edges table exists
     try:
         db.conn.execute("SELECT COUNT(*) FROM edges LIMIT 1")
-        edges_exists = True
     except Exception:
-        edges_exists = False
-
-    if not edges_exists:
         if not config.quiet:
             print("No edges table found - no dangling edges to process")
         return 0, {}, {}
 
-    # Check if file_source or source column exists in edges table
-    has_file_source = False
-    has_source = False
-    try:
-        db.conn.execute("SELECT file_source FROM edges LIMIT 1")
-        has_file_source = True
-    except Exception:
-        try:
-            db.conn.execute("SELECT source FROM edges LIMIT 1")
-            has_source = True
-        except Exception:
-            pass
-
-    # Find dangling edges - edges where subject or object doesn't exist in nodes table
-    if has_file_source:
-        source_column = "COALESCE(e.file_source, 'unknown')"
-    elif has_source:
-        source_column = "COALESCE(e.source, 'unknown')"
-    else:
-        source_column = "'unknown'"
-
     dangling_query = f"""
-    SELECT e.*, 
-           CASE WHEN n1.id IS NULL THEN e.subject ELSE NULL END as missing_subject,
-           CASE WHEN n2.id IS NULL THEN e.object ELSE NULL END as missing_object,
-           {source_column} as source
+    SELECT
+        CASE WHEN n1.{nodes.id} IS NULL THEN e.{edges.subject} ELSE NULL END as missing_subject,
+        CASE WHEN n2.{nodes.id} IS NULL THEN e.{edges.object} ELSE NULL END as missing_object,
+        COALESCE(e.{edges.file_source}, 'unknown') as source
     FROM edges e
-    LEFT JOIN nodes n1 ON e.subject = n1.id
-    LEFT JOIN nodes n2 ON e.object = n2.id
-    WHERE n1.id IS NULL OR n2.id IS NULL
+    LEFT JOIN nodes n1 ON e.{edges.subject} = n1.{nodes.id}
+    LEFT JOIN nodes n2 ON e.{edges.object} = n2.{nodes.id}
+    WHERE n1.{nodes.id} IS NULL OR n2.{nodes.id} IS NULL
     """
 
-    dangling_edges = db.conn.execute(dangling_query).fetchall()
+    dangling_rows = db.conn.execute(dangling_query).fetchall()
 
-    if not dangling_edges:
+    if not dangling_rows:
         if not config.quiet:
             print("No dangling edges found")
         return 0, {}, {}
 
-    dangling_count = len(dangling_edges)
+    dangling_count = len(dangling_rows)
 
     if not config.quiet:
         print(f"Found {dangling_count} dangling edges, moving to dangling_edges table...")
 
-    # Analyze dangling edges by source
-    #TODO turn these into defaultdicts.
-    dangling_by_source = {}
-    missing_by_source = {}
-
-    for edge in dangling_edges:
-        source = edge[-1]  # source is last column
-        if source not in dangling_by_source:
-            dangling_by_source[source] = 0
-            missing_by_source[source] = set()
-
+    dangling_by_source: dict[str, int] = defaultdict(int)
+    missing_by_source_sets: dict[str, set] = defaultdict(set)
+    for missing_subject, missing_object, source in dangling_rows:
         dangling_by_source[source] += 1
+        if missing_subject:
+            missing_by_source_sets[source].add(missing_subject)
+        if missing_object:
+            missing_by_source_sets[source].add(missing_object)
+    missing_by_source = {k: len(v) for k, v in missing_by_source_sets.items()}
 
-        # Track missing nodes
-        #TODO, confirm this code actually works as expected. Turns the indexed edge tuples into variables.
-        if edge[-3]:  # missing_subject
-            missing_by_source[source].add(edge[-3])
-        if edge[-2]:  # missing_object
-            missing_by_source[source].add(edge[-2])
-
-    # Convert sets to counts
-    missing_by_source = {k: len(v) for k, v in missing_by_source.items()}
-
-    # Move dangling edges to dangling_edges table
-    # First, get the column structure (excluding our analysis columns)
-    edge_columns_result = db.conn.execute("DESCRIBE edges").fetchall()
-    edge_columns = [col[0] for col in edge_columns_result]
-    columns_str = ", ".join(edge_columns)
-
-    # Recreate dangling_edges table with current edges schema to handle schema changes from normalization
+    # Recreate dangling_edges with current edges schema so per-run column
+    # evolution (e.g. normalize adding original_*) is reflected.
     db.conn.execute("DROP TABLE IF EXISTS dangling_edges")
     db.conn.execute("CREATE TABLE dangling_edges AS SELECT * FROM edges WHERE 1=0")
 
-    # Insert dangling edges into dangling_edges table
-    columns_with_prefix = ", ".join([f"e.{col}" for col in edge_columns])
-    insert_query = f"""
-    INSERT INTO dangling_edges ({columns_str})
-    SELECT {columns_with_prefix} FROM edges e
-    LEFT JOIN nodes n1 ON e.subject = n1.id
-    LEFT JOIN nodes n2 ON e.object = n2.id
-    WHERE n1.id IS NULL OR n2.id IS NULL
-    """
+    db.conn.execute(f"""
+        INSERT INTO dangling_edges
+        SELECT e.* FROM edges e
+        LEFT JOIN nodes n1 ON e.{edges.subject} = n1.{nodes.id}
+        LEFT JOIN nodes n2 ON e.{edges.object} = n2.{nodes.id}
+        WHERE n1.{nodes.id} IS NULL OR n2.{nodes.id} IS NULL
+    """)
 
-    db.conn.execute(insert_query)
-
-    # Remove dangling edges from main edges table
-    # Use a more robust approach that works with or without an id column
-    delete_query = """
-    DELETE FROM edges
-    WHERE EXISTS (
-        SELECT 1 FROM (
-            SELECT subject, object FROM edges e
-            LEFT JOIN nodes n1 ON e.subject = n1.id
-            LEFT JOIN nodes n2 ON e.object = n2.id
-            WHERE n1.id IS NULL OR n2.id IS NULL
-        ) dangling
-        WHERE dangling.subject = edges.subject AND dangling.object = edges.object
-    )
-    """
-
-    db.conn.execute(delete_query)
+    db.conn.execute(f"""
+        DELETE FROM edges
+        WHERE EXISTS (
+            SELECT 1 FROM (
+                SELECT e.{edges.subject} AS s, e.{edges.object} AS o FROM edges e
+                LEFT JOIN nodes n1 ON e.{edges.subject} = n1.{nodes.id}
+                LEFT JOIN nodes n2 ON e.{edges.object} = n2.{nodes.id}
+                WHERE n1.{nodes.id} IS NULL OR n2.{nodes.id} IS NULL
+            ) dangling
+            WHERE dangling.s = edges.{edges.subject} AND dangling.o = edges.{edges.object}
+        )
+    """)
 
     logger.info(f"Moved {dangling_count} dangling edges to dangling_edges table")
 
-    return dangling_count, dangling_by_source, missing_by_source
+    return dangling_count, dict(dangling_by_source), missing_by_source
 
 
 def _handle_singleton_nodes(db: GraphDatabase, config: PruneConfig) -> tuple[int, int]:
@@ -273,7 +223,6 @@ def _handle_singleton_nodes(db: GraphDatabase, config: PruneConfig) -> tuple[int
             - nodes_moved: Count of singleton nodes moved to singleton_nodes table
             - nodes_kept: Count of singleton nodes kept in main nodes table
     """
-    # Check if edges table exists
     try:
         db.conn.execute("SELECT COUNT(*) FROM edges LIMIT 1")
         edges_exists = True
@@ -281,25 +230,19 @@ def _handle_singleton_nodes(db: GraphDatabase, config: PruneConfig) -> tuple[int
         edges_exists = False
 
     if not edges_exists:
-        # If no edges table, all nodes are singletons
         try:
-            singleton_nodes = db.conn.execute("SELECT * FROM nodes").fetchall()
+            singleton_count = db.conn.execute("SELECT COUNT(*) FROM nodes").fetchone()[0]
         except Exception:
-            # No nodes table either
             if not config.quiet:
                 print("No nodes table found - no singleton nodes to process")
             return 0, 0
     else:
-        # Find singleton nodes - nodes that don't appear as subject or object in any edge
-        singleton_query = """
-        SELECT n.* FROM nodes n
-        LEFT JOIN edges e1 ON n.id = e1.subject
-        LEFT JOIN edges e2 ON n.id = e2.object
-        WHERE e1.subject IS NULL AND e2.object IS NULL
-        """
-
-        singleton_nodes = db.conn.execute(singleton_query).fetchall()
-    singleton_count = len(singleton_nodes)
+        singleton_count = db.conn.execute(f"""
+            SELECT COUNT(*) FROM nodes n
+            LEFT JOIN edges e1 ON n.{nodes.id} = e1.{edges.subject}
+            LEFT JOIN edges e2 ON n.{nodes.id} = e2.{edges.object}
+            WHERE e1.{edges.subject} IS NULL AND e2.{edges.object} IS NULL
+        """).fetchone()[0]
 
     if singleton_count == 0:
         if not config.quiet:
@@ -311,50 +254,39 @@ def _handle_singleton_nodes(db: GraphDatabase, config: PruneConfig) -> tuple[int
             print(f"Keeping {singleton_count} singleton nodes (--keep-singletons)")
         return 0, singleton_count
 
-    elif config.remove_singletons:
+    if config.remove_singletons:
         if not config.quiet:
             print(f"Moving {singleton_count} singleton nodes to singleton_nodes table...")
 
-        # Get node table structure
-        node_columns_result = db.conn.execute("DESCRIBE nodes").fetchall()
-        node_columns = [col[0] for col in node_columns_result]
-        columns_str = ", ".join(node_columns)
+        # Recreate to mirror the current nodes schema (operations may have
+        # added columns since the last run).
+        db.conn.execute("DROP TABLE IF EXISTS singleton_nodes")
+        db.conn.execute("CREATE TABLE singleton_nodes AS SELECT * FROM nodes WHERE 1=0")
 
-        # Insert singleton nodes into singleton_nodes table
-        columns_with_prefix = ", ".join([f"n.{col}" for col in node_columns])
-        #TODO: Verify this query works. It might need to be "WHERE e1.object IS NULL AND e2.subject IS NULL".
-        insert_query = f"""
-        INSERT INTO singleton_nodes ({columns_str})
-        SELECT {columns_with_prefix} FROM nodes n
-        LEFT JOIN edges e1 ON n.id = e1.subject
-        LEFT JOIN edges e2 ON n.id = e2.object
-        WHERE e1.subject IS NULL AND e2.object IS NULL
-        """
+        db.conn.execute(f"""
+            INSERT INTO singleton_nodes
+            SELECT n.* FROM nodes n
+            LEFT JOIN edges e1 ON n.{nodes.id} = e1.{edges.subject}
+            LEFT JOIN edges e2 ON n.{nodes.id} = e2.{edges.object}
+            WHERE e1.{edges.subject} IS NULL AND e2.{edges.object} IS NULL
+        """)
 
-        db.conn.execute(insert_query)
-
-        # Remove singleton nodes from main nodes table
-        delete_query = """
-        DELETE FROM nodes
-        WHERE nodes.id IN (
-            SELECT n.id FROM nodes n
-            LEFT JOIN edges e1 ON n.id = e1.subject
-            LEFT JOIN edges e2 ON n.id = e2.object
-            WHERE e1.subject IS NULL AND e2.object IS NULL
-        )
-        """
-
-        db.conn.execute(delete_query)
+        db.conn.execute(f"""
+            DELETE FROM nodes
+            WHERE nodes.{nodes.id} IN (
+                SELECT n.{nodes.id} FROM nodes n
+                LEFT JOIN edges e1 ON n.{nodes.id} = e1.{edges.subject}
+                LEFT JOIN edges e2 ON n.{nodes.id} = e2.{edges.object}
+                WHERE e1.{edges.subject} IS NULL AND e2.{edges.object} IS NULL
+            )
+        """)
 
         logger.info(f"Moved {singleton_count} singleton nodes to singleton_nodes table.")
-
         return singleton_count, 0
 
-    else:
-        # Default behavior: keep singletons
-        if not config.quiet:
-            print(f"Keeping {singleton_count} singleton nodes (default behavior).")
-        return 0, singleton_count
+    if not config.quiet:
+        print(f"Keeping {singleton_count} singleton nodes (default behavior).")
+    return 0, singleton_count
 
 
 def _handle_small_components(db: GraphDatabase, config: PruneConfig):
