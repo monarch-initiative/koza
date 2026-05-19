@@ -58,20 +58,12 @@ def closurize_graph(config: ClosurizeConfig) -> ClosurizeResult:
         add_closure(
             database_path=str(config.database_path),
             closure_file=str(config.closure_file),
-            # add_closure requires these but we don't currently use the TSV
-            # outputs from within the koza operation — downstream consumers
-            # read the views directly from the DuckDB.
-            edges_output_file="/dev/null",
-            nodes_output_file="/dev/null",
             edge_fields=list(config.edge_fields),
             edge_fields_to_label=list(config.edge_fields_to_label),
             node_fields=list(config.node_fields),
             evidence_fields=list(config.evidence_fields),
             grouping_fields=list(config.grouping_fields),
             additional_node_constraints=config.additional_node_constraints,
-            multivalued_fields=list(config.multivalued_fields),
-            export_edges=False,
-            export_nodes=False,
         )
 
         with GraphDatabase(config.database_path) as db:

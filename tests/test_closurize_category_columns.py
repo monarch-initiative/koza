@@ -53,16 +53,16 @@ def test_denormalized_edges_has_correct_category_columns():
             object VARCHAR,
             subject_category VARCHAR,
             object_category VARCHAR,
-            has_evidence VARCHAR,
-            publications VARCHAR,
+            has_evidence VARCHAR[],
+            publications VARCHAR[],
             negated BOOLEAN
         )
         """)
         working_db.sql("""
         INSERT INTO edges VALUES
-            ('GENE:1', 'biolink:related_to', 'DISEASE:1', NULL, NULL, 'ECO:1', 'PMID:1', false),
-            ('GENE:2', 'biolink:related_to', 'PHENOTYPE:1', NULL, NULL, 'ECO:2', 'PMID:2', false),
-            ('DISEASE:1', 'biolink:has_phenotype', 'PHENOTYPE:1', NULL, NULL, 'ECO:3', 'PMID:3', false)
+            ('GENE:1', 'biolink:related_to', 'DISEASE:1', NULL, NULL, ['ECO:1'], ['PMID:1'], false),
+            ('GENE:2', 'biolink:related_to', 'PHENOTYPE:1', NULL, NULL, ['ECO:2'], ['PMID:2'], false),
+            ('DISEASE:1', 'biolink:has_phenotype', 'PHENOTYPE:1', NULL, NULL, ['ECO:3'], ['PMID:3'], false)
         """)
 
         working_db.close()
@@ -72,18 +72,9 @@ def test_denormalized_edges_has_correct_category_columns():
         closure_file = temp_path / "closure.tsv"
         closure_file.write_text(closure_content)
 
-        # Output files
-        nodes_output = temp_path / "nodes_output.tsv"
-        edges_output = temp_path / "edges_output.tsv"
-
-        # Run closurizer
         add_closure(
             database_path=str(working_db_path),
             closure_file=str(closure_file),
-            nodes_output_file=str(nodes_output),
-            edges_output_file=str(edges_output),
-            export_edges=True,
-            export_nodes=True
         )
 
         # Now check the denormalized_edges table in the database
