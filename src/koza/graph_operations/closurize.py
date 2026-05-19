@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import time
 
-from closurizer.closurizer import add_closure
 from linkml_runtime.dumpers import yaml_dumper
 from linkml_runtime.linkml_model.meta import ClassDefinition, SlotDefinition
 from loguru import logger
@@ -24,6 +23,7 @@ from koza.model.graph_operations import (
     OperationSummary,
 )
 
+from ._closurize_engine import add_closure
 from .graph_schema import (
     _KIND_DERIVED_SCHEMA,
     _KOZA_SCHEMA_TABLE,
