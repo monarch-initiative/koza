@@ -471,6 +471,37 @@ def split(
         raise typer.Exit(1)
 
 
+@typer_app.command(name="schema-export")
+def schema_export(
+    database: Annotated[str, typer.Argument(help="Path to a koza-built DuckDB containing _koza_schema")],
+    output: Annotated[str, typer.Option(
+        "--output", "-o",
+        help="Path to write the exported schema YAML"
+    )],
+    raw: Annotated[bool, typer.Option(
+        "--raw",
+        help="Export the schema as-is (DenormalizedEntity/DenormalizedAssociation preserved). "
+             "Default is to project denormalized classes to consumer-facing Entity/Association names."
+    )] = False,
+) -> None:
+    """Export the koza graph schema from a DuckDB as a YAML release artifact.
+
+    By default, the wide post-closurize classes are renamed to Entity /
+    Association (matching monarch-app's convention) and the narrow post-merge
+    classes are dropped. Use --raw to preserve the full internal naming.
+    """
+    import duckdb
+    from koza.graph_operations.graph_schema import export_schema
+
+    conn = duckdb.connect(database, read_only=True)
+    try:
+        yaml_text = export_schema(conn, project_denormalized=not raw)
+    finally:
+        conn.close()
+    Path(output).write_text(yaml_text)
+    typer.echo(f"Wrote {output}")
+
+
 @typer_app.command()
 def closurize(
     database: Annotated[str, typer.Argument(help="Path to the DuckDB database file to closurize")],
