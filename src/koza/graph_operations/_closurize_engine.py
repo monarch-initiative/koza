@@ -194,19 +194,35 @@ def add_closure(closure_file: str,
         raise ValueError(f"database_path does not exist: {database_path}")
 
     logger.info(f"Closurize: database={database_path}, closure_file={closure_file}")
-
     db = duckdb.connect(database=database_path)
     if mem := os.environ.get("DUCKDB_MEMORY_LIMIT"):
         db.sql(f"PRAGMA memory_limit='{mem}'")
 
-    # Add namespace column if not present — derived from id prefix.
-    node_column_names = [col[0] for col in db.sql("DESCRIBE nodes").fetchall()]
-    if 'namespace' not in node_column_names:
-        logger.debug("Adding namespace column to nodes")
-        db.sql("ALTER TABLE nodes ADD COLUMN namespace VARCHAR")
-        db.sql("UPDATE nodes SET namespace = substr(id, 1, instr(id,':') - 1)")
+    _ensure_namespace_column(db)
+    _build_closure_tables(db, closure_file)
+    _materialize_edge_derived_columns(db, evidence_fields, grouping_fields)
+    _build_denormalized_edges_view(db, edge_fields, edge_fields_to_label)
+    _build_denormalized_nodes_view(db, node_fields, additional_node_constraints)
 
-    # Build closure side tables from the relation-graph TSV.
+
+def _ensure_namespace_column(db: duckdb.DuckDBPyConnection) -> None:
+    """Ensure `nodes.namespace` exists, deriving from the id prefix if missing."""
+    cols = {r[0] for r in db.sql("DESCRIBE nodes").fetchall()}
+    if "namespace" in cols:
+        return
+    logger.debug("Adding namespace column to nodes")
+    db.sql("ALTER TABLE nodes ADD COLUMN namespace VARCHAR")
+    db.sql("UPDATE nodes SET namespace = substr(id, 1, instr(id,':') - 1)")
+
+
+def _build_closure_tables(db: duckdb.DuckDBPyConnection, closure_file: str) -> None:
+    """Load the relation graph TSV and build the four closure side tables.
+
+    closure_id / closure_label: ancestor sets per node (used by both
+    subject/object edge expansion and entity-level closure exposure).
+    descendants_id / descendants_label: descendant sets per node (used by
+    has_descendant on the denormalized_nodes view).
+    """
     db.sql(f"""
         CREATE OR REPLACE TABLE closure AS
         SELECT * FROM read_csv(
@@ -239,53 +255,73 @@ def add_closure(closure_file: str,
         GROUP BY object_id
     """)
 
-    # Materialize per-edge derived columns onto `edges` itself: evidence_count
-    # and grouping_key are computed from edges columns only, cheap to store,
-    # and survive across re-runs / external queries on the base table.
-    edges_table_info = db.sql("DESCRIBE edges").fetchall()
-    edges_table_types = {col[0]: col[1] for col in edges_table_info}
-    edges_column_names = [col[0] for col in edges_table_info]
+
+def _materialize_edge_derived_columns(
+    db: duckdb.DuckDBPyConnection,
+    evidence_fields: List[str],
+    grouping_fields: List[str],
+) -> None:
+    """Add `evidence_count` and `grouping_key` as real columns on `edges`.
+
+    Both are per-edge, derived from edges-only inputs, and small to store —
+    materializing once beats recomputing on every view read.
+    """
+    edges_cols = [r[0] for r in db.sql("DESCRIBE edges").fetchall()]
     materialize_column(
         db, "edges", "evidence_count",
-        evidence_count_expr(evidence_fields, edges_column_names),
+        evidence_count_expr(evidence_fields, edges_cols),
         "BIGINT",
     )
     materialize_column(
         db, "edges", "grouping_key",
-        grouping_key_expr(grouping_fields, edges_column_names),
+        grouping_key_expr(grouping_fields, edges_cols),
         "VARCHAR",
     )
-    # Refresh column lists since edges just gained two columns.
-    edges_table_info = db.sql("DESCRIBE edges").fetchall()
-    edges_table_types = {col[0]: col[1] for col in edges_table_info}
-    edges_column_names = [col[0] for col in edges_table_info]
-    node_column_names = [r[0] for r in db.sql("DESCRIBE nodes").fetchall()]
 
-    # Build edge joins with VARCHAR[] handling based on actual column types.
-    def _is_mv(field: str) -> bool:
-        return "VARCHAR[]" in edges_table_types.get(field, "").upper()
 
-    edge_field_joins = [edge_joins(field, is_multivalued=_is_mv(field)) for field in edge_fields]
-    edge_field_to_label_joins = [
-        edge_joins(field, include_closure_joins=False, is_multivalued=_is_mv(field))
-        for field in edge_fields_to_label
+def _build_denormalized_edges_view(
+    db: duckdb.DuckDBPyConnection,
+    edge_fields: List[str],
+    edge_fields_to_label: List[str],
+) -> None:
+    """Create `denormalized_edges` VIEW: edges plus per-field closure expansions.
+
+    Each entry in `edge_fields` gets the full expansion (label, category,
+    namespace, closure, closure_label, plus taxon for subject/object).
+    Each entry in `edge_fields_to_label` gets the label-only expansion
+    (no closure joins).
+    """
+    edges_info = db.sql("DESCRIBE edges").fetchall()
+    edges_types = {col[0]: col[1] for col in edges_info}
+    edges_cols = [col[0] for col in edges_info]
+    node_cols = [r[0] for r in db.sql("DESCRIBE nodes").fetchall()]
+
+    def is_multivalued(field: str) -> bool:
+        return "VARCHAR[]" in edges_types.get(field, "").upper()
+
+    join_clauses = [
+        edge_joins(f, is_multivalued=is_multivalued(f))
+        for f in edge_fields
+    ] + [
+        edge_joins(f, include_closure_joins=False, is_multivalued=is_multivalued(f))
+        for f in edge_fields_to_label
     ]
 
-    # Exclude any edges columns that would collide with the join expansions.
+    # Exclude any pre-existing edges columns the joins would re-create.
     collision_cols = {
         f"{field}_{suffix}"
         for field in edge_fields + edge_fields_to_label
         for suffix in ("label", "category", "namespace", "closure", "closure_label", "taxon", "taxon_label")
     }
-    excluded = [c for c in collision_cols if c in edges_column_names]
+    excluded = [c for c in collision_cols if c in edges_cols]
     edges_select = f"edges.* EXCLUDE ({', '.join(excluded)})" if excluded else "edges.*"
 
-    column_projections = [
-        edge_columns(field, node_column_names=node_column_names)
-        for field in edge_fields
+    projections = [
+        edge_columns(f, node_column_names=node_cols)
+        for f in edge_fields
     ] + [
-        edge_columns(field, include_closure_fields=False, node_column_names=node_column_names)
-        for field in edge_fields_to_label
+        edge_columns(f, include_closure_fields=False, node_column_names=node_cols)
+        for f in edge_fields_to_label
     ]
 
     _drop_any("denormalized_edges", db)
@@ -293,26 +329,36 @@ def add_closure(closure_file: str,
         CREATE OR REPLACE VIEW denormalized_edges AS
         SELECT
             {edges_select},
-            {''.join(column_projections)}
+            {''.join(projections)}
         FROM edges
-            {''.join(edge_field_joins)}
-            {''.join(edge_field_to_label_joins)}
+            {''.join(join_clauses)}
     """)
 
-    # Build one side table per configured node predicate, each bounded by
-    # that predicate's edge subset — no monolithic GROUP BY.
-    side_table_joins = []
-    side_table_columns = []
+
+def _build_denormalized_nodes_view(
+    db: duckdb.DuckDBPyConnection,
+    node_fields: List[str],
+    additional_node_constraints: Optional[str],
+) -> None:
+    """Build per-predicate node side tables, then create `denormalized_nodes` VIEW.
+
+    For each entry in `node_fields`, materialize a `node_<predicate>` side
+    table holding (id, <field>, <field>_label, <field>_count, <field>_closure,
+    <field>_closure_label). The view joins all of these to `nodes` plus
+    descendants_id / descendants_label.
+    """
+    side_joins: list[str] = []
+    side_columns: list[str] = []
     for node_field in node_fields:
         field = node_field.replace("biolink:", "")
         side_table = build_node_predicate_side_table(db, node_field, additional_node_constraints)
         alias = f"_{field}"
-        side_table_joins.append(f"LEFT JOIN {side_table} {alias} ON nodes.id = {alias}.id")
+        side_joins.append(f"LEFT JOIN {side_table} {alias} ON nodes.id = {alias}.id")
         for col in (field, f"{field}_label", f"{field}_count",
                     f"{field}_closure", f"{field}_closure_label"):
-            side_table_columns.append(f"{alias}.{col}")
+            side_columns.append(f"{alias}.{col}")
 
-    column_list = (", ".join(side_table_columns) + ",") if side_table_columns else ""
+    column_list = (", ".join(side_columns) + ",") if side_columns else ""
     _drop_any("denormalized_nodes", db)
     db.sql(f"""
         CREATE OR REPLACE VIEW denormalized_nodes AS
@@ -323,7 +369,7 @@ def add_closure(closure_file: str,
             _dl.descendants_label AS has_descendant_label,
             COALESCE(ARRAY_LENGTH(_d.descendants), 0) AS has_descendant_count
         FROM nodes
-        {chr(10).join(side_table_joins)}
+        {chr(10).join(side_joins)}
         LEFT JOIN descendants_id _d ON nodes.id = _d.id
         LEFT JOIN descendants_label _dl ON nodes.id = _dl.id
     """)
