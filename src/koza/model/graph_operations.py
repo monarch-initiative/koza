@@ -534,6 +534,44 @@ class SchemaAnalysisReport(BaseModel):
     biolink_compliance: BiolinkCompliance
 
 
+class ClosurizeConfig(BaseModel):
+    """Configuration for closurize operation.
+
+    Wraps `closurizer.add_closure` and integrates with the graph schema
+    seam: after closurize finishes, the stored schema gains
+    `DenormalizedEntity` and `DenormalizedAssociation` classes.
+    """
+
+    database_path: Path
+    closure_file: Path
+    node_fields: list[str] = Field(default_factory=lambda: ["has_phenotype"])
+    edge_fields: list[str] = Field(default_factory=lambda: ["subject", "object"])
+    edge_fields_to_label: list[str] = Field(default_factory=list)
+    evidence_fields: list[str] = Field(default_factory=lambda: ["has_evidence", "publications"])
+    grouping_fields: list[str] = Field(default_factory=lambda: ["subject", "negated", "predicate", "object"])
+    additional_node_constraints: str | None = None
+    multivalued_fields: list[str] = Field(default_factory=list)
+    quiet: bool = False
+
+    @field_validator("database_path", "closure_file")
+    @classmethod
+    def validate_path_exists(cls, v: Path) -> Path:
+        if not v.exists():
+            raise ValueError(f"File not found: {v}")
+        return v
+
+
+class ClosurizeResult(BaseModel):
+    """Result of closurize operation."""
+
+    success: bool
+    denormalized_nodes_count: int
+    denormalized_edges_count: int
+    total_time_seconds: float
+    summary: "OperationSummary"
+    errors: list[str] = Field(default_factory=list)
+
+
 class QCReportConfig(BaseModel):
     """Configuration for QC report generation."""
 

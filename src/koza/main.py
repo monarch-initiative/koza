@@ -14,6 +14,7 @@ from koza.graph_operations import (
     append_graphs,
     generate_connectivity_report,
     generate_edge_examples,
+    closurize_graph,
     generate_edge_report,
     generate_graph_stats,
     generate_node_examples,
@@ -32,6 +33,7 @@ from koza.graph_operations import (
 from koza.model.formats import InputFormat, OutputFormat
 from koza.model.graph_operations import (
     AppendConfig,
+    ClosurizeConfig,
     ConnectivityReportConfig,
     EdgeExamplesConfig,
     EdgeReportConfig,
@@ -464,6 +466,69 @@ def split(
         if not quiet:
             typer.echo("Split operation completed successfully!")
 
+    except Exception as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(1)
+
+
+@typer_app.command()
+def closurize(
+    database: Annotated[str, typer.Argument(help="Path to the DuckDB database file to closurize")],
+    closure_file: Annotated[str, typer.Option(
+        "--closure-file", "-c",
+        help="Path to the relation-graph TSV file (subject_id, predicate_id, object_id)"
+    )],
+    node_fields: Annotated[list[str] | None, typer.Option(
+        "--node-field", help="Predicate to expand into per-node aggregations (repeatable)"
+    )] = None,
+    edge_fields: Annotated[list[str] | None, typer.Option(
+        "--edge-field", help="Edge field to fully expand (label + category + namespace + closure) (repeatable)"
+    )] = None,
+    edge_fields_to_label: Annotated[list[str] | None, typer.Option(
+        "--edge-field-to-label",
+        help="Edge field to expand with label/category/namespace only — no closure (repeatable)"
+    )] = None,
+    additional_node_constraints: Annotated[str | None, typer.Option(
+        "--additional-node-constraints",
+        help="SQL WHERE-clause fragment applied to per-predicate node aggregation joins"
+    )] = None,
+    quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress output")] = False,
+) -> None:
+    """Apply closure expansion to a merged graph: produce denormalized_nodes and
+    denormalized_edges, evolve the stored schema to include DenormalizedEntity
+    and DenormalizedAssociation classes.
+
+    Examples:
+        # Monarch-style: expand subject/object/disease-context with full closure,
+        # label-only expansion for the qualifier fields, has_phenotype per-node
+        # aggregation.
+        koza closurize graph.duckdb -c phenio-relation-filtered.tsv \\
+            --edge-field subject --edge-field object \\
+            --edge-field disease_context_qualifier \\
+            --edge-field-to-label species_context_qualifier \\
+            --edge-field-to-label stage_qualifier \\
+            --edge-field-to-label sex_qualifier \\
+            --edge-field-to-label onset_qualifier \\
+            --edge-field-to-label frequency_qualifier \\
+            --node-field has_phenotype \\
+            --additional-node-constraints "has_phenotype_edges.negated is null or has_phenotype_edges.negated = 'False'"
+    """
+    try:
+        config = ClosurizeConfig(
+            database_path=Path(database),
+            closure_file=Path(closure_file),
+            node_fields=node_fields or ["has_phenotype"],
+            edge_fields=edge_fields or ["subject", "object"],
+            edge_fields_to_label=edge_fields_to_label or [],
+            additional_node_constraints=additional_node_constraints,
+            quiet=quiet,
+        )
+        result = closurize_graph(config)
+        if not quiet:
+            typer.echo(
+                f"Closurize completed: {result.denormalized_nodes_count:,} nodes, "
+                f"{result.denormalized_edges_count:,} edges"
+            )
     except Exception as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(1)

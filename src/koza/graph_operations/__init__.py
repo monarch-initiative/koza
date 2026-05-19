@@ -6,6 +6,7 @@ including join, split, normalize, dedupe, prune, and other graph analysis operat
 """
 
 from .append import append_graphs
+from .closurize import closurize_graph
 from .connectivity import generate_connectivity_report
 from .deduplicate import deduplicate_graph
 from .join import join_graphs, prepare_file_specs_from_paths
@@ -30,6 +31,7 @@ __all__ = [
     "split_graph",
     "prune_graph",
     "append_graphs",
+    "closurize_graph",
     "deduplicate_graph",
     "normalize_graph",
     "merge_graphs",

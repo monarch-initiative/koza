@@ -13,7 +13,7 @@ The two flat classes in the graph schema for the ingest stage, corresponding to 
 _Avoid_: Node, Edge (those name the DuckDB tables, not the graph schema classes).
 
 **DenormalizedEntity** / **DenormalizedAssociation**:
-The post-closurizer counterparts, corresponding to the `denormalized_nodes` and `denormalized_edges` tables. `is_a` Entity / Association respectively, adding closurizer-produced slots (`{field}_label`, `{field}_category`, `{field}_namespace`, `{field}_closure`, `{field}_closure_label`, per-predicate aggregations on nodes). Reserved name even though closurizer hasn't yet moved into this codebase. Note: monarch-app currently uses `Entity`/`Association` for what we call `DenormalizedEntity`/`DenormalizedAssociation` — alignment is a downstream decision.
+The post-closurize counterparts, corresponding to the `denormalized_nodes` and `denormalized_edges` tables. `is_a` Entity / Association respectively, adding closurizer-produced slots (`{field}_label`, `{field}_category`, `{field}_namespace`, `{field}_closure`, `{field}_closure_label`, per-predicate aggregations on nodes). Added to the stored schema by the **Closurize** operation. Note: monarch-app currently uses `Entity`/`Association` for what we call `DenormalizedEntity`/`DenormalizedAssociation` — alignment is a downstream decision.
 _Avoid_: ClosurizedEntity, ExpandedEntity.
 
 **Schema seeding**:
@@ -45,8 +45,12 @@ A module-level constant (`DECLARED_OUTPUTS`) on each operation module that lists
 _Avoid_: produced slots, output schema, operation contract.
 
 **Operation**:
-One of the high-level graph transforms exposed by the CLI: join, deduplicate, normalize, prune, split, append, merge, report. Each is a module under `koza/graph_operations/`.
+One of the high-level graph transforms exposed by the CLI: join, deduplicate, normalize, prune, split, append, merge, closurize, report. Each is a module under `koza/graph_operations/`.
 _Avoid_: command, action, transform (transform refers to the koza ingest side).
+
+**Closurize**:
+The operation that applies a relation-graph closure to a merged graph database. Produces `denormalized_nodes` and `denormalized_edges` (currently materialized tables; spike at `~/Monarch/closurizer-view-architecture` explores making them views to save ~28% storage). Wraps the upstream `closurizer.add_closure` and evolves the stored schema to include `DenormalizedEntity` / `DenormalizedAssociation` classes whose slot lists come from the actual produced tables.
+_Avoid_: denormalize (too generic), expand.
 
 **Graph database**:
 The `GraphDatabase` class wrapping a DuckDB connection. Owns the data tables (`nodes`, `edges`, `singleton_nodes`, `dangling_edges`, etc.) and the schema metadata table (`_koza_schema`) holding the derived schema and the seeded Biolink YAML.
