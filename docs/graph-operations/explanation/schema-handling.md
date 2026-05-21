@@ -227,3 +227,34 @@ FROM nodes
 ```
 
 **Use provided_by for provenance**: Enable `generate_provided_by` (default) to track which source each record came from. This allows investigation of schema differences by source.
+
+## The Graph Schema (`_koza_schema`)
+
+Beyond file-level harmonization, every koza-built DuckDB carries a LinkML schema describing the classes and slots that the data conforms to. It lives in a metadata table called `_koza_schema` inside the DuckDB itself, alongside a snapshot of the Biolink Model used to derive it. Two rows: `derived_schema` and `biolink`.
+
+This schema is the source of truth. Operations consult it (via `current_schema(conn)`) instead of probing columns with `DESCRIBE`, and they evolve it when they add new slots.
+
+### Lifecycle
+
+1. **Seeded** at graph creation. `koza join` calls `seed_schema(conn, ...)` after `create_final_tables`. The schema is derived by:
+    - Walking Biolink's `named thing` and `association` class hierarchies
+    - Intersecting with the union of all input file headers
+    - Adding koza extras (`file_source`, `provided_by`)
+    - Adding declared outputs from operation modules (e.g. `normalize.DECLARED_OUTPUTS` contributes `original_subject` / `original_object`)
+    - Validating that no input column lies outside the union — strict reject on unknowns (ADR-0001)
+2. **Evolved** by each operation that produces new slots. `normalize` calls `ensure_slots(conn, "edges", ["original_subject", "original_object"])` before its SQL; the function ALTER-TABLEs and updates the stored schema in one transaction. `closurize_graph` adds `DenormalizedEntity` and `DenormalizedAssociation` classes whose slot lists come from the actual columns of the produced views.
+3. **Exported** at release time. `koza schema-export` reads `_koza_schema`, projects `DenormalizedEntity` → `Entity` and `DenormalizedAssociation` → `Association` (consumer-facing naming), derives `multivalued: true` from actual DuckDB column types, declares prefixes and imports — and writes a standalone LinkML YAML that downstream tools (`gen-pydantic`, `lsolr create-schema`, monarch-app's `imports:`) consume directly.
+
+### Tolerant of unseeded databases
+
+Graphs that predate the schema feature don't have a `_koza_schema` table. `ensure_slots` gracefully degrades — it falls back to a plain `ALTER TABLE` with column type defaulting to `VARCHAR` (multivalued-ness unknown without a schema), and skips the schema-metadata update. Operations refactored to consume the seam still work on these older graphs. See [ADR-0002](https://github.com/monarch-initiative/koza/blob/main/decisions/0002-schema-lives-with-database.md).
+
+### Why this matters
+
+Before the graph schema seam, operations re-derived "what columns exist" each run via `DESCRIBE` and try/except column probing. That meant the same fallback logic was duplicated in every operation, and silent schema drift was easy. With the schema as source of truth:
+
+- Operations are shorter and more honest about what they need.
+- Adding a column anywhere in the pipeline is a one-line slot declaration; the rest of the system picks it up.
+- Cross-tool integration (Solr indexing, monarch-app pydantic classes, third-party consumers) reads from a single authoritative artifact instead of guessing.
+
+The historical "monarch-ingest fetches monarch-app's `model.yaml` at runtime to learn what closurize produces" dependency was a symptom of not having this. With `_koza_schema` + `koza schema-export`, that inversion goes away.

@@ -25,6 +25,7 @@ nav:
       - Split Graphs: 'graph-operations/how-to/split-graph.md'
       - Normalize IDs: 'graph-operations/how-to/normalize-ids.md'
       - Clean Graphs: 'graph-operations/how-to/clean-graph.md'
+      - Closurize: 'graph-operations/how-to/closurize.md'
       - Incremental Updates: 'graph-operations/how-to/incremental-updates.md'
       - Generate Reports: 'graph-operations/how-to/generate-reports.md'
       - Export Formats: 'graph-operations/how-to/export-formats.md'
