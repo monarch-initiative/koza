@@ -1,6 +1,10 @@
-"""Closurize engine — vendored from `closurizer` (monarch-initiative/closurizer)
-in May 2026, with the view-based architecture applied. Closurizer the
-standalone package is deprecated in favor of `koza.graph_operations.closurize`.
+"""Closurize engine — the SQL machinery that produces denormalized_nodes
+and denormalized_edges from a koza-built DuckDB.
+
+Originally lived in `closurizer` (monarch-initiative/closurizer); migrated
+into koza in May 2026 with the view-based architecture applied. Closurizer
+the standalone package is no longer maintained — this module is its
+canonical home now.
 
 The wider operation surface (config, schema-seam integration, CLI command)
 lives in `closurize.py`; this module is the SQL machinery.

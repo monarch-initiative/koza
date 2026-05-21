@@ -49,7 +49,7 @@ One of the high-level graph transforms exposed by the CLI: join, deduplicate, no
 _Avoid_: command, action, transform (transform refers to the koza ingest side).
 
 **Closurize**:
-The operation that applies a relation-graph closure to a merged graph database. Produces `denormalized_nodes` and `denormalized_edges` (currently materialized tables; spike at `~/Monarch/closurizer-view-architecture` explores making them views to save ~28% storage). Wraps the upstream `closurizer.add_closure` and evolves the stored schema to include `DenormalizedEntity` / `DenormalizedAssociation` classes whose slot lists come from the actual produced tables.
+The operation that applies a relation-graph closure to a merged graph database. Produces `denormalized_nodes` and `denormalized_edges` as VIEWs over base tables (~50% smaller DuckDB than the historical materialized shape), plus per-predicate node-extension side tables and the materialized `closure_id` / `closure_label` / `descendants_id` / `descendants_label` tables. Evolves the stored schema to include `DenormalizedEntity` / `DenormalizedAssociation` classes whose slot lists come from the actual produced views. Migrated from the `closurizer` package in May 2026; this module is now its canonical home, the standalone package is no longer maintained.
 _Avoid_: denormalize (too generic), expand.
 
 **Graph database**:
