@@ -330,7 +330,9 @@ def export_schema(
     for table in ("denormalized_nodes", "denormalized_edges"):
         try:
             rows = conn.execute(f"DESCRIBE {table}").fetchall()
-        except Exception:
+        except duckdb.CatalogException:
+            # Pre-closurize DB; just skip — the schema is still exportable
+            # with whatever Entity / Association slot info we have.
             continue
         for col_name, col_type, *_ in rows:
             if "VARCHAR[]" in (col_type or "").upper():
@@ -344,6 +346,25 @@ def export_schema(
         slot.multivalued = True
 
     return yaml_dumper.dumps(schema)
+
+
+def is_seeded(conn: duckdb.DuckDBPyConnection) -> bool:
+    """Whether this DuckDB has a stored graph schema (the `_koza_schema`
+    metadata table with a derived_schema row). False for graphs from before
+    the schema feature existed or for fresh DuckDBs that haven't been
+    through `seed_schema` yet."""
+    return _read_metadata(conn, _KIND_DERIVED_SCHEMA) is not None
+
+
+def update_schema(conn: duckdb.DuckDBPyConnection, schema: SchemaDefinition) -> None:
+    """Persist `schema` as the stored derived schema for this DuckDB.
+
+    Used by operations that evolve the schema after seed time (e.g.
+    `ensure_slots` adds materialized slot columns; `closurize_graph` adds
+    `DenormalizedEntity` / `DenormalizedAssociation` classes). Requires
+    the database to already be seeded — call `is_seeded(conn)` first.
+    """
+    _write_metadata(conn, _KIND_DERIVED_SCHEMA, yaml_dumper.dumps(schema))
 
 
 def stored_biolink_yaml(conn: duckdb.DuckDBPyConnection) -> str | None:

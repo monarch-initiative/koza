@@ -472,7 +472,7 @@ def split(
 
 
 @typer_app.command(name="schema-export")
-def schema_export(
+def schema_export(  # noqa: PLR0913
     database: Annotated[str, typer.Argument(help="Path to a koza-built DuckDB containing _koza_schema")],
     output: Annotated[str, typer.Option(
         "--output", "-o",
@@ -488,9 +488,11 @@ def schema_export(
 
     By default, the wide post-closurize classes are renamed to Entity /
     Association (matching monarch-app's convention) and the narrow post-merge
-    classes are dropped. Use --raw to preserve the full internal naming.
+    classes are dropped. Use --raw to preserve the full internal naming —
+    note that downstream consumers (monarch-app's import target, lsolr
+    create-schema invocations) expect the projected names, so --raw output
+    isn't drop-in compatible with the default downstream toolchain.
     """
-    import duckdb
     from koza.graph_operations.graph_schema import export_schema
 
     conn = duckdb.connect(database, read_only=True)
@@ -521,7 +523,8 @@ def closurize(
     )] = None,
     additional_node_constraints: Annotated[str | None, typer.Option(
         "--additional-node-constraints",
-        help="SQL WHERE-clause fragment applied to per-predicate node aggregation joins"
+        help="SQL WHERE-clause fragment applied to per-predicate node aggregation joins. "
+             "Reference edges columns via the alias `e` (e.g. `e.negated IS NULL`)."
     )] = None,
     quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress output")] = False,
 ) -> None:
@@ -542,18 +545,24 @@ def closurize(
             --edge-field-to-label onset_qualifier \\
             --edge-field-to-label frequency_qualifier \\
             --node-field has_phenotype \\
-            --additional-node-constraints "has_phenotype_edges.negated is null or has_phenotype_edges.negated = 'False'"
+            --additional-node-constraints "e.negated IS NULL OR e.negated = false OR e.negated = 'False'"
     """
     try:
-        config = ClosurizeConfig(
-            database_path=Path(database),
-            closure_file=Path(closure_file),
-            node_fields=node_fields or ["has_phenotype"],
-            edge_fields=edge_fields or ["subject", "object"],
-            edge_fields_to_label=edge_fields_to_label or [],
-            additional_node_constraints=additional_node_constraints,
-            quiet=quiet,
-        )
+        # Pass-through: let ClosurizeConfig own defaults so they aren't
+        # duplicated between the CLI and the model.
+        config_kwargs = {
+            "database_path": Path(database),
+            "closure_file": Path(closure_file),
+            "additional_node_constraints": additional_node_constraints,
+            "quiet": quiet,
+        }
+        if node_fields is not None:
+            config_kwargs["node_fields"] = node_fields
+        if edge_fields is not None:
+            config_kwargs["edge_fields"] = edge_fields
+        if edge_fields_to_label is not None:
+            config_kwargs["edge_fields_to_label"] = edge_fields_to_label
+        config = ClosurizeConfig(**config_kwargs)
         result = closurize_graph(config)
         if not quiet:
             typer.echo(

@@ -1,10 +1,10 @@
 """Closurize operation: produce denormalized_nodes / denormalized_edges by
 applying a relation-graph closure to a koza-built DuckDB.
 
-Wraps `closurizer.add_closure` and integrates with the graph schema seam:
-after closurize finishes, the stored schema in `_koza_schema` gains
-`DenormalizedEntity` and `DenormalizedAssociation` classes whose slot lists
-come from the actual columns of the produced tables/views.
+Wraps the SQL engine in `_closurize_engine` and integrates with the graph
+schema seam: after closurize finishes, the stored schema in `_koza_schema`
+gains `DenormalizedEntity` and `DenormalizedAssociation` classes whose slot
+lists come from the actual columns of the produced views.
 
 See decisions/0002-schema-lives-with-database.md and CONTEXT.md.
 """
@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import time
 
-from linkml_runtime.dumpers import yaml_dumper
 from linkml_runtime.linkml_model.meta import ClassDefinition, SlotDefinition
 from loguru import logger
 
@@ -24,13 +23,7 @@ from koza.model.graph_operations import (
 )
 
 from ._closurize_engine import add_closure
-from .graph_schema import (
-    _KIND_DERIVED_SCHEMA,
-    _KOZA_SCHEMA_TABLE,
-    _read_metadata,
-    _write_metadata,
-    current_schema,
-)
+from .graph_schema import current_schema, is_seeded, update_schema
 from .utils import GraphDatabase, print_operation_summary
 
 
@@ -47,9 +40,10 @@ _INVARIANT_ENTITY_SLOTS = (
 def closurize_graph(config: ClosurizeConfig) -> ClosurizeResult:
     """Apply closure expansion to a merged graph database.
 
-    Calls `closurizer.add_closure` with the configured field lists, then
-    evolves the stored `_koza_schema` to include `DenormalizedEntity` and
-    `DenormalizedAssociation` classes reflecting the actual produced shape.
+    Calls the SQL engine in `_closurize_engine` with the configured field
+    lists, then evolves the stored `_koza_schema` to include
+    `DenormalizedEntity` and `DenormalizedAssociation` classes reflecting
+    the actual produced shape.
     """
     start_time = time.time()
     errors: list[str] = []
@@ -65,6 +59,12 @@ def closurize_graph(config: ClosurizeConfig) -> ClosurizeResult:
             grouping_fields=list(config.grouping_fields),
             additional_node_constraints=config.additional_node_constraints,
         )
+        # Note: closurize_graph mutates the stored schema. The
+        # DenormalizedEntity/Association classes are rebuilt from current
+        # view columns each run, but schema.slots accumulates slot
+        # definitions across runs (orphans for slots no longer in any
+        # view). Slot definitions are cheap and harmless; the classes
+        # remain accurate.
 
         with GraphDatabase(config.database_path) as db:
             _evolve_schema_for_denormalized(db.conn)
@@ -117,16 +117,18 @@ def closurize_graph(config: ClosurizeConfig) -> ClosurizeResult:
 def _evolve_schema_for_denormalized(conn) -> None:
     """If the database is seeded, add DenormalizedEntity / DenormalizedAssociation
     classes to the stored schema. Slot lists come from the actual columns of
-    the produced denormalized_nodes / denormalized_edges tables (or views).
+    the produced denormalized_nodes / denormalized_edges views.
 
     Tolerant: if the database is unseeded (no `_koza_schema` table), this is
     a no-op — matching `ensure_slots`' graceful-degradation contract.
+
+    Note: re-running closurize with a different `node_fields` config can leave
+    orphan SlotDefinitions in `schema.slots` from a prior run. The class
+    `slots:` list is always rebuilt from current view columns, so the
+    denormalized classes are correct; only the slot-definition catalog grows.
     """
-    if _read_metadata(conn, _KIND_DERIVED_SCHEMA) is None:
-        logger.debug(
-            "Skipping schema evolution: %s not present on this database",
-            _KOZA_SCHEMA_TABLE,
-        )
+    if not is_seeded(conn):
+        logger.debug("Skipping schema evolution: database is not seeded")
         return
 
     schema = current_schema(conn)
@@ -139,14 +141,14 @@ def _evolve_schema_for_denormalized(conn) -> None:
     schema.classes["DenormalizedEntity"] = ClassDefinition(
         name="DenormalizedEntity",
         is_a="Entity",
-        description="Post-closurizer node shape (entity + closure expansion + per-predicate aggregations).",
+        description="Post-closurize node shape (entity + closure expansion + per-predicate aggregations).",
         slots=de_cols,
     )
     schema.classes["DenormalizedAssociation"] = ClassDefinition(
         name="DenormalizedAssociation",
         is_a="Association",
-        description="Post-closurizer edge shape (association + subject/object closure expansion).",
+        description="Post-closurize edge shape (association + subject/object closure expansion).",
         slots=da_cols,
     )
 
-    _write_metadata(conn, _KIND_DERIVED_SCHEMA, yaml_dumper.dumps(schema))
+    update_schema(conn, schema)

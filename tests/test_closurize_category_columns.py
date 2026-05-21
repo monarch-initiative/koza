@@ -1,8 +1,6 @@
-import pytest
 import tempfile
 import duckdb
 from pathlib import Path
-from click.testing import CliRunner
 from koza.graph_operations._closurize_engine import add_closure
 
 

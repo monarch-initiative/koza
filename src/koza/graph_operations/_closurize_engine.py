@@ -89,8 +89,11 @@ def grouping_key_expr(grouping_fields, edges_column_names: list = None) -> str:
 
 
 def _drop_any(name: str, db) -> None:
-    """Drop `name` whether it's a view or a table. DuckDB's `DROP X IF EXISTS`
-    errors on type mismatch, so we have to look up the type first."""
+    """Drop `name` whether it's a view or a table. Needed for the
+    materialized-table → view migration (a DuckDB closurized by the old
+    standalone closurizer has `denormalized_edges` as a TABLE; this code
+    creates it as a VIEW), and because DuckDB's `DROP X IF EXISTS` errors
+    on type mismatch, so we look up the actual type first."""
     row = db.sql(
         f"SELECT table_type FROM information_schema.tables WHERE table_name = '{name}'"
     ).fetchone()
