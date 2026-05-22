@@ -8,13 +8,13 @@
       
       
       
-        <link rel="canonical" href="https://koza.monarchinitiative.org/graph-operations/how-to/split-graph/">
+        <link rel="canonical" href="https://koza.monarchinitiative.org/graph-operations/how-to/closurize/">
       
       
-        <link rel="prev" href="../join-files/">
+        <link rel="prev" href="../clean-graph/">
       
       
-        <link rel="next" href="../normalize-ids/">
+        <link rel="next" href="../incremental-updates/">
       
       
         
@@ -25,7 +25,7 @@
     
     
       
-        <title>Split Graphs - Koza Documentation</title>
+        <title>Closurize - Koza Documentation</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#how-to-split-graphs" class="md-skip">
+        <a href="#closurize-a-graph" class="md-skip">
           Skip to content
         </a>
       
@@ -113,7 +113,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Split Graphs
+              Closurize
             
           </span>
         </div>
@@ -926,37 +926,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Split Graphs
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../split-graph/" class="md-nav__link">
         
   
   
@@ -972,292 +945,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#goal" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Goal
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Prerequisites
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#output-filename-pattern" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Output Filename Pattern
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#split-by-single-field" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Split by Single Field
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Split by Single Field">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#split-nodes-by-source" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Split nodes by source
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#split-edges-by-predicate" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Split edges by predicate
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#split-by-multiple-fields" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Split by Multiple Fields
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#format-conversion" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Format Conversion
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Format Conversion">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#convert-tsv-to-parquet" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Convert TSV to Parquet
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#convert-to-jsonl" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Convert to JSONL
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#handling-multivalued-fields" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Handling Multivalued Fields
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#prefix-removal" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Prefix Removal
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Prefix Removal">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#without-prefix-removal-default" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Without prefix removal (default)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#with-prefix-removal" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        With prefix removal
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#output-directory" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Output Directory
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#verification" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Verification
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Verification">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#check-output-files-exist" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Check output files exist
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#count-records-across-all-split-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Count records across all split files
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#verify-specific-split" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Verify specific split
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#use-duckdb-for-detailed-verification" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Use DuckDB for detailed verification
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#cli-options-reference" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CLI Options Reference
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        See Also
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1323,10 +1010,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../closurize/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Closurize
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1342,6 +1056,131 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#goal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Goal
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#basic-closurize" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic Closurize
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuring-the-expansion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuring the Expansion
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuring the Expansion">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#monarch-style-invocation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Monarch-style invocation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#schema-evolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Schema Evolution
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#memory-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memory Considerations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1921,10 +1760,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#output-filename-pattern" class="md-nav__link">
+  <a href="#basic-closurize" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Output Filename Pattern
+        Basic Closurize
       
     </span>
   </a>
@@ -1932,33 +1771,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#split-by-single-field" class="md-nav__link">
+  <a href="#configuring-the-expansion" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Split by Single Field
+        Configuring the Expansion
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Split by Single Field">
+    <nav class="md-nav" aria-label="Configuring the Expansion">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#split-nodes-by-source" class="md-nav__link">
+  <a href="#monarch-style-invocation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Split nodes by source
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#split-edges-by-predicate" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Split edges by predicate
+        Monarch-style invocation
       
     </span>
   </a>
@@ -1971,10 +1799,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#split-by-multiple-fields" class="md-nav__link">
+  <a href="#schema-evolution" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Split by Multiple Fields
+        Schema Evolution
       
     </span>
   </a>
@@ -1982,99 +1810,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#format-conversion" class="md-nav__link">
+  <a href="#memory-considerations" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Format Conversion
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Format Conversion">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#convert-tsv-to-parquet" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Convert TSV to Parquet
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#convert-to-jsonl" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Convert to JSONL
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#handling-multivalued-fields" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Handling Multivalued Fields
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#prefix-removal" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Prefix Removal
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Prefix Removal">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#without-prefix-removal-default" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Without prefix removal (default)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#with-prefix-removal" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        With prefix removal
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#output-directory" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Output Directory
+        Memory Considerations
       
     </span>
   </a>
@@ -2090,74 +1829,13 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Verification">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#check-output-files-exist" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Check output files exist
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#count-records-across-all-split-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Count records across all split files
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#verify-specific-split" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Verify specific split
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#use-duckdb-for-detailed-verification" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Use DuckDB for detailed verification
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
       
         <li class="md-nav__item">
-  <a href="#cli-options-reference" class="md-nav__link">
+  <a href="#next-steps" class="md-nav__link">
     <span class="md-ellipsis">
       
-        CLI Options Reference
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        See Also
+        Next Steps
       
     </span>
   </a>
@@ -2184,193 +1862,112 @@
   
 
 
-<h1 id="how-to-split-graphs">How to Split Graphs</h1>
+<h1 id="closurize-a-graph">Closurize a Graph</h1>
 <h2 id="goal">Goal</h2>
-<p>Divide a graph into subsets based on field values with optional format conversion. This is useful for:</p>
-<ul>
-<li>Separating nodes or edges by data source (<code>provided_by</code>)</li>
-<li>Creating category-specific subsets (<code>category</code>)</li>
-<li>Partitioning large graphs for parallel processing</li>
-<li>Converting between formats (TSV, JSONL, Parquet) during extraction</li>
-</ul>
+<p>Apply transitive closure expansion to a merged graph database so each edge carries the full ancestry of its subject and object — enabling hierarchy-aware search and faceting without recursive SQL.</p>
+<p>After closurize, <code>denormalized_edges</code> and <code>denormalized_nodes</code> are queryable views: each edge row exposes <code>subject_closure</code>, <code>subject_closure_label</code>, <code>object_closure</code>, <code>object_closure_label</code>, and taxon/category/namespace labels for both endpoints. Each node row exposes per-predicate aggregations (e.g. <code>has_phenotype</code>, <code>has_phenotype_closure_label</code>) and descendants.</p>
 <h2 id="prerequisites">Prerequisites</h2>
 <ul>
-<li>A KGX file to split (TSV, JSONL, or Parquet format)</li>
-<li>Knowledge of which field(s) to split on (e.g., <code>provided_by</code>, <code>category</code>, <code>predicate</code>)</li>
+<li>A koza-built DuckDB containing <code>nodes</code> and <code>edges</code> tables (produced by <code>koza join</code> or <code>koza merge</code>).</li>
+<li>A relation-graph TSV: a three-column file <code>(subject_id, predicate_id, object_id)</code> enumerating one-hop relations from the ontology entailments you want closurized over. For Monarch, this is <code>phenio-relation-filtered.tsv</code> (the filtered output of phenio's ROBOT-based one-hop materialization).</li>
 </ul>
-<h2 id="output-filename-pattern">Output Filename Pattern</h2>
-<p>Split generates output filenames automatically using this pattern:</p>
-<div class="highlight"><pre><span></span><code>{input_basename}_{field_value}_{nodes|edges}.{format}
+<h2 id="basic-closurize">Basic Closurize</h2>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>closurize<span class="w"> </span>graph.duckdb<span class="w"> </span>-c<span class="w"> </span>phenio-relation-filtered.tsv
 </code></pre></div>
-<p>For example, splitting <code>monarch_nodes.tsv</code> by <code>provided_by</code> where one value is <code>infores:hgnc</code> produces:</p>
-<div class="highlight"><pre><span></span><code>monarch_infores_hgnc_nodes.tsv
-</code></pre></div>
-<p>The field value has special characters (like <code>:</code>) replaced with underscores.</p>
-<h2 id="split-by-single-field">Split by Single Field</h2>
-<p>The most common use case is splitting by a single field like <code>provided_by</code> or <code>category</code>.</p>
-<h3 id="split-nodes-by-source">Split nodes by source</h3>
-<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>split<span class="w"> </span>monarch_nodes.tsv<span class="w"> </span>provided_by<span class="w"> </span>--output-dir<span class="w"> </span>./split_by_source
-</code></pre></div>
-<p>This creates one file per unique <code>provided_by</code> value in <code>./split_by_source/</code>:</p>
-<ul>
-<li><code>monarch_infores_hgnc_nodes.tsv</code> (nodes where <code>provided_by</code> = <code>infores:hgnc</code>)</li>
-<li><code>monarch_infores_omim_nodes.tsv</code> (nodes where <code>provided_by</code> = <code>infores:omim</code>)</li>
-<li><code>monarch_infores_mondo_nodes.tsv</code> (nodes where <code>provided_by</code> = <code>infores:mondo</code>)</li>
-</ul>
-<h3 id="split-edges-by-predicate">Split edges by predicate</h3>
-<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>split<span class="w"> </span>monarch_edges.tsv<span class="w"> </span>predicate<span class="w"> </span>--output-dir<span class="w"> </span>./split_by_predicate
-</code></pre></div>
-<p>Output files are named <code>{input}_{predicate_value}_edges.tsv</code>:</p>
-<div class="highlight"><pre><span></span><code>split_by_predicate/
-  monarch_biolink_has_phenotype_edges.tsv
-  monarch_biolink_causes_edges.tsv
-  monarch_biolink_interacts_with_edges.tsv
-  ...
-</code></pre></div>
-<h2 id="split-by-multiple-fields">Split by Multiple Fields</h2>
-<p>Split on multiple fields by providing a comma-separated list. Records are grouped by the unique combination of all specified field values.</p>
-<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>split<span class="w"> </span>monarch_edges.tsv<span class="w"> </span>predicate,provided_by<span class="w"> </span>--output-dir<span class="w"> </span>./split_multi
-</code></pre></div>
-<p>This creates files for each unique combination:</p>
-<div class="highlight"><pre><span></span><code>split_multi/
-  monarch_biolink_has_phenotype_infores_hpoa_edges.tsv
-  monarch_biolink_causes_infores_mondo_edges.tsv
-  ...
-</code></pre></div>
-<h2 id="format-conversion">Format Conversion</h2>
-<p>Convert between formats during the split operation using the <code>--format</code> option.</p>
-<h3 id="convert-tsv-to-parquet">Convert TSV to Parquet</h3>
-<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>split<span class="w"> </span>monarch_nodes.tsv<span class="w"> </span>provided_by<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--output-dir<span class="w"> </span>./parquet_split<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--format<span class="w"> </span>parquet
-</code></pre></div>
-<h3 id="convert-to-jsonl">Convert to JSONL</h3>
-<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>split<span class="w"> </span>monarch_edges.tsv<span class="w"> </span>predicate<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--output-dir<span class="w"> </span>./jsonl_split<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--format<span class="w"> </span>jsonl
-</code></pre></div>
-<p>Supported formats:</p>
-<ul>
-<li><code>tsv</code> - Tab-separated values (KGX standard)</li>
-<li><code>jsonl</code> - JSON Lines (one JSON object per line)</li>
-<li><code>parquet</code> - Apache Parquet (columnar, efficient for analytics)</li>
-</ul>
-<p>If <code>--format</code> is not specified, the output format matches the input format.</p>
-<h2 id="handling-multivalued-fields">Handling Multivalued Fields</h2>
-<p>When splitting on array-type fields (like <code>category</code> or <code>provided_by</code> which can contain multiple values), records may appear in multiple output files.</p>
-<p>For example, if a node has:</p>
-<div class="highlight"><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;HGNC:1234&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;category&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;biolink:Gene&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;biolink:NamedThing&quot;</span><span class="p">]</span>
-<span class="p">}</span>
-</code></pre></div>
-<p>This node will appear in both:</p>
-<ul>
-<li><code>monarch_Gene_nodes.tsv</code></li>
-<li><code>monarch_NamedThing_nodes.tsv</code></li>
-</ul>
-<p>With this behavior, every record appears in every subset it belongs to.</p>
-<p>The split operation automatically detects array fields and uses appropriate filtering (via <code>list_contains()</code>) to handle them correctly.</p>
-<h2 id="prefix-removal">Prefix Removal</h2>
-<p>Use <code>--remove-prefixes</code> to strip CURIE prefixes from field values when generating filenames.</p>
-<h3 id="without-prefix-removal-default">Without prefix removal (default)</h3>
-<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>split<span class="w"> </span>monarch_nodes.tsv<span class="w"> </span>provided_by<span class="w"> </span>--output-dir<span class="w"> </span>./output
-</code></pre></div>
-<p>Output: <code>monarch_infores_hgnc_nodes.tsv</code></p>
-<h3 id="with-prefix-removal">With prefix removal</h3>
-<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>split<span class="w"> </span>monarch_nodes.tsv<span class="w"> </span>provided_by<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--output-dir<span class="w"> </span>./output<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--remove-prefixes
-</code></pre></div>
-<p>Output: <code>monarch_hgnc_nodes.tsv</code></p>
-<p>This option applies when:</p>
-<ul>
-<li>Field values use common prefixes like <code>infores:</code>, <code>biolink:</code>, or <code>HP:</code></li>
-<li>Shorter filenames are needed</li>
-<li>Files should be organized by the local part of the identifier</li>
-</ul>
-<h2 id="output-directory">Output Directory</h2>
-<p>Specify a custom output location with <code>--output-dir</code>:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Output to current directory</span>
-koza<span class="w"> </span>split<span class="w"> </span>data.tsv<span class="w"> </span>provided_by<span class="w"> </span>--output-dir<span class="w"> </span>.
-
-<span class="c1"># Output to nested directory (created if it doesn&#39;t exist)</span>
-koza<span class="w"> </span>split<span class="w"> </span>data.tsv<span class="w"> </span>category<span class="w"> </span>--output-dir<span class="w"> </span>./processed/split/by_category
-
-<span class="c1"># Absolute path</span>
-koza<span class="w"> </span>split<span class="w"> </span>data.tsv<span class="w"> </span>provided_by<span class="w"> </span>--output-dir<span class="w"> </span>/data/graphs/split
-</code></pre></div>
-<p>The output directory is created automatically if it does not exist.</p>
-<h2 id="verification">Verification</h2>
-<p>After splitting, verify the operation completed successfully.</p>
-<h3 id="check-output-files-exist">Check output files exist</h3>
-<div class="highlight"><pre><span></span><code>ls<span class="w"> </span>-la<span class="w"> </span>./split_output/
-</code></pre></div>
-<h3 id="count-records-across-all-split-files">Count records across all split files</h3>
-<p>For TSV files:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Count total lines (excluding headers)</span>
-wc<span class="w"> </span>-l<span class="w"> </span>./split_output/*.tsv<span class="w"> </span><span class="p">|</span><span class="w"> </span>tail<span class="w"> </span>-1
-
-<span class="c1"># Compare to original</span>
-wc<span class="w"> </span>-l<span class="w"> </span>original_nodes.tsv
-</code></pre></div>
-<p>Note: When splitting on multivalued fields, the total across split files may exceed the original count since records can appear in multiple outputs.</p>
-<h3 id="verify-specific-split">Verify specific split</h3>
-<div class="highlight"><pre><span></span><code><span class="c1"># Check a specific split file</span>
-head<span class="w"> </span>-5<span class="w"> </span>./split_output/monarch_hgnc_nodes.tsv
-
-<span class="c1"># Verify records have the expected field value</span>
-grep<span class="w"> </span><span class="s2">&quot;infores:hgnc&quot;</span><span class="w"> </span>./split_output/monarch_hgnc_nodes.tsv<span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-3
-</code></pre></div>
-<h3 id="use-duckdb-for-detailed-verification">Use DuckDB for detailed verification</h3>
-<div class="highlight"><pre><span></span><code><span class="c1"># Load and inspect a split file</span>
-duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;SELECT COUNT(*) FROM read_csv_auto(&#39;./split_output/monarch_hgnc_nodes.tsv&#39;)&quot;</span>
-
-<span class="c1"># Verify field values</span>
-duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;SELECT DISTINCT provided_by FROM read_csv_auto(&#39;./split_output/monarch_hgnc_nodes.tsv&#39;)&quot;</span>
-</code></pre></div>
-<h2 id="cli-options-reference">CLI Options Reference</h2>
+<p>This produces:</p>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th>Short</th>
-<th>Description</th>
+<th>Object</th>
+<th>Kind</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>--output-dir</code></td>
-<td><code>-o</code></td>
-<td>Output directory for split files (default: <code>./output</code>)</td>
+<td><code>closure_id</code></td>
+<td>materialized table</td>
+<td>per-node ancestor ID arrays</td>
 </tr>
 <tr>
-<td><code>--format</code></td>
-<td><code>-f</code></td>
-<td>Output format: <code>tsv</code>, <code>jsonl</code>, or <code>parquet</code> (default: preserve input)</td>
+<td><code>closure_label</code></td>
+<td>materialized table</td>
+<td>per-node ancestor label arrays</td>
 </tr>
 <tr>
-<td><code>--remove-prefixes</code></td>
-<td></td>
-<td>Remove CURIE prefixes from values in filenames</td>
+<td><code>descendants_id</code> / <code>descendants_label</code></td>
+<td>materialized tables</td>
+<td>per-node descendant arrays</td>
 </tr>
 <tr>
-<td><code>--progress</code></td>
-<td><code>-p</code></td>
-<td>Show progress bars (default: enabled)</td>
+<td><code>node_&lt;predicate&gt;</code></td>
+<td>materialized table per <code>--node-field</code></td>
+<td>aggregated edge endpoints per node</td>
 </tr>
 <tr>
-<td><code>--quiet</code></td>
-<td><code>-q</code></td>
-<td>Suppress output messages</td>
+<td><code>denormalized_edges</code></td>
+<td><strong>view</strong></td>
+<td>edges joined to subject/object closure expansions</td>
+</tr>
+<tr>
+<td><code>denormalized_nodes</code></td>
+<td><strong>view</strong></td>
+<td>nodes joined to side tables + descendants</td>
 </tr>
 </tbody>
 </table>
-<h2 id="see-also">See Also</h2>
+<p>Plus two new columns added directly to <code>edges</code>: <code>evidence_count</code> (sum of evidence/publication array lengths) and <code>grouping_key</code> (a stable composite key over subject/predicate/object/negated).</p>
+<h2 id="configuring-the-expansion">Configuring the Expansion</h2>
+<p>Two flavors of edge-field expansion:</p>
 <ul>
-<li><a href="../../reference/cli/">CLI Reference</a> - Complete CLI documentation</li>
-<li><a href="../join-files/">How to Join Files</a> - Combine split files back together</li>
-<li><a href="../export-formats/">How to Export Formats</a> - More on format conversion</li>
+<li><strong>Full closure expansion</strong> (<code>--edge-field</code>): adds <code>_label</code>, <code>_category</code>, <code>_namespace</code>, <code>_closure</code>, <code>_closure_label</code>, and (for <code>subject</code>/<code>object</code>) <code>_taxon</code>/<code>_taxon_label</code>.</li>
+<li><strong>Label-only expansion</strong> (<code>--edge-field-to-label</code>): adds <code>_label</code>, <code>_category</code>, <code>_namespace</code> — no closure arrays. Cheaper for fields where you don't need ancestry traversal.</li>
+</ul>
+<p>Plus node-side per-predicate aggregations (<code>--node-field</code>): for each configured predicate, aggregates that predicate's objects per subject node into <code>&lt;predicate&gt;</code>, <code>&lt;predicate&gt;_label</code>, <code>&lt;predicate&gt;_count</code>, <code>&lt;predicate&gt;_closure</code>, <code>&lt;predicate&gt;_closure_label</code>.</p>
+<h3 id="monarch-style-invocation">Monarch-style invocation</h3>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>closurize<span class="w"> </span>graph.duckdb<span class="w"> </span>-c<span class="w"> </span>phenio-relation-filtered.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--edge-field<span class="w"> </span>subject<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--edge-field<span class="w"> </span>object<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--edge-field<span class="w"> </span>disease_context_qualifier<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--edge-field-to-label<span class="w"> </span>species_context_qualifier<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--edge-field-to-label<span class="w"> </span>stage_qualifier<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--edge-field-to-label<span class="w"> </span>sex_qualifier<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--edge-field-to-label<span class="w"> </span>onset_qualifier<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--edge-field-to-label<span class="w"> </span>frequency_qualifier<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--node-field<span class="w"> </span>has_phenotype<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--additional-node-constraints<span class="w"> </span><span class="s2">&quot;e.negated IS NULL OR e.negated = false&quot;</span>
+</code></pre></div>
+<p>The <code>--additional-node-constraints</code> flag accepts a SQL <code>WHERE</code>-style fragment applied to the per-predicate edge join. Reference edges columns via the <code>e</code> alias.</p>
+<h2 id="schema-evolution">Schema Evolution</h2>
+<p>If the DuckDB was seeded (via <a href="../join-files/"><code>koza join</code></a>'s schema seam), closurize adds two new classes to the stored schema:</p>
+<ul>
+<li><code>DenormalizedEntity is_a Entity</code> — with slots matching the actual columns of <code>denormalized_nodes</code>.</li>
+<li><code>DenormalizedAssociation is_a Association</code> — with slots matching <code>denormalized_edges</code>.</li>
+</ul>
+<p>Inspect via:</p>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>schema-export<span class="w"> </span>graph.duckdb<span class="w"> </span>-o<span class="w"> </span>graph-schema.yaml
+</code></pre></div>
+<p>The exported file is a standalone LinkML schema with <code>linkml:types</code> imported and <code>linkml</code>/<code>biolink</code> prefixes declared — directly consumable by <code>gen-pydantic</code>, <code>lsolr</code>, and other LinkML tooling. By default, <code>DenormalizedEntity</code> is renamed to <code>Entity</code> and <code>DenormalizedAssociation</code> to <code>Association</code> (consumer-facing names); pass <code>--raw</code> to preserve the internal naming.</p>
+<h2 id="memory-considerations">Memory Considerations</h2>
+<p>The closure aggregation involves <code>ARRAY_AGG</code>+<code>FLATTEN</code>+<code>LIST_DISTINCT</code> over per-node groups, which doesn't spill cleanly to disk. For a Monarch-scale graph (~1.5 M nodes, ~15 M edges), peak memory during closurize is ~25 GB. To cap:</p>
+<div class="highlight"><pre><span></span><code><span class="nv">DUCKDB_MEMORY_LIMIT</span><span class="o">=</span>16GB<span class="w"> </span>koza<span class="w"> </span>closurize<span class="w"> </span>...
+</code></pre></div>
+<p>Most chunks will still succeed; the closure aggregation chunk may OOM under tight caps. The graph schema seam is tolerant — if it doesn't get to the evolve step, downstream operations still work via the unseed fallback.</p>
+<h2 id="verification">Verification</h2>
+<p>Confirm the denormalized views are queryable:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- All edges where the subject is a descendant of MONDO:0700096 (human disease)</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="n">subject_label</span><span class="p">,</span><span class="w"> </span><span class="n">predicate</span><span class="p">,</span><span class="w"> </span><span class="n">object_label</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">denormalized_edges</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">list_contains</span><span class="p">(</span><span class="n">subject_closure</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;MONDO:0700096&#39;</span><span class="p">)</span>
+<span class="k">LIMIT</span><span class="w"> </span><span class="mi">5</span><span class="p">;</span>
+</code></pre></div>
+<p>And confirm <code>_koza_schema</code> knows about the new classes:</p>
+<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">&quot;SELECT kind, length(content) FROM _koza_schema&quot;</span>
+</code></pre></div>
+<h2 id="next-steps">Next Steps</h2>
+<ul>
+<li><a href="../../reference/cli/#koza-schema-export"><code>koza schema-export</code></a> — write the post-closurize schema as a release artifact.</li>
+<li><a href="../../explanation/schema-handling/">Schema Handling</a> — how the graph schema seam works.</li>
 </ul>
 
 

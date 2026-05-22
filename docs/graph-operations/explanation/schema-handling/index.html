@@ -1013,6 +1013,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../how-to/closurize/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Closurize
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../how-to/incremental-updates/" class="md-nav__link">
         
   
@@ -1772,6 +1800,56 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#the-graph-schema-_koza_schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Graph Schema (_koza_schema)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The Graph Schema (_koza_schema)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lifecycle
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tolerant-of-unseeded-databases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tolerant of unseeded databases
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-this-matters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why this matters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2260,6 +2338,56 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#the-graph-schema-_koza_schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Graph Schema (_koza_schema)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The Graph Schema (_koza_schema)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lifecycle
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tolerant-of-unseeded-databases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tolerant of unseeded databases
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-this-matters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why this matters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2466,6 +2594,32 @@ For chemicals: <code>taxon</code>, <code>chromosome</code>, <code>definition</co
 <span class="k">FROM</span><span class="w"> </span><span class="n">nodes</span>
 </code></pre></div>
 <p><strong>Use provided_by for provenance</strong>: Enable <code>generate_provided_by</code> (default) to track which source each record came from. This allows investigation of schema differences by source.</p>
+<h2 id="the-graph-schema-_koza_schema">The Graph Schema (<code>_koza_schema</code>)</h2>
+<p>Beyond file-level harmonization, every koza-built DuckDB carries a LinkML schema describing the classes and slots that the data conforms to. It lives in a metadata table called <code>_koza_schema</code> inside the DuckDB itself, alongside a snapshot of the Biolink Model used to derive it. Two rows: <code>derived_schema</code> and <code>biolink</code>.</p>
+<p>This schema is the source of truth. Operations consult it (via <code>current_schema(conn)</code>) instead of probing columns with <code>DESCRIBE</code>, and they evolve it when they add new slots.</p>
+<h3 id="lifecycle">Lifecycle</h3>
+<ol>
+<li><strong>Seeded</strong> at graph creation. <code>koza join</code> calls <code>seed_schema(conn, ...)</code> after <code>create_final_tables</code>. The schema is derived by:<ul>
+<li>Walking Biolink's <code>named thing</code> and <code>association</code> class hierarchies</li>
+<li>Intersecting with the union of all input file headers</li>
+<li>Adding koza extras (<code>file_source</code>, <code>provided_by</code>)</li>
+<li>Adding declared outputs from operation modules (e.g. <code>normalize.DECLARED_OUTPUTS</code> contributes <code>original_subject</code> / <code>original_object</code>)</li>
+<li>Validating that no input column lies outside the union — strict reject on unknowns (ADR-0001)</li>
+</ul>
+</li>
+<li><strong>Evolved</strong> by each operation that produces new slots. <code>normalize</code> calls <code>ensure_slots(conn, "edges", ["original_subject", "original_object"])</code> before its SQL; the function ALTER-TABLEs and updates the stored schema in one transaction. <code>closurize_graph</code> adds <code>DenormalizedEntity</code> and <code>DenormalizedAssociation</code> classes whose slot lists come from the actual columns of the produced views.</li>
+<li><strong>Exported</strong> at release time. <code>koza schema-export</code> reads <code>_koza_schema</code>, projects <code>DenormalizedEntity</code> → <code>Entity</code> and <code>DenormalizedAssociation</code> → <code>Association</code> (consumer-facing naming), derives <code>multivalued: true</code> from actual DuckDB column types, declares prefixes and imports — and writes a standalone LinkML YAML that downstream tools (<code>gen-pydantic</code>, <code>lsolr create-schema</code>, monarch-app's <code>imports:</code>) consume directly.</li>
+</ol>
+<h3 id="tolerant-of-unseeded-databases">Tolerant of unseeded databases</h3>
+<p>Graphs that predate the schema feature don't have a <code>_koza_schema</code> table. <code>ensure_slots</code> gracefully degrades — it falls back to a plain <code>ALTER TABLE</code> with column type defaulting to <code>VARCHAR</code> (multivalued-ness unknown without a schema), and skips the schema-metadata update. Operations refactored to consume the seam still work on these older graphs. See <a href="https://github.com/monarch-initiative/koza/blob/main/decisions/0002-schema-lives-with-database.md">ADR-0002</a>.</p>
+<h3 id="why-this-matters">Why this matters</h3>
+<p>Before the graph schema seam, operations re-derived "what columns exist" each run via <code>DESCRIBE</code> and try/except column probing. That meant the same fallback logic was duplicated in every operation, and silent schema drift was easy. With the schema as source of truth:</p>
+<ul>
+<li>Operations are shorter and more honest about what they need.</li>
+<li>Adding a column anywhere in the pipeline is a one-line slot declaration; the rest of the system picks it up.</li>
+<li>Cross-tool integration (Solr indexing, monarch-app pydantic classes, third-party consumers) reads from a single authoritative artifact instead of guessing.</li>
+</ul>
+<p>The historical "monarch-ingest fetches monarch-app's <code>model.yaml</code> at runtime to learn what closurize produces" dependency was a symptom of not having this. With <code>_koza_schema</code> + <code>koza schema-export</code>, that inversion goes away.</p>
 
 
 

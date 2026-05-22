@@ -1010,6 +1010,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../graph-operations/how-to/closurize/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Closurize
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../graph-operations/how-to/incremental-updates/" class="md-nav__link">
         
   
@@ -1574,6 +1602,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#koza-schema-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        koza schema-export
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza-closurize" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        koza closurize
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#koza-prune" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1767,6 +1817,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#koza-schema-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        koza schema-export
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza-closurize" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        koza closurize
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#koza-prune" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1901,6 +1973,8 @@
 <li><code>transform</code>: Transform a source file.</li>
 <li><code>join</code>: Join multiple KGX files into a unified...</li>
 <li><code>split</code>: Split a KGX file by specified fields with...</li>
+<li><code>schema-export</code>: Export the koza graph schema from a DuckDB...</li>
+<li><code>closurize</code>: Apply closure expansion to a merged graph:...</li>
 <li><code>prune</code>: Prune graph by removing dangling edges and...</li>
 <li><code>append</code>: Append new KGX files to an existing graph...</li>
 <li><code>normalize</code>: Apply SSSOM mappings to normalize edge...</li>
@@ -1999,6 +2073,62 @@ koza join -n file1.tsv -n file2.tsv -e edges.tsv -o graph.duckdb
 <li><code>--remove-prefixes</code>: Remove prefixes from values in filenames</li>
 <li><code>-q, --quiet</code>: Suppress output</li>
 <li><code>-p, --progress</code>: Show progress bars  [default: True]</li>
+<li><code>--help</code>: Show this message and exit.</li>
+</ul>
+<h2 id="koza-schema-export"><code>koza schema-export</code></h2>
+<p>Export the koza graph schema from a DuckDB as a YAML release artifact.</p>
+<p>By default, the wide post-closurize classes are renamed to Entity /
+Association (matching monarch-app&#x27;s convention) and the narrow post-merge
+classes are dropped. Use --raw to preserve the full internal naming —
+note that downstream consumers (monarch-app&#x27;s import target, lsolr
+create-schema invocations) expect the projected names, so --raw output
+isn&#x27;t drop-in compatible with the default downstream toolchain.</p>
+<p><strong>Usage</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>schema-export<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>DATABASE
+</code></pre></div>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>DATABASE</code>: Path to a koza-built DuckDB containing _koza_schema  [required]</li>
+</ul>
+<p><strong>Options</strong>:</p>
+<ul>
+<li><code>-o, --output TEXT</code>: Path to write the exported schema YAML  [required]</li>
+<li><code>--raw</code>: Export the schema as-is (DenormalizedEntity/DenormalizedAssociation preserved). Default is to project denormalized classes to consumer-facing Entity/Association names.</li>
+<li><code>--help</code>: Show this message and exit.</li>
+</ul>
+<h2 id="koza-closurize"><code>koza closurize</code></h2>
+<p>Apply closure expansion to a merged graph: produce denormalized_nodes and
+denormalized_edges, evolve the stored schema to include DenormalizedEntity
+and DenormalizedAssociation classes.</p>
+<p>Examples:
+    # Monarch-style: expand subject/object/disease-context with full closure,
+    # label-only expansion for the qualifier fields, has_phenotype per-node
+    # aggregation.
+    koza closurize graph.duckdb -c phenio-relation-filtered.tsv \
+        --edge-field subject --edge-field object \
+        --edge-field disease_context_qualifier \
+        --edge-field-to-label species_context_qualifier \
+        --edge-field-to-label stage_qualifier \
+        --edge-field-to-label sex_qualifier \
+        --edge-field-to-label onset_qualifier \
+        --edge-field-to-label frequency_qualifier \
+        --node-field has_phenotype \
+        --additional-node-constraints &quot;e.negated IS NULL OR e.negated = false OR e.negated = &#x27;False&#x27;&quot;</p>
+<p><strong>Usage</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>closurize<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>DATABASE
+</code></pre></div>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>DATABASE</code>: Path to the DuckDB database file to closurize  [required]</li>
+</ul>
+<p><strong>Options</strong>:</p>
+<ul>
+<li><code>-c, --closure-file TEXT</code>: Path to the relation-graph TSV file (subject_id, predicate_id, object_id)  [required]</li>
+<li><code>--node-field TEXT</code>: Predicate to expand into per-node aggregations (repeatable)</li>
+<li><code>--edge-field TEXT</code>: Edge field to fully expand (label + category + namespace + closure) (repeatable)</li>
+<li><code>--edge-field-to-label TEXT</code>: Edge field to expand with label/category/namespace only — no closure (repeatable)</li>
+<li><code>--additional-node-constraints TEXT</code>: SQL WHERE-clause fragment applied to per-predicate node aggregation joins. Reference edges columns via the alias <code>e</code> (e.g. <code>e.negated IS NULL</code>).</li>
+<li><code>-q, --quiet</code>: Suppress output</li>
 <li><code>--help</code>: Show this message and exit.</li>
 </ul>
 <h2 id="koza-prune"><code>koza prune</code></h2>
