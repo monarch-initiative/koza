@@ -358,6 +358,112 @@ Creates archive tables for data preservation:
 
 ---
 
+## koza closurize
+
+Apply transitive closure expansion to a merged graph: produce `denormalized_nodes` and `denormalized_edges` views and evolve the stored schema to include `DenormalizedEntity` and `DenormalizedAssociation` classes.
+
+### Synopsis
+
+```bash
+koza closurize DATABASE -c CLOSURE_FILE [OPTIONS]
+```
+
+### Arguments
+
+| Argument | Type | Description |
+|----------|------|-------------|
+| `DATABASE` | str | Path to the DuckDB database (must contain `nodes` and `edges` tables) |
+
+### Options
+
+| Option | Short | Type | Default | Description |
+|--------|-------|------|---------|-------------|
+| `--closure-file` | `-c` | str | (required) | Path to the relation-graph TSV (subject_id, predicate_id, object_id) |
+| `--edge-field` | | List[str] | `["subject", "object"]` | Edge field to fully expand (label + category + namespace + closure). Repeatable. |
+| `--edge-field-to-label` | | List[str] | `[]` | Edge field to expand with label/category/namespace only — no closure. Repeatable. |
+| `--node-field` | | List[str] | `["has_phenotype"]` | Predicate to aggregate per-subject-node into `<predicate>`, `<predicate>_label`, `<predicate>_count`, `<predicate>_closure`, `<predicate>_closure_label`. Repeatable. |
+| `--additional-node-constraints` | | str | None | SQL WHERE-clause fragment applied to per-predicate join. Reference edges via the `e` alias (e.g. `"e.negated IS NULL"`). |
+| `--quiet` | `-q` | bool | False | Suppress output |
+
+### Environment
+
+- `DUCKDB_MEMORY_LIMIT` — if set (e.g. `16GB`), passed to DuckDB's `memory_limit` pragma to force spill-to-disk under memory pressure.
+
+### Examples
+
+```bash
+# Default (subject/object closure + has_phenotype node aggregation)
+koza closurize graph.duckdb -c phenio-relation-filtered.tsv
+
+# Monarch-style: full closure on three edge fields, label-only on five qualifier
+# fields, has_phenotype node aggregation excluding negated edges
+koza closurize graph.duckdb -c phenio-relation-filtered.tsv \
+    --edge-field subject \
+    --edge-field object \
+    --edge-field disease_context_qualifier \
+    --edge-field-to-label species_context_qualifier \
+    --edge-field-to-label stage_qualifier \
+    --edge-field-to-label sex_qualifier \
+    --edge-field-to-label onset_qualifier \
+    --edge-field-to-label frequency_qualifier \
+    --node-field has_phenotype \
+    --additional-node-constraints "e.negated IS NULL OR e.negated = false"
+```
+
+### Output
+
+- **denormalized_nodes / denormalized_edges**: views in the DuckDB
+- **closure_id, closure_label, descendants_id, descendants_label, node_<predicate>**: materialized side tables
+- **edges**: gains `evidence_count` and `grouping_key` columns
+- **_koza_schema**: gains `DenormalizedEntity` and `DenormalizedAssociation` classes (if the database was seeded)
+
+**See also**: [How to Closurize a Graph](../how-to/closurize.md), [koza schema-export](#koza-schema-export)
+
+---
+
+## koza schema-export
+
+Write the stored graph schema from a koza-built DuckDB as a release-ready LinkML YAML.
+
+### Synopsis
+
+```bash
+koza schema-export DATABASE -o OUTPUT [OPTIONS]
+```
+
+### Arguments
+
+| Argument | Type | Description |
+|----------|------|-------------|
+| `DATABASE` | str | Path to a koza-built DuckDB containing `_koza_schema` |
+
+### Options
+
+| Option | Short | Type | Default | Description |
+|--------|-------|------|---------|-------------|
+| `--output` | `-o` | str | (required) | Path to write the exported schema YAML |
+| `--raw` | | bool | False | Preserve the full internal naming (DenormalizedEntity/Association). By default, those are renamed to Entity/Association — the consumer-facing convention. |
+
+### Description
+
+The exported schema is a standalone LinkML file with `linkml:types` imported, `linkml`/`biolink` prefixes declared, and `multivalued: true` derived from actual DuckDB column types. Downstream consumers (monarch-app's `imports:`, `lsolr create-schema`, `gen-pydantic`) can use it directly.
+
+Note: `--raw` output isn't drop-in compatible with downstream tools that expect Entity/Association as the wide post-closurize classes; use the default projection unless you specifically need the internal naming preserved.
+
+### Examples
+
+```bash
+# Default — projected names, downstream-compatible
+koza schema-export graph.duckdb -o graph-schema.yaml
+
+# Preserve internal naming (DenormalizedEntity, DenormalizedAssociation)
+koza schema-export graph.duckdb -o graph-schema.raw.yaml --raw
+```
+
+**See also**: [koza closurize](#koza-closurize), [Schema Handling](../explanation/schema-handling.md)
+
+---
+
 ## koza append
 
 Append new KGX files to an existing graph database.

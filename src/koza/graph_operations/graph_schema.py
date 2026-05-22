@@ -15,6 +15,7 @@ import duckdb
 from linkml_runtime.dumpers import yaml_dumper
 from linkml_runtime.linkml_model.meta import (
     ClassDefinition,
+    Prefix,
     SchemaDefinition,
     SlotDefinition,
 )
@@ -275,6 +276,95 @@ def current_schema(conn: duckdb.DuckDBPyConnection) -> SchemaDefinition:
             f"No graph schema found in {_KOZA_SCHEMA_TABLE} — was seed_schema called?"
         )
     return yaml_loader.loads(content, target_class=SchemaDefinition)
+
+
+def export_schema(
+    conn: duckdb.DuckDBPyConnection,
+    project_denormalized: bool = True,
+) -> str:
+    """Export the stored graph schema as a YAML string suitable for release.
+
+    With `project_denormalized=True` (default), `DenormalizedEntity` and
+    `DenormalizedAssociation` are renamed to `Entity` / `Association` and the
+    narrow post-merge classes are dropped — matching monarch-app's convention
+    where those names refer to the post-closurize wide shape.
+
+    Slot definitions are enriched with `multivalued: true` for any slot whose
+    column in `denormalized_nodes` or `denormalized_edges` is `VARCHAR[]`.
+    """
+    schema = current_schema(conn)
+
+    # Released schema must be standalone-loadable by linkml tooling: linkml:types
+    # is needed for `range: string` etc. to resolve, and the prefixes need to be
+    # declared for CURIE expansion.
+    if "linkml:types" not in (schema.imports or []):
+        schema.imports = list(schema.imports or []) + ["linkml:types"]
+    if not schema.default_range:
+        schema.default_range = "string"
+    prefixes = dict(schema.prefixes or {})
+    for prefix, uri in (
+        ("linkml", "https://w3id.org/linkml/"),
+        ("biolink", "https://w3id.org/biolink/vocab/"),
+    ):
+        prefixes.setdefault(prefix, Prefix(prefix_prefix=prefix, prefix_reference=uri))
+    schema.prefixes = prefixes
+
+    if project_denormalized:
+        new_classes: dict[str, ClassDefinition] = {}
+        rename = {"DenormalizedEntity": "Entity", "DenormalizedAssociation": "Association"}
+        for cls_name, cls_def in schema.classes.items():
+            target = rename.get(cls_name)
+            if target is None:
+                # Drop narrow post-merge classes when we're projecting denorm names
+                if cls_name in ("Entity", "Association"):
+                    continue
+                new_classes[cls_name] = cls_def
+            else:
+                cls_def.name = target
+                cls_def.is_a = None  # parent class is being dropped
+                new_classes[target] = cls_def
+        schema.classes = new_classes
+
+    # Derive multivalued from actual DuckDB column types of the denormalized views.
+    multivalued_slots: set[str] = set()
+    for table in ("denormalized_nodes", "denormalized_edges"):
+        try:
+            rows = conn.execute(f"DESCRIBE {table}").fetchall()
+        except duckdb.CatalogException:
+            # Pre-closurize DB; just skip — the schema is still exportable
+            # with whatever Entity / Association slot info we have.
+            continue
+        for col_name, col_type, *_ in rows:
+            if "VARCHAR[]" in (col_type or "").upper():
+                multivalued_slots.add(col_name)
+
+    for slot_name in multivalued_slots:
+        slot = schema.slots.get(slot_name)
+        if slot is None:
+            slot = SlotDefinition(name=slot_name)
+            schema.slots[slot_name] = slot
+        slot.multivalued = True
+
+    return yaml_dumper.dumps(schema)
+
+
+def is_seeded(conn: duckdb.DuckDBPyConnection) -> bool:
+    """Whether this DuckDB has a stored graph schema (the `_koza_schema`
+    metadata table with a derived_schema row). False for graphs from before
+    the schema feature existed or for fresh DuckDBs that haven't been
+    through `seed_schema` yet."""
+    return _read_metadata(conn, _KIND_DERIVED_SCHEMA) is not None
+
+
+def update_schema(conn: duckdb.DuckDBPyConnection, schema: SchemaDefinition) -> None:
+    """Persist `schema` as the stored derived schema for this DuckDB.
+
+    Used by operations that evolve the schema after seed time (e.g.
+    `ensure_slots` adds materialized slot columns; `closurize_graph` adds
+    `DenormalizedEntity` / `DenormalizedAssociation` classes). Requires
+    the database to already be seeded — call `is_seeded(conn)` first.
+    """
+    _write_metadata(conn, _KIND_DERIVED_SCHEMA, yaml_dumper.dumps(schema))
 
 
 def stored_biolink_yaml(conn: duckdb.DuckDBPyConnection) -> str | None:

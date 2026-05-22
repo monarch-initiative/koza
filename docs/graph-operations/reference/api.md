@@ -69,6 +69,91 @@ Append additional KGX files to an existing graph database.
       show_root_heading: true
       show_source: false
 
+### closurize_graph
+
+Apply transitive closure expansion to a merged graph. Produces `denormalized_nodes` and `denormalized_edges` as views joining `nodes`/`edges` to materialized closure side tables. Evolves the stored graph schema to include `DenormalizedEntity` and `DenormalizedAssociation` classes.
+
+::: koza.graph_operations.closurize.closurize_graph
+    options:
+      show_root_heading: true
+      show_source: false
+
+## Graph Schema Seam
+
+Each koza-built DuckDB carries its own derived LinkML schema in a `_koza_schema` metadata table, seeded at graph creation from Biolink + input file headers + koza extras. Operations consume and evolve this schema through the functions below.
+
+### seed_schema
+
+Derive a graph schema from input headers + Biolink and persist it into the DuckDB at graph creation.
+
+::: koza.graph_operations.graph_schema.seed_schema
+    options:
+      show_root_heading: true
+      show_source: false
+
+### current_schema
+
+Read the stored schema back from a DuckDB.
+
+::: koza.graph_operations.graph_schema.current_schema
+    options:
+      show_root_heading: true
+      show_source: false
+
+### is_seeded
+
+Check whether a DuckDB has a stored schema (e.g. before calling `update_schema`).
+
+::: koza.graph_operations.graph_schema.is_seeded
+    options:
+      show_root_heading: true
+      show_source: false
+
+### ensure_slots
+
+Materialize declared output slots as columns, idempotently. Used by operations (`normalize`, `closurize`) before they write columns they've declared.
+
+::: koza.graph_operations.graph_schema.ensure_slots
+    options:
+      show_root_heading: true
+      show_source: false
+
+### update_schema
+
+Persist an evolved schema back to the DuckDB.
+
+::: koza.graph_operations.graph_schema.update_schema
+    options:
+      show_root_heading: true
+      show_source: false
+
+### export_schema
+
+Project the stored schema to a release-ready YAML string (Denormalized\* classes renamed to Entity/Association, multivalued info derived from actual column types, linkml:types import + prefixes declared).
+
+::: koza.graph_operations.graph_schema.export_schema
+    options:
+      show_root_heading: true
+      show_source: false
+
+### stored_biolink_yaml
+
+Read the full Biolink YAML stored at seed time (used by `koza schema rebase`, not by routine operations).
+
+::: koza.graph_operations.graph_schema.stored_biolink_yaml
+    options:
+      show_root_heading: true
+      show_source: false
+
+### discover_declared_outputs
+
+Walk operation modules to collect their `DECLARED_OUTPUTS` for inclusion in the seeded schema's strict-reject set.
+
+::: koza.graph_operations.graph_schema.discover_declared_outputs
+    options:
+      show_root_heading: true
+      show_source: false
+
 ## Reporting Functions
 
 These functions generate various reports and statistics about graph databases.

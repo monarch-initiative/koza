@@ -14,6 +14,7 @@ from koza.graph_operations import (
     append_graphs,
     generate_connectivity_report,
     generate_edge_examples,
+    closurize_graph,
     generate_edge_report,
     generate_graph_stats,
     generate_node_examples,
@@ -32,6 +33,7 @@ from koza.graph_operations import (
 from koza.model.formats import InputFormat, OutputFormat
 from koza.model.graph_operations import (
     AppendConfig,
+    ClosurizeConfig,
     ConnectivityReportConfig,
     EdgeExamplesConfig,
     EdgeReportConfig,
@@ -464,6 +466,109 @@ def split(
         if not quiet:
             typer.echo("Split operation completed successfully!")
 
+    except Exception as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(1)
+
+
+@typer_app.command(name="schema-export")
+def schema_export(  # noqa: PLR0913
+    database: Annotated[str, typer.Argument(help="Path to a koza-built DuckDB containing _koza_schema")],
+    output: Annotated[str, typer.Option(
+        "--output", "-o",
+        help="Path to write the exported schema YAML"
+    )],
+    raw: Annotated[bool, typer.Option(
+        "--raw",
+        help="Export the schema as-is (DenormalizedEntity/DenormalizedAssociation preserved). "
+             "Default is to project denormalized classes to consumer-facing Entity/Association names."
+    )] = False,
+) -> None:
+    """Export the koza graph schema from a DuckDB as a YAML release artifact.
+
+    By default, the wide post-closurize classes are renamed to Entity /
+    Association (matching monarch-app's convention) and the narrow post-merge
+    classes are dropped. Use --raw to preserve the full internal naming —
+    note that downstream consumers (monarch-app's import target, lsolr
+    create-schema invocations) expect the projected names, so --raw output
+    isn't drop-in compatible with the default downstream toolchain.
+    """
+    from koza.graph_operations.graph_schema import export_schema
+
+    conn = duckdb.connect(database, read_only=True)
+    try:
+        yaml_text = export_schema(conn, project_denormalized=not raw)
+    finally:
+        conn.close()
+    Path(output).write_text(yaml_text)
+    typer.echo(f"Wrote {output}")
+
+
+@typer_app.command()
+def closurize(
+    database: Annotated[str, typer.Argument(help="Path to the DuckDB database file to closurize")],
+    closure_file: Annotated[str, typer.Option(
+        "--closure-file", "-c",
+        help="Path to the relation-graph TSV file (subject_id, predicate_id, object_id)"
+    )],
+    node_fields: Annotated[list[str] | None, typer.Option(
+        "--node-field", help="Predicate to expand into per-node aggregations (repeatable)"
+    )] = None,
+    edge_fields: Annotated[list[str] | None, typer.Option(
+        "--edge-field", help="Edge field to fully expand (label + category + namespace + closure) (repeatable)"
+    )] = None,
+    edge_fields_to_label: Annotated[list[str] | None, typer.Option(
+        "--edge-field-to-label",
+        help="Edge field to expand with label/category/namespace only — no closure (repeatable)"
+    )] = None,
+    additional_node_constraints: Annotated[str | None, typer.Option(
+        "--additional-node-constraints",
+        help="SQL WHERE-clause fragment applied to per-predicate node aggregation joins. "
+             "Reference edges columns via the alias `e` (e.g. `e.negated IS NULL`)."
+    )] = None,
+    quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress output")] = False,
+) -> None:
+    """Apply closure expansion to a merged graph: produce denormalized_nodes and
+    denormalized_edges, evolve the stored schema to include DenormalizedEntity
+    and DenormalizedAssociation classes.
+
+    Examples:
+        # Monarch-style: expand subject/object/disease-context with full closure,
+        # label-only expansion for the qualifier fields, has_phenotype per-node
+        # aggregation.
+        koza closurize graph.duckdb -c phenio-relation-filtered.tsv \\
+            --edge-field subject --edge-field object \\
+            --edge-field disease_context_qualifier \\
+            --edge-field-to-label species_context_qualifier \\
+            --edge-field-to-label stage_qualifier \\
+            --edge-field-to-label sex_qualifier \\
+            --edge-field-to-label onset_qualifier \\
+            --edge-field-to-label frequency_qualifier \\
+            --node-field has_phenotype \\
+            --additional-node-constraints "e.negated IS NULL OR e.negated = false OR e.negated = 'False'"
+    """
+    try:
+        # Pass-through: let ClosurizeConfig own defaults so they aren't
+        # duplicated between the CLI and the model.
+        config_kwargs = {
+            "database_path": Path(database),
+            "closure_file": Path(closure_file),
+            "additional_node_constraints": additional_node_constraints,
+            "quiet": quiet,
+        }
+        if node_fields is not None:
+            config_kwargs["node_fields"] = node_fields
+        if edge_fields is not None:
+            config_kwargs["edge_fields"] = edge_fields
+        if edge_fields_to_label is not None:
+            config_kwargs["edge_fields_to_label"] = edge_fields_to_label
+        config = ClosurizeConfig(**config_kwargs)
+        result = closurize_graph(config)
+        if not quiet:
+            typer.echo(
+                f"Closurize completed: {result.denormalized_nodes_count:,} nodes, "
+                f"{result.denormalized_edges_count:,} edges"
+            )
     except Exception as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(1)
