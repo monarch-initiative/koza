@@ -2,6 +2,7 @@
 Shared utilities for graph operations using DuckDB.
 """
 
+import re
 import time
 from pathlib import Path
 
@@ -90,6 +91,9 @@ def _build_injected_columns_exclude(
     return f" EXCLUDE ({', '.join(sorted(present))})"
 
 
+_SLOT_NAME_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+
+
 def _jsonl_explicit_columns_clause(file_spec: FileSpec) -> str | None:
     """Build a `columns={...}` clause from file_spec.slots for JSONL.
 
@@ -119,6 +123,17 @@ def _jsonl_explicit_columns_clause(file_spec: FileSpec) -> str | None:
         biolink_schemaview=load_biolink_schemaview(),
         declared_outputs=declared_outputs,
     )
+    # Guard against SQL injection at the emitter rather than relying on
+    # upstream validation. In the strict-reject path slot names come from
+    # the Biolink pool / KOZA_INGEST_EXTRAS / declared_outputs and are
+    # already constrained, but a permissive caller could supply arbitrary
+    # identifiers.
+    for slot_name in cols:
+        if not _SLOT_NAME_RE.fullmatch(slot_name):
+            raise ValueError(
+                f"slot name {slot_name!r} contains characters disallowed in a "
+                f"DuckDB identifier; refusing to interpolate into SQL"
+            )
     return "{" + ", ".join(f"'{k}': '{v}'" for k, v in cols.items()) + "}"
 
 

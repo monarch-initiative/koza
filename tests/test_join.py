@@ -1134,6 +1134,105 @@ class TestSlotsFile:
         with pytest.raises(UnknownSlotsError, match="not_a_biolink_slot"):
             join_graphs(config)
 
+    def test_slots_file_subset_drops_unmentioned_keys(self, nested_edges_jsonl, temp_dir):
+        """By design, read_json(columns=...) silently drops JSON keys not in
+        the slot list. Locked in as a regression marker — if behavior ever
+        changes, the docstring on _apply_slots_file needs updating too."""
+        import duckdb
+
+        slots_file = temp_dir / "slots.yaml"
+        # Deliberately omit publications + sources from the slot list.
+        slots_file.write_text("edges: [id, subject, predicate, object, category]\n")
+        db_path = temp_dir / "out.duckdb"
+
+        config = JoinConfig(
+            node_files=[],
+            edge_files=[FileSpec(path=nested_edges_jsonl, format=KGXFormat.JSONL, file_type=KGXFileType.EDGES)],
+            database_path=db_path,
+            slots_file=slots_file,
+            quiet=True,
+            show_progress=False,
+        )
+        join_graphs(config)
+        with duckdb.connect(str(db_path)) as conn:
+            cols = {row[0] for row in conn.execute("DESCRIBE edges").fetchall()}
+            assert "publications" not in cols
+            assert "sources" not in cols
+            assert {"id", "subject", "predicate", "object", "category"}.issubset(cols)
+
+    def test_slots_file_skips_files_without_file_type(self, temp_dir):
+        """A FileSpec with file_type=None (ambiguous filename) is left
+        untouched by _apply_slots_file — we don't guess whether it's nodes
+        or edges based on the slots that happen to match."""
+        from koza.graph_operations.join import _apply_slots_file
+
+        # Filename without _nodes or _edges → FileSpec's file_type validator
+        # leaves file_type=None.
+        ambiguous = temp_dir / "data.jsonl"
+        ambiguous.write_text('{"id": "x"}\n')
+
+        slots_file = temp_dir / "slots.yaml"
+        slots_file.write_text(
+            "nodes: [id, category, name]\n"
+            "edges: [id, subject, predicate, object]\n"
+        )
+        spec = FileSpec(path=ambiguous, format=KGXFormat.JSONL)
+        assert spec.file_type is None  # sanity: validator left it unset
+        config = JoinConfig(
+            node_files=[spec],
+            edge_files=[spec],
+            slots_file=slots_file,
+            quiet=True,
+        )
+        _apply_slots_file(config)
+        assert spec.slots is None
+
+
+class TestApplySlotsFile:
+    """Unit tests for _apply_slots_file's yaml-shape validation."""
+
+    @pytest.fixture
+    def _conf(self, temp_dir):
+        def make(yaml_text: str) -> JoinConfig:
+            f = temp_dir / "slots.yaml"
+            f.write_text(yaml_text)
+            return JoinConfig(node_files=[], edge_files=[], slots_file=f, quiet=True)
+        return make
+
+    def test_apply_no_slots_file_is_noop(self):
+        from koza.graph_operations.join import _apply_slots_file
+
+        _apply_slots_file(JoinConfig(node_files=[], edge_files=[], quiet=True))  # no raise
+
+    def test_apply_accepts_well_formed_yaml(self, _conf):
+        from koza.graph_operations.join import _apply_slots_file
+
+        _apply_slots_file(_conf("nodes: [id, category]\nedges: [id, subject, predicate, object]\n"))
+
+    def test_apply_accepts_partial_yaml(self, _conf):
+        from koza.graph_operations.join import _apply_slots_file
+
+        _apply_slots_file(_conf("nodes: [id, category]\n"))  # edges key omitted
+        _apply_slots_file(_conf("edges: [id, subject, predicate, object]\n"))  # nodes omitted
+
+    def test_apply_rejects_non_mapping_root(self, _conf):
+        from koza.graph_operations.join import _apply_slots_file
+
+        with pytest.raises(ValueError, match="must be a mapping"):
+            _apply_slots_file(_conf("- id\n- category\n"))
+
+    def test_apply_rejects_scalar_node_value(self, _conf):
+        from koza.graph_operations.join import _apply_slots_file
+
+        with pytest.raises(ValueError, match="'nodes' must be a list of strings"):
+            _apply_slots_file(_conf("nodes: id\n"))
+
+    def test_apply_rejects_non_string_items(self, _conf):
+        from koza.graph_operations.join import _apply_slots_file
+
+        with pytest.raises(ValueError, match="'edges' must be a list of strings"):
+            _apply_slots_file(_conf("edges: [id, 42, predicate]\n"))
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

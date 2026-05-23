@@ -333,7 +333,14 @@ def join(
     ] = None,
     slots_file: Annotated[
         str | None,
-        typer.Option("--slots-file", help="YAML file with {nodes: [...], edges: [...]} — sets explicit JSONL schema, skipping inference"),
+        typer.Option(
+            "--slots-file",
+            help=(
+                "YAML file with {nodes: [...], edges: [...]} — sets explicit JSONL "
+                "schema, skipping inference. JSON keys NOT in the slot list are "
+                "silently dropped at read time."
+            ),
+        ),
     ] = None,
     quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress output")] = False,
     show_progress: Annotated[bool, typer.Option("--progress", "-p", help="Show progress bars")] = True,
