@@ -14,10 +14,13 @@ from linkml_runtime.utils.schemaview import SchemaView
 
 from koza.graph_operations import prune_graph
 from koza.graph_operations.graph_schema import (
+    ASSOCIATION_ROOT,
+    ENTITY_ROOT,
     UnknownSlotsError,
     current_schema,
     derive_schema,
     discover_declared_outputs,
+    duckdb_columns_for_slots,
     ensure_slots,
     seed_schema,
     stored_biolink_yaml,
@@ -302,3 +305,106 @@ def test_prune_against_seeded_database(biolink_schemaview, tmp_path):
         "phenotype_links": 1,
     }
     assert result.final_stats.edges == 1
+
+
+# ---------------------------------------------------------------------------
+# duckdb_columns_for_slots — LinkML-flag dispatch for explicit-schema JSONL.
+# ---------------------------------------------------------------------------
+
+
+def test_columns_for_primitive_scalar_slot(biolink_schemaview):
+    cols = duckdb_columns_for_slots(["id", "name"], ENTITY_ROOT, biolink_schemaview)
+    assert cols == {"id": "VARCHAR", "name": "VARCHAR"}
+
+
+def test_columns_for_multivalued_primitive_slot(biolink_schemaview):
+    # `category` is multivalued with range=uriorcurie (primitive) → VARCHAR[].
+    cols = duckdb_columns_for_slots(["category"], ENTITY_ROOT, biolink_schemaview)
+    assert cols == {"category": "VARCHAR[]"}
+
+
+def test_columns_for_numeric_and_boolean_slots(biolink_schemaview):
+    cols = duckdb_columns_for_slots(
+        ["p_value", "evidence_count", "negated"],
+        ASSOCIATION_ROOT,
+        biolink_schemaview,
+    )
+    assert cols == {
+        "p_value": "DOUBLE",
+        "evidence_count": "BIGINT",
+        "negated": "BOOLEAN",
+    }
+
+
+def test_columns_for_class_ref_scalar_slot(biolink_schemaview):
+    # `subject` has class range (named thing) and is scalar → CURIE reference → VARCHAR.
+    cols = duckdb_columns_for_slots(["subject"], ASSOCIATION_ROOT, biolink_schemaview)
+    assert cols == {"subject": "VARCHAR"}
+
+
+def test_columns_for_inlined_as_list_class_slot_uses_struct_array(biolink_schemaview):
+    # `sources` is multivalued + inlined_as_list=True → STRUCT(...)[].
+    cols = duckdb_columns_for_slots(["sources"], ASSOCIATION_ROOT, biolink_schemaview)
+    t = cols["sources"]
+    assert t.startswith("STRUCT(") and t.endswith(")[]")
+    assert "resource_id" in t
+    assert "resource_role" in t
+
+
+def test_columns_for_inlined_class_slot_uses_map(biolink_schemaview):
+    # `has_supporting_studies` is multivalued + inlined=True (no inlined_as_list)
+    # → dict-keyed-by-id → MAP(VARCHAR, STRUCT(...)).
+    cols = duckdb_columns_for_slots(
+        ["has_supporting_studies"], ASSOCIATION_ROOT, biolink_schemaview
+    )
+    t = cols["has_supporting_studies"]
+    assert t.startswith("MAP(VARCHAR, STRUCT(") and t.endswith("))")
+
+
+def test_columns_for_multivalued_curie_refs(biolink_schemaview):
+    # `publications` is multivalued with class range but neither inlined flag
+    # set → list of CURIE references → VARCHAR[].
+    cols = duckdb_columns_for_slots(
+        ["publications"], ASSOCIATION_ROOT, biolink_schemaview
+    )
+    assert cols == {"publications": "VARCHAR[]"}
+
+
+def test_columns_for_koza_extras_resolve_without_biolink(biolink_schemaview):
+    cols = duckdb_columns_for_slots(
+        ["file_source", "provided_by"], ENTITY_ROOT, biolink_schemaview
+    )
+    assert cols == {"file_source": "VARCHAR", "provided_by": "VARCHAR"}
+
+
+def test_columns_for_declared_outputs(biolink_schemaview):
+    cols = duckdb_columns_for_slots(
+        ["mapping_source"],
+        ASSOCIATION_ROOT,
+        biolink_schemaview,
+        declared_outputs={
+            "mapping_source": {
+                "description": "SSSOM mapping provenance.",
+                "range": "string",
+                "multivalued": False,
+            },
+        },
+    )
+    assert cols == {"mapping_source": "VARCHAR"}
+
+
+def test_columns_strict_rejects_unknown_slot(biolink_schemaview):
+    with pytest.raises(UnknownSlotsError, match="not_a_real_biolink_slot"):
+        duckdb_columns_for_slots(
+            ["id", "not_a_real_biolink_slot"], ENTITY_ROOT, biolink_schemaview
+        )
+
+
+def test_columns_permissive_admits_unknown_as_varchar(biolink_schemaview):
+    cols = duckdb_columns_for_slots(
+        ["id", "not_a_real_biolink_slot"],
+        ENTITY_ROOT,
+        biolink_schemaview,
+        strict=False,
+    )
+    assert cols == {"id": "VARCHAR", "not_a_real_biolink_slot": "VARCHAR"}

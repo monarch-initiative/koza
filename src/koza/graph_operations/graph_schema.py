@@ -380,6 +380,160 @@ def _duckdb_type_for(slot_def: SlotDefinition | None) -> str:
     return "VARCHAR"
 
 
+# Biolink ranges that map to non-string DuckDB scalar types. Anything not
+# listed here defaults to VARCHAR (covers string, uriorcurie, label_type,
+# narrative_text, all enums, all class CURIE references, etc.).
+_RANGE_TO_DUCKDB_SCALAR: dict[str, str] = {
+    "integer": "BIGINT",
+    "float": "DOUBLE",
+    "double": "DOUBLE",
+    "boolean": "BOOLEAN",
+}
+
+# Biolink ranges treated as "primitive" for the purpose of multivalued
+# dispatch: their multivalued form is a list of scalars in JSONL, never a
+# list of struct objects. Class-typed multivalued slots are dispatched via
+# the inlined / inlined_as_list LinkML flags instead.
+_PRIMITIVE_RANGE_NAMES: frozenset[str] = frozenset(
+    {
+        "string",
+        "uriorcurie",
+        "iri type",
+        "iriortext",
+        "label type",
+        "narrative text",
+        "symbol type",
+        "chemical formula value",
+        "biological sequence",
+        "date",
+        "datetime",
+        "time",
+    }
+)
+
+
+def _scalar_for_range(rng: str) -> str:
+    return _RANGE_TO_DUCKDB_SCALAR.get(rng, "VARCHAR")
+
+
+def _duckdb_type_for_class(sv: SchemaView, class_name: str, depth: int = 0, max_depth: int = 2) -> str:
+    """Build a DuckDB STRUCT(...) type for a Biolink class's induced slots.
+
+    Recursive for nested class-typed slots that are `inlined_as_list`, bounded
+    by `max_depth`. Returns `JSON` when depth is exceeded or the class is
+    unknown — a safe fallback that preserves the literal value.
+    """
+    if depth > max_depth:
+        return "JSON"
+    try:
+        slots = sv.class_induced_slots(class_name)
+    except Exception:
+        return "JSON"
+    fields: list[tuple[str, str]] = []
+    for s in slots:
+        col = _snake_case(s.name)
+        rng = str(s.range) if s.range else "string"
+        if rng in _PRIMITIVE_RANGE_NAMES or rng in _RANGE_TO_DUCKDB_SCALAR:
+            scalar = _scalar_for_range(rng)
+            inner = f"{scalar}[]" if s.multivalued else scalar
+        elif s.multivalued and s.inlined_as_list:
+            inner = f"{_duckdb_type_for_class(sv, rng, depth + 1, max_depth)}[]"
+        elif s.multivalued and s.inlined:
+            struct = _duckdb_type_for_class(sv, rng, depth + 1, max_depth)
+            inner = f"MAP(VARCHAR, {struct})" if struct != "JSON" else "JSON"
+        elif s.multivalued:
+            inner = "VARCHAR[]"  # list of CURIE references
+        else:
+            inner = "VARCHAR"  # scalar CURIE reference
+        fields.append((col, inner))
+    fields_sql = ", ".join(f'"{n}" {t}' for n, t in fields)
+    return f"STRUCT({fields_sql})"
+
+
+def duckdb_columns_for_slots(
+    slots: list[str],
+    root_class: str,
+    biolink_schemaview: SchemaView,
+    declared_outputs: dict[str, dict] | None = None,
+    strict: bool = True,
+) -> dict[str, str]:
+    """Map a list of slot names to DuckDB column types, dispatched on Biolink.
+
+    Returned dict is suitable for DuckDB's `read_json(..., columns={...})`
+    parameter — bypasses schema inference entirely for JSONL files where we
+    already know the slot set.
+
+    Type dispatch follows LinkML semantics:
+
+    | LinkML flags                                | DuckDB type             |
+    |---------------------------------------------|-------------------------|
+    | primitive range, scalar                     | `<scalar>` (VARCHAR/…)  |
+    | primitive range, multivalued                | `<scalar>[]`            |
+    | class range, scalar                         | `VARCHAR` (CURIE ref)   |
+    | class range, multivalued + inlined_as_list  | `STRUCT(...)[]`         |
+    | class range, multivalued + inlined          | `MAP(VARCHAR, STRUCT)`  |
+    | class range, multivalued, neither flag      | `VARCHAR[]` (refs)      |
+
+    `root_class` is the Biolink class to use as context for `induced_slot`
+    lookups — `ENTITY_ROOT` for node files, `ASSOCIATION_ROOT` for edge files.
+
+    With `strict=True` (default), slots that match no Biolink slot, no koza
+    extra, and no declared output raise `UnknownSlotsError` — the ADR-0001
+    contract applied to JSONL input. With `strict=False`, unknown slots map
+    to `VARCHAR` so the loader can still read whatever's in the file.
+    """
+    declared_outputs = declared_outputs or {}
+    pool = _biolink_slot_pool(biolink_schemaview, root_class)
+
+    columns: dict[str, str] = {}
+    rejected: list[str] = []
+    for slot in slots:
+        if slot in declared_outputs:
+            spec = declared_outputs[slot]
+            rng = spec.get("range", "string")
+            mv = bool(spec.get("multivalued"))
+            scalar = _scalar_for_range(rng)
+            columns[slot] = f"{scalar}[]" if mv else scalar
+            continue
+        if slot in KOZA_INGEST_EXTRAS:
+            spec = KOZA_INGEST_EXTRAS[slot]
+            columns[slot] = _scalar_for_range(spec.get("range", "string"))
+            continue
+        if slot not in pool:
+            rejected.append(slot)
+            continue
+        try:
+            s = biolink_schemaview.induced_slot(slot.replace("_", " "), root_class)
+        except Exception:
+            columns[slot] = "VARCHAR"
+            continue
+        rng = str(s.range) if s.range else "string"
+        if rng in _PRIMITIVE_RANGE_NAMES or rng in _RANGE_TO_DUCKDB_SCALAR:
+            scalar = _scalar_for_range(rng)
+            columns[slot] = f"{scalar}[]" if s.multivalued else scalar
+        elif not s.multivalued:
+            columns[slot] = "VARCHAR"  # scalar CURIE reference to a class instance
+        elif s.inlined_as_list:
+            columns[slot] = f"{_duckdb_type_for_class(biolink_schemaview, rng)}[]"
+        elif s.inlined:
+            struct = _duckdb_type_for_class(biolink_schemaview, rng)
+            columns[slot] = f"MAP(VARCHAR, {struct})" if struct != "JSON" else "JSON"
+        else:
+            columns[slot] = "VARCHAR[]"  # multivalued CURIE references
+
+    if rejected:
+        if strict:
+            details = ", ".join(rejected)
+            raise UnknownSlotsError(
+                f"{len(rejected)} slot(s) match no Biolink slot, koza extra, or "
+                f"declared output for root class {root_class!r}: {details}"
+            )
+        for slot in rejected:
+            columns[slot] = "VARCHAR"
+
+    return columns
+
+
 def ensure_slots(
     conn: duckdb.DuckDBPyConnection, table: str, slot_names: list[str]
 ) -> None:
