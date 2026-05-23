@@ -90,13 +90,46 @@ def _build_injected_columns_exclude(
     return f" EXCLUDE ({', '.join(sorted(present))})"
 
 
+def _jsonl_explicit_columns_clause(file_spec: FileSpec) -> str | None:
+    """Build a `columns={...}` clause from file_spec.slots for JSONL.
+
+    Returns None when no slots are specified — caller falls back to schema
+    inference. Imports are local to avoid pulling biolink into the import
+    graph for the no-slots path.
+    """
+    if not file_spec.slots:
+        return None
+    from .graph_schema import (
+        ASSOCIATION_ROOT,
+        ENTITY_ROOT,
+        discover_declared_outputs,
+        duckdb_columns_for_slots,
+        load_biolink_schemaview,
+    )
+    root_class = (
+        ASSOCIATION_ROOT
+        if file_spec.file_type == KGXFileType.EDGES
+        else ENTITY_ROOT
+    )
+    class_label = "Association" if file_spec.file_type == KGXFileType.EDGES else "Entity"
+    declared_outputs = discover_declared_outputs().get(class_label, {})
+    cols = duckdb_columns_for_slots(
+        slots=list(file_spec.slots),
+        root_class=root_class,
+        biolink_schemaview=load_biolink_schemaview(),
+        declared_outputs=declared_outputs,
+    )
+    return "{" + ", ".join(f"'{k}': '{v}'" for k, v in cols.items()) + "}"
+
+
 def get_duckdb_read_statement(file_spec: FileSpec, sample_size: int | None = None) -> str:
     """
     Generate DuckDB read statement for the given file spec.
 
     Args:
         file_spec: FileSpec with path and format information
-        sample_size: Optional sample size for JSONL schema inference (-1 for full scan)
+        sample_size: Optional sample size for JSONL schema inference (-1 for full scan).
+            Ignored when file_spec.slots is set (explicit schema bypasses inference).
 
     Returns:
         DuckDB read statement string
@@ -108,6 +141,13 @@ def get_duckdb_read_statement(file_spec: FileSpec, sample_size: int | None = Non
         return f"read_csv('{file_path_str}', delim='\\t', header=true, all_varchar=true)"
     elif format_type == KGXFormat.JSONL:
         # convert_strings_to_integers=false prevents DuckDB from inferring UUID-like strings as INT128
+        columns_clause = _jsonl_explicit_columns_clause(file_spec)
+        if columns_clause is not None:
+            # Explicit schema: skip inference entirely. sample_size is moot.
+            return (
+                f"read_json('{file_path_str}', columns={columns_clause}, "
+                f"format='newline_delimited', convert_strings_to_integers=false)"
+            )
         if sample_size is not None:
             return f"read_json('{file_path_str}', format='newline_delimited', convert_strings_to_integers=false, sample_size={sample_size})"
         return f"read_json('{file_path_str}', format='newline_delimited', convert_strings_to_integers=false)"
@@ -234,11 +274,15 @@ class GraphDatabase:
                     raise
 
             # Transform pipe-delimited multivalued fields to arrays
-            # Skip file_source and provided_by (when generated) since we add them as literals
-            skip_columns = {"file_source"}
-            if generate_provided_by:
-                skip_columns.add("provided_by")
-            self._transform_multivalued_columns(temp_table_name, skip_columns=skip_columns)
+            # Skip file_source and provided_by (when generated) since we add them as literals.
+            # When the user supplied explicit slots, the column types already reflect
+            # Biolink's multivalued declarations; the FORCE_SINGLE_VALUED flatten path
+            # would undo that, so skip the transform entirely.
+            if not file_spec.slots:
+                skip_columns = {"file_source"}
+                if generate_provided_by:
+                    skip_columns.add("provided_by")
+                self._transform_multivalued_columns(temp_table_name, skip_columns=skip_columns)
 
             # Get record count
             count_result = self.conn.execute(f"SELECT COUNT(*) FROM {temp_table_name}").fetchone()
@@ -264,6 +308,11 @@ class GraphDatabase:
             )
 
         except Exception as e:
+            # Strict-reject contract from ADR-0001 — propagate, do not swallow.
+            from .graph_schema import UnknownSlotsError
+            if isinstance(e, UnknownSlotsError):
+                raise
+
             load_time = time.time() - start_time
             error_msg = f"Failed to load {file_spec.path}: {e}"
             errors.append(error_msg)

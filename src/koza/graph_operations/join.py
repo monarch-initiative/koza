@@ -123,6 +123,13 @@ def join_graphs(config: JoinConfig) -> JoinResult:
     files_loaded: list[FileLoadResult] = []
 
     try:
+        # Apply slots_file (if any) to each FileSpec by file_type. Mutates
+        # the FileSpec.slots field so downstream read_json gets the explicit
+        # columns clause and skips schema inference. See
+        # decisions/0001-graph-schema-strict-derivation.md.
+        if config.slots_file is not None:
+            _apply_slots_file(config)
+
         # Initialize database
         with GraphDatabase(config.database_path) as db:
             # Load node files
@@ -223,6 +230,36 @@ def join_graphs(config: JoinConfig) -> JoinResult:
             print_operation_summary(summary)
 
         raise
+
+
+def _apply_slots_file(config: JoinConfig) -> None:
+    """Read JoinConfig.slots_file and populate FileSpec.slots for each input.
+
+    The yaml shape is:
+
+        nodes: [id, category, name, ...]
+        edges: [id, subject, predicate, object, sources, ...]
+
+    Both keys are optional. Files whose file_type is missing or doesn't match
+    a slot list are left untouched (no implicit assumption that an unlabeled
+    file is one or the other).
+    """
+    import yaml
+
+    if config.slots_file is None:
+        return
+    with config.slots_file.open() as f:
+        loaded = yaml.safe_load(f) or {}
+    node_slots = loaded.get("nodes") or None
+    edge_slots = loaded.get("edges") or None
+
+    from koza.model.graph_operations import KGXFileType
+    for spec in config.node_files:
+        if spec.file_type == KGXFileType.NODES and node_slots and spec.slots is None:
+            spec.slots = list(node_slots)
+    for spec in config.edge_files:
+        if spec.file_type == KGXFileType.EDGES and edge_slots and spec.slots is None:
+            spec.slots = list(edge_slots)
 
 
 def _seed_graph_schema(db: GraphDatabase, files_loaded: list[FileLoadResult]) -> None:

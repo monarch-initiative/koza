@@ -331,6 +331,10 @@ def join(
         list[str] | None,
         typer.Option("--required-edge-field", help="Edge fields that must be present and non-empty (can specify multiple)"),
     ] = None,
+    slots_file: Annotated[
+        str | None,
+        typer.Option("--slots-file", help="YAML file with {nodes: [...], edges: [...]} — sets explicit JSONL schema, skipping inference"),
+    ] = None,
     quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress output")] = False,
     show_progress: Annotated[bool, typer.Option("--progress", "-p", help="Show progress bars")] = True,
 ) -> None:
@@ -405,6 +409,7 @@ def join(
             schema_reporting=schema_reporting,
             required_node_fields=required_node_fields or [],
             required_edge_fields=required_edge_fields or [],
+            slots_file=Path(slots_file) if slots_file else None,
             quiet=quiet,
             show_progress=show_progress,
         )

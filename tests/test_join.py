@@ -1050,5 +1050,90 @@ HGNC:123\tbiolink:related_to\tMONDO:001
             join_graphs(config)
 
 
+class TestSlotsFile:
+    """End-to-end join with --slots-file driving the explicit-schema JSONL path."""
+
+    @pytest.fixture
+    def nested_nodes_jsonl(self, temp_dir):
+        """Nodes file with canonical Biolink shape: `category` is a list."""
+        content = (
+            '{"id": "CHEBI:1", "category": ["biolink:ChemicalEntity"], "name": "c1"}\n'
+            '{"id": "CHEBI:2", "category": ["biolink:ChemicalEntity"], "name": "c2"}\n'
+        )
+        path = temp_dir / "nested_nodes.jsonl"
+        path.write_text(content)
+        return path
+
+    @pytest.fixture
+    def nested_edges_jsonl(self, temp_dir):
+        """Edges file with translator-shape nested fields: list-of-string
+        `category`, list of `sources` structs, list of CURIE-ref `publications`.
+        Inference would need to scan; the explicit schema reads in one shot."""
+        content = (
+            '{"id": "u1", "subject": "HGNC:1", "predicate": "biolink:related_to", '
+            '"object": "HGNC:2", "category": ["biolink:Association"], '
+            '"publications": ["PMID:1"], '
+            '"sources": [{"resource_id": "infores:test", "resource_role": "primary_knowledge_source"}]}\n'
+            '{"id": "u2", "subject": "HGNC:3", "predicate": "biolink:related_to", '
+            '"object": "HGNC:4", "category": ["biolink:Association"], '
+            '"publications": ["PMID:2", "PMID:3"], '
+            '"sources": [{"resource_id": "infores:test", "resource_role": "primary_knowledge_source"}]}\n'
+        )
+        path = temp_dir / "nested_edges.jsonl"
+        path.write_text(content)
+        return path
+
+    def test_slots_file_loads_jsonl_with_explicit_schema(self, nested_nodes_jsonl, nested_edges_jsonl, temp_dir):
+        import duckdb
+
+        slots_file = temp_dir / "slots.yaml"
+        slots_file.write_text(
+            "nodes: [id, category, name]\n"
+            "edges: [id, subject, predicate, object, category, publications, sources]\n"
+        )
+        db_path = temp_dir / "out.duckdb"
+
+        config = JoinConfig(
+            node_files=[FileSpec(path=nested_nodes_jsonl, format=KGXFormat.JSONL, file_type=KGXFileType.NODES)],
+            edge_files=[FileSpec(path=nested_edges_jsonl, format=KGXFormat.JSONL, file_type=KGXFileType.EDGES)],
+            database_path=db_path,
+            slots_file=slots_file,
+            quiet=True,
+            show_progress=False,
+        )
+        result = join_graphs(config)
+        assert result.final_stats.nodes == 2
+        assert result.final_stats.edges == 2
+
+        # Verify the explicit schema took effect end-to-end: multivalued
+        # primitives become <scalar>[], inlined_as_list classes become
+        # STRUCT(...)[].
+        with duckdb.connect(str(db_path)) as conn:
+            edges_schema = {row[0]: row[1] for row in conn.execute("DESCRIBE edges").fetchall()}
+            nodes_schema = {row[0]: row[1] for row in conn.execute("DESCRIBE nodes").fetchall()}
+            assert edges_schema["category"] == "VARCHAR[]"
+            assert edges_schema["publications"] == "VARCHAR[]"
+            assert edges_schema["sources"].startswith("STRUCT(") and edges_schema["sources"].endswith(")[]")
+            assert nodes_schema["category"] == "VARCHAR[]"
+
+    def test_slots_file_rejects_unknown_slot(self, nested_nodes_jsonl, temp_dir):
+        from koza.graph_operations.graph_schema import UnknownSlotsError
+
+        slots_file = temp_dir / "slots.yaml"
+        slots_file.write_text("nodes: [id, category, name, not_a_biolink_slot]\n")
+        db_path = temp_dir / "out.duckdb"
+
+        config = JoinConfig(
+            node_files=[FileSpec(path=nested_nodes_jsonl, format=KGXFormat.JSONL, file_type=KGXFileType.NODES)],
+            edge_files=[],
+            database_path=db_path,
+            slots_file=slots_file,
+            quiet=True,
+            show_progress=False,
+        )
+        with pytest.raises(UnknownSlotsError, match="not_a_biolink_slot"):
+            join_graphs(config)
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
