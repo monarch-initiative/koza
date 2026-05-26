@@ -31,6 +31,7 @@ class FileSpec(BaseModel):
     source_name: str | None = Field(default=None,validate_default=True)
     format: KGXFormat | None = Field(default=None,validate_default=True)
     file_type: KGXFileType | None = Field(default=None,validate_default=True)
+    slots: list[str] | None = None  # If set, read only these slots with explicit DuckDB types (skips JSONL schema inference)
 
     @field_validator("format",mode="before")
     def generate_format(cls, format_value :KGXFormat|None, info:ValidationInfo) -> KGXFormat:
@@ -107,6 +108,7 @@ class JoinConfig(GraphOperationConfig):
     required_node_fields: list[str] = Field(default_factory=list)
     required_edge_fields: list[str] = Field(default_factory=list)
     seed_schema: bool = True  # Seed the koza graph schema (derived-schema.yaml + Biolink) into DuckDB metadata
+    slots_file: Path | None = None  # YAML file with {nodes: [...], edges: [...]} — applies explicit JSONL schemas to all files in the join
 
     @model_validator(mode="after")
     def set_database_path_from_output_database(self):

@@ -6,6 +6,7 @@ import re
 import time
 from pathlib import Path
 
+import yaml
 from loguru import logger
 from tqdm import tqdm
 
@@ -123,6 +124,13 @@ def join_graphs(config: JoinConfig) -> JoinResult:
     files_loaded: list[FileLoadResult] = []
 
     try:
+        # Apply slots_file (if any) to each FileSpec by file_type. Mutates
+        # the FileSpec.slots field so downstream read_json gets the explicit
+        # columns clause and skips schema inference. See
+        # decisions/0001-graph-schema-strict-derivation.md.
+        if config.slots_file is not None:
+            _apply_slots_file(config)
+
         # Initialize database
         with GraphDatabase(config.database_path) as db:
             # Load node files
@@ -223,6 +231,59 @@ def join_graphs(config: JoinConfig) -> JoinResult:
             print_operation_summary(summary)
 
         raise
+
+
+def _apply_slots_file(config: JoinConfig) -> None:
+    """Read JoinConfig.slots_file and populate FileSpec.slots for each input.
+
+    The yaml shape is:
+
+        nodes: [id, category, name, ...]
+        edges: [id, subject, predicate, object, sources, ...]
+
+    Both keys are optional. Files whose file_type is missing or doesn't match
+    a slot list are left untouched (no implicit assumption that an unlabeled
+    file is one or the other).
+
+    Note: any JSONL key not in the slot list is silently dropped by
+    `read_json(columns=...)`. An under-specified slots_file therefore drops
+    data without warning — by design (the slot list is the user's contract)
+    but worth knowing.
+    """
+    if config.slots_file is None:
+        return
+    with config.slots_file.open() as f:
+        loaded = yaml.safe_load(f) or {}
+    if not isinstance(loaded, dict):
+        raise ValueError(
+            f"slots_file {config.slots_file} must be a mapping with "
+            f"'nodes' and/or 'edges' keys, got {type(loaded).__name__}"
+        )
+    node_slots = _validated_slot_list(loaded, "nodes", config.slots_file)
+    edge_slots = _validated_slot_list(loaded, "edges", config.slots_file)
+
+    for spec in config.node_files:
+        if spec.file_type == KGXFileType.NODES and node_slots and spec.slots is None:
+            spec.slots = list(node_slots)
+    for spec in config.edge_files:
+        if spec.file_type == KGXFileType.EDGES and edge_slots and spec.slots is None:
+            spec.slots = list(edge_slots)
+
+
+def _validated_slot_list(loaded: dict, key: str, source: Path) -> list[str] | None:
+    """Return loaded[key] as a list of strings, or None if missing/empty.
+
+    Raises ValueError with a pointer to the offending file when the value is
+    present but not shaped as `list[str]`.
+    """
+    value = loaded.get(key)
+    if value is None:
+        return None
+    if not isinstance(value, list) or not all(isinstance(s, str) for s in value):
+        raise ValueError(
+            f"slots_file {source}: {key!r} must be a list of strings"
+        )
+    return value or None
 
 
 def _seed_graph_schema(db: GraphDatabase, files_loaded: list[FileLoadResult]) -> None:
