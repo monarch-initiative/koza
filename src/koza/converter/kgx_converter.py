@@ -16,20 +16,21 @@ class KGXConverter:
 
     """
 
-    def convert(self, entities: Iterable) -> tuple[list, list]:
+    @staticmethod
+    def split_entities(entities: Iterable) -> tuple[list, list]:
         nodes = []
         edges = []
 
         for entity in entities:
             # if entity has subject + object + predicate, treat as edge
             if all(hasattr(entity, attr) for attr in ["subject", "object", "predicate"]):
-                edges.append(self.convert_association(entity))
+                edges.append(entity)
 
             # if entity has id and name, but not subject/object/predicate, treat as node
             elif all(hasattr(entity, attr) for attr in ["id", "name"]) and not all(
-                hasattr(entity, attr) for attr in ["subject", "object", "predicate"]
+                    hasattr(entity, attr) for attr in ["subject", "object", "predicate"]
             ):
-                nodes.append(self.convert_node(entity))
+                nodes.append(entity)
 
             # otherwise, not a valid entity
             else:
@@ -40,12 +41,14 @@ class KGXConverter:
 
         return nodes, edges
 
-    def convert_node(self, node) -> dict:
+    @staticmethod
+    def convert_node(node) -> dict:
         if isinstance(node, BaseModel):
             return node.model_dump(mode='json', exclude_none=True)
         return asdict(node)
 
-    def convert_association(self, association) -> dict:
+    @staticmethod
+    def convert_association(association) -> dict:
         if isinstance(association, BaseModel):
             return association.model_dump(mode='json', exclude_none=True)
         return asdict(association)

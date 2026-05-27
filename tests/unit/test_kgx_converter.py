@@ -13,8 +13,7 @@ def test_gene_conversion():
     )
 
     kgx_converter: KGXConverter = KGXConverter()
-    (nodes, edges) = kgx_converter.convert([fgf8a])
-    output = nodes[0]
+    output = kgx_converter.convert_node(fgf8a)
 
     assert output["id"] == "ZFIN:ZDB-GENE-990415-72"
     assert output["symbol"] == "fgf8a"
@@ -37,9 +36,10 @@ def test_association_conversion():
         agent_type="not_provided",
     )
 
-    (_, edges) = KGXConverter().convert([fgf8a, pax2a, association])
+    kgx_converter: KGXConverter = KGXConverter()
+    (_, edges) = kgx_converter.split_entities([fgf8a, pax2a, association])
 
-    output = edges[0]
+    output = kgx_converter.convert_association(edges[0])
     assert output["subject"] == "ZFIN:ZDB-GENE-990415-72"
     assert output["object"] == "ZFIN:ZDB-GENE-990415-8"
     # TODO figure out how/where to handle this conversion
@@ -59,8 +59,7 @@ def test_keys_uniformity(id, symbol, synonym, xref):
     """
     gene = Gene(id=id, symbol=symbol, synonym=synonym, xref=xref)
 
-    (nodes, edges) = KGXConverter().convert([gene])
-    output = nodes[0]
+    output = KGXConverter().convert_node(gene)
 
     assert "category" in output.keys()
     assert "id" in output.keys()
@@ -83,8 +82,7 @@ def test_exclude_none(id, symbol, synonym, xref):
     """
     gene = Gene(id=id, symbol=symbol, synonym=synonym, xref=xref)
 
-    (nodes, edges) = KGXConverter().convert([gene])
-    output = nodes[0]
+    output = KGXConverter().convert_node(gene)
 
     assert output["id"] == "MGI:1917258" or output["id"] == "RGD:620474"
 

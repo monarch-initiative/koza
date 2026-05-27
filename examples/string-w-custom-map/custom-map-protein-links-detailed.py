@@ -1,6 +1,7 @@
 import uuid
 
 from biolink_model.datamodel.pydanticmodel_v2 import Gene, PairwiseGeneToGeneInteraction
+from koza.model.graphs import KnowledgeGraph
 
 import koza
 
@@ -23,4 +24,4 @@ def transform_string_record(koza: koza.KozaTransform, record: dict):
         agent_type="not_provided",
     )
 
-    koza.write(gene_a, gene_b, pairwise_gene_to_gene_interaction)
+    return KnowledgeGraph(nodes=[gene_a, gene_b], edges=[pairwise_gene_to_gene_interaction])

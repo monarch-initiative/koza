@@ -63,6 +63,8 @@ class _DeprecatedSourceConfig:
     transform_mode: TransformMode (optional) - how to process the transform file
     global_table: str (optional) - path to a global table file
     local_table: str (optional) - path to a local table file
+    max_edge_count: int (optional) - maximum number of edges allowed to write output
+    max_node_count: int (optional) - maximum number of nodes allowed to write output
     """
 
     name: str
@@ -93,6 +95,8 @@ class _DeprecatedSourceConfig:
     edge_properties: list[str] | None = None
     min_node_count: int | None = None
     min_edge_count: int | None = None
+    max_node_count: int | None = None
+    max_edge_count: int | None = None
     # node_report_columns: Optional[List[str]] = None
     # edge_report_columns: Optional[List[str]] = None
     depends_on: list[str] = field(default_factory=list)
@@ -134,7 +138,9 @@ class _DeprecatedSourceConfig:
                 "edge_properties": self.edge_properties,
                 "min_node_count": self.min_node_count,
                 "min_edge_count": self.min_edge_count,
-            },
+                "max_node_count": self.max_node_count,
+                "max_edge_count": self.max_edge_count,
+            }
         }
 
         return TypeAdapter(KozaConfig).validate_python(config_obj)

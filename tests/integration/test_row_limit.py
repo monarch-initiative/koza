@@ -32,7 +32,7 @@ from koza.runner import KozaRunner
             "declarative-protein-links-detailed",  # output_names
             OutputFormat.jsonl,  # output_format
             5,  # row_limit
-            5 * 2,  # expected_node_len
+            6,  # expected_node_len
             5,  # expected_edge_len
         ),
     ],

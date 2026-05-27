@@ -35,6 +35,14 @@ class HeaderMode(str, Enum):
 
 @dataclass(config=PYDANTIC_CONFIG, frozen=True)
 class BaseReaderConfig:
+    """Base configuration for all reader types.
+
+    Attributes:
+        files: List of file paths to process.
+        file_archive: Path to an archive file (zip/tar) containing data files.
+        filters: List of column filters to apply to the data.
+    """
+
     files: list[str] = field(default_factory=list)
     file_archive: str | None = None
     filters: list[ColumnFilter] = field(default_factory=list)

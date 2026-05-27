@@ -45,5 +45,5 @@ def test_jsonl_writer_lazy_file_handle_creation():
             
             # Verify open was called for both node and edge files
             assert mock_file.call_count == 2
-            mock_file.assert_any_call(f"{temp_dir}/test_nodes.jsonl", "w")
-            mock_file.assert_any_call(f"{temp_dir}/test_edges.jsonl", "w")
+            mock_file.assert_any_call(f"{temp_dir}/test_nodes.jsonl", "wb")
+            mock_file.assert_any_call(f"{temp_dir}/test_edges.jsonl", "wb")

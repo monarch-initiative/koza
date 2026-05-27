@@ -245,6 +245,8 @@ The writer section configures output format and properties.
 | `edge_properties` | list[string] | None | Edge properties to include |
 | `min_node_count` | int | None | Minimum nodes required |
 | `min_edge_count` | int | None | Minimum edges required |
+| `max_node_count` | int | None | Maximum nodes allowed |
+| `max_edge_count` | int | None | Maximum edges allowed |
 
 ### Output Formats
 - `tsv` - Tab-separated values
