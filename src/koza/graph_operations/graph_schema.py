@@ -118,14 +118,21 @@ def _biolink_derived_slot(sv: SchemaView, col: str) -> SlotDefinition:
     → `rdfs:label`, `subject` → `rdf:subject`). `exact_mappings` pins the
     Biolink slot identity (`biolink:<name>`) regardless, so provenance to the
     originating Biolink slot survives even when slot_uri points away.
+
+    `range` is captured from Biolink here (where the SchemaView is available)
+    so it persists in the stored schema and the export doesn't have to reload
+    Biolink (ADR-0002) — e.g. `has_count` → integer, `negated` → boolean.
     """
     biolink_slot = sv.get_slot(col.replace("_", " "))
+    slot_range = biolink_slot.range if biolink_slot is not None else None
     try:
         slot_uri = sv.get_uri(biolink_slot) if biolink_slot is not None else None
     except Exception:
         logger.warning(f"Could not resolve slot_uri for Biolink slot {col!r}")
         slot_uri = None
-    return SlotDefinition(name=col, slot_uri=slot_uri, exact_mappings=[f"biolink:{col}"])
+    return SlotDefinition(
+        name=col, range=slot_range, slot_uri=slot_uri, exact_mappings=[f"biolink:{col}"]
+    )
 
 
 def _biolink_slot_pool(sv: SchemaView, root_class: str) -> set[str]:
@@ -375,8 +382,10 @@ def export_schema(
                 new_classes[target] = cls_def
         schema.classes = new_classes
 
-    # Derive multivalued from actual DuckDB column types of the denormalized views.
+    # Derive multivalued + scalar range from actual DuckDB column types of the
+    # denormalized views.
     multivalued_slots: set[str] = set()
+    scalar_types: dict[str, str] = {}
     for table in ("denormalized_nodes", "denormalized_edges"):
         try:
             rows = conn.execute(f"DESCRIBE {table}").fetchall()
@@ -385,8 +394,11 @@ def export_schema(
             # with whatever Entity / Association slot info we have.
             continue
         for col_name, col_type, *_ in rows:
-            if "VARCHAR[]" in (col_type or "").upper():
+            upper = (col_type or "").upper()
+            if "VARCHAR[]" in upper:
                 multivalued_slots.add(col_name)
+            else:
+                scalar_types[col_name] = upper
 
     for slot_name in multivalued_slots:
         slot = schema.slots.get(slot_name)
@@ -394,6 +406,17 @@ def export_schema(
             slot = SlotDefinition(name=slot_name)
             schema.slots[slot_name] = slot
         slot.multivalued = True
+
+    # Recover range for computed, non-Biolink scalar columns from their DuckDB
+    # type — only where the slot has no range yet, so Biolink-derived ranges
+    # (captured at derive time) win over the lossy DuckDB inverse.
+    for slot_name, col_type in scalar_types.items():
+        slot = schema.slots.get(slot_name)
+        if slot is None or slot.range:
+            continue
+        rng = _DUCKDB_SCALAR_TO_RANGE.get(col_type)
+        if rng:
+            slot.range = rng
 
     # schema_as_dict emits the idiomatic compact schema form — `prefix: uri`
     # rather than expanded Prefix objects, and drops redundant per-element
@@ -441,6 +464,18 @@ _RANGE_TO_DUCKDB_SCALAR: dict[str, str] = {
     "float": "DOUBLE",
     "double": "DOUBLE",
     "boolean": "BOOLEAN",
+}
+
+# Inverse of the above for recovering a LinkML range from a computed, non-Biolink
+# DuckDB column (e.g. `has_phenotype_count` BIGINT). Lossy — DUCKDB DOUBLE can't
+# distinguish float from double — so this only fills slots Biolink didn't already
+# range at derive time, where the precise range is unknown anyway.
+_DUCKDB_SCALAR_TO_RANGE: dict[str, str] = {
+    "BIGINT": "integer",
+    "INTEGER": "integer",
+    "DOUBLE": "float",
+    "FLOAT": "float",
+    "BOOLEAN": "boolean",
 }
 
 # Biolink ranges treated as "primitive" for the purpose of multivalued
