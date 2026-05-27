@@ -12,6 +12,7 @@ import importlib
 import importlib.resources as ir
 
 import duckdb
+import yaml
 from linkml_runtime.dumpers import yaml_dumper
 from linkml_runtime.linkml_model.meta import (
     ClassDefinition,
@@ -20,6 +21,7 @@ from linkml_runtime.linkml_model.meta import (
     SlotDefinition,
 )
 from linkml_runtime.loaders import yaml_loader
+from linkml_runtime.utils.schema_as_dict import schema_as_dict
 from linkml_runtime.utils.schemaview import SchemaView
 
 
@@ -92,6 +94,38 @@ def _snake_case(biolink_name: str) -> str:
     return biolink_name.replace(" ", "_")
 
 
+# CURIE prefixes that can appear in exported slot_uri / exact_mappings, with
+# their canonical reference URIs. Kept static so export stays standalone and
+# does not re-load Biolink (ADR-0002): slot_uri across the Biolink slot pool
+# resolves to one of these, and exact_mappings always use `biolink`.
+_KNOWN_PREFIX_URIS: dict[str, str] = {
+    "linkml": "https://w3id.org/linkml/",
+    "biolink": "https://w3id.org/biolink/vocab/",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "dct": "http://purl.org/dc/terms/",
+    "schema": "http://schema.org/",
+}
+
+
+def _biolink_derived_slot(sv: SchemaView, col: str) -> SlotDefinition:
+    """A SlotDefinition for a column that matched the Biolink slot pool,
+    carrying semantic references back to the Biolink slot it was derived from.
+
+    `slot_uri` is Biolink's canonical predicate URI for the slot — usually
+    `biolink:<name>`, but for some slots Biolink maps it elsewhere (e.g. `name`
+    → `rdfs:label`, `subject` → `rdf:subject`). `exact_mappings` pins the
+    Biolink slot identity (`biolink:<name>`) regardless, so provenance to the
+    originating Biolink slot survives even when slot_uri points away.
+    """
+    try:
+        biolink_slot = sv.get_slot(col.replace("_", " "))
+        slot_uri = sv.get_uri(biolink_slot) if biolink_slot is not None else None
+    except Exception:
+        slot_uri = None
+    return SlotDefinition(name=col, slot_uri=slot_uri, exact_mappings=[f"biolink:{col}"])
+
+
 def _biolink_slot_pool(sv: SchemaView, root_class: str) -> set[str]:
     """All slots defined on the root class or any descendant, snake_cased.
 
@@ -123,7 +157,7 @@ def _flatten(
     rejected: list[str] = []
     for col in headers:
         if col in pool:
-            slots[col] = SlotDefinition(name=col)
+            slots[col] = _biolink_derived_slot(sv, col)
         elif col in declared_outputs:
             slots[col] = SlotDefinition(name=col, **declared_outputs[col])
         elif col in KOZA_INGEST_EXTRAS:
@@ -301,12 +335,21 @@ def export_schema(
         schema.imports = list(schema.imports or []) + ["linkml:types"]
     if not schema.default_range:
         schema.default_range = "string"
+    # Declare every prefix the schema actually references — linkml:types plus
+    # the prefixes used by the slot_uri / exact_mappings we attach to derived
+    # slots — so the released schema is standalone-loadable for CURIE expansion.
     prefixes = dict(schema.prefixes or {})
-    for prefix, uri in (
-        ("linkml", "https://w3id.org/linkml/"),
-        ("biolink", "https://w3id.org/biolink/vocab/"),
-    ):
-        prefixes.setdefault(prefix, Prefix(prefix_prefix=prefix, prefix_reference=uri))
+    used_prefixes = {"linkml", "biolink"}
+    for slot in schema.slots.values():
+        for curie in [slot.slot_uri, *(slot.exact_mappings or [])]:
+            if curie and ":" in curie:
+                used_prefixes.add(curie.split(":", 1)[0])
+    for prefix in used_prefixes:
+        uri = _KNOWN_PREFIX_URIS.get(prefix)
+        if uri:
+            prefixes.setdefault(
+                prefix, Prefix(prefix_prefix=prefix, prefix_reference=uri)
+            )
     schema.prefixes = prefixes
 
     if project_denormalized:
@@ -345,7 +388,10 @@ def export_schema(
             schema.slots[slot_name] = slot
         slot.multivalued = True
 
-    return yaml_dumper.dumps(schema)
+    # schema_as_dict emits the idiomatic compact schema form — `prefix: uri`
+    # rather than expanded Prefix objects, and drops redundant per-element
+    # `name:` keys — which is what LinkML tooling and humans expect.
+    return yaml.dump(schema_as_dict(schema), sort_keys=False)
 
 
 def is_seeded(conn: duckdb.DuckDBPyConnection) -> bool:

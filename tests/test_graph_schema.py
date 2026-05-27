@@ -22,6 +22,7 @@ from koza.graph_operations.graph_schema import (
     discover_declared_outputs,
     duckdb_columns_for_slots,
     ensure_slots,
+    export_schema,
     seed_schema,
     stored_biolink_yaml,
 )
@@ -44,6 +45,54 @@ def test_derive_schema_flattens_entity_class_from_node_headers(biolink_schemavie
 
     entity_slots = set(schema.classes["Entity"].slots)
     assert {"id", "category", "name"}.issubset(entity_slots)
+
+
+def test_derived_slots_reference_their_biolink_origin(biolink_schemaview):
+    """Each slot flattened from Biolink carries a semantic reference back to
+    the Biolink slot it came from: slot_uri (Biolink's canonical predicate URI)
+    plus an exact_mapping pinning the Biolink slot identity."""
+    schema = derive_schema(
+        nodes_headers=["id", "category", "name"],
+        edges_headers=["subject", "predicate", "object"],
+        biolink_schemaview=biolink_schemaview,
+    )
+
+    # slot_uri reflects Biolink's own mapping — biolink: for most, rdfs:/rdf:
+    # for the slots Biolink maps elsewhere.
+    assert schema.slots["category"].slot_uri == "biolink:category"
+    assert schema.slots["name"].slot_uri == "rdfs:label"
+    assert schema.slots["subject"].slot_uri == "rdf:subject"
+
+    # exact_mappings always pin the originating Biolink slot identity.
+    assert schema.slots["category"].exact_mappings == ["biolink:category"]
+    assert schema.slots["name"].exact_mappings == ["biolink:name"]
+    assert schema.slots["subject"].exact_mappings == ["biolink:subject"]
+
+    # Koza extras are not Biolink-derived and carry no Biolink reference.
+    assert not schema.slots["file_source"].exact_mappings
+
+
+def test_export_declares_prefixes_for_slot_references(biolink_schemaview, tmp_path):
+    """The exported schema must declare every prefix its slot references use so
+    it stays standalone-loadable for CURIE expansion."""
+    db_path = tmp_path / "test.duckdb"
+    conn = duckdb.connect(str(db_path))
+    try:
+        seed_schema(
+            conn,
+            nodes_headers=["id", "category", "name"],
+            edges_headers=["subject", "predicate", "object"],
+            biolink_schemaview=biolink_schemaview,
+        )
+        exported = export_schema(conn, project_denormalized=False)
+    finally:
+        conn.close()
+
+    assert "biolink: https://w3id.org/biolink/vocab/" in exported
+    assert "rdfs: http://www.w3.org/2000/01/rdf-schema#" in exported
+    assert "rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#" in exported
+    assert "slot_uri: rdfs:label" in exported
+    assert "biolink:name" in exported
 
 
 def test_file_source_is_injected_as_koza_extra(biolink_schemaview):
