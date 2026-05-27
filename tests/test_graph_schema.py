@@ -94,6 +94,12 @@ def test_export_declares_prefixes_for_slot_references(biolink_schemaview, tmp_pa
     assert "slot_uri: rdfs:label" in exported
     assert "biolink:name" in exported
 
+    # The actual contract: the exported schema loads standalone and its
+    # CURIEs resolve — not just that the text appears.
+    reloaded = SchemaView(exported)
+    assert reloaded.expand_curie("rdfs:label") == "http://www.w3.org/2000/01/rdf-schema#label"
+    assert reloaded.expand_curie("biolink:name") == "https://w3id.org/biolink/vocab/name"
+
 
 def test_file_source_is_injected_as_koza_extra(biolink_schemaview):
     """file_source is injected unconditionally by load_file; the schema must

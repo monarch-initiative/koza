@@ -23,6 +23,7 @@ from linkml_runtime.linkml_model.meta import (
 from linkml_runtime.loaders import yaml_loader
 from linkml_runtime.utils.schema_as_dict import schema_as_dict
 from linkml_runtime.utils.schemaview import SchemaView
+from loguru import logger
 
 
 ENTITY_ROOT = "named thing"
@@ -118,10 +119,11 @@ def _biolink_derived_slot(sv: SchemaView, col: str) -> SlotDefinition:
     Biolink slot identity (`biolink:<name>`) regardless, so provenance to the
     originating Biolink slot survives even when slot_uri points away.
     """
+    biolink_slot = sv.get_slot(col.replace("_", " "))
     try:
-        biolink_slot = sv.get_slot(col.replace("_", " "))
         slot_uri = sv.get_uri(biolink_slot) if biolink_slot is not None else None
     except Exception:
+        logger.warning(f"Could not resolve slot_uri for Biolink slot {col!r}")
         slot_uri = None
     return SlotDefinition(name=col, slot_uri=slot_uri, exact_mappings=[f"biolink:{col}"])
 
@@ -346,10 +348,15 @@ def export_schema(
                 used_prefixes.add(curie.split(":", 1)[0])
     for prefix in used_prefixes:
         uri = _KNOWN_PREFIX_URIS.get(prefix)
-        if uri:
-            prefixes.setdefault(
-                prefix, Prefix(prefix_prefix=prefix, prefix_reference=uri)
+        if uri is None:
+            raise ValueError(
+                f"Slot references use CURIE prefix {prefix!r} which has no entry "
+                f"in _KNOWN_PREFIX_URIS — the exported schema would not be "
+                f"standalone-loadable. Add its reference URI to _KNOWN_PREFIX_URIS."
             )
+        prefixes.setdefault(
+            prefix, Prefix(prefix_prefix=prefix, prefix_reference=uri)
+        )
     schema.prefixes = prefixes
 
     if project_denormalized:
@@ -391,7 +398,7 @@ def export_schema(
     # schema_as_dict emits the idiomatic compact schema form — `prefix: uri`
     # rather than expanded Prefix objects, and drops redundant per-element
     # `name:` keys — which is what LinkML tooling and humans expect.
-    return yaml.dump(schema_as_dict(schema), sort_keys=False)
+    return yaml.dump(schema_as_dict(schema), sort_keys=False, allow_unicode=True)
 
 
 def is_seeded(conn: duckdb.DuckDBPyConnection) -> bool:
