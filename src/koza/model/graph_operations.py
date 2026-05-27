@@ -811,10 +811,10 @@ class ConnectivityReportConfig(BaseModel):
     output_file: Path | None = None  # YAML summary file
     graph_name: str = "KnowledgeGraph"
     node_name_column: str = "id"
-    node_type_column: str | None = "category"
+    node_type_column: str | None = None
     edge_src_column: str = "subject"
     edge_dst_column: str = "object"
-    edge_type_column: str | None = "predicate"
+    edge_type_column: str | None = None
     directed: bool = False  # Undirected for connectivity analysis
     top_components: int = 20  # Number of top minor components to include in summary
     quiet: bool = False

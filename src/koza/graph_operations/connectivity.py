@@ -459,9 +459,16 @@ def _build_connectivity_summary(
     graph,
     config: ConnectivityReportConfig,
 ) -> ConnectivitySummary:
-    """Construct a ``ConnectivitySummary`` from the DuckDB sidecar tables."""
-    num_nodes = graph.get_number_of_nodes()
-    num_edges = graph.get_number_of_edges()
+    """Construct a ``ConnectivitySummary`` from the DuckDB sidecar tables.
+
+    Node and edge counts are sourced from DuckDB, not GRAPE. GRAPE collapses
+    edges to its topological skeleton (unique unordered SO-pairs in undirected
+    mode, or unique SPO triples if an edge_type_column is passed), which is an
+    implementation detail of CC. The property-graph row counts are what users
+    care about.
+    """
+    num_nodes = db.conn.execute("SELECT COUNT(*) FROM nodes").fetchone()[0]
+    num_edges = db.conn.execute("SELECT COUNT(*) FROM edges").fetchone()[0]
 
     comp_row = db.conn.execute(
         """
