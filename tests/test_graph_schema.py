@@ -88,6 +88,40 @@ def test_derived_slots_carry_their_biolink_range(biolink_schemaview):
     assert schema.slots["category"].range == "uriorcurie"
 
 
+def test_derived_ranges_reduce_to_standalone_primitives(biolink_schemaview):
+    """Class-, enum-, and type-valued Biolink ranges are reduced to LinkML
+    primitives so the released schema (which imports only `linkml:types`) has no
+    dangling range references — the contract linkml-solr's create-schema needs.
+    """
+    schema = derive_schema(
+        nodes_headers=["id", "name", "in_taxon", "has_attribute"],
+        edges_headers=["subject", "predicate", "object", "knowledge_level"],
+        biolink_schemaview=biolink_schemaview,
+    )
+
+    # Biolink type whose typeof chain bottoms out at string (`label type`).
+    assert schema.slots["name"].range == "string"
+    # Biolink class-valued slots hold CURIE references → uriorcurie.
+    assert schema.slots["in_taxon"].range == "uriorcurie"
+    assert schema.slots["subject"].range == "uriorcurie"
+    assert schema.slots["object"].range == "uriorcurie"
+    # Biolink enum-valued slot serializes permissible values as strings.
+    assert schema.slots["knowledge_level"].range == "string"
+
+    # Every emitted range resolves against linkml:types alone — no Biolink
+    # class/enum/type names leak into the standalone schema.
+    standalone = {
+        "string", "integer", "boolean", "float", "double", "decimal",
+        "date", "datetime", "time", "uriorcurie", "uri",
+    }
+    from jsonasobj2 import items
+
+    for name, slot in items(schema.slots):
+        assert slot.range is None or slot.range in standalone, (
+            f"slot {name!r} has non-primitive range {slot.range!r}"
+        )
+
+
 def test_export_declares_prefixes_for_slot_references(biolink_schemaview, tmp_path):
     """The exported schema must declare every prefix its slot references use so
     it stays standalone-loadable for CURIE expansion."""

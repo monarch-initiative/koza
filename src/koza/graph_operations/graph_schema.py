@@ -95,6 +95,64 @@ def _snake_case(biolink_name: str) -> str:
     return biolink_name.replace(" ", "_")
 
 
+# LinkML built-in scalar types that downstream LinkML tooling resolves without
+# a Biolink import. The released schema only imports `linkml:types`, so every
+# slot range it emits must reduce to one of these to stay standalone-loadable
+# (ADR-0002). `uriorcurie`/`uri` are kept (they carry identifier intent and
+# tools collapse them to a string field); anything else falls back to `string`.
+_LINKML_BUILTIN_PRIMITIVES: frozenset[str] = frozenset(
+    {
+        "string",
+        "integer",
+        "boolean",
+        "float",
+        "double",
+        "decimal",
+        "date",
+        "datetime",
+        "time",
+        "uriorcurie",
+        "uri",
+    }
+)
+
+
+def _primitive_range(sv: SchemaView, range_name: str | None) -> str | None:
+    """Reduce a Biolink range to a standalone-resolvable LinkML primitive.
+
+    The released schema (see `export_schema`) imports only `linkml:types`, so a
+    range that names a Biolink class, enum, or type would be a dangling
+    reference — linkml-solr's `create-schema` and other LinkML tooling reject
+    it. We resolve here, at derive time, where the Biolink SchemaView is in hand
+    (ADR-0002 keeps export from re-loading Biolink):
+
+    - class-valued slot  → ``uriorcurie`` (the column holds a CURIE reference)
+    - enum-valued slot   → ``string`` (permissible values serialize as strings)
+    - type-valued slot   → walk the ``typeof`` chain to the underlying built-in
+
+    The resolved primitive is informational only — no operation dispatches on
+    the stored range (column types come from the live Biolink SchemaView via
+    `duckdb_columns_for_slots`), and Biolink slot identity is preserved on every
+    slot through `slot_uri` / `exact_mappings`.
+    """
+    if range_name is None:
+        return None
+    if range_name in sv.all_classes():
+        return "uriorcurie"
+    if range_name in sv.all_enums():
+        return "string"
+    t = sv.get_type(range_name)
+    if t is None:
+        # Not a known class/enum/type — leave it for default_range handling.
+        return range_name
+    seen: set[str] = set()
+    while t is not None and t.typeof and t.name not in seen:
+        seen.add(t.name)
+        t = sv.get_type(t.typeof)
+    resolved = t.name if t is not None else range_name
+    return resolved if resolved in _LINKML_BUILTIN_PRIMITIVES else "string"
+
+
 # CURIE prefixes that can appear in exported slot_uri / exact_mappings, with
 # their canonical reference URIs. Kept static so export stays standalone and
 # does not re-load Biolink (ADR-0002): slot_uri across the Biolink slot pool
@@ -121,10 +179,16 @@ def _biolink_derived_slot(sv: SchemaView, col: str) -> SlotDefinition:
 
     `range` is captured from Biolink here (where the SchemaView is available)
     so it persists in the stored schema and the export doesn't have to reload
-    Biolink (ADR-0002) — e.g. `has_count` → integer, `negated` → boolean.
+    Biolink (ADR-0002) — e.g. `has_count` → integer, `negated` → boolean. It is
+    reduced to a standalone-resolvable LinkML primitive via `_primitive_range`
+    so the released schema (which imports only `linkml:types`) stays loadable —
+    e.g. `name` (Biolink `label type`) → string, `has_gene` (Biolink `gene`)
+    → uriorcurie.
     """
     biolink_slot = sv.get_slot(col.replace("_", " "))
-    slot_range = biolink_slot.range if biolink_slot is not None else None
+    slot_range = (
+        _primitive_range(sv, biolink_slot.range) if biolink_slot is not None else None
+    )
     try:
         slot_uri = sv.get_uri(biolink_slot) if biolink_slot is not None else None
     except Exception:
