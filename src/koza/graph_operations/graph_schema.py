@@ -95,6 +95,64 @@ def _snake_case(biolink_name: str) -> str:
     return biolink_name.replace(" ", "_")
 
 
+# LinkML built-in scalar types that downstream LinkML tooling resolves without
+# a Biolink import. The released schema only imports `linkml:types`, so every
+# slot range it emits must reduce to one of these to stay standalone-loadable
+# (ADR-0002). `uriorcurie`/`uri` are kept (they carry identifier intent and
+# tools collapse them to a string field); anything else falls back to `string`.
+_LINKML_BUILTIN_PRIMITIVES: frozenset[str] = frozenset(
+    {
+        "string",
+        "integer",
+        "boolean",
+        "float",
+        "double",
+        "decimal",
+        "date",
+        "datetime",
+        "time",
+        "uriorcurie",
+        "uri",
+    }
+)
+
+
+def _primitive_range(sv: SchemaView, range_name: str | None) -> str | None:
+    """Reduce a Biolink range to a standalone-resolvable LinkML primitive.
+
+    The released schema (see `export_schema`) imports only `linkml:types`, so a
+    range that names a Biolink class, enum, or type would be a dangling
+    reference — linkml-solr's `create-schema` and other LinkML tooling reject
+    it. We resolve here, at derive time, where the Biolink SchemaView is in hand
+    (ADR-0002 keeps export from re-loading Biolink):
+
+    - class-valued slot  → ``uriorcurie`` (the column holds a CURIE reference)
+    - enum-valued slot   → ``string`` (permissible values serialize as strings)
+    - type-valued slot   → walk the ``typeof`` chain to the underlying built-in
+
+    The resolved primitive is informational only — no operation dispatches on
+    the stored range (column types come from the live Biolink SchemaView via
+    `duckdb_columns_for_slots`), and Biolink slot identity is preserved on every
+    slot through `slot_uri` / `exact_mappings`.
+    """
+    if range_name is None:
+        return None
+    if range_name in sv.all_classes():
+        return "uriorcurie"
+    if range_name in sv.all_enums():
+        return "string"
+    t = sv.get_type(range_name)
+    if t is None:
+        # Not a known class/enum/type — leave it for default_range handling.
+        return range_name
+    seen: set[str] = set()
+    while t is not None and t.typeof and t.name not in seen:
+        seen.add(t.name)
+        t = sv.get_type(t.typeof)
+    resolved = t.name if t is not None else range_name
+    return resolved if resolved in _LINKML_BUILTIN_PRIMITIVES else "string"
+
+
 # CURIE prefixes that can appear in exported slot_uri / exact_mappings, with
 # their canonical reference URIs. Kept static so export stays standalone and
 # does not re-load Biolink (ADR-0002): slot_uri across the Biolink slot pool
@@ -118,14 +176,27 @@ def _biolink_derived_slot(sv: SchemaView, col: str) -> SlotDefinition:
     → `rdfs:label`, `subject` → `rdf:subject`). `exact_mappings` pins the
     Biolink slot identity (`biolink:<name>`) regardless, so provenance to the
     originating Biolink slot survives even when slot_uri points away.
+
+    `range` is captured from Biolink here (where the SchemaView is available)
+    so it persists in the stored schema and the export doesn't have to reload
+    Biolink (ADR-0002) — e.g. `has_count` → integer, `negated` → boolean. It is
+    reduced to a standalone-resolvable LinkML primitive via `_primitive_range`
+    so the released schema (which imports only `linkml:types`) stays loadable —
+    e.g. `name` (Biolink `label type`) → string, `has_gene` (Biolink `gene`)
+    → uriorcurie.
     """
     biolink_slot = sv.get_slot(col.replace("_", " "))
+    slot_range = (
+        _primitive_range(sv, biolink_slot.range) if biolink_slot is not None else None
+    )
     try:
         slot_uri = sv.get_uri(biolink_slot) if biolink_slot is not None else None
     except Exception:
         logger.warning(f"Could not resolve slot_uri for Biolink slot {col!r}")
         slot_uri = None
-    return SlotDefinition(name=col, slot_uri=slot_uri, exact_mappings=[f"biolink:{col}"])
+    return SlotDefinition(
+        name=col, range=slot_range, slot_uri=slot_uri, exact_mappings=[f"biolink:{col}"]
+    )
 
 
 def _biolink_slot_pool(sv: SchemaView, root_class: str) -> set[str]:
@@ -375,8 +446,10 @@ def export_schema(
                 new_classes[target] = cls_def
         schema.classes = new_classes
 
-    # Derive multivalued from actual DuckDB column types of the denormalized views.
+    # Derive multivalued + scalar range from actual DuckDB column types of the
+    # denormalized views.
     multivalued_slots: set[str] = set()
+    scalar_types: dict[str, str] = {}
     for table in ("denormalized_nodes", "denormalized_edges"):
         try:
             rows = conn.execute(f"DESCRIBE {table}").fetchall()
@@ -385,8 +458,11 @@ def export_schema(
             # with whatever Entity / Association slot info we have.
             continue
         for col_name, col_type, *_ in rows:
-            if "VARCHAR[]" in (col_type or "").upper():
+            upper = (col_type or "").upper()
+            if "VARCHAR[]" in upper:
                 multivalued_slots.add(col_name)
+            else:
+                scalar_types[col_name] = upper
 
     for slot_name in multivalued_slots:
         slot = schema.slots.get(slot_name)
@@ -394,6 +470,17 @@ def export_schema(
             slot = SlotDefinition(name=slot_name)
             schema.slots[slot_name] = slot
         slot.multivalued = True
+
+    # Recover range for computed, non-Biolink scalar columns from their DuckDB
+    # type — only where the slot has no range yet, so Biolink-derived ranges
+    # (captured at derive time) win over the lossy DuckDB inverse.
+    for slot_name, col_type in scalar_types.items():
+        slot = schema.slots.get(slot_name)
+        if slot is None or slot.range:
+            continue
+        rng = _DUCKDB_SCALAR_TO_RANGE.get(col_type)
+        if rng:
+            slot.range = rng
 
     # schema_as_dict emits the idiomatic compact schema form — `prefix: uri`
     # rather than expanded Prefix objects, and drops redundant per-element
@@ -441,6 +528,18 @@ _RANGE_TO_DUCKDB_SCALAR: dict[str, str] = {
     "float": "DOUBLE",
     "double": "DOUBLE",
     "boolean": "BOOLEAN",
+}
+
+# Inverse of the above for recovering a LinkML range from a computed, non-Biolink
+# DuckDB column (e.g. `has_phenotype_count` BIGINT). Lossy — DUCKDB DOUBLE can't
+# distinguish float from double — so this only fills slots Biolink didn't already
+# range at derive time, where the precise range is unknown anyway.
+_DUCKDB_SCALAR_TO_RANGE: dict[str, str] = {
+    "BIGINT": "integer",
+    "INTEGER": "integer",
+    "DOUBLE": "float",
+    "FLOAT": "float",
+    "BOOLEAN": "boolean",
 }
 
 # Biolink ranges treated as "primitive" for the purpose of multivalued
