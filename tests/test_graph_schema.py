@@ -72,6 +72,56 @@ def test_derived_slots_reference_their_biolink_origin(biolink_schemaview):
     assert not schema.slots["file_source"].exact_mappings
 
 
+def test_derived_slots_carry_their_biolink_range(biolink_schemaview):
+    """Biolink-typed slots carry Biolink's range, captured at derive time so it
+    persists in the stored schema rather than defaulting to string at export."""
+    schema = derive_schema(
+        nodes_headers=["id", "category", "name"],
+        edges_headers=["subject", "predicate", "object", "negated", "has_count", "has_percentage"],
+        biolink_schemaview=biolink_schemaview,
+    )
+
+    assert schema.slots["has_count"].range == "integer"
+    assert schema.slots["has_percentage"].range == "double"
+    assert schema.slots["negated"].range == "boolean"
+    # Full scope: string-ish ranges are emitted explicitly too, not left to default.
+    assert schema.slots["category"].range == "uriorcurie"
+
+
+def test_derived_ranges_reduce_to_standalone_primitives(biolink_schemaview):
+    """Class-, enum-, and type-valued Biolink ranges are reduced to LinkML
+    primitives so the released schema (which imports only `linkml:types`) has no
+    dangling range references — the contract linkml-solr's create-schema needs.
+    """
+    schema = derive_schema(
+        nodes_headers=["id", "name", "in_taxon", "has_attribute"],
+        edges_headers=["subject", "predicate", "object", "knowledge_level"],
+        biolink_schemaview=biolink_schemaview,
+    )
+
+    # Biolink type whose typeof chain bottoms out at string (`label type`).
+    assert schema.slots["name"].range == "string"
+    # Biolink class-valued slots hold CURIE references → uriorcurie.
+    assert schema.slots["in_taxon"].range == "uriorcurie"
+    assert schema.slots["subject"].range == "uriorcurie"
+    assert schema.slots["object"].range == "uriorcurie"
+    # Biolink enum-valued slot serializes permissible values as strings.
+    assert schema.slots["knowledge_level"].range == "string"
+
+    # Every emitted range resolves against linkml:types alone — no Biolink
+    # class/enum/type names leak into the standalone schema.
+    standalone = {
+        "string", "integer", "boolean", "float", "double", "decimal",
+        "date", "datetime", "time", "uriorcurie", "uri",
+    }
+    from jsonasobj2 import items
+
+    for name, slot in items(schema.slots):
+        assert slot.range is None or slot.range in standalone, (
+            f"slot {name!r} has non-primitive range {slot.range!r}"
+        )
+
+
 def test_export_declares_prefixes_for_slot_references(biolink_schemaview, tmp_path):
     """The exported schema must declare every prefix its slot references use so
     it stays standalone-loadable for CURIE expansion."""
@@ -99,6 +149,32 @@ def test_export_declares_prefixes_for_slot_references(biolink_schemaview, tmp_pa
     reloaded = SchemaView(exported)
     assert reloaded.expand_curie("rdfs:label") == "http://www.w3.org/2000/01/rdf-schema#label"
     assert reloaded.expand_curie("biolink:name") == "https://w3id.org/biolink/vocab/name"
+
+
+def test_export_recovers_range_for_computed_scalar_columns(biolink_schemaview, tmp_path):
+    """Computed, non-Biolink scalar columns (e.g. has_phenotype_count) get their
+    range from the DuckDB column type, so they don't fall back to string."""
+    db_path = tmp_path / "test.duckdb"
+    conn = duckdb.connect(str(db_path))
+    try:
+        seed_schema(
+            conn,
+            nodes_headers=["id", "category", "name"],
+            edges_headers=["subject", "predicate", "object", "has_phenotype_count"],
+            biolink_schemaview=biolink_schemaview,
+        )
+        # has_phenotype_count isn't a Biolink slot — its only type signal is the
+        # DuckDB column. (The denormalized views are what export introspects.)
+        conn.execute(
+            "CREATE TABLE denormalized_edges "
+            "(subject VARCHAR, predicate VARCHAR, object VARCHAR, has_phenotype_count BIGINT)"
+        )
+        exported = export_schema(conn, project_denormalized=False)
+    finally:
+        conn.close()
+
+    reloaded = SchemaView(exported)
+    assert reloaded.get_slot("has_phenotype_count").range == "integer"
 
 
 def test_file_source_is_injected_as_koza_extra(biolink_schemaview):
