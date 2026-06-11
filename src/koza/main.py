@@ -22,9 +22,11 @@ from koza.graph_operations import (
     generate_qc_report,
     generate_schema_compliance_report,
     join_graphs,
+    load_graph,
     merge_graphs,
     normalize_graph,
     prepare_file_specs_from_paths,
+    prepare_load_config_from_paths,
     prepare_mapping_file_specs_from_paths,
     prepare_merge_config_from_paths,
     prune_graph,
@@ -426,6 +428,129 @@ def join(
 
         if not quiet:
             typer.echo("Join operation completed successfully!")
+
+    except Exception as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(1)
+
+
+@typer_app.command()
+def load(
+    node_files: Annotated[
+        list[str] | None, typer.Option("--nodes", "-n", help="Node files or glob patterns (can specify multiple)")
+    ] = None,
+    edge_files: Annotated[
+        list[str] | None, typer.Option("--edges", "-e", help="Edge files or glob patterns (can specify multiple)")
+    ] = None,
+    input_directory: Annotated[
+        str | None, typer.Option("--input-dir", "-d", help="Directory to auto-discover KGX files")
+    ] = None,
+    output_database: Annotated[
+        str | None, typer.Option("--output", "-o", help="Path to output database file (default: in-memory)")
+    ] = None,
+    output_format: Annotated[
+        KGXFormat, typer.Option("--format", "-f", help="Output format for any exported files")
+    ] = KGXFormat.TSV,
+    slots_file: Annotated[
+        str | None,
+        typer.Option(
+            "--slots-file",
+            help=(
+                "YAML file with {nodes: [...], edges: [...]} — sets explicit JSONL "
+                "schema, skipping inference. JSON keys NOT in the slot list are "
+                "silently dropped at read time."
+            ),
+        ),
+    ] = None,
+    required_node_fields: Annotated[
+        list[str] | None,
+        typer.Option("--required-node-field", help="Node fields that must be present and non-empty (can specify multiple)"),
+    ] = None,
+    required_edge_fields: Annotated[
+        list[str] | None,
+        typer.Option("--required-edge-field", help="Edge fields that must be present and non-empty (can specify multiple)"),
+    ] = None,
+    generate_provided_by: Annotated[
+        bool,
+        typer.Option(
+            "--generate-provided-by",
+            help="Overwrite provided_by with the source filename (cat-merge style). "
+                 "Off by default: load preserves any existing provided_by.",
+        ),
+    ] = False,
+    schema_reporting: Annotated[
+        bool, typer.Option("--schema-report", help="Generate schema compliance report")
+    ] = False,
+    quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress output")] = False,
+    show_progress: Annotated[bool, typer.Option("--progress", "-p", help="Show progress bars")] = True,
+) -> None:
+    """Load KGX node/edge files into a DuckDB as-is.
+
+    The first step of a build, on its own: bring a knowledge graph that is
+    already represented as node and edge files into `nodes` / `edges` tables,
+    ready for analysis or downstream operations (closurize, report) — without
+    the deduplicate / normalize / prune stages that `merge` runs.
+
+    Unlike `join` (cat-merge style), `load` preserves an existing `provided_by`
+    instead of overwriting it with the source filename. Pass
+    `--generate-provided-by` to opt into the filename-stamping behavior.
+
+    Examples:
+        # Load a KG represented as one nodes file and one edges file
+        koza load -n graph_nodes.jsonl -e graph_edges.jsonl -o graph.duckdb
+
+        # Auto-discover from a directory
+        koza load --input-dir kg/ -o graph.duckdb
+    """
+    try:
+        # Collect all node and edge files (mirrors `join`'s input handling)
+        all_node_files: list[str] = []
+        all_edge_files: list[str] = []
+
+        if input_directory:
+            discovered_nodes, discovered_edges = _discover_files_in_directory(Path(input_directory))
+            all_node_files.extend(discovered_nodes)
+            all_edge_files.extend(discovered_edges)
+            if not quiet:
+                print(f"📂 Auto-discovered from {input_directory}:")
+                print(f"   - {len(discovered_nodes)} node files")
+                print(f"   - {len(discovered_edges)} edge files")
+
+        if node_files:
+            all_node_files.extend(_expand_file_patterns(node_files))
+        if edge_files:
+            all_edge_files.extend(_expand_file_patterns(edge_files))
+
+        # Remove duplicates while preserving order
+        all_node_files = list(dict.fromkeys(all_node_files))
+        all_edge_files = list(dict.fromkeys(all_edge_files))
+
+        if not all_node_files and not all_edge_files:
+            if input_directory:
+                raise typer.BadParameter(f"No KGX files found in directory: {input_directory}")
+            raise typer.BadParameter("Must specify --input-dir, --nodes, or --edges")
+
+        config = prepare_load_config_from_paths(
+            node_files=[Path(f) for f in all_node_files],
+            edge_files=[Path(f) for f in all_edge_files],
+            output_database=Path(output_database) if output_database else None,
+            output_format=output_format,
+            slots_file=Path(slots_file) if slots_file else None,
+            required_node_fields=required_node_fields or [],
+            required_edge_fields=required_edge_fields or [],
+            generate_provided_by=generate_provided_by,
+            schema_reporting=schema_reporting,
+            quiet=quiet,
+            show_progress=show_progress,
+        )
+
+        result = load_graph(config)
+
+        if not quiet:
+            typer.echo(
+                f"Load completed: {result.final_stats.nodes:,} nodes, "
+                f"{result.final_stats.edges:,} edges"
+            )
 
     except Exception as e:
         typer.echo(f"Error: {e}", err=True)
