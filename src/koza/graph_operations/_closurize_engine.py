@@ -107,6 +107,7 @@ def build_node_predicate_side_table(
     db,
     predicate: str,
     additional_filter: Optional[str] = None,
+    include_closure: bool = True,
 ) -> str:
     """Build a per-predicate node-extension side table aggregating object info
     for edges where nodes.id is the subject and the edge has the given predicate.
@@ -116,11 +117,27 @@ def build_node_predicate_side_table(
     by one predicate's edge subset.
 
     Returns the side table name; columns are (id, <field>, <field>_label,
-    <field>_count, <field>_closure, <field>_closure_label).
+    <field>_count) plus (<field>_closure, <field>_closure_label) when
+    `include_closure` is set. With no closure file, the closure columns are
+    omitted entirely (the closure_id / closure_label side tables don't exist).
     """
     field = predicate.replace("biolink:", "")
     side_table = f"node_{field}"
     extra = f"AND ({additional_filter})" if additional_filter else ""
+    if include_closure:
+        closure_columns = f""",
+      CASE WHEN COUNT(c.closure) > 0
+           THEN LIST_DISTINCT(FLATTEN(ARRAY_AGG(c.closure)))
+           ELSE NULL END AS {field}_closure,
+      CASE WHEN COUNT(cl.closure_label) > 0
+           THEN LIST_DISTINCT(FLATTEN(ARRAY_AGG(cl.closure_label)))
+           ELSE NULL END AS {field}_closure_label"""
+        closure_joins = """
+    LEFT JOIN closure_id c ON e.object = c.id
+    LEFT JOIN closure_label cl ON e.object = cl.id"""
+    else:
+        closure_columns = ""
+        closure_joins = ""
     db.sql(f"""
     CREATE OR REPLACE TABLE {side_table} AS
     SELECT
@@ -131,21 +148,13 @@ def build_node_predicate_side_table(
       CASE WHEN COUNT(DISTINCT o.name) > 0
            THEN ARRAY_AGG(DISTINCT o.name)
            ELSE NULL END AS {field}_label,
-      COUNT(DISTINCT e.object) AS {field}_count,
-      CASE WHEN COUNT(c.closure) > 0
-           THEN LIST_DISTINCT(FLATTEN(ARRAY_AGG(c.closure)))
-           ELSE NULL END AS {field}_closure,
-      CASE WHEN COUNT(cl.closure_label) > 0
-           THEN LIST_DISTINCT(FLATTEN(ARRAY_AGG(cl.closure_label)))
-           ELSE NULL END AS {field}_closure_label
+      COUNT(DISTINCT e.object) AS {field}_count{closure_columns}
     FROM nodes n
     LEFT JOIN edges e
       ON n.id = e.subject
      AND e.predicate = 'biolink:{field}'
      {extra}
-    LEFT JOIN nodes o ON e.object = o.id
-    LEFT JOIN closure_id c ON e.object = c.id
-    LEFT JOIN closure_label cl ON e.object = cl.id
+    LEFT JOIN nodes o ON e.object = o.id{closure_joins}
     GROUP BY n.id
     """)
     return side_table
@@ -162,8 +171,8 @@ def materialize_column(db, table: str, column_name: str, expression: str, sql_ty
 
 
 
-def add_closure(closure_file: str,
-                database_path: str,
+def add_closure(database_path: str,
+                closure_file: Optional[str] = None,
                 node_fields: Optional[List[str]] = None,
                 edge_fields: Optional[List[str]] = None,
                 edge_fields_to_label: Optional[List[str]] = None,
@@ -174,13 +183,19 @@ def add_closure(closure_file: str,
     """Apply closure expansion to the nodes/edges tables in `database_path`.
 
     The DuckDB at `database_path` must already contain `nodes` and `edges`
-    tables (produced upstream by `koza join`). `closure_file` is a TSV with
-    `(subject_id, predicate_id, object_id)` columns (e.g. the filtered
-    phenio relation graph).
+    tables (produced upstream by `koza join`). `closure_file`, when given, is
+    a TSV with `(subject_id, predicate_id, object_id)` columns (e.g. the
+    filtered phenio relation graph).
+
+    When `closure_file` is None, the denormalized views are still produced —
+    nodes/edges are joined for labels, categories, namespaces and per-predicate
+    aggregations — but no relation-graph closure is loaded, so the
+    `*_closure` / `*_closure_label` slots (and node-level `has_descendant*`)
+    are omitted entirely.
 
     Produces:
-    - Materialized closure side tables: `closure_id`, `closure_label`,
-      `descendants_id`, `descendants_label`.
+    - Materialized closure side tables `closure_id`, `closure_label`,
+      `descendants_id`, `descendants_label` (only when `closure_file` given).
     - New columns on `edges`: `evidence_count`, `grouping_key`.
     - One materialized side table per `node_fields` entry: `node_<predicate>`.
     - `denormalized_edges` VIEW and `denormalized_nodes` VIEW.
@@ -200,16 +215,18 @@ def add_closure(closure_file: str,
     if not os.path.exists(database_path):
         raise ValueError(f"database_path does not exist: {database_path}")
 
+    include_closure = closure_file is not None
     logger.info(f"Closurize: database={database_path}, closure_file={closure_file}")
     db = duckdb.connect(database=database_path)
     if mem := os.environ.get("DUCKDB_MEMORY_LIMIT"):
         db.sql(f"PRAGMA memory_limit='{mem}'")
 
     _ensure_namespace_column(db)
-    _build_closure_tables(db, closure_file)
+    if include_closure:
+        _build_closure_tables(db, closure_file)
     _materialize_edge_derived_columns(db, evidence_fields, grouping_fields)
-    _build_denormalized_edges_view(db, edge_fields, edge_fields_to_label)
-    _build_denormalized_nodes_view(db, node_fields, additional_node_constraints)
+    _build_denormalized_edges_view(db, edge_fields, edge_fields_to_label, include_closure)
+    _build_denormalized_nodes_view(db, node_fields, additional_node_constraints, include_closure)
 
 
 def _ensure_namespace_column(db: duckdb.DuckDBPyConnection) -> None:
@@ -290,13 +307,15 @@ def _build_denormalized_edges_view(
     db: duckdb.DuckDBPyConnection,
     edge_fields: List[str],
     edge_fields_to_label: List[str],
+    include_closure: bool = True,
 ) -> None:
-    """Create `denormalized_edges` VIEW: edges plus per-field closure expansions.
+    """Create `denormalized_edges` VIEW: edges plus per-field expansions.
 
     Each entry in `edge_fields` gets the full expansion (label, category,
-    namespace, closure, closure_label, plus taxon for subject/object).
-    Each entry in `edge_fields_to_label` gets the label-only expansion
-    (no closure joins).
+    namespace, plus taxon for subject/object). When `include_closure` is set,
+    closure / closure_label columns are added too; otherwise they're omitted
+    (no closure side tables exist). Each entry in `edge_fields_to_label` gets
+    the label-only expansion regardless.
     """
     edges_info = db.sql("DESCRIBE edges").fetchall()
     edges_types = {col[0]: col[1] for col in edges_info}
@@ -307,7 +326,7 @@ def _build_denormalized_edges_view(
         return "VARCHAR[]" in edges_types.get(field, "").upper()
 
     join_clauses = [
-        edge_joins(f, is_multivalued=is_multivalued(f))
+        edge_joins(f, include_closure_joins=include_closure, is_multivalued=is_multivalued(f))
         for f in edge_fields
     ] + [
         edge_joins(f, include_closure_joins=False, is_multivalued=is_multivalued(f))
@@ -324,7 +343,7 @@ def _build_denormalized_edges_view(
     edges_select = f"edges.* EXCLUDE ({', '.join(excluded)})" if excluded else "edges.*"
 
     projections = [
-        edge_columns(f, node_column_names=node_cols)
+        edge_columns(f, include_closure_fields=include_closure, node_column_names=node_cols)
         for f in edge_fields
     ] + [
         edge_columns(f, include_closure_fields=False, node_column_names=node_cols)
@@ -346,37 +365,51 @@ def _build_denormalized_nodes_view(
     db: duckdb.DuckDBPyConnection,
     node_fields: List[str],
     additional_node_constraints: Optional[str],
+    include_closure: bool = True,
 ) -> None:
     """Build per-predicate node side tables, then create `denormalized_nodes` VIEW.
 
     For each entry in `node_fields`, materialize a `node_<predicate>` side
-    table holding (id, <field>, <field>_label, <field>_count, <field>_closure,
-    <field>_closure_label). The view joins all of these to `nodes` plus
-    descendants_id / descendants_label.
+    table holding (id, <field>, <field>_label, <field>_count) plus
+    (<field>_closure, <field>_closure_label) when `include_closure` is set.
+    The view joins all of these to `nodes`, plus descendants_id /
+    descendants_label for the `has_descendant*` slots — also only when a
+    closure file was loaded.
     """
     side_joins: list[str] = []
     side_columns: list[str] = []
     for node_field in node_fields:
         field = node_field.replace("biolink:", "")
-        side_table = build_node_predicate_side_table(db, node_field, additional_node_constraints)
+        side_table = build_node_predicate_side_table(
+            db, node_field, additional_node_constraints, include_closure
+        )
         alias = f"_{field}"
         side_joins.append(f"LEFT JOIN {side_table} {alias} ON nodes.id = {alias}.id")
-        for col in (field, f"{field}_label", f"{field}_count",
-                    f"{field}_closure", f"{field}_closure_label"):
+        cols = [field, f"{field}_label", f"{field}_count"]
+        if include_closure:
+            cols += [f"{field}_closure", f"{field}_closure_label"]
+        for col in cols:
             side_columns.append(f"{alias}.{col}")
 
-    column_list = (", ".join(side_columns) + ",") if side_columns else ""
+    # Build the projection as an explicit list so the trailing comma is never
+    # in doubt whether or not closure (and its has_descendant* columns) is present.
+    projection = ["nodes.*", *side_columns]
+    descendant_joins = ""
+    if include_closure:
+        projection += [
+            "_d.descendants AS has_descendant",
+            "_dl.descendants_label AS has_descendant_label",
+            "COALESCE(ARRAY_LENGTH(_d.descendants), 0) AS has_descendant_count",
+        ]
+        descendant_joins = """
+        LEFT JOIN descendants_id _d ON nodes.id = _d.id
+        LEFT JOIN descendants_label _dl ON nodes.id = _dl.id"""
+
     _drop_any("denormalized_nodes", db)
     db.sql(f"""
         CREATE OR REPLACE VIEW denormalized_nodes AS
         SELECT
-            nodes.*,
-            {column_list}
-            _d.descendants AS has_descendant,
-            _dl.descendants_label AS has_descendant_label,
-            COALESCE(ARRAY_LENGTH(_d.descendants), 0) AS has_descendant_count
+            {", ".join(projection)}
         FROM nodes
-        {chr(10).join(side_joins)}
-        LEFT JOIN descendants_id _d ON nodes.id = _d.id
-        LEFT JOIN descendants_label _dl ON nodes.id = _dl.id
+        {chr(10).join(side_joins)}{descendant_joins}
     """)

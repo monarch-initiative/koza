@@ -519,10 +519,12 @@ def schema_export(  # noqa: PLR0913
 @typer_app.command()
 def closurize(
     database: Annotated[str, typer.Argument(help="Path to the DuckDB database file to closurize")],
-    closure_file: Annotated[str, typer.Option(
+    closure_file: Annotated[str | None, typer.Option(
         "--closure-file", "-c",
-        help="Path to the relation-graph TSV file (subject_id, predicate_id, object_id)"
-    )],
+        help="Path to the relation-graph TSV file (subject_id, predicate_id, object_id). "
+             "Omit to build denormalized views without closure: no *_closure / "
+             "*_closure_label slots and no node-level has_descendant* slots."
+    )] = None,
     node_fields: Annotated[list[str] | None, typer.Option(
         "--node-field", help="Predicate to expand into per-node aggregations (repeatable)"
     )] = None,
@@ -564,7 +566,7 @@ def closurize(
         # duplicated between the CLI and the model.
         config_kwargs = {
             "database_path": Path(database),
-            "closure_file": Path(closure_file),
+            "closure_file": Path(closure_file) if closure_file is not None else None,
             "additional_node_constraints": additional_node_constraints,
             "quiet": quiet,
         }

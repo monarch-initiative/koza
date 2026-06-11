@@ -136,6 +136,58 @@ def test_closurize_evolves_stored_schema_to_four_classes(synthetic_kg, biolink_s
     assert {"subject_label", "subject_closure", "object_label", "object_closure"}.issubset(da_slots)
 
 
+def test_closurize_without_closure_file_omits_closure_slots(synthetic_kg, biolink_schemaview):
+    """With no closure_file, the denormalized views are still produced — labels,
+    categories, namespaces, per-predicate aggregations — but the *_closure /
+    *_closure_label slots and node-level has_descendant* slots are omitted."""
+    db_path, _ = synthetic_kg
+
+    with GraphDatabase(db_path) as db:
+        seed_schema(
+            db.conn,
+            nodes_headers=["id", "category", "name", "in_taxon", "in_taxon_label"],
+            edges_headers=["id", "subject", "predicate", "object", "category",
+                           "has_evidence", "publications", "negated", "namespace"],
+            biolink_schemaview=biolink_schemaview,
+        )
+
+    result = closurize_graph(
+        ClosurizeConfig(
+            database_path=db_path,
+            # closure_file omitted
+            node_fields=["has_phenotype"],
+            edge_fields=["subject", "object"],
+            quiet=True,
+        )
+    )
+
+    assert result.success
+    assert result.denormalized_edges_count == 2
+    assert result.denormalized_nodes_count == 4
+
+    with GraphDatabase(db_path) as db:
+        e_cols = {r[0] for r in db.conn.execute("DESCRIBE denormalized_edges").fetchall()}
+        # Label/category/namespace expansion still present...
+        assert {"subject_label", "subject_category", "subject_namespace",
+                "object_label"}.issubset(e_cols)
+        # ...but no closure slots.
+        assert not any(c.endswith("_closure") or c.endswith("_closure_label") for c in e_cols)
+
+        n_cols = {r[0] for r in db.conn.execute("DESCRIBE denormalized_nodes").fetchall()}
+        assert {"has_phenotype", "has_phenotype_label", "has_phenotype_count"}.issubset(n_cols)
+        assert "has_phenotype_closure" not in n_cols
+        assert "has_phenotype_closure_label" not in n_cols
+        assert not any(c.startswith("has_descendant") for c in n_cols)
+
+        # The closure side tables were never built.
+        tables = {r[0] for r in db.conn.execute("SHOW TABLES").fetchall()}
+        assert "closure_id" not in tables
+        assert "descendants_id" not in tables
+
+        # The views still read.
+        assert db.conn.execute("SELECT COUNT(*) FROM denormalized_edges").fetchone()[0] == 2
+
+
 def test_closurize_tolerates_unseeded_database(synthetic_kg):
     """If `_koza_schema` is absent (graphs from before the schema feature),
     closurize still produces the denormalized tables, it just skips the
