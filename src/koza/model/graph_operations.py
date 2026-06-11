@@ -123,6 +123,29 @@ class JoinConfig(GraphOperationConfig):
         return self
 
 
+class LoadConfig(JoinConfig):
+    """Configuration for the load operation.
+
+    Load one or more KGX node/edge files into a DuckDB as `nodes` and `edges`
+    tables — the first step of a build, on its own (no deduplicate / normalize /
+    prune). Use this when a knowledge graph is already represented as node and
+    edge files and you just want it in DuckDB for analysis or downstream
+    operations like `closurize` / `report`.
+
+    Differs from `JoinConfig` only in defaults, reflecting a faithful as-is
+    load rather than a cat-merge-style build:
+    - `generate_provided_by` is False, so an existing `provided_by` is preserved
+      instead of being overwritten with the source filename.
+    - `schema_reporting` is False (no schema report written by default).
+
+    Inherits everything else from `JoinConfig`, so `load_graph` is just
+    `join_graphs` with these defaults.
+    """
+
+    generate_provided_by: bool = False
+    schema_reporting: bool = False
+
+
 class SplitConfig(GraphOperationConfig):
     """Configuration for split operation"""
 
