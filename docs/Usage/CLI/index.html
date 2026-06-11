@@ -2053,6 +2053,7 @@ koza join -n file1.tsv -n file2.tsv -e edges.tsv -o graph.duckdb
 <li><code>--required-node-field TEXT</code>: Node fields that must be present and non-empty (can specify multiple)</li>
 <li><code>--required-edge-field TEXT</code>: Edge fields that must be present and non-empty (can specify multiple)</li>
 <li><code>--slots-file TEXT</code>: YAML file with {nodes: [...], edges: [...]} — sets explicit JSONL schema, skipping inference. JSON keys NOT in the slot list are silently dropped at read time.</li>
+<li><code>--force-single-valued TEXT</code>: Collapse this Biolink-multivalued slot to a scalar, keeping only the first array element (repeatable). Default: none — Biolink multivalued slots are preserved as arrays. Pass e.g. --force-single-valued category for the historical Monarch convention.</li>
 <li><code>-q, --quiet</code>: Suppress output</li>
 <li><code>-p, --progress</code>: Show progress bars  [default: True]</li>
 <li><code>--help</code>: Show this message and exit.</li>
@@ -2259,6 +2260,7 @@ koza merge --input-dir ./data/ -m &amp;quot;*.sssom.tsv&amp;quot; --remove-singl
 <li><code>--remove-singletons</code>: Move singleton nodes to separate table</li>
 <li><code>--required-node-field TEXT</code>: Node fields that must be present and non-empty (can specify multiple)</li>
 <li><code>--required-edge-field TEXT</code>: Edge fields that must be present and non-empty (can specify multiple)</li>
+<li><code>--force-single-valued TEXT</code>: Collapse this Biolink-multivalued slot to a scalar during the join step, keeping only the first array element (repeatable). Default: none — Biolink multivalued slots are preserved as arrays.</li>
 <li><code>-q, --quiet</code>: Suppress output</li>
 <li><code>-p, --progress</code>: Show progress bars  [default: True]</li>
 <li><code>--help</code>: Show this message and exit.</li>
