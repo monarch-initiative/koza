@@ -143,7 +143,11 @@ def join_graphs(config: JoinConfig) -> JoinResult:
                 if config.show_progress:
                     node_progress.set_description(f"Loading {file_spec.path.name}")
 
-                result = db.load_file(file_spec, generate_provided_by=config.generate_provided_by)
+                result = db.load_file(
+                    file_spec,
+                    generate_provided_by=config.generate_provided_by,
+                    force_single_valued=set(config.force_single_valued),
+                )
                 files_loaded.append(result)
 
                 if config.required_node_fields:
@@ -165,7 +169,11 @@ def join_graphs(config: JoinConfig) -> JoinResult:
                 if config.show_progress:
                     edge_progress.set_description(f"Loading {file_spec.path.name}")
 
-                result = db.load_file(file_spec, generate_provided_by=config.generate_provided_by)
+                result = db.load_file(
+                    file_spec,
+                    generate_provided_by=config.generate_provided_by,
+                    force_single_valued=set(config.force_single_valued),
+                )
                 files_loaded.append(result)
 
                 if config.required_edge_fields:

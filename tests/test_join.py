@@ -1234,5 +1234,79 @@ class TestApplySlotsFile:
             _apply_slots_file(_conf("edges: [id, 42, predicate]\n"))
 
 
+class TestForceSingleValued:
+    """Biolink multivalued slots are preserved by default; the single-valued
+    collapse is opt-in via force_single_valued."""
+
+    @pytest.fixture
+    def array_category_jsonl(self, temp_dir):
+        """Nodes/edges with canonical Biolink array `category` and a node with
+        two categories (to exercise the lossy-collapse path)."""
+        nodes = temp_dir / "fsv_nodes.jsonl"
+        nodes.write_text(
+            '{"id": "CHEBI:1", "category": ["biolink:ChemicalEntity"], "name": "c1"}\n'
+            '{"id": "HGNC:1", "category": ["biolink:Gene", "biolink:NamedThing"], "name": "g1"}\n'
+        )
+        edges = temp_dir / "fsv_edges.jsonl"
+        edges.write_text(
+            '{"id": "e1", "subject": "CHEBI:1", "predicate": "biolink:related_to", '
+            '"object": "HGNC:1", "category": ["biolink:Association"]}\n'
+        )
+        return nodes, edges
+
+    def _describe(self, db_path, table):
+        import duckdb
+        with duckdb.connect(str(db_path)) as conn:
+            return {r[0]: r[1] for r in conn.execute(f"DESCRIBE {table}").fetchall()}
+
+    def test_default_preserves_array_category(self, array_category_jsonl, temp_dir):
+        """No force_single_valued: array `category` stays VARCHAR[]."""
+        nodes, edges = array_category_jsonl
+        db_path = temp_dir / "preserved.duckdb"
+        result = join_graphs(JoinConfig(
+            node_files=[FileSpec(path=nodes, format=KGXFormat.JSONL, file_type=KGXFileType.NODES)],
+            edge_files=[FileSpec(path=edges, format=KGXFormat.JSONL, file_type=KGXFileType.EDGES)],
+            database_path=db_path, quiet=True, show_progress=False,
+        ))
+        assert result.final_stats.nodes == 2
+        assert self._describe(db_path, "nodes")["category"] == "VARCHAR[]"
+        assert self._describe(db_path, "edges")["category"] == "VARCHAR[]"
+
+    def test_force_single_valued_collapses_category(self, array_category_jsonl, temp_dir):
+        """With force_single_valued=['category'], category flattens to scalar."""
+        nodes, edges = array_category_jsonl
+        db_path = temp_dir / "collapsed.duckdb"
+        join_graphs(JoinConfig(
+            node_files=[FileSpec(path=nodes, format=KGXFormat.JSONL, file_type=KGXFileType.NODES)],
+            edge_files=[FileSpec(path=edges, format=KGXFormat.JSONL, file_type=KGXFileType.EDGES)],
+            database_path=db_path, force_single_valued=["category"],
+            quiet=True, show_progress=False,
+        ))
+        assert self._describe(db_path, "nodes")["category"] == "VARCHAR"
+        assert self._describe(db_path, "edges")["category"] == "VARCHAR"
+
+        import duckdb
+        with duckdb.connect(str(db_path)) as conn:
+            cat = conn.execute("SELECT category FROM nodes WHERE id = 'HGNC:1'").fetchone()[0]
+        # Only the first element survives the collapse.
+        assert cat == "biolink:Gene"
+
+    def test_lossy_collapse_warns(self, array_category_jsonl, temp_dir, caplog):
+        """Collapsing a slot that has multi-element arrays warns about data loss."""
+        import logging
+        nodes, edges = array_category_jsonl
+        db_path = temp_dir / "warn.duckdb"
+        with caplog.at_level(logging.WARNING):
+            join_graphs(JoinConfig(
+                node_files=[FileSpec(path=nodes, format=KGXFormat.JSONL, file_type=KGXFileType.NODES)],
+                edge_files=[FileSpec(path=edges, format=KGXFormat.JSONL, file_type=KGXFileType.EDGES)],
+                database_path=db_path, force_single_valued=["category"],
+                quiet=True, show_progress=False,
+            ))
+        # HGNC:1 has two categories — its collapse is lossy.
+        assert any("force_single_valued" in r.message and "category" in r.message
+                   for r in caplog.records)
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

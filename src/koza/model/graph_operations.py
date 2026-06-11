@@ -109,6 +109,11 @@ class JoinConfig(GraphOperationConfig):
     required_edge_fields: list[str] = Field(default_factory=list)
     seed_schema: bool = True  # Seed the koza graph schema (derived-schema.yaml + Biolink) into DuckDB metadata
     slots_file: Path | None = None  # YAML file with {nodes: [...], edges: [...]} — applies explicit JSONL schemas to all files in the join
+    # Slot names to collapse from arrays to scalars (keeping the first element).
+    # Empty by default: koza preserves Biolink multivalued slot definitions.
+    # Opt in per field, e.g. ["category", "in_taxon", "type"] to match consumers
+    # (like monarch-app) that expect those slots scalar.
+    force_single_valued: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def set_database_path_from_output_database(self):
@@ -324,6 +329,9 @@ class MergeConfig(BaseModel):
     continue_on_pipeline_step_error: bool = True # If there is an error for a non-critical pipeline step, append a warning and continue the merge.
     required_node_fields: list[str] = Field(default_factory=list)
     required_edge_fields: list[str] = Field(default_factory=list)
+    # Slot names to collapse from arrays to scalars during the join step.
+    # Empty by default: Biolink multivalued slot definitions are preserved.
+    force_single_valued: list[str] = Field(default_factory=list)
 
     # Prune-specific options
     keep_singletons: bool = True

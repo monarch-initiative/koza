@@ -136,6 +136,7 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
             generate_provided_by=config.generate_provided_by,
             required_node_fields=config.required_node_fields,
             required_edge_fields=config.required_edge_fields,
+            force_single_valued=config.force_single_valued,
         )
 
         join_result = join_graphs(join_config)
