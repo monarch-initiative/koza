@@ -2124,7 +2124,7 @@ and DenormalizedAssociation classes.</p>
 </ul>
 <p><strong>Options</strong>:</p>
 <ul>
-<li><code>-c, --closure-file TEXT</code>: Path to the relation-graph TSV file (subject_id, predicate_id, object_id)  [required]</li>
+<li><code>-c, --closure-file TEXT</code>: Path to the relation-graph TSV file (subject_id, predicate_id, object_id). Omit to build denormalized views without closure: no <em>_closure / *_closure_label slots and no node-level has_descendant</em> slots.</li>
 <li><code>--node-field TEXT</code>: Predicate to expand into per-node aggregations (repeatable)</li>
 <li><code>--edge-field TEXT</code>: Edge field to fully expand (label + category + namespace + closure) (repeatable)</li>
 <li><code>--edge-field-to-label TEXT</code>: Edge field to expand with label/category/namespace only — no closure (repeatable)</li>
