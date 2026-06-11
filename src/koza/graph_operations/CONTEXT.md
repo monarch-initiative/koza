@@ -45,12 +45,16 @@ A module-level constant (`DECLARED_OUTPUTS`) on each operation module that lists
 _Avoid_: produced slots, output schema, operation contract.
 
 **Operation**:
-One of the high-level graph transforms exposed by the CLI: load, join, deduplicate, normalize, prune, split, append, merge, closurize, report. Each is a module under `koza/graph_operations/`.
+One of the high-level graph transforms exposed by the CLI: load, join, deduplicate, normalize, prune, split, append, merge, closurize, profile, report. Each is a module under `koza/graph_operations/`.
 _Avoid_: command, action, transform (transform refers to the koza ingest side).
 
 **Load** / **Join**:
 Both ingest KGX node/edge files into the `nodes` / `edges` tables — the first step of building a graph database. They differ in provenance handling, not mechanism: `load` brings an existing graph in faithfully (preserves `provided_by`, no schema report by default), while `join` is cat-merge style for building from raw per-source files (stamps `provided_by` from the source filename, oriented toward combining many files). `load` is `join_graphs` with `LoadConfig`'s defaults (`generate_provided_by=False`, `schema_reporting=False`); use it when a knowledge graph is already represented as node/edge files and you just want it in DuckDB for analysis or downstream operations without a full `merge`.
 _Avoid_: import (names the koza ingest/reader side), ingest (that's the transform stage).
+
+**Profile**:
+The operation that reports the *shape* of a graph: per-column marginal distributions (counts by predicate, category, namespace, knowledge source, …) over each table's **categorical** columns. Categorical columns are auto-detected schema-smart — a Biolink signal (enum / boolean range, the `category` designator, slots descending from `type` or `knowledge source`, identifier / free-text / `named thing` excluded) combined with a DuckDB cardinality probe (`approx_count_distinct`) that decides the ambiguous middle and handles non-Biolink derived columns and unseeded graphs. Renders in the terminal; optionally writes long-form `(table, column, value, count)`. Distinct from **Report** (per-source QC counts) and the tabular edge/node reports (a single cross-product `GROUP BY ALL`).
+_Avoid_: describe, summary, stats (ambiguous with the graph-stats report).
 
 **Closurize**:
 The operation that applies a relation-graph closure to a merged graph database. Produces `denormalized_nodes` and `denormalized_edges` as VIEWs over base tables (~50% smaller DuckDB than the historical materialized shape), plus per-predicate node-extension side tables and the materialized `closure_id` / `closure_label` / `descendants_id` / `descendants_label` tables. Evolves the stored schema to include `DenormalizedEntity` / `DenormalizedAssociation` classes whose slot lists come from the actual produced views. Migrated from the `closurizer` package in May 2026; this module is now its canonical home, the standalone package is no longer maintained.

@@ -909,3 +909,63 @@ class ConnectivityReportResult(BaseModel):
     parquet_files: dict[str, Path] = Field(default_factory=dict)
     computation_seconds: float = 0.0
     total_time_seconds: float = 0.0
+
+
+# Profile ("shape of the graph") models
+
+
+class ProfileConfig(BaseModel):
+    """Configuration for the graph profile / shape report.
+
+    Renders schema-smart per-column marginal distributions over the categorical
+    columns of a koza DuckDB — "tell me about the shape of this graph". Which
+    columns are categorical is auto-detected (Biolink schema + DuckDB
+    cardinality); pass `columns` to override.
+    """
+
+    database_path: Path
+    # Tables to profile. None → auto: whichever of nodes / edges /
+    # denormalized_nodes / denormalized_edges exist.
+    tables: list[str] | None = None
+    top_n: int = 10  # top values to show per column
+    max_distinct: int = 50  # always-categorical floor (distinct ≤ this → categorical)
+    max_ratio: float = 0.01  # or distinct/rows ratio cap for the middle range
+    max_distinct_ceiling: int = 1000  # hard cap — never categorical above this many distinct
+    columns: list[str] | None = None  # override auto-detection (intersected with each table)
+    output_file: Path | None = None  # optional long-form (table, column, value, count) export
+    output_format: TabularReportFormat = TabularReportFormat.TSV
+    quiet: bool = False
+
+    @field_validator("database_path")
+    @classmethod
+    def validate_database_exists(cls, v: Path) -> Path:
+        if not v.exists():
+            raise ValueError(f"Database file not found: {v}")
+        return v
+
+
+class ColumnProfile(BaseModel):
+    """Marginal distribution of one categorical column."""
+
+    column: str
+    distinct_count: int
+    reason: str  # how it was detected: enum/boolean/category/predicate/knowledge_source/cardinality
+    is_list: bool = False
+    top_values: list[tuple[str | None, int]] = Field(default_factory=list)  # (value, count), value cast to str
+
+
+class TableProfile(BaseModel):
+    """Profile of one table: row count + per-column marginals."""
+
+    table: str
+    row_count: int
+    columns: list[ColumnProfile] = Field(default_factory=list)
+
+
+class ProfileResult(BaseModel):
+    """Result of a graph profile."""
+
+    database_path: Path
+    tables: list[TableProfile] = Field(default_factory=list)
+    output_file: Path | None = None
+    total_time_seconds: float = 0.0
