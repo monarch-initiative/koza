@@ -1591,6 +1591,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#koza-load" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        koza load
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#koza-split" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1806,6 +1817,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#koza-load" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        koza load
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#koza-split" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1972,6 +1994,7 @@
 <ul>
 <li><code>transform</code>: Transform a source file.</li>
 <li><code>join</code>: Join multiple KGX files into a unified...</li>
+<li><code>load</code>: Load KGX node/edge files into a DuckDB as-is.</li>
 <li><code>split</code>: Split a KGX file by specified fields with...</li>
 <li><code>schema-export</code>: Export the koza graph schema from a DuckDB...</li>
 <li><code>closurize</code>: Apply closure expansion to a merged graph:...</li>
@@ -2054,6 +2077,40 @@ koza join -n file1.tsv -n file2.tsv -e edges.tsv -o graph.duckdb
 <li><code>--required-edge-field TEXT</code>: Edge fields that must be present and non-empty (can specify multiple)</li>
 <li><code>--slots-file TEXT</code>: YAML file with {nodes: [...], edges: [...]} — sets explicit JSONL schema, skipping inference. JSON keys NOT in the slot list are silently dropped at read time.</li>
 <li><code>--force-single-valued TEXT</code>: Collapse this Biolink-multivalued slot to a scalar, keeping only the first array element (repeatable). Default: none — Biolink multivalued slots are preserved as arrays. Pass e.g. --force-single-valued category for the historical Monarch convention.</li>
+<li><code>-q, --quiet</code>: Suppress output</li>
+<li><code>-p, --progress</code>: Show progress bars  [default: True]</li>
+<li><code>--help</code>: Show this message and exit.</li>
+</ul>
+<h2 id="koza-load"><code>koza load</code></h2>
+<p>Load KGX node/edge files into a DuckDB as-is.</p>
+<p>The first step of a build, on its own: bring a knowledge graph that is
+already represented as node and edge files into <code>nodes</code> / <code>edges</code> tables,
+ready for analysis or downstream operations (closurize, report) — without
+the deduplicate / normalize / prune stages that <code>merge</code> runs.</p>
+<p>Unlike <code>join</code> (cat-merge style), <code>load</code> preserves an existing <code>provided_by</code>
+instead of overwriting it with the source filename. Pass
+<code>--generate-provided-by</code> to opt into the filename-stamping behavior.</p>
+<p>Examples:
+    # Load a KG represented as one nodes file and one edges file
+    koza load -n graph_nodes.jsonl -e graph_edges.jsonl -o graph.duckdb</p>
+<pre><code># Auto-discover from a directory
+koza load --input-dir kg/ -o graph.duckdb
+</code></pre>
+<p><strong>Usage</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>load<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</code></pre></div>
+<p><strong>Options</strong>:</p>
+<ul>
+<li><code>-n, --nodes TEXT</code>: Node files or glob patterns (can specify multiple)</li>
+<li><code>-e, --edges TEXT</code>: Edge files or glob patterns (can specify multiple)</li>
+<li><code>-d, --input-dir TEXT</code>: Directory to auto-discover KGX files</li>
+<li><code>-o, --output TEXT</code>: Path to output database file (default: in-memory)</li>
+<li><code>-f, --format [tsv|jsonl|parquet]</code>: Output format for any exported files  [default: tsv]</li>
+<li><code>--slots-file TEXT</code>: YAML file with {nodes: [...], edges: [...]} — sets explicit JSONL schema, skipping inference. JSON keys NOT in the slot list are silently dropped at read time.</li>
+<li><code>--required-node-field TEXT</code>: Node fields that must be present and non-empty (can specify multiple)</li>
+<li><code>--required-edge-field TEXT</code>: Edge fields that must be present and non-empty (can specify multiple)</li>
+<li><code>--generate-provided-by</code>: Overwrite provided_by with the source filename (cat-merge style). Off by default: load preserves any existing provided_by.</li>
+<li><code>--schema-report</code>: Generate schema compliance report</li>
 <li><code>-q, --quiet</code>: Suppress output</li>
 <li><code>-p, --progress</code>: Show progress bars  [default: True]</li>
 <li><code>--help</code>: Show this message and exit.</li>
