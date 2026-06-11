@@ -51,7 +51,7 @@ def closurize_graph(config: ClosurizeConfig) -> ClosurizeResult:
     try:
         add_closure(
             database_path=str(config.database_path),
-            closure_file=str(config.closure_file),
+            closure_file=str(config.closure_file) if config.closure_file is not None else None,
             edge_fields=list(config.edge_fields),
             edge_fields_to_label=list(config.edge_fields_to_label),
             node_fields=list(config.node_fields),

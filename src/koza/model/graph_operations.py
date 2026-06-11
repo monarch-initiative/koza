@@ -551,7 +551,11 @@ class ClosurizeConfig(BaseModel):
     """
 
     database_path: Path
-    closure_file: Path
+    # closure_file is optional: when None, the denormalized views are still
+    # produced (labels, categories, namespaces, per-predicate aggregations)
+    # but no relation-graph closure is loaded, so the *_closure /
+    # *_closure_label slots and node-level has_descendant* are omitted.
+    closure_file: Path | None = None
     node_fields: list[str] = Field(default_factory=lambda: ["has_phenotype"])
     edge_fields: list[str] = Field(default_factory=lambda: ["subject", "object"])
     edge_fields_to_label: list[str] = Field(default_factory=list)
@@ -562,8 +566,8 @@ class ClosurizeConfig(BaseModel):
 
     @field_validator("database_path", "closure_file")
     @classmethod
-    def validate_path_exists(cls, v: Path) -> Path:
-        if not v.exists():
+    def validate_path_exists(cls, v: Path | None) -> Path | None:
+        if v is not None and not v.exists():
             raise ValueError(f"File not found: {v}")
         return v
 
