@@ -17,13 +17,14 @@ from koza.model.graph_operations import (
     KGXFormat,
     OperationSummary,
 )
-from koza.graph_operations.schema_utils import get_multivalued_columns, FORCE_SINGLE_VALUED_FIELDS
+from koza.graph_operations.schema_utils import get_multivalued_columns
 
 
 def _generate_multivalued_select(
     conn: duckdb.DuckDBPyConnection,
     temp_table: str,
     multivalued_columns: set[str],
+    force_single_valued: set[str],
 ) -> str:
     """
     Generate a SELECT statement that transforms pipe-delimited multivalued fields into arrays.
@@ -32,6 +33,9 @@ def _generate_multivalued_select(
         conn: DuckDB connection
         temp_table: Name of temporary table to read from
         multivalued_columns: Set of column names that should be converted to arrays
+        force_single_valued: Set of column names the caller has opted into
+            single-valued collapse (array -> first element). Empty by default,
+            so Biolink-multivalued slots are preserved as arrays.
 
     Returns:
         SQL SELECT statement with appropriate column transformations
@@ -42,9 +46,10 @@ def _generate_multivalued_select(
     # Build SELECT clause with conditional column transformation
     select_parts = []
     for col_name, col_type, *_ in columns_result:
-        if col_name in FORCE_SINGLE_VALUED_FIELDS and col_type == "VARCHAR[]":
-            # Flatten array to single value for fields forced to be single-valued
-            # (e.g., JSONL has category as ["biolink:X"] but we need it as "biolink:X")
+        if col_name in force_single_valued and col_type == "VARCHAR[]":
+            # Flatten array to single value for fields the caller opted into
+            # single-valued (e.g., JSONL has category as ["biolink:X"] and the
+            # caller wants "biolink:X"). Only the first element is kept.
             select_parts.append(f"""
                 CASE
                     WHEN "{col_name}" IS NULL OR len("{col_name}") = 0 THEN NULL
@@ -210,7 +215,12 @@ class GraphDatabase:
 
         logger.info("Database schema initialized (main tables created dynamically)")
 
-    def load_file(self, file_spec: FileSpec, generate_provided_by: bool = True) -> FileLoadResult:
+    def load_file(
+        self,
+        file_spec: FileSpec,
+        generate_provided_by: bool = True,
+        force_single_valued: set[str] | None = None,
+    ) -> FileLoadResult:
         """
         Load a KGX file into a temporary table for schema analysis.
 
@@ -218,6 +228,9 @@ class GraphDatabase:
             file_spec: FileSpec describing the file to load
             generate_provided_by: If True, add provided_by column from filename (like cat-merge).
                                   Any existing provided_by column in the input file will be replaced.
+            force_single_valued: Slot names to collapse from arrays to scalars
+                                  (keeping the first element). Empty/None preserves
+                                  Biolink multivalued slots as arrays.
 
         Returns:
             FileLoadResult with load statistics
@@ -291,13 +304,17 @@ class GraphDatabase:
             # Transform pipe-delimited multivalued fields to arrays
             # Skip file_source and provided_by (when generated) since we add them as literals.
             # When the user supplied explicit slots, the column types already reflect
-            # Biolink's multivalued declarations; the FORCE_SINGLE_VALUED flatten path
+            # Biolink's multivalued declarations; the single-valued flatten path
             # would undo that, so skip the transform entirely.
             if not file_spec.slots:
                 skip_columns = {"file_source"}
                 if generate_provided_by:
                     skip_columns.add("provided_by")
-                self._transform_multivalued_columns(temp_table_name, skip_columns=skip_columns)
+                self._transform_multivalued_columns(
+                    temp_table_name,
+                    skip_columns=skip_columns,
+                    force_single_valued=force_single_valued,
+                )
 
             # Get record count
             count_result = self.conn.execute(f"SELECT COUNT(*) FROM {temp_table_name}").fetchone()
@@ -341,16 +358,27 @@ class GraphDatabase:
                 errors=errors,
             )
 
-    def _transform_multivalued_columns(self, temp_table_name: str, skip_columns: set[str] | None = None):
+    def _transform_multivalued_columns(
+        self,
+        temp_table_name: str,
+        skip_columns: set[str] | None = None,
+        force_single_valued: set[str] | None = None,
+    ):
         """
         Transform pipe-delimited VARCHAR columns to VARCHAR[] arrays for known multivalued fields,
-        and flatten VARCHAR[] columns to VARCHAR for force-single-valued fields (e.g. from JSONL input).
+        and flatten VARCHAR[] columns to VARCHAR for caller-opted single-valued fields.
+
+        By default Biolink slot definitions are preserved (nothing is flattened);
+        only fields named in `force_single_valued` are collapsed.
 
         Args:
             temp_table_name: Name of the temporary table to transform
             skip_columns: Set of column names to skip (e.g., columns we added as literals)
+            force_single_valued: Slot names the caller explicitly opted into
+                single-valued collapse. Empty/None preserves all arrays.
         """
         skip_columns = skip_columns or set()
+        force_single_valued = force_single_valued or set()
 
         try:
             # Get column info from the temp table
@@ -358,20 +386,26 @@ class GraphDatabase:
             column_names = [row[0] for row in describe_result if row[0] not in skip_columns]
             column_types = {row[0]: row[1] for row in describe_result if row[0] not in skip_columns}
 
-            # Identify which columns are multivalued
-            multivalued_cols = get_multivalued_columns(column_names)
+            # Identify which columns are multivalued (excluding caller-forced single-valued)
+            multivalued_cols = get_multivalued_columns(column_names, force_single_valued=force_single_valued)
 
-            # Check if any force-single-valued fields arrived as arrays (e.g. from JSONL)
-            needs_flattening = any(
-                col in FORCE_SINGLE_VALUED_FIELDS and column_types.get(col) == "VARCHAR[]"
-                for col in column_names
-            )
+            # Check if any caller-opted single-valued fields arrived as arrays (e.g. from JSONL)
+            fields_to_flatten = [
+                col for col in column_names
+                if col in force_single_valued and column_types.get(col) == "VARCHAR[]"
+            ]
 
-            if not multivalued_cols and not needs_flattening:
+            if not multivalued_cols and not fields_to_flatten:
                 return
 
+            # Warn before any lossy collapse: flattening keeps only the first
+            # array element, so any row with >1 value loses data.
+            self._warn_on_lossy_flatten(temp_table_name, fields_to_flatten)
+
             # Generate SELECT with transformations
-            select_sql = _generate_multivalued_select(self.conn, temp_table_name, multivalued_cols)
+            select_sql = _generate_multivalued_select(
+                self.conn, temp_table_name, multivalued_cols, force_single_valued
+            )
 
             # Recreate the table with transformed columns
             self.conn.execute(f"""
@@ -383,10 +417,35 @@ class GraphDatabase:
             logger.debug(
                 f"Transformed {len(multivalued_cols)} multivalued columns in {temp_table_name}: "
                 f"{', '.join(sorted(multivalued_cols))}"
+                + (
+                    f"; flattened to single-valued: {', '.join(sorted(fields_to_flatten))}"
+                    if fields_to_flatten else ""
+                )
             )
 
         except Exception as e:
             logger.warning(f"Failed to transform multivalued columns in {temp_table_name}: {e}")
+
+    def _warn_on_lossy_flatten(self, temp_table_name: str, fields_to_flatten: list[str]) -> None:
+        """Warn when a force-single-valued collapse would discard data.
+
+        Flattening keeps only the first element of each array, so any row whose
+        array has more than one value silently loses the rest. Surface that as a
+        warning rather than dropping data quietly.
+        """
+        for col in fields_to_flatten:
+            try:
+                lost = self.conn.execute(
+                    f'SELECT COUNT(*) FROM {temp_table_name} '
+                    f'WHERE len("{col}") > 1'
+                ).fetchone()[0]
+            except Exception:  # pragma: no cover - defensive; don't block the load
+                continue
+            if lost:
+                logger.warning(
+                    f"force_single_valued: collapsing '{col}' to a scalar discards "
+                    f"additional values in {lost:,} row(s) (only the first element is kept)."
+                )
 
     def _analyze_file_schema(self, file_spec: FileSpec, temp_table_name: str):
         """Analyze and store schema information for a loaded file."""

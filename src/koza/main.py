@@ -342,6 +342,18 @@ def join(
             ),
         ),
     ] = None,
+    force_single_valued: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--force-single-valued",
+            help=(
+                "Collapse this Biolink-multivalued slot to a scalar, keeping only "
+                "the first array element (repeatable). Default: none — Biolink "
+                "multivalued slots are preserved as arrays. Pass e.g. "
+                "--force-single-valued category for the historical Monarch convention."
+            ),
+        ),
+    ] = None,
     quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress output")] = False,
     show_progress: Annotated[bool, typer.Option("--progress", "-p", help="Show progress bars")] = True,
 ) -> None:
@@ -417,6 +429,7 @@ def join(
             required_node_fields=required_node_fields or [],
             required_edge_fields=required_edge_fields or [],
             slots_file=Path(slots_file) if slots_file else None,
+            force_single_valued=force_single_valued or [],
             quiet=quiet,
             show_progress=show_progress,
         )
@@ -885,6 +898,17 @@ def merge(
         list[str] | None,
         typer.Option("--required-edge-field", help="Edge fields that must be present and non-empty (can specify multiple)"),
     ] = None,
+    force_single_valued: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--force-single-valued",
+            help=(
+                "Collapse this Biolink-multivalued slot to a scalar during the join "
+                "step, keeping only the first array element (repeatable). Default: "
+                "none — Biolink multivalued slots are preserved as arrays."
+            ),
+        ),
+    ] = None,
     quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress output")] = False,
     show_progress: Annotated[bool, typer.Option("--progress", "-p", help="Show progress bars")] = True,
 ) -> None:
@@ -1009,6 +1033,7 @@ def merge(
             graph_name=graph_name,
             required_node_fields=required_node_fields or [],
             required_edge_fields=required_edge_fields or [],
+            force_single_valued=force_single_valued or [],
             quiet=quiet,
             show_progress=show_progress,
         )
