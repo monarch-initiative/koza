@@ -30,15 +30,23 @@ dependencies = [
     "LinkML>=1.9.0"
 ]
 
+# NOTE: `ensmallen` and `embiggen` are temporarily removed from the extras
+# below. Both were quarantined on PyPI during the mini-Shai-Hulud supply-chain
+# wave (their /simple/ pages return project-status "quarantined" with zero
+# downloadable files for ALL versions), which makes `uv lock` unsatisfiable and
+# breaks CI for every PR. Restore the pins once PyPI de-quarantines them (or the
+# maintainers cut clean releases). Until then, the connectivity report's
+# ensmallen import degrades gracefully via `_check_ensmallen_available()`; users
+# who need it must install ensmallen manually from a trusted source.
 [project.optional-dependencies]
 grape = [
-    "ensmallen==0.8.99",
+    # "ensmallen==0.8.99",  # quarantined on PyPI — see note above
     "pandas",
     "pyarrow",
 ]
 ml = [
-    "ensmallen==0.8.99",
-    "embiggen>=0.11",
+    # "ensmallen==0.8.99",  # quarantined on PyPI — see note above
+    # "embiggen>=0.11",     # quarantined on PyPI (pulls ensmallen) — see note above
     "pandas",
     "pyarrow",
 ]
