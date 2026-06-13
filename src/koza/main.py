@@ -1395,6 +1395,14 @@ def edge_report_cmd(
                  "primary_knowledge_source). Switches to the SPQO 'edge type shape' summary.",
         ),
     ] = None,
+    percentile_columns: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--percentile-column", "-P",
+            help="Numeric slots to summarize per group as `<slot>_avg` + `<slot>_quantiles` "
+                 "(list slots summarize element count, e.g. publications; numeric slots the value).",
+        ),
+    ] = None,
     proportion: Annotated[
         bool,
         typer.Option("--proportion", help="Add a `proportion` column (group count / total edges)."),
@@ -1461,6 +1469,8 @@ def edge_report_cmd(
             config_kwargs["categorical_columns"] = columns
         if set_columns:
             config_kwargs["set_columns"] = set_columns
+        if percentile_columns:
+            config_kwargs["percentile_columns"] = percentile_columns
         if proportion:
             config_kwargs["include_proportion"] = True
 

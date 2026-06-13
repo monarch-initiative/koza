@@ -1114,11 +1114,29 @@ def _ensure_denormalized_edges_view(db: GraphDatabase) -> str:
     if "in_taxon" in node_cols:
         taxon_select = "sn.in_taxon AS subject_taxon, on_.in_taxon AS object_taxon,"
 
+    # Translator-style edges carry knowledge sources inside a nested
+    # `sources: [{resource_id, resource_role, ...}]` struct array rather than as
+    # flat `<role>` columns. Derive the flat per-role columns from `sources` so
+    # the report / examples paths can group on them — but only for roles that
+    # aren't already present as their own column (KGX TSV graphs ship them flat).
+    edge_cols = _get_available_columns(db, "edges")
+    sources_select = ""
+    if "sources" in edge_cols:
+        roles = ["primary_knowledge_source", "aggregator_knowledge_source", "supporting_data_source"]
+        parts = [
+            f"list_distinct([x.resource_id FOR x IN e.sources IF x.resource_role = '{role}']) AS {role}"
+            for role in roles
+            if role not in edge_cols
+        ]
+        if parts:
+            sources_select = ", ".join(parts) + ","
+
     # Create temp view joining edges to nodes twice
     db.conn.execute(f"""
         CREATE OR REPLACE TEMP VIEW denormalized_edges AS
         SELECT
             e.*,
+            {sources_select}
             sn.category AS subject_category,
             split_part(e.subject, ':', 1) AS subject_namespace,
             on_.category AS object_category,
@@ -1305,6 +1323,26 @@ def _set_agg_expr(col: str, dtype: str) -> str:
     return f"array_agg(DISTINCT {quoted}) FILTER (WHERE {quoted} IS NOT NULL) AS {quoted}"
 
 
+_QUANTILES = "[0, 0.25, 0.5, 0.75, 0.9, 1.0]"
+
+
+def _percentile_exprs(col: str, dtype: str) -> list[str]:
+    """Per-group `<col>_avg` and `<col>_quantiles` expressions.
+
+    List slots summarize the per-edge element count (NULL list → 0 elements);
+    numeric slots summarize the value itself (NULLs ignored by avg/quantile).
+    """
+    quoted = f'"{col}"'
+    if dtype.upper().rstrip().endswith("[]"):
+        val = f"coalesce(len({quoted}), 0)"
+    else:
+        val = quoted
+    return [
+        f'round(avg({val}), 3) AS "{col}_avg"',
+        f'approx_quantile({val}, {_QUANTILES}) AS "{col}_quantiles"',
+    ]
+
+
 def _build_edge_report_query(db: GraphDatabase, denorm_table: str, config: EdgeReportConfig) -> str:
     """Build the edge-report SQL.
 
@@ -1322,11 +1360,16 @@ def _build_edge_report_query(db: GraphDatabase, denorm_table: str, config: EdgeR
         if c not in available:
             logger.warning(f"Set column '{c}' not found in {denorm_table}, skipping")
 
-    # Group dimensions: requested categoricals that aren't pulled out as set columns.
-    set_lookup = set(set_cols)
+    pct_cols = [c for c in config.percentile_columns if c in available]
+    for c in config.percentile_columns:
+        if c not in available:
+            logger.warning(f"Percentile column '{c}' not found in {denorm_table}, skipping")
+
+    # Group dimensions: requested categoricals that aren't aggregated (set or percentile).
+    aggregated = set(set_cols) | set(pct_cols)
     group_cols = []
     for col in config.categorical_columns:
-        if col in set_lookup:
+        if col in aggregated:
             continue
         if col in available:
             group_cols.append(col)
@@ -1341,6 +1384,8 @@ def _build_edge_report_query(db: GraphDatabase, denorm_table: str, config: EdgeR
     if config.include_proportion:
         select_parts.append("count(*) / sum(count(*)) OVER () AS proportion")
     select_parts.extend(_set_agg_expr(c, types[c]) for c in set_cols)
+    for c in pct_cols:
+        select_parts.extend(_percentile_exprs(c, types[c]))
 
     group_clause = ", ".join(f'"{c}"' for c in group_cols)
     return (

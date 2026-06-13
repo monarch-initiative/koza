@@ -737,6 +737,11 @@ class EdgeReportConfig(BaseModel):
     # knowledge_level / agent_type / knowledge-source terms it spans. A slot named
     # in both lists is treated as a set column (pulled out of the GROUP BY).
     set_columns: list[str] = Field(default_factory=list)
+    # Per-group numeric summaries. For a list-typed slot (e.g. publications) the
+    # element COUNT per edge is summarized (missing → 0); for a numeric slot the
+    # value itself is. Each yields `<slot>_avg` and `<slot>_quantiles`
+    # ([min, p25, median, p75, p90, max]).
+    percentile_columns: list[str] = Field(default_factory=list)
     # Add a `proportion` column: each group's count / total edge count.
     include_proportion: bool = False
 

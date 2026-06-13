@@ -141,6 +141,78 @@ def test_proportion_sums_to_one_across_groups(kg, tmp_path):
     assert int(df["count"].sum()) == 10
 
 
+@pytest.fixture
+def kg_translator(tmp_path):
+    """A translator-style graph: knowledge source lives inside a nested
+    `sources: [{resource_id, resource_role}]` struct array (no flat column), plus
+    a `publications` list and a numeric `has_confidence_score`."""
+    db = tmp_path / "kg.duckdb"
+    conn = duckdb.connect(str(db))
+    conn.execute(
+        """
+        CREATE TABLE nodes AS
+        SELECT 'GENE:' || i AS id, 'biolink:Gene' AS category FROM range(3) t(i)
+        UNION ALL SELECT 'MONDO:' || i, 'biolink:Disease' FROM range(3) t(i);
+
+        CREATE TABLE edges AS
+        SELECT
+            'GENE:' || (i % 3)::VARCHAR AS subject,
+            'biolink:causes'           AS predicate,
+            'MONDO:' || (i % 3)::VARCHAR AS object,
+            [{'resource_id': ['infores:ctd','infores:signor'][(i % 2) + 1],
+              'resource_role': 'primary_knowledge_source'}] AS sources,
+            -- 0, 1, or 2 publications depending on the row
+            ['PMID:1','PMID:2'][1:(i % 3)]  AS publications,
+            (i % 5)::DOUBLE                 AS has_confidence_score
+        FROM range(15) t(i);
+        """
+    )
+    conn.close()
+    return db
+
+
+def test_source_role_derived_from_sources_struct_array(kg_translator, tmp_path):
+    """primary_knowledge_source is pulled out of the nested sources[] and reported
+    as the distinct set of resource_ids for that role."""
+    out = tmp_path / "summary.parquet"
+    generate_edge_report(
+        EdgeReportConfig(
+            database_path=kg_translator,
+            output_file=out,
+            output_format="parquet",
+            categorical_columns=["subject_category", "predicate", "object_category"],
+            set_columns=["primary_knowledge_source"],
+            quiet=True,
+        )
+    )
+    df = _read(out)
+    assert sorted(df["primary_knowledge_source"].iloc[0]) == ["infores:ctd", "infores:signor"]
+
+
+def test_percentile_columns_for_list_and_numeric(kg_translator, tmp_path):
+    """List slots summarize element count (missing → 0); numeric slots the value."""
+    out = tmp_path / "summary.parquet"
+    generate_edge_report(
+        EdgeReportConfig(
+            database_path=kg_translator,
+            output_file=out,
+            output_format="parquet",
+            categorical_columns=["subject_category", "predicate", "object_category"],
+            percentile_columns=["publications", "has_confidence_score"],
+            quiet=True,
+        )
+    )
+    df = _read(out)
+    row = df.iloc[0]
+    # publications per edge cycle 0,1,2 → mean 1.0, min 0, max 2
+    assert row["publications_avg"] == pytest.approx(1.0, abs=0.01)
+    q = list(row["publications_quantiles"])
+    assert q[0] == 0 and q[-1] == 2
+    # has_confidence_score cycles 0..4 → min 0, max 4
+    cq = list(row["has_confidence_score_quantiles"])
+    assert cq[0] == pytest.approx(0.0) and cq[-1] == pytest.approx(4.0)
+
+
 def test_missing_set_column_is_skipped_not_fatal(kg, tmp_path):
     """A set column absent from the graph is warned and dropped, not an error."""
     out = tmp_path / "summary.parquet"
