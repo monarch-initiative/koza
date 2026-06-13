@@ -1630,11 +1630,14 @@ def validate(
     Two Biolink-driven checks, run as set-operations over the graph's own
     nodes/edges (no row iteration):
 
-    - subobj_errors: edge-type domain/range. Edges that ASSERT their association
-      class (the edge `category` slot) are checked against THAT class
-      specifically (BAD_SUBJECT / BAD_PREDICATE / BAD_OBJECT); others fall back to
-      "is this triple legal at all" (NOT_IN_LEGAL_TYPES — advisory). At edge-type
-      grain, so each violation carries its edge count.
+    - subobj_errors: where each edge type MISMATCHES the current Biolink model's
+      domain/range — which may be a model gap as readily as a data error (Biolink
+      is stricter than widely realized; the report is triage input, the edge count
+      the signal). Edges that ASSERT their association class (the edge `category`
+      slot) are checked against THAT class (BAD_SUBJECT / BAD_PREDICATE /
+      BAD_OBJECT); others fall back to "is this triple legal at all"
+      (NOT_IN_LEGAL_TYPES — advisory). At edge-type grain, so each mismatch
+      carries its edge count.
     - prefix_errors: node CURIE prefix valid for its category.
 
     Example:

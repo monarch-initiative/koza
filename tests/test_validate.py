@@ -33,7 +33,7 @@ def _run(db, tmp_path):
 
 def test_asserted_class_catches_bad_object(tmp_path):
     """An edge that ASSERTS GeneRegulatesGeneAssociation but points at a Disease
-    object is flagged BAD_OBJECT (strict) — the union alone could not catch it."""
+    object is flagged BAD_OBJECT (strict) — the union alone can't catch it."""
     db = tmp_path / "kg.duckdb"
     _build(
         db,

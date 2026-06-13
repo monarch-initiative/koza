@@ -3,13 +3,19 @@
 Two checks, both Biolink-driven and both run as set-operations over the graph's
 own ``nodes`` / ``edges`` — no row-by-row Python:
 
-* **subobj_errors** — does each edge type respect Biolink domain/range? *Tiered*:
-  an edge that **asserts** its association class (the edge ``category`` slot) is
-  checked against THAT class's descendant-expanded subject/predicate/object
-  constraints (BAD_SUBJECT / BAD_PREDICATE / BAD_OBJECT / BAD_COMBINATION);
-  edges asserting no constrained class fall back to "is this triple in the legal
-  union at all" (NOT_IN_LEGAL_TYPES — *advisory*, the union has coverage holes).
-  Emitted at edge-type (summary) grain, so each violation carries its edge count.
+* **subobj_errors** — where does each edge type *mismatch* the current Biolink
+  model's domain/range? A mismatch is NOT a verdict on the data: Biolink's
+  domain/range is stricter than widely realized, so a mismatch may be resolved by
+  loosening the model just as often as by fixing the data — the report is the
+  triage input, and the edge count + how broadly a mismatch occurs is the signal
+  (a million edges across sources points at the model; a handful points at the
+  data). *Tiered*: an edge that **asserts** its association class (the edge
+  ``category`` slot) is checked against THAT class's descendant-expanded
+  subject/predicate/object constraints (BAD_SUBJECT / BAD_PREDICATE / BAD_OBJECT /
+  BAD_COMBINATION); edges
+  asserting no constrained class fall back to "is this triple in the legal union
+  at all" (NOT_IN_LEGAL_TYPES — *advisory*, the union has coverage holes). Emitted
+  at edge-type (summary) grain, so each mismatch carries its edge count.
 * **prefix_errors** — is each node's CURIE prefix valid for its category?
 
 Both handle ``category`` as **scalar** (monarch-kg forces single-valued) or
@@ -43,8 +49,9 @@ from koza.model.graph_operations import (
 
 from .utils import GraphDatabase
 
-# Rows where we can't resolve a category (dangling/missing endpoint) are out of
-# scope here — dangling edges are a separate QC report.
+# Mismatch verdicts. Named neutrally (a mismatch may be a model gap, not a data
+# error). Rows where we can't resolve a category (dangling/missing endpoint) are
+# out of scope here — dangling edges are a separate QC report.
 _VIOLATION_VERDICTS = (
     "BAD_SUBJECT",
     "BAD_PREDICATE",
