@@ -730,6 +730,16 @@ class EdgeReportConfig(BaseModel):
         ]
     )
 
+    # Opt-in "shape of the edge type" enrichment (kgxval-style SPQO summary).
+    # When set_columns is non-empty, those slots are NOT grouped on — instead each
+    # group keeps the distinct set of their values via array_agg, so e.g. the
+    # (subject_category, predicate, object_category) group reports the full set of
+    # knowledge_level / agent_type / knowledge-source terms it spans. A slot named
+    # in both lists is treated as a set column (pulled out of the GROUP BY).
+    set_columns: list[str] = Field(default_factory=list)
+    # Add a `proportion` column: each group's count / total edge count.
+    include_proportion: bool = False
+
     quiet: bool = False
 
     @model_validator(mode="after")

@@ -1107,16 +1107,22 @@ def _ensure_denormalized_edges_view(db: GraphDatabase) -> str:
     if tables:
         return "denormalized_edges"
 
+    # in_taxon is optional on nodes (ontology/association graphs often lack it).
+    # Only project the taxon columns when the nodes table actually has the slot.
+    node_cols = _get_available_columns(db, "nodes")
+    taxon_select = ""
+    if "in_taxon" in node_cols:
+        taxon_select = "sn.in_taxon AS subject_taxon, on_.in_taxon AS object_taxon,"
+
     # Create temp view joining edges to nodes twice
-    db.conn.execute("""
+    db.conn.execute(f"""
         CREATE OR REPLACE TEMP VIEW denormalized_edges AS
         SELECT
             e.*,
             sn.category AS subject_category,
-            sn.in_taxon AS subject_taxon,
             split_part(e.subject, ':', 1) AS subject_namespace,
             on_.category AS object_category,
-            on_.in_taxon AS object_taxon,
+            {taxon_select}
             split_part(e.object, ':', 1) AS object_namespace
         FROM edges e
         LEFT JOIN nodes sn ON e.subject = sn.id
@@ -1281,6 +1287,68 @@ def generate_node_report(config: NodeReportConfig) -> NodeReportResult:
         raise
 
 
+def _column_types(db: GraphDatabase, table_name: str) -> dict[str, str]:
+    """Map column name -> DuckDB type string for a table or view."""
+    return {r[0]: r[1] for r in db.conn.execute(f"DESCRIBE {table_name}").fetchall()}
+
+
+def _set_agg_expr(col: str, dtype: str) -> str:
+    """Per-group `array_agg(DISTINCT col)` expression, NULLs dropped.
+
+    List-typed slots (e.g. `aggregator_knowledge_source VARCHAR[]`) are flattened
+    so the result is the distinct set of *elements* across the group, not a set of
+    lists. Scalar slots use a plain distinct aggregate.
+    """
+    quoted = f'"{col}"'
+    if dtype.upper().rstrip().endswith("[]"):
+        return f"list_distinct(flatten(array_agg({quoted}) FILTER (WHERE {quoted} IS NOT NULL))) AS {quoted}"
+    return f"array_agg(DISTINCT {quoted}) FILTER (WHERE {quoted} IS NOT NULL) AS {quoted}"
+
+
+def _build_edge_report_query(db: GraphDatabase, denorm_table: str, config: EdgeReportConfig) -> str:
+    """Build the edge-report SQL.
+
+    Default: a plain cross-tab — `GROUP BY ALL` of the categorical columns plus a
+    count. When `set_columns` (or `include_proportion`) are given, switch to the
+    kgxval-style "edge type shape" summary: group only on the remaining
+    categorical columns (the SPQO key), and report each set column as the distinct
+    set of values that group spans, optionally with a `proportion` column.
+    """
+    types = _column_types(db, denorm_table)
+    available = set(types)
+
+    set_cols = [c for c in config.set_columns if c in available]
+    for c in config.set_columns:
+        if c not in available:
+            logger.warning(f"Set column '{c}' not found in {denorm_table}, skipping")
+
+    # Group dimensions: requested categoricals that aren't pulled out as set columns.
+    set_lookup = set(set_cols)
+    group_cols = []
+    for col in config.categorical_columns:
+        if col in set_lookup:
+            continue
+        if col in available:
+            group_cols.append(col)
+        else:
+            logger.warning(f"Column '{col}' not found in {denorm_table}, skipping")
+
+    if not group_cols:
+        raise ValueError("No valid columns found for report")
+
+    select_parts = [f'"{c}"' for c in group_cols]
+    select_parts.append("count(*) AS count")
+    if config.include_proportion:
+        select_parts.append("count(*) / sum(count(*)) OVER () AS proportion")
+    select_parts.extend(_set_agg_expr(c, types[c]) for c in set_cols)
+
+    group_clause = ", ".join(f'"{c}"' for c in group_cols)
+    return (
+        f"SELECT {', '.join(select_parts)} FROM {denorm_table} "
+        f"GROUP BY {group_clause} ORDER BY count DESC"
+    )
+
+
 def generate_edge_report(config: EdgeReportConfig) -> EdgeReportResult:
     """
     Generate a tabular edge report with denormalized node information.
@@ -1335,23 +1403,8 @@ def generate_edge_report(config: EdgeReportConfig) -> EdgeReportResult:
             # Ensure denormalized edges view exists
             denorm_table = _ensure_denormalized_edges_view(db)
 
-            # Get available columns from denormalized view
-            available_cols = _get_available_columns(db, denorm_table)
-
-            # Build SELECT clause with requested columns
-            select_parts = []
-            for col in config.categorical_columns:
-                if col in available_cols:
-                    select_parts.append(col)
-                else:
-                    logger.warning(f"Column '{col}' not found in {denorm_table}, skipping")
-
-            if not select_parts:
-                raise ValueError("No valid columns found for report")
-
-            # Build query
-            select_clause = ", ".join(select_parts)
-            query = f"SELECT {select_clause}, count(*) as count FROM {denorm_table} GROUP BY ALL ORDER BY count DESC"
+            # Build query (plain cross-tab, or kgxval-style SPQO summary)
+            query = _build_edge_report_query(db, denorm_table, config)
 
             # Export to file
             if config.output_file:
