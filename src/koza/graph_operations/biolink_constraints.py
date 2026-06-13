@@ -133,6 +133,33 @@ def build_edge_type_constraints(sv) -> EdgeTypeConstraints:
     return constraints
 
 
+# The high-priority classes a category rolls up to, in precedence order (a
+# category under more than one — rare for these three — takes the first).
+DEFAULT_HIGH_PRIORITY = (
+    "gene or gene product",
+    "disease or phenotypic feature",
+    "chemical entity",
+)
+
+
+def build_category_rollup(sv, high_priority=DEFAULT_HIGH_PRIORITY) -> dict[str, str]:
+    """Map each Biolink category to a high-priority class it descends from.
+
+    A consumer collapses a node/edge category to ``rollup.get(category, category)``
+    — categories not under any high-priority class map to themselves. This is the
+    readable "shape" view (e.g. Protein / GeneProductMixin → gene or gene
+    product), and the deterministic single-category needed to join multivalued
+    edges against the exact (non-list) legal-triple table.
+    """
+    uri = sv.get_uri
+    rollup: dict[str, str] = {}
+    for hp in high_priority:
+        hp_uri = uri(hp)
+        for class_name in sv.class_descendants(hp):
+            rollup.setdefault(uri(class_name), hp_uri)
+    return rollup
+
+
 def build_category_prefixes(sv) -> list[tuple[str, str]]:
     """``(category, valid_id_prefix)`` rows from each Biolink class's ``id_prefixes``.
 

@@ -11,6 +11,7 @@ import pytest
 
 from koza.graph_operations.biolink_constraints import (
     EdgeTypeConstraints,
+    build_category_rollup,
     build_edge_type_constraints,
 )
 from koza.graph_operations.graph_schema import load_biolink_schemaview
@@ -51,3 +52,15 @@ def test_long_form_rows_round_trip(constraints):
     subj_rows = [r for r in constraints.subject_rows() if r[0] == cls]
     assert len(subj_rows) == len(constraints.subject_by_class[cls])
     assert len(constraints.union_rows()) == len(constraints.union_triples)
+
+
+def test_category_rollup_collapses_to_high_priority():
+    """Concrete subclasses collapse to their high-priority class; unrelated ones
+    map to themselves at consume time (absent from the map)."""
+    rollup = build_category_rollup(load_biolink_schemaview())
+    assert rollup.get("biolink:Protein") == "biolink:GeneOrGeneProduct"
+    assert rollup.get("biolink:Disease") == "biolink:DiseaseOrPhenotypicFeature"
+    # the high-priority classes map to themselves
+    assert rollup.get("biolink:ChemicalEntity") == "biolink:ChemicalEntity"
+    # something outside the three high-priority families isn't in the map
+    assert "biolink:Publication" not in rollup
