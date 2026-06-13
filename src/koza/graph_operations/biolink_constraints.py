@@ -131,3 +131,23 @@ def build_edge_type_constraints(sv) -> EdgeTypeConstraints:
                 constraints.union_triples.add((s, predicate, o))
 
     return constraints
+
+
+def build_category_prefixes(sv) -> list[tuple[str, str]]:
+    """``(category, valid_id_prefix)`` rows from each Biolink class's ``id_prefixes``.
+
+    A node violates if its CURIE prefix is not among the prefixes its category
+    declares. Classes that declare no prefixes contribute no rows, so nodes of
+    those categories are never flagged (nothing to check against). Used for the
+    ``prefix_errors`` table.
+    """
+    uri = sv.get_uri
+    rows: list[tuple[str, str]] = []
+    for class_name in sv.all_classes():
+        prefixes = sv.get_class(class_name).id_prefixes or []
+        if not prefixes:
+            continue
+        category = uri(class_name)
+        for prefix in prefixes:
+            rows.append((category, prefix))
+    return rows

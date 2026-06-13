@@ -832,6 +832,37 @@ class EdgeExamplesResult(BaseModel):
     total_time_seconds: float = 0.0
 
 
+# Biolink validation models
+
+
+class ValidationConfig(BaseModel):
+    """Configuration for Biolink edge-type / node-prefix validation."""
+
+    database_path: Path
+    output_dir: Path | None = None  # Directory for subobj_errors / prefix_errors tables
+    output_format: TabularReportFormat = TabularReportFormat.PARQUET
+    quiet: bool = False
+
+    @field_validator("database_path")
+    @classmethod
+    def validate_database_exists(cls, v: Path) -> Path:
+        if not v.exists():
+            raise ValueError(f"Database file not found: {v}")
+        return v
+
+
+class ValidationResult(BaseModel):
+    """Result from Biolink validation. Counts are of violating *types*, not edges."""
+
+    database_path: Path
+    output_dir: Path | None = None
+    subobj_error_types: int = 0  # distinct edge types in violation
+    subobj_strict_error_types: int = 0  # checked against the edge's asserted association class
+    subobj_advisory_error_types: int = 0  # fallback union check (coverage-limited, advisory)
+    prefix_error_types: int = 0  # distinct (category, prefix) violations
+    total_time_seconds: float = 0.0
+
+
 # Connectivity Report Models
 
 

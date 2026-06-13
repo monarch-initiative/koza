@@ -16,6 +16,7 @@ from koza.graph_operations import (
     generate_edge_examples,
     closurize_graph,
     generate_edge_report,
+    generate_validation_report,
     generate_graph_stats,
     generate_node_examples,
     generate_node_report,
@@ -39,6 +40,7 @@ from koza.model.graph_operations import (
     ConnectivityReportConfig,
     EdgeExamplesConfig,
     EdgeReportConfig,
+    ValidationConfig,
     FileSpec,
     GraphStatsConfig,
     JoinConfig,
@@ -1608,6 +1610,55 @@ def edge_examples_cmd(
 
     except Exception as e:
         typer.echo(f"Error generating edge examples: {e}", err=True)
+        raise typer.Exit(1)
+
+
+@typer_app.command()
+def validate(
+    database: Annotated[str, typer.Argument(help="Path to the DuckDB database file to validate")],
+    output_dir: Annotated[
+        str | None,
+        typer.Option("--output-dir", "-o", help="Directory to write subobj_errors / prefix_errors tables"),
+    ] = None,
+    format: Annotated[
+        TabularReportFormat, typer.Option("--format", "-f", help="Output format")
+    ] = TabularReportFormat.PARQUET,
+    quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress summary output")] = False,
+) -> None:
+    """Validate a graph's edge types and node prefixes against Biolink.
+
+    Two Biolink-driven checks, run as set-operations over the graph's own
+    nodes/edges (no row iteration):
+
+    - subobj_errors: edge-type domain/range. Edges that ASSERT their association
+      class (the edge `category` slot) are checked against THAT class
+      specifically (BAD_SUBJECT / BAD_PREDICATE / BAD_OBJECT); others fall back to
+      "is this triple legal at all" (NOT_IN_LEGAL_TYPES — advisory). At edge-type
+      grain, so each violation carries its edge count.
+    - prefix_errors: node CURIE prefix valid for its category.
+
+    Example:
+        koza validate graph.duckdb -o validation/
+    """
+    try:
+        config = ValidationConfig(
+            database_path=Path(database),
+            output_dir=Path(output_dir) if output_dir else None,
+            output_format=format,
+            quiet=quiet,
+        )
+        result = generate_validation_report(config)
+        if not quiet:
+            typer.echo(
+                f"✓ {result.subobj_strict_error_types} strict + "
+                f"{result.subobj_advisory_error_types} advisory edge-type violations, "
+                f"{result.prefix_error_types} prefix violations "
+                f"({result.total_time_seconds:.1f}s)"
+            )
+            if result.output_dir:
+                typer.echo(f"Tables written to: {result.output_dir}")
+    except Exception as e:
+        typer.echo(f"Error during validation: {e}", err=True)
         raise typer.Exit(1)
 
 

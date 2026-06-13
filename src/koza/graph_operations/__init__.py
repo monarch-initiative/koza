@@ -26,6 +26,7 @@ from .report import (
 from .schema import generate_schema_report, print_schema_summary, write_schema_report_yaml
 from .split import split_graph
 from .utils import GraphDatabase, print_operation_summary
+from .validate import generate_validation_report
 
 __all__ = [
     "join_graphs",
@@ -54,6 +55,7 @@ __all__ = [
     # Tabular reports
     "generate_node_report",
     "generate_edge_report",
+    "generate_validation_report",
     "generate_node_examples",
     "generate_edge_examples",
 ]
