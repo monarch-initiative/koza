@@ -1386,6 +1386,27 @@ def edge_report_cmd(
         list[str] | None,
         typer.Option("--column", "-c", help="Categorical columns to group by (can specify multiple)"),
     ] = None,
+    set_columns: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--set-column", "-s",
+            help="Slots to summarize as the distinct set of values per group instead "
+                 "of grouping on them (e.g. knowledge_level, agent_type, "
+                 "primary_knowledge_source). Switches to the SPQO 'edge type shape' summary.",
+        ),
+    ] = None,
+    percentile_columns: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--percentile-column", "-P",
+            help="Numeric slots to summarize per group as `<slot>_avg` + `<slot>_quantiles` "
+                 "(list slots summarize element count, e.g. publications; numeric slots the value).",
+        ),
+    ] = None,
+    proportion: Annotated[
+        bool,
+        typer.Option("--proportion", help="Add a `proportion` column (group count / total edges)."),
+    ] = False,
     quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress progress output")] = False,
 ):
     """
@@ -1393,6 +1414,10 @@ def edge_report_cmd(
 
     Joins edges to nodes to get subject_category, object_category, etc., then
     outputs count of edges grouped by categorical columns.
+
+    With --set-column, switches to a kgxval-style "edge type shape" summary: one
+    row per (subject_category, predicate, object_category, ...) group, with each
+    set column reported as the distinct set of values that group spans.
 
     Examples:
 
@@ -1405,6 +1430,11 @@ def edge_report_cmd(
         # Custom columns
         koza edge-report -d merged.duckdb -o report.tsv \\
             -c subject_category -c predicate -c object_category -c primary_knowledge_source
+
+        # SPQO edge-type-shape summary with proportion + term sets
+        koza edge-report -d merged.duckdb -o summary.parquet --format parquet --proportion \\
+            -c subject_category -c predicate -c object_category \\
+            -s knowledge_level -s agent_type -s primary_knowledge_source
     """
     try:
         if not database and not edge_file:
@@ -1437,6 +1467,12 @@ def edge_report_cmd(
 
         if columns:
             config_kwargs["categorical_columns"] = columns
+        if set_columns:
+            config_kwargs["set_columns"] = set_columns
+        if percentile_columns:
+            config_kwargs["percentile_columns"] = percentile_columns
+        if proportion:
+            config_kwargs["include_proportion"] = True
 
         config = EdgeReportConfig(**config_kwargs)
         result = generate_edge_report(config)
