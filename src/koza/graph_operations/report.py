@@ -1255,7 +1255,10 @@ def generate_node_report(config: NodeReportConfig) -> NodeReportResult:
             # Get available columns
             available_cols = _get_available_columns(db, "nodes")
 
-            # Build SELECT clause with requested columns
+            # Build SELECT clause with requested columns. Absent columns warn only
+            # when explicitly requested; a default column the graph lacks (e.g.
+            # provided_by on a single-source load) is expected → debug.
+            cols_explicit = "categorical_columns" in config.model_fields_set
             select_parts = []
             for col in config.categorical_columns:
                 if col == "namespace":
@@ -1263,8 +1266,10 @@ def generate_node_report(config: NodeReportConfig) -> NodeReportResult:
                     select_parts.append("split_part(id, ':', 1) AS namespace")
                 elif col in available_cols:
                     select_parts.append(col)
-                else:
+                elif cols_explicit:
                     logger.warning(f"Column '{col}' not found in nodes table, skipping")
+                else:
+                    logger.debug(f"Default column '{col}' not in nodes table, skipping")
 
             if not select_parts:
                 raise ValueError("No valid columns found for report")
@@ -1366,6 +1371,11 @@ def _build_edge_report_query(db: GraphDatabase, denorm_table: str, config: EdgeR
             logger.warning(f"Percentile column '{c}' not found in {denorm_table}, skipping")
 
     # Group dimensions: requested categoricals that aren't aggregated (set or percentile).
+    # An absent column is only worth a warning if the user explicitly asked for it;
+    # a *default* column that this graph simply doesn't have is expected (e.g.
+    # `provided_by` on a single-source `load`ed graph, which records provenance as
+    # `file_source`), so log those at debug.
+    cols_explicit = "categorical_columns" in config.model_fields_set
     aggregated = set(set_cols) | set(pct_cols)
     group_cols = []
     for col in config.categorical_columns:
@@ -1373,8 +1383,10 @@ def _build_edge_report_query(db: GraphDatabase, denorm_table: str, config: EdgeR
             continue
         if col in available:
             group_cols.append(col)
-        else:
+        elif cols_explicit:
             logger.warning(f"Column '{col}' not found in {denorm_table}, skipping")
+        else:
+            logger.debug(f"Default column '{col}' not in {denorm_table}, skipping")
 
     if not group_cols:
         raise ValueError("No valid columns found for report")

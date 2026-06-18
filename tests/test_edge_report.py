@@ -229,3 +229,49 @@ def test_missing_set_column_is_skipped_not_fatal(kg, tmp_path):
     df = _read(out)
     assert "knowledge_level" in df.columns
     assert "does_not_exist" not in df.columns
+
+
+def _capture_logs(level="DEBUG"):
+    """Capture loguru records (koza logs via loguru, not stdlib logging)."""
+    from loguru import logger
+
+    records: list[tuple[str, str]] = []
+    sink_id = logger.add(lambda m: records.append((m.record["level"].name, m.record["message"])), level=level)
+    return records, sink_id
+
+
+def test_absent_default_column_is_debug_not_warning(kg, tmp_path):
+    """A default group column the graph lacks (provided_by here) is expected —
+    debug, not a warning that reads like an error."""
+    from loguru import logger
+
+    records, sink_id = _capture_logs()
+    try:
+        generate_edge_report(
+            EdgeReportConfig(  # no categorical_columns override -> uses defaults incl. provided_by
+                database_path=kg, output_file=tmp_path / "r.parquet",
+                output_format="parquet", quiet=True,
+            )
+        )
+    finally:
+        logger.remove(sink_id)
+    assert not any(lvl == "WARNING" and "provided_by" in msg for lvl, msg in records)
+    assert any(lvl == "DEBUG" and "provided_by" in msg for lvl, msg in records)
+
+
+def test_absent_explicit_column_warns(kg, tmp_path):
+    """A column the user explicitly asked for is still a warning when missing."""
+    from loguru import logger
+
+    records, sink_id = _capture_logs()
+    try:
+        generate_edge_report(
+            EdgeReportConfig(
+                database_path=kg, output_file=tmp_path / "r.parquet", output_format="parquet",
+                categorical_columns=["subject_category", "predicate", "does_not_exist"],
+                quiet=True,
+            )
+        )
+    finally:
+        logger.remove(sink_id)
+    assert any(lvl == "WARNING" and "does_not_exist" in msg for lvl, msg in records)
