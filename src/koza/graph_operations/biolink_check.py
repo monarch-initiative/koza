@@ -43,8 +43,8 @@ from koza.graph_operations.biolink_constraints import (
 from koza.graph_operations.graph_schema import load_biolink_schemaview
 from koza.model.graph_operations import (
     TabularReportFormat,
-    ValidationConfig,
-    ValidationResult,
+    BiolinkCheckConfig,
+    BiolinkCheckResult,
 )
 
 from .utils import GraphDatabase
@@ -215,7 +215,7 @@ def _copy_out(conn, query: str, path: Path, fmt: TabularReportFormat) -> int:
     return conn.execute(f"SELECT COUNT(*) FROM ({query})").fetchone()[0]
 
 
-def generate_validation_report(config: ValidationConfig) -> ValidationResult:
+def run_biolink_check(config: BiolinkCheckConfig) -> BiolinkCheckResult:
     """Validate a graph's edge types and node prefixes against Biolink.
 
     Writes ``subobj_errors`` and ``prefix_errors`` (one violation row each, at
@@ -262,7 +262,7 @@ def generate_validation_report(config: ValidationConfig) -> ValidationResult:
         else:
             prefix_errors = conn.execute(f"SELECT COUNT(*) FROM ({prefix_query})").fetchone()[0]
 
-    result = ValidationResult(
+    result = BiolinkCheckResult(
         database_path=config.database_path,
         output_dir=config.output_dir,
         subobj_error_types=subobj_errors if config.output_dir else (subobj_strict + subobj_advisory),

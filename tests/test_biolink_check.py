@@ -10,8 +10,8 @@ from __future__ import annotations
 import duckdb
 import pytest
 
-from koza.graph_operations.validate import generate_validation_report
-from koza.model.graph_operations import TabularReportFormat, ValidationConfig
+from koza.graph_operations.biolink_check import run_biolink_check
+from koza.model.graph_operations import TabularReportFormat, BiolinkCheckConfig
 
 
 def _build(path, nodes_sql, edges_sql):
@@ -23,8 +23,8 @@ def _build(path, nodes_sql, edges_sql):
 
 def _run(db, tmp_path):
     out = tmp_path / "validation"
-    generate_validation_report(
-        ValidationConfig(database_path=db, output_dir=out, output_format=TabularReportFormat.PARQUET, quiet=True)
+    run_biolink_check(
+        BiolinkCheckConfig(database_path=db, output_dir=out, output_format=TabularReportFormat.PARQUET, quiet=True)
     )
     sub = duckdb.sql(f"SELECT * FROM '{out}/subobj_errors.parquet'").df()
     pre = duckdb.sql(f"SELECT * FROM '{out}/prefix_errors.parquet'").df()

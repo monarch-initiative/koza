@@ -832,11 +832,11 @@ class EdgeExamplesResult(BaseModel):
     total_time_seconds: float = 0.0
 
 
-# Biolink validation models
+# Biolink-check models
 
 
-class ValidationConfig(BaseModel):
-    """Configuration for Biolink edge-type / node-prefix validation."""
+class BiolinkCheckConfig(BaseModel):
+    """Configuration for the biolink-check (edge domain/range + node prefixes)."""
 
     database_path: Path
     output_dir: Path | None = None  # Directory for subobj_errors / prefix_errors tables
@@ -851,7 +851,7 @@ class ValidationConfig(BaseModel):
         return v
 
 
-class ValidationResult(BaseModel):
+class BiolinkCheckResult(BaseModel):
     """Result from Biolink validation. Counts are of violating *types*, not edges."""
 
     database_path: Path

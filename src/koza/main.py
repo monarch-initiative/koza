@@ -16,7 +16,7 @@ from koza.graph_operations import (
     generate_edge_examples,
     closurize_graph,
     generate_edge_report,
-    generate_validation_report,
+    run_biolink_check,
     generate_graph_stats,
     generate_node_examples,
     generate_node_report,
@@ -40,7 +40,7 @@ from koza.model.graph_operations import (
     ConnectivityReportConfig,
     EdgeExamplesConfig,
     EdgeReportConfig,
-    ValidationConfig,
+    BiolinkCheckConfig,
     FileSpec,
     GraphStatsConfig,
     JoinConfig,
@@ -1613,9 +1613,9 @@ def edge_examples_cmd(
         raise typer.Exit(1)
 
 
-@typer_app.command()
-def validate(
-    database: Annotated[str, typer.Argument(help="Path to the DuckDB database file to validate")],
+@typer_app.command(name="biolink-check")
+def biolink_check(
+    database: Annotated[str, typer.Argument(help="Path to the DuckDB database file to check")],
     output_dir: Annotated[
         str | None,
         typer.Option("--output-dir", "-o", help="Directory to write subobj_errors / prefix_errors tables"),
@@ -1625,7 +1625,7 @@ def validate(
     ] = TabularReportFormat.PARQUET,
     quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress summary output")] = False,
 ) -> None:
-    """Validate a graph's edge types and node prefixes against Biolink.
+    """Check a graph against Biolink type constraints (edge domain/range + node prefixes).
 
     Two Biolink-driven checks, run as set-operations over the graph's own
     nodes/edges (no row iteration):
@@ -1641,16 +1641,16 @@ def validate(
     - prefix_errors: node CURIE prefix valid for its category.
 
     Example:
-        koza validate graph.duckdb -o validation/
+        koza biolink-check graph.duckdb -o checks/
     """
     try:
-        config = ValidationConfig(
+        config = BiolinkCheckConfig(
             database_path=Path(database),
             output_dir=Path(output_dir) if output_dir else None,
             output_format=format,
             quiet=quiet,
         )
-        result = generate_validation_report(config)
+        result = run_biolink_check(config)
         if not quiet:
             typer.echo(
                 f"✓ {result.subobj_strict_error_types} strict + "
@@ -1661,7 +1661,7 @@ def validate(
             if result.output_dir:
                 typer.echo(f"Tables written to: {result.output_dir}")
     except Exception as e:
-        typer.echo(f"Error during validation: {e}", err=True)
+        typer.echo(f"Error during biolink-check: {e}", err=True)
         raise typer.Exit(1)
 
 
