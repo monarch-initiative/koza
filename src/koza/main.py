@@ -123,6 +123,28 @@ def _infer_input_format(files: list[str]) -> InputFormat:
     return ext_to_format[ext]
 
 
+def _resolve_tabular_format(output: str | None, fmt: "TabularReportFormat | None") -> "TabularReportFormat":
+    """Resolve a tabular report's output format.
+
+    An explicit --format always wins. Otherwise infer from the -o file extension
+    (.parquet / .jsonl / .tsv / .txt), falling back to TSV — so `-o report.parquet`
+    Just Works without also passing `--format parquet`.
+    """
+    if fmt is not None:
+        return fmt
+    if output:
+        by_ext = {
+            ".parquet": TabularReportFormat.PARQUET,
+            ".jsonl": TabularReportFormat.JSONL,
+            ".tsv": TabularReportFormat.TSV,
+            ".txt": TabularReportFormat.TSV,
+        }
+        inferred = by_ext.get(Path(output).suffix.lower())
+        if inferred is not None:
+            return inferred
+    return TabularReportFormat.TSV
+
+
 @typer_app.command()
 def transform(
     config_or_transform: Annotated[
@@ -1305,8 +1327,9 @@ def node_report_cmd(
     ] = None,
     output: Annotated[str, typer.Option("--output", "-o", help="Path to output report file")] = None,
     format: Annotated[
-        TabularReportFormat, typer.Option("--format", help="Output format")
-    ] = TabularReportFormat.TSV,
+        TabularReportFormat | None,
+        typer.Option("--format", help="Output format (default: infer from -o extension, else tsv)"),
+    ] = None,
     columns: Annotated[
         list[str] | None,
         typer.Option("--column", "-c", help="Categorical columns to group by (can specify multiple)"),
@@ -1336,7 +1359,7 @@ def node_report_cmd(
         # Build config
         config_kwargs = {
             "output_file": Path(output) if output else None,
-            "output_format": format,
+            "output_format": _resolve_tabular_format(output, format),
             "quiet": quiet,
         }
 
@@ -1380,8 +1403,9 @@ def edge_report_cmd(
     ] = None,
     output: Annotated[str, typer.Option("--output", "-o", help="Path to output report file")] = None,
     format: Annotated[
-        TabularReportFormat, typer.Option("--format", help="Output format")
-    ] = TabularReportFormat.TSV,
+        TabularReportFormat | None,
+        typer.Option("--format", help="Output format (default: infer from -o extension, else tsv)"),
+    ] = None,
     columns: Annotated[
         list[str] | None,
         typer.Option("--column", "-c", help="Categorical columns to group by (can specify multiple)"),
@@ -1443,7 +1467,7 @@ def edge_report_cmd(
         # Build config
         config_kwargs = {
             "output_file": Path(output) if output else None,
-            "output_format": format,
+            "output_format": _resolve_tabular_format(output, format),
             "quiet": quiet,
         }
 
@@ -1497,8 +1521,9 @@ def node_examples_cmd(
     ] = None,
     output: Annotated[str, typer.Option("--output", "-o", help="Path to output examples file")] = None,
     format: Annotated[
-        TabularReportFormat, typer.Option("--format", help="Output format")
-    ] = TabularReportFormat.TSV,
+        TabularReportFormat | None,
+        typer.Option("--format", help="Output format (default: infer from -o extension, else tsv)"),
+    ] = None,
     sample_size: Annotated[
         int, typer.Option("--sample-size", "-n", help="Number of examples per type")
     ] = 5,
@@ -1530,7 +1555,7 @@ def node_examples_cmd(
         # Build config
         config_kwargs = {
             "output_file": Path(output) if output else None,
-            "output_format": format,
+            "output_format": _resolve_tabular_format(output, format),
             "sample_size": sample_size,
             "type_column": type_column,
             "quiet": quiet,
@@ -1573,8 +1598,9 @@ def edge_examples_cmd(
     ] = None,
     output: Annotated[str, typer.Option("--output", "-o", help="Path to output examples file")] = None,
     format: Annotated[
-        TabularReportFormat, typer.Option("--format", help="Output format")
-    ] = TabularReportFormat.TSV,
+        TabularReportFormat | None,
+        typer.Option("--format", help="Output format (default: infer from -o extension, else tsv)"),
+    ] = None,
     sample_size: Annotated[
         int, typer.Option("--sample-size", "-s", help="Number of examples per type")
     ] = 5,
@@ -1608,7 +1634,7 @@ def edge_examples_cmd(
         # Build config
         config_kwargs = {
             "output_file": Path(output) if output else None,
-            "output_format": format,
+            "output_format": _resolve_tabular_format(output, format),
             "sample_size": sample_size,
             "quiet": quiet,
         }

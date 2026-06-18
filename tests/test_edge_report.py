@@ -275,3 +275,38 @@ def test_absent_explicit_column_warns(kg, tmp_path):
     finally:
         logger.remove(sink_id)
     assert any(lvl == "WARNING" and "does_not_exist" in msg for lvl, msg in records)
+
+
+@pytest.mark.parametrize(
+    "output,fmt,expected",
+    [
+        (None, None, "tsv"),                 # nothing -> tsv default
+        ("r.parquet", None, "parquet"),      # inferred from extension
+        ("r.jsonl", None, "jsonl"),
+        ("r.tsv", None, "tsv"),
+        ("r.weird", None, "tsv"),            # unknown extension -> tsv
+        ("r.parquet", "tsv", "tsv"),         # explicit --format wins over extension
+    ],
+)
+def test_resolve_tabular_format(output, fmt, expected):
+    from koza.main import _resolve_tabular_format
+    from koza.model.graph_operations import TabularReportFormat
+
+    f = TabularReportFormat(fmt) if fmt else None
+    assert _resolve_tabular_format(output, f).value == expected
+
+
+def test_tsv_export_forces_csv_regardless_of_extension(kg, tmp_path):
+    """A TSV-format export into a .parquet-named file writes TSV bytes (the chosen
+    format wins; DuckDB's extension-based inference doesn't take over)."""
+    out = tmp_path / "misnamed.parquet"
+    generate_edge_report(
+        EdgeReportConfig(
+            database_path=kg, output_file=out, output_format="tsv",
+            categorical_columns=["subject_category", "predicate", "object_category"],
+            quiet=True,
+        )
+    )
+    head = out.read_bytes()[:16]
+    assert not head.startswith(b"PAR1")  # not a parquet file
+    assert head.startswith(b"subject_category")  # TSV header

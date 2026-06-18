@@ -1160,7 +1160,9 @@ def _export_query_result(
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     if format == TabularReportFormat.TSV:
-        db.conn.execute(f"COPY ({query}) TO '{output_path}' (HEADER, DELIMITER '\\t')")
+        # Force FORMAT CSV so the chosen format wins regardless of the output file's
+        # extension (DuckDB's COPY otherwise infers format from the suffix).
+        db.conn.execute(f"COPY ({query}) TO '{output_path}' (FORMAT CSV, HEADER, DELIMITER '\\t')")
     elif format == TabularReportFormat.PARQUET:
         db.conn.execute(f"COPY ({query}) TO '{output_path}' (FORMAT PARQUET)")
     elif format == TabularReportFormat.JSONL:
