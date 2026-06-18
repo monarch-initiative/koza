@@ -724,6 +724,7 @@ class EdgeReportConfig(BaseModel):
             "object_namespace",
             "primary_knowledge_source",
             "aggregator_knowledge_source",
+            "supporting_data_source",
             "knowledge_level",
             "agent_type",
             "provided_by",
