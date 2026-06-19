@@ -12,6 +12,8 @@ from tqdm import tqdm
 
 from koza.graph_operations import (
     append_graphs,
+    convert_graph,
+    export_graph,
     generate_connectivity_report,
     generate_edge_examples,
     closurize_graph,
@@ -37,8 +39,10 @@ from koza.model.graph_operations import (
     AppendConfig,
     ClosurizeConfig,
     ConnectivityReportConfig,
+    ConvertConfig,
     EdgeExamplesConfig,
     EdgeReportConfig,
+    ExportConfig,
     FileSpec,
     GraphStatsConfig,
     JoinConfig,
@@ -1608,6 +1612,87 @@ def edge_examples_cmd(
 
     except Exception as e:
         typer.echo(f"Error generating edge examples: {e}", err=True)
+        raise typer.Exit(1)
+
+
+@typer_app.command()
+def export(
+    database: Annotated[str, typer.Argument(help="Path to the DuckDB graph to export")],
+    output_dir: Annotated[str, typer.Option("--output-dir", "-o", help="Output directory")] = "./output",
+    format: Annotated[KGXFormat, typer.Option("--format", "-f", help="Output format")] = KGXFormat.TSV,
+    quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress output")] = False,
+) -> None:
+    """Write a koza DuckDB graph's nodes/edges out as single KGX files.
+
+    The inverse of load/join: one file per table, no fragmentation (unlike split).
+    For TSV, scalar multivalued columns are |-delimited and nested object columns
+    (sources, ...) are written as JSON-in-cell; JSONL/Parquet keep nested data
+    natively.
+
+    Examples:
+        koza export graph.duckdb -o output/ -f tsv
+        koza export graph.duckdb -o output/ -f jsonl
+    """
+    try:
+        result = export_graph(
+            ExportConfig(
+                database_path=Path(database),
+                output_dir=Path(output_dir),
+                output_format=format,
+                quiet=quiet,
+            )
+        )
+        if not quiet:
+            for f in result.output_files:
+                typer.echo(f"Wrote {f}")
+    except Exception as e:
+        typer.echo(f"Error during export: {e}", err=True)
+        raise typer.Exit(1)
+
+
+@typer_app.command()
+def convert(
+    node_files: Annotated[
+        list[str] | None, typer.Option("--nodes", "-n", help="Node file(s) or glob(s)")
+    ] = None,
+    edge_files: Annotated[
+        list[str] | None, typer.Option("--edges", "-e", help="Edge file(s) or glob(s)")
+    ] = None,
+    output_dir: Annotated[str, typer.Option("--output-dir", "-o", help="Output directory")] = "./output",
+    format: Annotated[KGXFormat, typer.Option("--format", "-f", help="Output format")] = KGXFormat.TSV,
+    slots_file: Annotated[
+        str | None,
+        typer.Option("--slots-file", help="YAML {nodes:[...], edges:[...]} explicit JSONL schema (skips inference)"),
+    ] = None,
+    quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress output")] = False,
+) -> None:
+    """One-shot KGX file format conversion (= load + export).
+
+    Loads the input file(s) into a temporary DuckDB and writes them back out in
+    the requested format, applying the same serialization policy as `export`.
+
+    Examples:
+        koza convert -e edges.jsonl -o output/ -f tsv
+        koza convert -n nodes.jsonl -e edges.jsonl -o output/ -f parquet
+    """
+    try:
+        if not node_files and not edge_files:
+            raise typer.BadParameter("Specify --nodes and/or --edges")
+        result = convert_graph(
+            ConvertConfig(
+                node_files=[Path(f) for f in _expand_file_patterns(node_files or [])],
+                edge_files=[Path(f) for f in _expand_file_patterns(edge_files or [])],
+                output_dir=Path(output_dir),
+                output_format=format,
+                slots_file=Path(slots_file) if slots_file else None,
+                quiet=quiet,
+            )
+        )
+        if not quiet:
+            for f in result.output_files:
+                typer.echo(f"Wrote {f}")
+    except Exception as e:
+        typer.echo(f"Error during convert: {e}", err=True)
         raise typer.Exit(1)
 
 

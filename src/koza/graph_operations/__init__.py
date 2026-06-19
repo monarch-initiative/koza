@@ -9,6 +9,7 @@ from .append import append_graphs
 from .closurize import closurize_graph
 from .connectivity import generate_connectivity_report
 from .deduplicate import deduplicate_graph
+from .export import convert_graph, export_graph
 from .join import join_graphs, prepare_file_specs_from_paths
 from .load import load_graph, prepare_load_config_from_paths
 from .merge import merge_graphs, prepare_merge_config_from_paths
@@ -32,6 +33,8 @@ __all__ = [
     "load_graph",
     "prepare_load_config_from_paths",
     "split_graph",
+    "export_graph",
+    "convert_graph",
     "prune_graph",
     "append_graphs",
     "closurize_graph",
