@@ -45,7 +45,7 @@ A module-level constant (`DECLARED_OUTPUTS`) on each operation module that lists
 _Avoid_: produced slots, output schema, operation contract.
 
 **Operation**:
-One of the high-level graph transforms exposed by the CLI: load, join, deduplicate, normalize, prune, split, append, merge, closurize, report. Each is a module under `koza/graph_operations/`.
+One of the high-level graph transforms exposed by the CLI: load, join, deduplicate, normalize, prune, split, append, merge, closurize, information-content, report. Each is a module under `koza/graph_operations/`.
 _Avoid_: command, action, transform (transform refers to the koza ingest side).
 
 **Load** / **Join**:
@@ -55,6 +55,10 @@ _Avoid_: import (names the koza ingest/reader side), ingest (that's the transfor
 **Closurize**:
 The operation that applies a relation-graph closure to a merged graph database. Produces `denormalized_nodes` and `denormalized_edges` as VIEWs over base tables (~50% smaller DuckDB than the historical materialized shape), plus per-predicate node-extension side tables and the materialized `closure_id` / `closure_label` / `descendants_id` / `descendants_label` tables. Evolves the stored schema to include `DenormalizedEntity` / `DenormalizedAssociation` classes whose slot lists come from the actual produced views. Migrated from the `closurizer` package in May 2026; this module is now its canonical home, the standalone package is no longer maintained.
 _Avoid_: denormalize (too generic), expand.
+
+**Information-content**:
+The operation that computes the semantic-similarity precompute tables for an already-closurized graph database. Reads the `closure` table closurize materializes plus `edges`, and writes `information_content` (`term`, `ic` — information content per closure term, ``IC = -log2(freq/N)``; oaklib's `information-content`) and `closure_size` (`entity`, `size` — distinct closure ancestors/subsumers reachable from the terms an entity is associated with; the search-time profile-size denominator). These are auxiliary tables for a downstream similarity engine; like closurize's `closure_id` / `descendants_id` side tables they are not added to the stored graph schema. Parameterized by closure predicate(s), association categories/predicate, and a negation filter — defaults are Monarch-flavored (rdfs:subClassOf, Gene/Disease has_phenotype). Runs after `closurize` (the `closure` table is its precondition, mirroring how `prepare-solr` depends on `denormalized_edges`).
+_Avoid_: semsim-prep, bake, ducksim (retired codenames), ic-table.
 
 **Graph database**:
 The `GraphDatabase` class wrapping a DuckDB connection. Owns the data tables (`nodes`, `edges`, `singleton_nodes`, `dangling_edges`, etc.) and the schema metadata table (`_koza_schema`) holding the derived schema and the seeded Biolink YAML.

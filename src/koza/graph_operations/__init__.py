@@ -23,6 +23,7 @@ from .report import (
     generate_qc_report,
     generate_schema_compliance_report,
 )
+from .information_content import compute_information_content
 from .schema import generate_schema_report, print_schema_summary, write_schema_report_yaml
 from .split import split_graph
 from .utils import GraphDatabase, print_operation_summary
@@ -35,6 +36,7 @@ __all__ = [
     "prune_graph",
     "append_graphs",
     "closurize_graph",
+    "compute_information_content",
     "deduplicate_graph",
     "normalize_graph",
     "merge_graphs",

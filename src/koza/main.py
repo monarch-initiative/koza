@@ -12,6 +12,7 @@ from tqdm import tqdm
 
 from koza.graph_operations import (
     append_graphs,
+    compute_information_content,
     generate_connectivity_report,
     generate_edge_examples,
     closurize_graph,
@@ -47,6 +48,7 @@ from koza.model.graph_operations import (
     NodeReportConfig,
     NormalizeConfig,
     PruneConfig,
+    InformationContentConfig,
     QCReportConfig,
     SchemaReportConfig,
     SplitConfig,
@@ -720,6 +722,75 @@ def closurize(
             typer.echo(
                 f"Closurize completed: {result.denormalized_nodes_count:,} nodes, "
                 f"{result.denormalized_edges_count:,} edges"
+            )
+    except Exception as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(1)
+
+
+@typer_app.command(name="information-content")
+def information_content(
+    database: Annotated[str, typer.Argument(help="Path to an already-closurized DuckDB database file")],
+    closure_predicate: Annotated[list[str] | None, typer.Option(
+        "--closure-predicate",
+        help="Closure predicate(s) that define ancestry for IC / closure-size "
+             "(repeatable). Default: rdfs:subClassOf",
+    )] = None,
+    association_category: Annotated[list[str] | None, typer.Option(
+        "--association-category",
+        help="Edge category that links an entity to a term, for the closure-size "
+             "table (repeatable). Default: Monarch Gene/Disease has_phenotype categories",
+    )] = None,
+    association_predicate: Annotated[str | None, typer.Option(
+        "--association-predicate",
+        help="Edge predicate for entity->term associations. Default: biolink:has_phenotype",
+    )] = None,
+    include_negated: Annotated[bool, typer.Option(
+        "--include-negated",
+        help="Include negated associations in the closure-size table (default: excluded)",
+    )] = False,
+    quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress output")] = False,
+) -> None:
+    """Compute information-content and closure-size tables for a closurized graph.
+
+    Reads the `closure` table produced by `closurize` plus the `edges` table,
+    and writes two tables a downstream similarity engine can read instead of
+    rebuilding per process:
+
+      information_content  (term, ic)     -- information content per closure term
+      closure_size         (entity, size) -- distinct closure subsumers per entity
+
+    Run after `closurize`.
+
+    Examples:
+        # Monarch defaults (rdfs:subClassOf, Gene/Disease has_phenotype)
+        koza information-content monarch-kg.duckdb
+
+        # Custom closure predicate and association edge
+        koza information-content graph.duckdb \\
+            --closure-predicate rdfs:subClassOf --closure-predicate BFO:0000050 \\
+            --association-category biolink:GeneToPhenotypicFeatureAssociation \\
+            --association-predicate biolink:has_phenotype
+    """
+    try:
+        # Pass-through: let InformationContentConfig own defaults so they aren't
+        # duplicated between the CLI and the model.
+        config_kwargs = {
+            "database_path": Path(database),
+            "include_negated": include_negated,
+            "quiet": quiet,
+        }
+        if closure_predicate is not None:
+            config_kwargs["closure_predicates"] = closure_predicate
+        if association_category is not None:
+            config_kwargs["association_categories"] = association_category
+        if association_predicate is not None:
+            config_kwargs["association_predicate"] = association_predicate
+        result = compute_information_content(InformationContentConfig(**config_kwargs))
+        if not quiet:
+            typer.echo(
+                f"Information-content completed: {result.ic_term_count:,} terms, "
+                f"{result.closure_size_entity_count:,} entities"
             )
     except Exception as e:
         typer.echo(f"Error: {e}", err=True)
