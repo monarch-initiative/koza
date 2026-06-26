@@ -37,12 +37,17 @@ def _run_with_timeout(cfg, seconds=30):
     box = {}
 
     def run():
-        box["result"] = load_graph(cfg)
+        try:
+            box["result"] = load_graph(cfg)
+        except BaseException as exc:  # noqa: BLE001 - re-raised on the main thread below
+            box["error"] = exc
 
     t = threading.Thread(target=run, daemon=True)
     t.start()
     t.join(timeout=seconds)
     assert not t.is_alive(), "load_graph hung on the FIFO — it re-read a non-seekable input"
+    if "error" in box:
+        raise box["error"]
     return box["result"]
 
 
@@ -57,6 +62,12 @@ def slots_file(tmp_path):
     return p
 
 
+requires_fifo = pytest.mark.skipif(
+    not hasattr(os, "mkfifo"), reason="os.mkfifo is not available on this platform"
+)
+
+
+@requires_fifo
 def test_load_streams_from_fifo_single_pass(tmp_path, slots_file):
     nodes_fifo = tmp_path / "nodes.jsonl"
     edges_fifo = tmp_path / "edges.jsonl"
@@ -89,3 +100,73 @@ def test_load_streams_from_fifo_single_pass(tmp_path, slots_file):
     cols = [r[0] for r in con.execute("DESCRIBE edges").fetchall()]
     assert cols.count("file_source") == 1
     assert "file_source_1" not in cols
+
+
+def _write_tsv(path, header, rows):
+    lines = ["\t".join(header)]
+    lines += ["\t".join(r) for r in rows]
+    path.write_text("\n".join(lines) + "\n")
+
+
+def test_tsv_with_slots_excludes_input_file_source(tmp_path):
+    """A slots file is set on every input regardless of format, but for TSV the
+    read schema is the file's real columns — not the slots. The collision exclude
+    must therefore come from a DESCRIBE, otherwise the input's own file_source
+    survives and koza's injected one auto-renames to file_source_1."""
+    slots = tmp_path / "slots.yaml"
+    # edges slots OMIT file_source even though the TSV header carries it
+    slots.write_text(
+        "nodes: [id, category, name]\n"
+        "edges: [id, subject, predicate, object]\n"
+    )
+    nodes = tmp_path / "nodes.tsv"
+    edges = tmp_path / "edges.tsv"
+    _write_tsv(nodes, ["id", "category", "name"], [[f"GENE:{i}", "biolink:Gene", f"g{i}"] for i in range(3)])
+    _write_tsv(
+        edges,
+        ["id", "subject", "predicate", "object", "file_source"],
+        [[f"e{i}", f"GENE:{i}", "biolink:related_to", f"GENE:{(i + 1) % 3}", "upstream"] for i in range(3)],
+    )
+
+    db = tmp_path / "g.duckdb"
+    cfg = prepare_load_config_from_paths(
+        [nodes], [edges], output_database=db, slots_file=slots, quiet=True, show_progress=False,
+    )
+    result = load_graph(cfg)
+
+    assert result.final_stats.edges == 3
+    con = duckdb.connect(str(db), read_only=True)
+    cols = [r[0] for r in con.execute("DESCRIBE edges").fetchall()]
+    assert cols.count("file_source") == 1
+    assert "file_source_1" not in cols
+
+
+def test_tsv_with_slots_naming_absent_column_loads(tmp_path):
+    """Slots may name a column the TSV file does not have (e.g. file_source). The
+    single-pass path would build an EXCLUDE for that column and DuckDB raises a
+    Binder Error; the DESCRIBE-based path excludes only columns that exist."""
+    slots = tmp_path / "slots.yaml"
+    # edges slots INCLUDE file_source, but the TSV header below has no such column
+    slots.write_text(
+        "nodes: [id, category, name]\n"
+        "edges: [id, subject, predicate, object, file_source]\n"
+    )
+    nodes = tmp_path / "nodes.tsv"
+    edges = tmp_path / "edges.tsv"
+    _write_tsv(nodes, ["id", "category", "name"], [[f"GENE:{i}", "biolink:Gene", f"g{i}"] for i in range(3)])
+    _write_tsv(
+        edges,
+        ["id", "subject", "predicate", "object"],
+        [[f"e{i}", f"GENE:{i}", "biolink:related_to", f"GENE:{(i + 1) % 3}"] for i in range(3)],
+    )
+
+    db = tmp_path / "g.duckdb"
+    cfg = prepare_load_config_from_paths(
+        [nodes], [edges], output_database=db, slots_file=slots, quiet=True, show_progress=False,
+    )
+    result = load_graph(cfg)
+
+    assert result.final_stats.edges == 3
+    con = duckdb.connect(str(db), read_only=True)
+    cols = [r[0] for r in con.execute("DESCRIBE edges").fetchall()]
+    assert cols.count("file_source") == 1

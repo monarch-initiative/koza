@@ -275,6 +275,15 @@ class GraphDatabase:
 
             read_stmt = get_duckdb_read_statement(file_spec)
 
+            # The single-read "explicit columns" optimisations below are only
+            # valid when the read schema is guaranteed to equal file_spec.slots.
+            # That holds for JSONL, where get_duckdb_read_statement emits
+            # read_json(columns={...}) keyed by the slots; for TSV/Parquet the
+            # slots are ignored and the read returns the file's real columns, so
+            # we must fall back to DESCRIBE-based handling (which is seekable and
+            # therefore safe for those formats).
+            explicit_columns = bool(file_spec.slots) and file_spec.format == KGXFormat.JSONL
+
             # Create unique temp table name for this file
             safe_filename = file_spec.path.stem.replace("-", "_").replace(".", "_")
             temp_table_name = f"temp_{file_spec.file_type.value}_{safe_filename}_{id(file_spec)}"
@@ -292,7 +301,7 @@ class GraphDatabase:
             # slot list we know the read schema already, so derive the exclude
             # from the slots instead of DESCRIBE-ing the file — keeping the
             # explicit-schema path to a single read (FIFO/stream-safe).
-            if file_spec.slots:
+            if explicit_columns:
                 exclude_clause = _injected_exclude_from_slots(file_spec.slots, generate_provided_by)
             else:
                 exclude_clause = _build_injected_columns_exclude(
@@ -340,10 +349,12 @@ class GraphDatabase:
 
             # Transform pipe-delimited multivalued fields to arrays
             # Skip file_source and provided_by (when generated) since we add them as literals.
-            # When the user supplied explicit slots, the column types already reflect
-            # Biolink's multivalued declarations; the single-valued flatten path
-            # would undo that, so skip the transform entirely.
-            if not file_spec.slots:
+            # When the user supplied explicit slots on the JSONL path, the column
+            # types already reflect Biolink's multivalued declarations; the
+            # single-valued flatten path would undo that, so skip the transform
+            # entirely. For TSV/Parquet (read_csv/read_parquet ignore the slots)
+            # the columns are still pipe-delimited scalars and need the transform.
+            if not explicit_columns:
                 skip_columns = {"file_source"}
                 if generate_provided_by:
                     skip_columns.add("provided_by")
