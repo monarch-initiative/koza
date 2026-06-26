@@ -107,10 +107,16 @@ def _edge_type_summary_view(conn) -> None:
     present (else an empty list → every edge uses the fallback union check)."""
     edge_cols = _describe(conn, "edges")
     node_cols = _describe(conn, "nodes")
-    node_cat = node_cols.get("category", "VARCHAR")
 
-    subj = _category_list_expr("sn.category", node_cat)
-    obj = _category_list_expr("on_.category", node_cat)
+    # A nodes table with no category column can't constrain subject/object; emit
+    # empty lists so every edge falls through the len()>0 filter as unvalidatable
+    # rather than raising a binder error on the missing column.
+    if "category" in node_cols:
+        node_cat = node_cols["category"]
+        subj = _category_list_expr("sn.category", node_cat)
+        obj = _category_list_expr("on_.category", node_cat)
+    else:
+        subj = obj = "CAST([] AS VARCHAR[])"
     if "category" in edge_cols:
         assoc = _category_list_expr("e.category", edge_cols["category"])
     else:
@@ -253,8 +259,14 @@ def run_biolink_check(config: BiolinkCheckConfig) -> BiolinkCheckResult:
                 subobj_advisory += n
 
         # --- node-prefix validation ---
-        node_cat = _describe(conn, "nodes").get("category", "VARCHAR")
-        prefix_query = _PREFIX_SQL_TEMPLATE.format(node_cat=_category_list_expr("category", node_cat))
+        node_cols = _describe(conn, "nodes")
+        # No category column → no category constrains any prefix; emit empty lists
+        # so the query binds and simply finds no violations.
+        if "category" in node_cols:
+            node_cat_expr = _category_list_expr("category", node_cols["category"])
+        else:
+            node_cat_expr = "CAST([] AS VARCHAR[])"
+        prefix_query = _PREFIX_SQL_TEMPLATE.format(node_cat=node_cat_expr)
         prefix_errors = 0
         if config.output_dir:
             out = config.output_dir / f"prefix_errors.{ext}"

@@ -95,8 +95,11 @@ def build_edge_type_constraints(sv) -> EdgeTypeConstraints:
     Mirrors the matrix-validator legal-edge-type generator (predicate
     domain×range product unioned with association-class slot_usage product), but
     additionally **keeps the per-association-class constraints** so edges that
-    assert their class can be checked against that class specifically. Built from
-    the graph's own pinned Biolink version (avoids skew with a checked-in table).
+    assert their class can be checked against that class specifically. Built at
+    runtime from the supplied ``SchemaView`` (koza's installed ``biolink-model``,
+    see :func:`load_biolink_schemaview`) rather than a checked-in constraint
+    table, so the constraints track whatever Biolink version koza is pinned to —
+    note this is koza's pinned version, not the version the graph was built with.
     """
     uri = sv.get_uri
     constraints = EdgeTypeConstraints()

@@ -81,6 +81,22 @@ def test_scalar_category_and_biolink_normalization(tmp_path):
     assert "NOT_IN_LEGAL_TYPES" not in set(sub["verdict"]) if len(sub) else True
 
 
+def test_nodes_without_category_degrade_gracefully(tmp_path):
+    """A nodes table with no `category` column must not raise a binder error;
+    nothing can be validated, so both reports come back empty."""
+    db = tmp_path / "kg.duckdb"
+    _build(
+        db,
+        "SELECT * FROM (VALUES ('GENE:1'), ('GENE:2')) t(id)",  # no category column
+        """SELECT * FROM (VALUES
+            ('GENE:1','biolink:regulates','GENE:2', ['biolink:GeneRegulatesGeneAssociation'])
+          ) t(subject, predicate, object, category)""",
+    )
+    sub, pre = _run(db, tmp_path)
+    assert len(sub) == 0
+    assert len(pre) == 0
+
+
 def test_prefix_check_is_multivalued_lenient(tmp_path):
     """A node valid under ANY of its categories isn't flagged; a bogus prefix is."""
     db = tmp_path / "kg.duckdb"
