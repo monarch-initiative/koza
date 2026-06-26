@@ -14,6 +14,13 @@ struct-repr — neither valid JSON nor valid KGX):
   struct / map / json / list-of-list) are written as **JSON-in-cell** (there's no
   KGX standard for nested objects, and JSON round-trips losslessly).
 - **JSONL / Parquet** — keep nested data natively; copied as-is.
+
+TSV is written with DuckDB's CSV writer (RFC 4180 quoting), so any field
+containing a tab, newline, or double quote — which includes every JSON-in-cell
+`sources` value — is wrapped in double quotes with embedded quotes doubled.
+"Round-trips losslessly" therefore means *via a CSV-aware reader* (DuckDB
+`read_csv`, pandas, `csv.reader`); a naive ``line.split('\\t')`` consumer will
+mis-parse those rows. This matches `split` / `report`, which use the same writer.
 """
 
 from __future__ import annotations
@@ -106,7 +113,7 @@ def convert_graph(config: ConvertConfig) -> ExportResult:
     """One-shot KGX format conversion: load the input files into a temporary
     DuckDB, then export them. Equivalent to `koza load` followed by `koza export`.
     """
-    import os
+    import shutil
     import tempfile
 
     from .load import load_graph, prepare_load_config_from_paths
@@ -134,12 +141,9 @@ def convert_graph(config: ConvertConfig) -> ExportResult:
             )
         )
     finally:
-        if tmp_db.exists():
-            tmp_db.unlink()
-        try:
-            os.rmdir(tmp_dir)
-        except OSError:
-            pass
+        # rmtree (not unlink+rmdir): DuckDB may leave a .wal sibling on an error
+        # path, which would make rmdir raise and leak the temp directory.
+        shutil.rmtree(tmp_dir, ignore_errors=True)
 
     result.total_time_seconds = time.time() - start
     return result

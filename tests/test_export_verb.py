@@ -58,6 +58,25 @@ def test_export_tsv_serializes_nested_json_and_pipe_lists(graph_db, tmp_path):
     assert nodes["category"].iloc[0] == "biolink:Gene|biolink:NamedThing"
 
 
+def test_export_tsv_quotes_special_characters(tmp_path):
+    """A field containing a tab, newline, or double quote is RFC 4180-quoted by
+    the CSV writer and round-trips via a CSV-aware reader (a naive split would
+    not). Guards the documented lossless-via-CSV-reader contract."""
+    db = tmp_path / "g.duckdb"
+    conn = duckdb.connect(str(db))
+    tricky = 'a\tb\nc"d'
+    conn.execute(
+        "CREATE TABLE nodes AS SELECT 'GENE:1' AS id, ['biolink:Gene'] AS category, $name AS name",
+        {"name": tricky},
+    )
+    conn.close()
+
+    out = tmp_path / "out"
+    export_graph(ExportConfig(database_path=db, output_dir=out, output_format="tsv", quiet=True))
+    nodes = _read_tsv(out / "nodes.tsv")
+    assert nodes["name"].iloc[0] == tricky  # tab/newline/quote preserved through quoting
+
+
 def test_export_jsonl_keeps_nested_structure(graph_db, tmp_path):
     out = tmp_path / "out"
     export_graph(ExportConfig(database_path=graph_db, output_dir=out, output_format="jsonl", quiet=True))
