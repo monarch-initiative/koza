@@ -952,6 +952,7 @@ class ColumnProfile(BaseModel):
     reason: str  # how it was detected: enum/boolean/category/predicate/knowledge_source/cardinality
     is_list: bool = False
     top_values: list[tuple[str | None, int]] = Field(default_factory=list)  # (value, count), value cast to str
+    total_count: int = 0  # denominator for percentages: row count (scalar) or unnested element count (list)
 
 
 class TableProfile(BaseModel):

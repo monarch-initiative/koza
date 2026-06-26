@@ -292,6 +292,19 @@ def _marginal(conn, table: str, col: "CategoricalColumn", limit: int | None):
     return [(r[0], r[1]) for r in rows]
 
 
+def _marginal_total(conn, table: str, col: "CategoricalColumn") -> int:
+    """Total occurrences that the marginal counts sum to — the right denominator
+    for percentages. For scalar columns that's the row count (NULLs included);
+    for list columns it's the number of UNNESTed elements, which exceeds the row
+    count when rows hold multivalued arrays.
+    """
+    if col.is_list:
+        src = f'(SELECT UNNEST("{col.name}") AS v FROM {table})'
+    else:
+        src = f'(SELECT "{col.name}" AS v FROM {table})'
+    return conn.execute(f"SELECT COUNT(*) FROM {src}").fetchone()[0]
+
+
 def profile_table(
     conn,
     table: str,
@@ -342,6 +355,7 @@ def profile_table(
             reason=c.reason,
             is_list=c.is_list,
             top_values=_marginal(conn, table, c, top_n),
+            total_count=_marginal_total(conn, table, c),
         )
         for c in cats
     ]
@@ -432,8 +446,11 @@ def render_profile(result) -> str:
         for cp in tp.columns:
             shown = len(cp.top_values)
             more = "" if cp.distinct_count <= shown else f" · showing top {shown} of {cp.distinct_count}"
-            lines.append(f"  {cp.column} · {cp.distinct_count} distinct · {cp.reason}{more}")
-            denom = tp.row_count or 1
+            # List columns are UNNESTed, so percentages are of elements (which can
+            # sum past the row count when rows carry multivalued arrays), not of rows.
+            unit = " · % of elements" if cp.is_list else ""
+            lines.append(f"  {cp.column} · {cp.distinct_count} distinct · {cp.reason}{more}{unit}")
+            denom = (cp.total_count or tp.row_count) or 1
             for value, count in cp.top_values:
                 pct = 100.0 * count / denom
                 val = "∅ (null)" if value is None else value

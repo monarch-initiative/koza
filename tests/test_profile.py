@@ -155,6 +155,51 @@ def test_profile_graph_and_render(kg, sv):
     assert "edges — 30 rows" in text
 
 
+@pytest.fixture
+def list_kg(tmp_path):
+    """A nodes table whose `category` is a true VARCHAR[] (multivalued), as
+    preserved by default since Biolink multivalued slots are kept as arrays."""
+    db = tmp_path / "list_kg.duckdb"
+    conn = duckdb.connect(str(db))
+    conn.execute("""
+        CREATE TABLE nodes AS
+        SELECT
+            'GENE:' || i::VARCHAR                                       AS id,
+            ['biolink:Gene','biolink:NamedThing']::VARCHAR[]            AS category,
+            'node name ' || i::VARCHAR                                  AS name
+        FROM range(30) t(i);
+    """)
+    conn.close()
+    return db
+
+
+def test_list_column_total_is_element_count(list_kg, sv):
+    """For a multivalued (UNNESTed) column, total_count is the element count
+    (rows × elements-per-row), not the row count — so percentages are of
+    elements and sum to ~100%, not ~200%."""
+    conn = duckdb.connect(str(list_kg), read_only=True)
+    tp = profile_table(conn, "nodes", sv, top_n=5)
+    cat = next(c for c in tp.columns if c.column == "category")
+    assert cat.is_list is True
+    assert tp.row_count == 30
+    # two elements per row → 60 elements total
+    assert cat.total_count == 60
+    assert sum(count for _, count in cat.top_values) == 60
+    # each of the two categories appears once per row → 50% of elements each
+    pcts = [100.0 * count / cat.total_count for _, count in cat.top_values]
+    assert sum(pcts) == pytest.approx(100.0)
+    assert all(p == pytest.approx(50.0) for p in pcts)
+
+
+def test_render_list_column_percentages(list_kg, sv):
+    result = profile_graph(ProfileConfig(database_path=list_kg, top_n=5, quiet=True))
+    text = render_profile(result)
+    assert "% of elements" in text
+    # 50.0% lines, not 100.0% (the pre-fix row-count denominator)
+    assert "50.0%" in text
+    assert "100.0%" not in text
+
+
 def test_profile_output_file(kg, sv, tmp_path):
     out = tmp_path / "shape.tsv"
     result = profile_graph(ProfileConfig(database_path=kg, output_file=out, quiet=True))
