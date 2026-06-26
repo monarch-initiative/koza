@@ -714,7 +714,12 @@ class EdgeReportConfig(BaseModel):
     output_file: Path | None = None
     output_format: TabularReportFormat = TabularReportFormat.TSV
 
-    # Default categorical columns for edges
+    # Default categorical columns for edges.
+    # NOTE: `supporting_data_source` is included by default. On graphs that carry
+    # that column this adds a GROUP BY dimension, so the default report gains a
+    # column and splits rows relative to the prior default — a deliberate change,
+    # not a behavior-preserving one. Columns absent from a graph are skipped, so
+    # graphs without it are unaffected.
     categorical_columns: list[str] = Field(
         default_factory=lambda: [
             "subject_category",
