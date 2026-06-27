@@ -614,6 +614,76 @@ class ClosurizeResult(BaseModel):
     errors: list[str] = Field(default_factory=list)
 
 
+# Default Biolink association categories that link an entity to a phenotype term.
+# Used to derive each entity's annotation-closure size. Monarch-flavored, like
+# ClosurizeConfig's defaults — non-Monarch consumers should pass their own.
+_DEFAULT_ASSOCIATION_CATEGORIES = [
+    "biolink:GeneToPhenotypicFeatureAssociation",
+    "biolink:DiseaseToPhenotypicFeatureAssociation",
+]
+
+
+class InformationContentConfig(BaseModel):
+    """Configuration for the information-content operation.
+
+    Adds two semantic-similarity precompute tables to an already-closurized
+    graph database (it reads the `closure` table closurize produces):
+
+    - `information_content` (term, ic): information content of each closure
+      object, ``IC = -log2(freq / N)`` where ``freq`` is the number of closure
+      rows with the term as object and ``N`` is the number of distinct closure
+      objects, both over the rows whose predicate is in `closure_predicates`
+      (this is oaklib's `information-content`).
+    - `closure_size` (entity, size): the number of distinct closure ancestors
+      (subsumers) reachable from the phenotype terms an entity is associated
+      with, over the associations selected by `association_*` — the search-time
+      profile-size denominator.
+
+    Both tables let a downstream similarity engine skip the per-process build.
+    Defaults are Monarch-flavored (rdfs:subClassOf for closure, has_phenotype
+    Gene/Disease associations), matching the ClosurizeConfig convention — other
+    consumers should pass explicit values.
+    """
+
+    database_path: Path
+    # Closure source (the table + columns closurize materializes).
+    closure_table: str = "closure"
+    closure_subject_column: str = "subject_id"
+    closure_predicate_column: str = "predicate_id"
+    closure_object_column: str = "object_id"
+    # Which closure predicates define ancestry for IC / closure-size.
+    closure_predicates: list[str] = Field(default_factory=lambda: ["rdfs:subClassOf"])
+    # Association source (entity -> term edges) for the closure-size table.
+    edges_table: str = "edges"
+    association_subject_column: str = "subject"
+    association_object_column: str = "object"
+    association_categories: list[str] = Field(
+        default_factory=lambda: list(_DEFAULT_ASSOCIATION_CATEGORIES)
+    )
+    association_predicate: str = "biolink:has_phenotype"
+    # When False, negated associations are excluded from the closure-size table.
+    include_negated: bool = False
+    quiet: bool = False
+
+    @field_validator("database_path")
+    @classmethod
+    def validate_path_exists(cls, v: Path) -> Path:
+        if not v.exists():
+            raise ValueError(f"File not found: {v}")
+        return v
+
+
+class InformationContentResult(BaseModel):
+    """Result of the information-content operation."""
+
+    success: bool
+    ic_term_count: int
+    closure_size_entity_count: int
+    total_time_seconds: float
+    summary: "OperationSummary"
+    errors: list[str] = Field(default_factory=list)
+
+
 class QCReportConfig(BaseModel):
     """Configuration for QC report generation."""
 
