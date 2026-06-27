@@ -115,6 +115,48 @@ def test_information_content_is_idempotent(closurized_kg):
     assert {"information_content", "closure_size"}.issubset(tables)
 
 
+@pytest.fixture
+def multi_predicate_kg(tmp_path):
+    """A closure where descendant X reaches ancestor A via TWO closure
+    predicates (rdfs:subClassOf and BFO:0000050). freq(A) must be the count of
+    distinct descendants (X and A → 2 = N), not the row count (3), which would
+    push freq past N and yield a negative IC."""
+    db_path = tmp_path / "multi.duckdb"
+    with GraphDatabase(db_path) as db:
+        db.conn.execute("""
+            CREATE TABLE closure (subject_id VARCHAR, predicate_id VARCHAR, object_id VARCHAR);
+            INSERT INTO closure VALUES
+                ('X', 'rdfs:subClassOf', 'X'),
+                ('X', 'rdfs:subClassOf', 'A'),
+                ('X', 'BFO:0000050',     'A'),   -- A reached again, different predicate
+                ('A', 'rdfs:subClassOf', 'A');
+            CREATE TABLE edges (id VARCHAR, subject VARCHAR, predicate VARCHAR, object VARCHAR,
+                                category VARCHAR, negated BOOLEAN);
+        """)
+    return db_path
+
+
+def test_overlapping_closure_predicates_dedup_descendants(multi_predicate_kg):
+    """Counting distinct descendants (not rows) keeps IC well-formed when closure
+    predicates overlap: A is reachable from every descendant, so IC(A) == 0 and
+    no IC is negative (freq never exceeds N)."""
+    result = compute_information_content(
+        InformationContentConfig(
+            database_path=multi_predicate_kg,
+            closure_predicates=["rdfs:subClassOf", "BFO:0000050"],
+            quiet=True,
+        )
+    )
+    assert result.success
+    with GraphDatabase(multi_predicate_kg) as db:
+        ic = dict(db.conn.execute("SELECT term, ic FROM information_content").fetchall())
+
+    assert result.ic_term_count == 2  # N = {A, X}
+    assert ic["A"] == pytest.approx(0.0)          # row-count freq would give -log2(3/2) < 0
+    assert ic["X"] == pytest.approx(-math.log2(1 / 2))
+    assert all(v >= 0 for v in ic.values())       # no negative IC
+
+
 def test_information_content_custom_closure_predicate(closurized_kg):
     """With only the part_of predicate selected, IC is built from the single
     GO:1 row (N = 1) and no subClassOf terms appear."""

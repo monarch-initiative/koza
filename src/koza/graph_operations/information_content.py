@@ -70,19 +70,24 @@ def compute_information_content(config: InformationContentConfig) -> Information
                 f"closure_predicates={config.closure_predicates}"
             )
 
-            # information_content: IC = -log2(freq / N), freq = #closure rows
-            # with the term as object, N = #distinct closure objects — over the
-            # closure rows whose predicate is in closure_predicates.
+            # information_content: IC = -log2(freq / N), freq = #distinct
+            # descendants (closure subjects) reaching the term as object, N =
+            # #distinct closure objects — over the closure rows whose predicate
+            # is in closure_predicates. Count DISTINCT subjects, not rows: with
+            # overlapping closure_predicates a descendant can reach the same
+            # ancestor via more than one predicate, and counting rows would
+            # double-count it (and can push freq past N → negative IC).
             conn.execute(f"""
                 CREATE OR REPLACE TABLE information_content AS
                 WITH clo AS (
-                    SELECT {config.closure_object_column} AS o
+                    SELECT {config.closure_subject_column} AS s,
+                           {config.closure_object_column} AS o
                     FROM {config.closure_table}
                     WHERE {config.closure_predicate_column} IN ({preds})
                 ),
                 n AS (SELECT count(DISTINCT o) AS nn FROM clo)
                 SELECT o AS term,
-                       -log2(count(*)::DOUBLE / (SELECT nn FROM n)) AS ic
+                       -log2(count(DISTINCT s)::DOUBLE / (SELECT nn FROM n)) AS ic
                 FROM clo
                 GROUP BY o
             """)
@@ -99,7 +104,7 @@ def compute_information_content(config: InformationContentConfig) -> Information
                            {config.association_object_column} AS term
                     FROM {config.edges_table}
                     WHERE category IN ({categories})
-                      AND predicate = '{config.association_predicate}'{negated_filter}
+                      AND predicate = {_quote_list([config.association_predicate])}{negated_filter}
                 ),
                 clo AS (
                     SELECT {config.closure_subject_column} AS s,
