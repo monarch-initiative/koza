@@ -1635,6 +1635,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#koza-information-content" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        koza information-content
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#koza-prune" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1861,6 +1872,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#koza-information-content" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        koza information-content
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#koza-prune" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1998,6 +2020,7 @@
 <li><code>split</code>: Split a KGX file by specified fields with...</li>
 <li><code>schema-export</code>: Export the koza graph schema from a DuckDB...</li>
 <li><code>closurize</code>: Apply closure expansion to a merged graph:...</li>
+<li><code>information-content</code>: Compute information-content and...</li>
 <li><code>prune</code>: Prune graph by removing dangling edges and...</li>
 <li><code>append</code>: Append new KGX files to an existing graph...</li>
 <li><code>normalize</code>: Apply SSSOM mappings to normalize edge...</li>
@@ -2187,6 +2210,39 @@ and DenormalizedAssociation classes.</p>
 <li><code>--edge-field TEXT</code>: Edge field to fully expand (label + category + namespace + closure) (repeatable)</li>
 <li><code>--edge-field-to-label TEXT</code>: Edge field to expand with label/category/namespace only — no closure (repeatable)</li>
 <li><code>--additional-node-constraints TEXT</code>: SQL WHERE-clause fragment applied to per-predicate node aggregation joins. Reference edges columns via the alias <code>e</code> (e.g. <code>e.negated IS NULL</code>).</li>
+<li><code>-q, --quiet</code>: Suppress output</li>
+<li><code>--help</code>: Show this message and exit.</li>
+</ul>
+<h2 id="koza-information-content"><code>koza information-content</code></h2>
+<p>Compute information-content and closure-size tables for a closurized graph.</p>
+<p>Reads the <code>closure</code> table produced by <code>closurize</code> plus the <code>edges</code> table,
+and writes two tables a downstream similarity engine can read instead of
+rebuilding per process:</p>
+<p>information_content  (term, ic)     -- information content per closure term
+  closure_size         (entity, size) -- distinct closure subsumers per entity</p>
+<p>Run after <code>closurize</code>.</p>
+<p>Examples:
+    # Monarch defaults (rdfs:subClassOf, Gene/Disease has_phenotype)
+    koza information-content monarch-kg.duckdb</p>
+<pre><code># Custom closure predicate and association edge
+koza information-content graph.duckdb \
+    --closure-predicate rdfs:subClassOf --closure-predicate BFO:0000050 \
+    --association-category biolink:GeneToPhenotypicFeatureAssociation \
+    --association-predicate biolink:has_phenotype
+</code></pre>
+<p><strong>Usage</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>information-content<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>DATABASE
+</code></pre></div>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>DATABASE</code>: Path to an already-closurized DuckDB database file  [required]</li>
+</ul>
+<p><strong>Options</strong>:</p>
+<ul>
+<li><code>--closure-predicate TEXT</code>: Closure predicate(s) that define ancestry for IC / closure-size (repeatable). Default: rdfs:subClassOf</li>
+<li><code>--association-category TEXT</code>: Edge category that links an entity to a term, for the closure-size table (repeatable). Default: Monarch Gene/Disease has_phenotype categories</li>
+<li><code>--association-predicate TEXT</code>: Edge predicate for entity-&gt;term associations. Default: biolink:has_phenotype</li>
+<li><code>--include-negated</code>: Include negated associations in the closure-size table (default: excluded)</li>
 <li><code>-q, --quiet</code>: Suppress output</li>
 <li><code>--help</code>: Show this message and exit.</li>
 </ul>
