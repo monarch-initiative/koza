@@ -169,3 +169,47 @@ def test_information_content_custom_closure_predicate(closurized_kg):
     with GraphDatabase(closurized_kg) as db:
         terms = {r[0] for r in db.conn.execute("SELECT term FROM information_content").fetchall()}
     assert terms == {"GO:1"}
+
+
+@pytest.fixture
+def closurized_kg_multivalued_category(tmp_path):
+    """Like closurized_kg, but edges.category is VARCHAR[] (koza's default for
+    Biolink-multivalued slots) — exercises the list_has_any path in closure_size."""
+    db_path = tmp_path / "kg_mv.duckdb"
+    with GraphDatabase(db_path) as db:
+        db.conn.execute("""
+            CREATE TABLE closure (subject_id VARCHAR, predicate_id VARCHAR, object_id VARCHAR);
+            INSERT INTO closure VALUES
+                ('HP:1', 'rdfs:subClassOf', 'HP:1'),
+                ('HP:1', 'rdfs:subClassOf', 'HP:0'),
+                ('HP:1', 'rdfs:subClassOf', 'HP:ROOT'),
+                ('HP:0', 'rdfs:subClassOf', 'HP:0'),
+                ('HP:0', 'rdfs:subClassOf', 'HP:ROOT'),
+                ('HP:ROOT', 'rdfs:subClassOf', 'HP:ROOT');
+        """)
+        db.conn.execute("""
+            CREATE TABLE edges (id VARCHAR, subject VARCHAR, predicate VARCHAR, object VARCHAR,
+                                category VARCHAR[], negated BOOLEAN);
+            INSERT INTO edges VALUES
+                ('e1', 'GENE:1', 'biolink:has_phenotype', 'HP:1',
+                 ['biolink:GeneToPhenotypicFeatureAssociation'], false),
+                ('e2', 'DISEASE:1', 'biolink:has_phenotype', 'HP:0',
+                 ['biolink:DiseaseToPhenotypicFeatureAssociation'], false),
+                ('e3', 'GENE:2', 'biolink:has_phenotype', 'HP:1',
+                 ['biolink:GeneToGeneAssociation'], false);
+        """)
+    return db_path
+
+
+def test_closure_size_handles_multivalued_category(closurized_kg_multivalued_category):
+    """`category` as VARCHAR[] must use list_has_any, not scalar IN (which throws
+    a cast error on the array column). Regression for the production monarch-kg,
+    where merge preserves Biolink-multivalued category."""
+    result = compute_information_content(
+        InformationContentConfig(database_path=closurized_kg_multivalued_category, quiet=True)
+    )
+    assert result.success
+    with GraphDatabase(closurized_kg_multivalued_category) as db:
+        size = dict(db.conn.execute("SELECT entity, size FROM closure_size").fetchall())
+    # GENE:1 -> {HP:1,HP:0,HP:ROOT}=3; DISEASE:1 -> {HP:0,HP:ROOT}=2; GENE:2 dropped (category)
+    assert size == {"GENE:1": 3, "DISEASE:1": 2}
