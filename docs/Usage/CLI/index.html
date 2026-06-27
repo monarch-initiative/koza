@@ -1744,6 +1744,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#koza-biolink-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        koza biolink-check
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1981,6 +1992,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#koza-biolink-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        koza biolink-check
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2030,6 +2052,7 @@
 <li><code>edge-report</code>: Generate tabular edge report with...</li>
 <li><code>node-examples</code>: Generate sample rows per node type.</li>
 <li><code>edge-examples</code>: Generate sample rows per edge type.</li>
+<li><code>biolink-check</code>: Check a graph against Biolink type...</li>
 </ul>
 <h2 id="koza-transform"><code>koza transform</code></h2>
 <p>Transform a source file.</p>
@@ -2537,6 +2560,37 @@ koza edge-examples -d merged.duckdb -o examples.tsv -t predicate -t primary_know
 <li><code>-s, --sample-size INTEGER</code>: Number of examples per type  [default: 5]</li>
 <li><code>-t, --type-column TEXT</code>: Columns to partition examples by (can specify multiple)</li>
 <li><code>-q, --quiet</code>: Suppress progress output</li>
+<li><code>--help</code>: Show this message and exit.</li>
+</ul>
+<h2 id="koza-biolink-check"><code>koza biolink-check</code></h2>
+<p>Check a graph against Biolink type constraints (edge domain/range + node prefixes).</p>
+<p>Two Biolink-driven checks, run as set-operations over the graph&#x27;s own
+nodes/edges (no row iteration):</p>
+<ul>
+<li>subobj_errors: where each edge type MISMATCHES the current Biolink model&#x27;s
+  domain/range — which may be a model gap as readily as a data error (Biolink
+  is stricter than widely realized; the report is triage input, the edge count
+  the signal). Edges that ASSERT their association class (the edge <code>category</code>
+  slot) are checked against THAT class (BAD_SUBJECT / BAD_PREDICATE /
+  BAD_OBJECT); others fall back to &quot;is this triple legal at all&quot;
+  (NOT_IN_LEGAL_TYPES — advisory). At edge-type grain, so each mismatch
+  carries its edge count.</li>
+<li>prefix_errors: node CURIE prefix valid for its category.</li>
+</ul>
+<p>Example:
+    koza biolink-check graph.duckdb -o checks/</p>
+<p><strong>Usage</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>biolink-check<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>DATABASE
+</code></pre></div>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>DATABASE</code>: Path to the DuckDB database file to check  [required]</li>
+</ul>
+<p><strong>Options</strong>:</p>
+<ul>
+<li><code>-o, --output-dir TEXT</code>: Directory to write subobj_errors / prefix_errors tables</li>
+<li><code>-f, --format [tsv|parquet|jsonl]</code>: Output format  [default: parquet]</li>
+<li><code>-q, --quiet</code>: Suppress summary output</li>
 <li><code>--help</code>: Show this message and exit.</li>
 </ul>
 
