@@ -12,12 +12,14 @@ from tqdm import tqdm
 
 from koza.graph_operations import (
     append_graphs,
+    compute_information_content,
     convert_graph,
     export_graph,
     generate_connectivity_report,
     generate_edge_examples,
     closurize_graph,
     generate_edge_report,
+    run_biolink_check,
     generate_graph_stats,
     generate_node_examples,
     generate_node_report,
@@ -43,6 +45,7 @@ from koza.model.graph_operations import (
     EdgeExamplesConfig,
     EdgeReportConfig,
     ExportConfig,
+    BiolinkCheckConfig,
     FileSpec,
     GraphStatsConfig,
     JoinConfig,
@@ -51,6 +54,7 @@ from koza.model.graph_operations import (
     NodeReportConfig,
     NormalizeConfig,
     PruneConfig,
+    InformationContentConfig,
     QCReportConfig,
     SchemaReportConfig,
     SplitConfig,
@@ -127,6 +131,28 @@ def _infer_input_format(files: list[str]) -> InputFormat:
     return ext_to_format[ext]
 
 
+def _resolve_tabular_format(output: str | None, fmt: "TabularReportFormat | None") -> "TabularReportFormat":
+    """Resolve a tabular report's output format.
+
+    An explicit --format always wins. Otherwise infer from the -o file extension
+    (.parquet / .jsonl / .tsv / .txt), falling back to TSV — so `-o report.parquet`
+    Just Works without also passing `--format parquet`.
+    """
+    if fmt is not None:
+        return fmt
+    if output:
+        by_ext = {
+            ".parquet": TabularReportFormat.PARQUET,
+            ".jsonl": TabularReportFormat.JSONL,
+            ".tsv": TabularReportFormat.TSV,
+            ".txt": TabularReportFormat.TSV,
+        }
+        inferred = by_ext.get(Path(output).suffix.lower())
+        if inferred is not None:
+            return inferred
+    return TabularReportFormat.TSV
+
+
 @typer_app.command()
 def transform(
     config_or_transform: Annotated[
@@ -156,6 +182,10 @@ def transform(
     quiet: Annotated[
         bool,
         typer.Option("--quiet", "-q", help="Disable log output"),
+    ] = False,
+    verbose: Annotated[
+        bool,
+        typer.Option("--verbose", "-v", help="Enable debug-level logging (e.g. per-row 'filtered out' messages)"),
     ] = False,
     delimiter: Annotated[
         str | None,
@@ -204,7 +234,9 @@ def transform(
         def log(msg: str):
             tqdm.write(msg, end="")
 
-        logger.add(log, format=prompt, colorize=True)
+        # Default to INFO so the per-row "filtered out" debug lines don't spam a
+        # normal run; --verbose opts into DEBUG.
+        logger.add(log, format=prompt, colorize=True, level="DEBUG" if verbose else "INFO")
 
     input_path = Path(config_or_transform)
     is_transform_file = input_path.suffix == ".py"
@@ -724,6 +756,75 @@ def closurize(
             typer.echo(
                 f"Closurize completed: {result.denormalized_nodes_count:,} nodes, "
                 f"{result.denormalized_edges_count:,} edges"
+            )
+    except Exception as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(1)
+
+
+@typer_app.command(name="information-content")
+def information_content(
+    database: Annotated[str, typer.Argument(help="Path to an already-closurized DuckDB database file")],
+    closure_predicate: Annotated[list[str] | None, typer.Option(
+        "--closure-predicate",
+        help="Closure predicate(s) that define ancestry for IC / closure-size "
+             "(repeatable). Default: rdfs:subClassOf",
+    )] = None,
+    association_category: Annotated[list[str] | None, typer.Option(
+        "--association-category",
+        help="Edge category that links an entity to a term, for the closure-size "
+             "table (repeatable). Default: Monarch Gene/Disease has_phenotype categories",
+    )] = None,
+    association_predicate: Annotated[str | None, typer.Option(
+        "--association-predicate",
+        help="Edge predicate for entity->term associations. Default: biolink:has_phenotype",
+    )] = None,
+    include_negated: Annotated[bool, typer.Option(
+        "--include-negated",
+        help="Include negated associations in the closure-size table (default: excluded)",
+    )] = False,
+    quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress output")] = False,
+) -> None:
+    """Compute information-content and closure-size tables for a closurized graph.
+
+    Reads the `closure` table produced by `closurize` plus the `edges` table,
+    and writes two tables a downstream similarity engine can read instead of
+    rebuilding per process:
+
+      information_content  (term, ic)     -- information content per closure term
+      closure_size         (entity, size) -- distinct closure subsumers per entity
+
+    Run after `closurize`.
+
+    Examples:
+        # Monarch defaults (rdfs:subClassOf, Gene/Disease has_phenotype)
+        koza information-content monarch-kg.duckdb
+
+        # Custom closure predicate and association edge
+        koza information-content graph.duckdb \\
+            --closure-predicate rdfs:subClassOf --closure-predicate BFO:0000050 \\
+            --association-category biolink:GeneToPhenotypicFeatureAssociation \\
+            --association-predicate biolink:has_phenotype
+    """
+    try:
+        # Pass-through: let InformationContentConfig own defaults so they aren't
+        # duplicated between the CLI and the model.
+        config_kwargs = {
+            "database_path": Path(database),
+            "include_negated": include_negated,
+            "quiet": quiet,
+        }
+        if closure_predicate is not None:
+            config_kwargs["closure_predicates"] = closure_predicate
+        if association_category is not None:
+            config_kwargs["association_categories"] = association_category
+        if association_predicate is not None:
+            config_kwargs["association_predicate"] = association_predicate
+        result = compute_information_content(InformationContentConfig(**config_kwargs))
+        if not quiet:
+            typer.echo(
+                f"Information-content completed: {result.ic_term_count:,} terms, "
+                f"{result.closure_size_entity_count:,} entities"
             )
     except Exception as e:
         typer.echo(f"Error: {e}", err=True)
@@ -1309,8 +1410,9 @@ def node_report_cmd(
     ] = None,
     output: Annotated[str, typer.Option("--output", "-o", help="Path to output report file")] = None,
     format: Annotated[
-        TabularReportFormat, typer.Option("--format", help="Output format")
-    ] = TabularReportFormat.TSV,
+        TabularReportFormat | None,
+        typer.Option("--format", help="Output format (default: infer from -o extension, else tsv)"),
+    ] = None,
     columns: Annotated[
         list[str] | None,
         typer.Option("--column", "-c", help="Categorical columns to group by (can specify multiple)"),
@@ -1340,7 +1442,7 @@ def node_report_cmd(
         # Build config
         config_kwargs = {
             "output_file": Path(output) if output else None,
-            "output_format": format,
+            "output_format": _resolve_tabular_format(output, format),
             "quiet": quiet,
         }
 
@@ -1384,12 +1486,34 @@ def edge_report_cmd(
     ] = None,
     output: Annotated[str, typer.Option("--output", "-o", help="Path to output report file")] = None,
     format: Annotated[
-        TabularReportFormat, typer.Option("--format", help="Output format")
-    ] = TabularReportFormat.TSV,
+        TabularReportFormat | None,
+        typer.Option("--format", help="Output format (default: infer from -o extension, else tsv)"),
+    ] = None,
     columns: Annotated[
         list[str] | None,
         typer.Option("--column", "-c", help="Categorical columns to group by (can specify multiple)"),
     ] = None,
+    set_columns: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--set-column", "-s",
+            help="Slots to summarize as the distinct set of values per group instead "
+                 "of grouping on them (e.g. knowledge_level, agent_type, "
+                 "primary_knowledge_source). Switches to the SPQO 'edge type shape' summary.",
+        ),
+    ] = None,
+    percentile_columns: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--percentile-column", "-P",
+            help="Numeric slots to summarize per group as `<slot>_avg` + `<slot>_quantiles` "
+                 "(list slots summarize element count, e.g. publications; numeric slots the value).",
+        ),
+    ] = None,
+    proportion: Annotated[
+        bool,
+        typer.Option("--proportion", help="Add a `proportion` column (group count / total edges)."),
+    ] = False,
     quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress progress output")] = False,
 ):
     """
@@ -1397,6 +1521,10 @@ def edge_report_cmd(
 
     Joins edges to nodes to get subject_category, object_category, etc., then
     outputs count of edges grouped by categorical columns.
+
+    With --set-column, switches to a kgxval-style "edge type shape" summary: one
+    row per (subject_category, predicate, object_category, ...) group, with each
+    set column reported as the distinct set of values that group spans.
 
     Examples:
 
@@ -1409,6 +1537,11 @@ def edge_report_cmd(
         # Custom columns
         koza edge-report -d merged.duckdb -o report.tsv \\
             -c subject_category -c predicate -c object_category -c primary_knowledge_source
+
+        # SPQO edge-type-shape summary with proportion + term sets
+        koza edge-report -d merged.duckdb -o summary.parquet --format parquet --proportion \\
+            -c subject_category -c predicate -c object_category \\
+            -s knowledge_level -s agent_type -s primary_knowledge_source
     """
     try:
         if not database and not edge_file:
@@ -1417,7 +1550,7 @@ def edge_report_cmd(
         # Build config
         config_kwargs = {
             "output_file": Path(output) if output else None,
-            "output_format": format,
+            "output_format": _resolve_tabular_format(output, format),
             "quiet": quiet,
         }
 
@@ -1441,6 +1574,12 @@ def edge_report_cmd(
 
         if columns:
             config_kwargs["categorical_columns"] = columns
+        if set_columns:
+            config_kwargs["set_columns"] = set_columns
+        if percentile_columns:
+            config_kwargs["percentile_columns"] = percentile_columns
+        if proportion:
+            config_kwargs["include_proportion"] = True
 
         config = EdgeReportConfig(**config_kwargs)
         result = generate_edge_report(config)
@@ -1465,8 +1604,9 @@ def node_examples_cmd(
     ] = None,
     output: Annotated[str, typer.Option("--output", "-o", help="Path to output examples file")] = None,
     format: Annotated[
-        TabularReportFormat, typer.Option("--format", help="Output format")
-    ] = TabularReportFormat.TSV,
+        TabularReportFormat | None,
+        typer.Option("--format", help="Output format (default: infer from -o extension, else tsv)"),
+    ] = None,
     sample_size: Annotated[
         int, typer.Option("--sample-size", "-n", help="Number of examples per type")
     ] = 5,
@@ -1498,7 +1638,7 @@ def node_examples_cmd(
         # Build config
         config_kwargs = {
             "output_file": Path(output) if output else None,
-            "output_format": format,
+            "output_format": _resolve_tabular_format(output, format),
             "sample_size": sample_size,
             "type_column": type_column,
             "quiet": quiet,
@@ -1541,8 +1681,9 @@ def edge_examples_cmd(
     ] = None,
     output: Annotated[str, typer.Option("--output", "-o", help="Path to output examples file")] = None,
     format: Annotated[
-        TabularReportFormat, typer.Option("--format", help="Output format")
-    ] = TabularReportFormat.TSV,
+        TabularReportFormat | None,
+        typer.Option("--format", help="Output format (default: infer from -o extension, else tsv)"),
+    ] = None,
     sample_size: Annotated[
         int, typer.Option("--sample-size", "-s", help="Number of examples per type")
     ] = 5,
@@ -1576,7 +1717,7 @@ def edge_examples_cmd(
         # Build config
         config_kwargs = {
             "output_file": Path(output) if output else None,
-            "output_format": format,
+            "output_format": _resolve_tabular_format(output, format),
             "sample_size": sample_size,
             "quiet": quiet,
         }
@@ -1693,6 +1834,58 @@ def convert(
                 typer.echo(f"Wrote {f}")
     except Exception as e:
         typer.echo(f"Error during convert: {e}", err=True)
+        raise typer.Exit(1)
+
+
+@typer_app.command(name="biolink-check")
+def biolink_check(
+    database: Annotated[str, typer.Argument(help="Path to the DuckDB database file to check")],
+    output_dir: Annotated[
+        str | None,
+        typer.Option("--output-dir", "-o", help="Directory to write subobj_errors / prefix_errors tables"),
+    ] = None,
+    format: Annotated[
+        TabularReportFormat, typer.Option("--format", "-f", help="Output format")
+    ] = TabularReportFormat.PARQUET,
+    quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress summary output")] = False,
+) -> None:
+    """Check a graph against Biolink type constraints (edge domain/range + node prefixes).
+
+    Two Biolink-driven checks, run as set-operations over the graph's own
+    nodes/edges (no row iteration):
+
+    - subobj_errors: where each edge type MISMATCHES the current Biolink model's
+      domain/range — which may be a model gap as readily as a data error (Biolink
+      is stricter than widely realized; the report is triage input, the edge count
+      the signal). Edges that ASSERT their association class (the edge `category`
+      slot) are checked against THAT class (BAD_SUBJECT / BAD_PREDICATE /
+      BAD_OBJECT); others fall back to "is this triple legal at all"
+      (NOT_IN_LEGAL_TYPES — advisory). At edge-type grain, so each mismatch
+      carries its edge count.
+    - prefix_errors: node CURIE prefix valid for its category.
+
+    Example:
+        koza biolink-check graph.duckdb -o checks/
+    """
+    try:
+        config = BiolinkCheckConfig(
+            database_path=Path(database),
+            output_dir=Path(output_dir) if output_dir else None,
+            output_format=format,
+            quiet=quiet,
+        )
+        result = run_biolink_check(config)
+        if not quiet:
+            typer.echo(
+                f"✓ {result.subobj_strict_error_types} strict + "
+                f"{result.subobj_advisory_error_types} advisory edge-type violations, "
+                f"{result.prefix_error_types} prefix violations "
+                f"({result.total_time_seconds:.1f}s)"
+            )
+            if result.output_dir:
+                typer.echo(f"Tables written to: {result.output_dir}")
+    except Exception as e:
+        typer.echo(f"Error during biolink-check: {e}", err=True)
         raise typer.Exit(1)
 
 

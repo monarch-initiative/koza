@@ -47,7 +47,7 @@ class RowFilter:
 
             comparison_method = self.operators.get(column_filter.filter_code)
             if comparison_method is None:
-                raise ValueError("No such operator for filter code `{column_filter.filter_code}`")
+                raise ValueError(f"No such operator for filter code `{column_filter.filter_code}`")
 
             comparison_match = comparison_method(row_value, column_filter.value)
 

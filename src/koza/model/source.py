@@ -143,7 +143,7 @@ class Source:
             numlines = 0
 
             if self.show_progress and isinstance(reader, CSVReader):
-                reader.header  # noqa: B018
+                _ = reader.header
                 numlines = sum(1 for _ in reader.io_str)
                 pbar = tqdm(reader, total=numlines, leave=True)
                 reader.reset()
@@ -158,6 +158,8 @@ class Source:
                     pbar.update(1)
 
                 if self._filter and not self._filter.include_row(item):
+                    # Deferred formatting: only render the row if DEBUG is enabled.
+                    logger.debug("Row filtered out: {}", item)
                     continue
 
                 self.last_row = item
