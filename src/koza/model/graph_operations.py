@@ -187,6 +187,56 @@ class SplitResult(BaseModel):
     total_time_seconds: float
 
 
+class ExportConfig(BaseModel):
+    """Configuration for the export operation (DuckDB graph -> single KGX files).
+
+    The inverse of load/join: write the canonical `nodes` / `edges` tables to one
+    file each, without fragmenting by a field (the way `split` does).
+    """
+
+    database_path: Path
+    output_dir: Path = Field(default=Path("./output"))
+    output_format: KGXFormat = KGXFormat.TSV
+    tables: list[str] | None = None  # default: whichever of nodes / edges exist
+    quiet: bool = False
+
+    @field_validator("database_path")
+    @classmethod
+    def validate_database_exists(cls, v: Path) -> Path:
+        if not v.exists():
+            raise ValueError(f"Database file not found: {v}")
+        return v
+
+
+class ConvertConfig(BaseModel):
+    """Configuration for the convert operation (KGX files -> single KGX files).
+
+    A one-shot format conversion = load + export composed.
+    """
+
+    node_files: list[Path] = Field(default_factory=list)
+    edge_files: list[Path] = Field(default_factory=list)
+    output_dir: Path = Field(default=Path("./output"))
+    output_format: KGXFormat = KGXFormat.TSV
+    slots_file: Path | None = None  # explicit JSONL schema (skips inference), as in load
+    quiet: bool = False
+
+    @model_validator(mode="after")
+    def _require_input(self):
+        if not self.node_files and not self.edge_files:
+            raise ValueError("convert needs at least one of node_files / edge_files")
+        return self
+
+
+class ExportResult(BaseModel):
+    """Result of an export / convert operation."""
+
+    output_files: list[Path] = Field(default_factory=list)
+    row_counts: dict[str, int] = Field(default_factory=dict)  # table -> rows written
+    output_format: KGXFormat = KGXFormat.TSV
+    total_time_seconds: float = 0.0
+
+
 class PruneConfig(BaseModel):
     """Configuration for prune operation"""
 
