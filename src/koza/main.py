@@ -153,6 +153,10 @@ def transform(
         bool,
         typer.Option("--quiet", "-q", help="Disable log output"),
     ] = False,
+    verbose: Annotated[
+        bool,
+        typer.Option("--verbose", "-v", help="Enable debug-level logging (e.g. per-row 'filtered out' messages)"),
+    ] = False,
     delimiter: Annotated[
         str | None,
         typer.Option("--delimiter", "-d", help="Field delimiter for CSV/TSV files (default: tab for .tsv, comma for .csv)"),
@@ -200,7 +204,9 @@ def transform(
         def log(msg: str):
             tqdm.write(msg, end="")
 
-        logger.add(log, format=prompt, colorize=True)
+        # Default to INFO so the per-row "filtered out" debug lines don't spam a
+        # normal run; --verbose opts into DEBUG.
+        logger.add(log, format=prompt, colorize=True, level="DEBUG" if verbose else "INFO")
 
     input_path = Path(config_or_transform)
     is_transform_file = input_path.suffix == ".py"

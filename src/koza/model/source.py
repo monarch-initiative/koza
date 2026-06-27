@@ -158,7 +158,8 @@ class Source:
                     pbar.update(1)
 
                 if self._filter and not self._filter.include_row(item):
-                    logger.debug(f"Row filtered out: {item}")
+                    # Deferred formatting: only render the row if DEBUG is enabled.
+                    logger.debug("Row filtered out: {}", item)
                     continue
 
                 self.last_row = item
