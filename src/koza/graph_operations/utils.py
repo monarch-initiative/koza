@@ -69,31 +69,62 @@ def _generate_multivalued_select(
     return ", ".join(select_parts)
 
 
+def _injected_columns(generate_provided_by: bool) -> set[str]:
+    """The columns the loader injects (`file_source`, optionally `provided_by`).
+
+    These must be stripped from the input if it already supplies them, or
+    DuckDB's UNION ALL BY NAME auto-renames the duplicates (file_source_1 etc).
+    """
+    injected = {"file_source"}
+    if generate_provided_by:
+        injected.add("provided_by")
+    return injected
+
+
+def _format_exclude(present: set[str], file_path: Path | None = None) -> str:
+    """Render the EXCLUDE clause for whichever injected columns are present."""
+    if not present:
+        return ""
+    for col in sorted(present):
+        logger.debug(f"Excluding existing {col!r} column from {file_path}")
+    return f" EXCLUDE ({', '.join(sorted(present))})"
+
+
+def _injected_exclude_from_slots(slots: list[str], generate_provided_by: bool) -> str:
+    """EXCLUDE clause derived from an explicit slot list — without reading the file.
+
+    With an explicit `read_json(columns=...)` the read's schema *is* the slot
+    list, so the injected-column collisions can be computed from the slots alone.
+    Skipping the DESCRIBE probe this way means `load_file` touches the input
+    exactly once on the explicit-schema path — which is what lets it read a
+    non-seekable stream (a FIFO fed by `tar -xO …`), so a compressed release can
+    be loaded without first extracting its multi-GB JSONL to disk.
+    """
+    present = set(slots) & _injected_columns(generate_provided_by)
+    return _format_exclude(present)
+
+
 def _build_injected_columns_exclude(
     conn: duckdb.DuckDBPyConnection,
     read_stmt: str,
     file_path: Path,
     generate_provided_by: bool,
 ) -> str:
-    """Return a DuckDB EXCLUDE clause stripping any columns the loader is
-    about to inject (`file_source`, optionally `provided_by`). Without this
-    UNION ALL BY NAME ends up with auto-renamed duplicates (file_source_1
-    etc.) when an upstream ingest already supplies the column.
+    """EXCLUDE clause for an inferred-schema read: DESCRIBE the input to find
+    which injected columns it already supplies.
+
+    This reads the file. When an explicit slot list is known, use
+    `_injected_exclude_from_slots` instead — it computes the same result without
+    the extra read.
     """
-    injected = {"file_source"}
-    if generate_provided_by:
-        injected.add("provided_by")
+    injected = _injected_columns(generate_provided_by)
     try:
         schema_result = conn.execute(f"DESCRIBE SELECT * FROM {read_stmt}").fetchall()
         present = {row[0] for row in schema_result} & injected
     except Exception as e:
         logger.debug(f"Could not detect schema for {file_path}: {e}")
         return ""
-    if not present:
-        return ""
-    for col in sorted(present):
-        logger.debug(f"Excluding existing {col!r} column from {file_path}")
-    return f" EXCLUDE ({', '.join(sorted(present))})"
+    return _format_exclude(present, file_path)
 
 
 _SLOT_NAME_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
@@ -244,6 +275,15 @@ class GraphDatabase:
 
             read_stmt = get_duckdb_read_statement(file_spec)
 
+            # The single-read "explicit columns" optimisations below are only
+            # valid when the read schema is guaranteed to equal file_spec.slots.
+            # That holds for JSONL, where get_duckdb_read_statement emits
+            # read_json(columns={...}) keyed by the slots; for TSV/Parquet the
+            # slots are ignored and the read returns the file's real columns, so
+            # we must fall back to DESCRIBE-based handling (which is seekable and
+            # therefore safe for those formats).
+            explicit_columns = bool(file_spec.slots) and file_spec.format == KGXFormat.JSONL
+
             # Create unique temp table name for this file
             safe_filename = file_spec.path.stem.replace("-", "_").replace(".", "_")
             temp_table_name = f"temp_{file_spec.file_type.value}_{safe_filename}_{id(file_spec)}"
@@ -257,10 +297,16 @@ class GraphDatabase:
 
             # Strip any pre-existing file_source / provided_by from the input
             # so our injected versions don't collide (DuckDB UNION ALL BY NAME
-            # would otherwise auto-rename to file_source_1 etc).
-            exclude_clause = _build_injected_columns_exclude(
-                self.conn, read_stmt, file_spec.path, generate_provided_by
-            )
+            # would otherwise auto-rename to file_source_1 etc). With an explicit
+            # slot list we know the read schema already, so derive the exclude
+            # from the slots instead of DESCRIBE-ing the file — keeping the
+            # explicit-schema path to a single read (FIFO/stream-safe).
+            if explicit_columns:
+                exclude_clause = _injected_exclude_from_slots(file_spec.slots, generate_provided_by)
+            else:
+                exclude_clause = _build_injected_columns_exclude(
+                    self.conn, read_stmt, file_spec.path, generate_provided_by
+                )
 
             # Load into temp table with source tracking and optional provided_by
             extra_cols_str = ", " + ", ".join(extra_columns) if extra_columns else ""
@@ -303,10 +349,12 @@ class GraphDatabase:
 
             # Transform pipe-delimited multivalued fields to arrays
             # Skip file_source and provided_by (when generated) since we add them as literals.
-            # When the user supplied explicit slots, the column types already reflect
-            # Biolink's multivalued declarations; the single-valued flatten path
-            # would undo that, so skip the transform entirely.
-            if not file_spec.slots:
+            # When the user supplied explicit slots on the JSONL path, the column
+            # types already reflect Biolink's multivalued declarations; the
+            # single-valued flatten path would undo that, so skip the transform
+            # entirely. For TSV/Parquet (read_csv/read_parquet ignore the slots)
+            # the columns are still pipe-delimited scalars and need the transform.
+            if not explicit_columns:
                 skip_columns = {"file_source"}
                 if generate_provided_by:
                     skip_columns.add("provided_by")

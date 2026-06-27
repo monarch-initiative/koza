@@ -614,6 +614,76 @@ class ClosurizeResult(BaseModel):
     errors: list[str] = Field(default_factory=list)
 
 
+# Default Biolink association categories that link an entity to a phenotype term.
+# Used to derive each entity's annotation-closure size. Monarch-flavored, like
+# ClosurizeConfig's defaults — non-Monarch consumers should pass their own.
+_DEFAULT_ASSOCIATION_CATEGORIES = [
+    "biolink:GeneToPhenotypicFeatureAssociation",
+    "biolink:DiseaseToPhenotypicFeatureAssociation",
+]
+
+
+class InformationContentConfig(BaseModel):
+    """Configuration for the information-content operation.
+
+    Adds two semantic-similarity precompute tables to an already-closurized
+    graph database (it reads the `closure` table closurize produces):
+
+    - `information_content` (term, ic): information content of each closure
+      object, ``IC = -log2(freq / N)`` where ``freq`` is the number of closure
+      rows with the term as object and ``N`` is the number of distinct closure
+      objects, both over the rows whose predicate is in `closure_predicates`
+      (this is oaklib's `information-content`).
+    - `closure_size` (entity, size): the number of distinct closure ancestors
+      (subsumers) reachable from the phenotype terms an entity is associated
+      with, over the associations selected by `association_*` — the search-time
+      profile-size denominator.
+
+    Both tables let a downstream similarity engine skip the per-process build.
+    Defaults are Monarch-flavored (rdfs:subClassOf for closure, has_phenotype
+    Gene/Disease associations), matching the ClosurizeConfig convention — other
+    consumers should pass explicit values.
+    """
+
+    database_path: Path
+    # Closure source (the table + columns closurize materializes).
+    closure_table: str = "closure"
+    closure_subject_column: str = "subject_id"
+    closure_predicate_column: str = "predicate_id"
+    closure_object_column: str = "object_id"
+    # Which closure predicates define ancestry for IC / closure-size.
+    closure_predicates: list[str] = Field(default_factory=lambda: ["rdfs:subClassOf"])
+    # Association source (entity -> term edges) for the closure-size table.
+    edges_table: str = "edges"
+    association_subject_column: str = "subject"
+    association_object_column: str = "object"
+    association_categories: list[str] = Field(
+        default_factory=lambda: list(_DEFAULT_ASSOCIATION_CATEGORIES)
+    )
+    association_predicate: str = "biolink:has_phenotype"
+    # When False, negated associations are excluded from the closure-size table.
+    include_negated: bool = False
+    quiet: bool = False
+
+    @field_validator("database_path")
+    @classmethod
+    def validate_path_exists(cls, v: Path) -> Path:
+        if not v.exists():
+            raise ValueError(f"File not found: {v}")
+        return v
+
+
+class InformationContentResult(BaseModel):
+    """Result of the information-content operation."""
+
+    success: bool
+    ic_term_count: int
+    closure_size_entity_count: int
+    total_time_seconds: float
+    summary: "OperationSummary"
+    errors: list[str] = Field(default_factory=list)
+
+
 class QCReportConfig(BaseModel):
     """Configuration for QC report generation."""
 
@@ -714,7 +784,12 @@ class EdgeReportConfig(BaseModel):
     output_file: Path | None = None
     output_format: TabularReportFormat = TabularReportFormat.TSV
 
-    # Default categorical columns for edges
+    # Default categorical columns for edges.
+    # NOTE: `supporting_data_source` is included by default. On graphs that carry
+    # that column this adds a GROUP BY dimension, so the default report gains a
+    # column and splits rows relative to the prior default — a deliberate change,
+    # not a behavior-preserving one. Columns absent from a graph are skipped, so
+    # graphs without it are unaffected.
     categorical_columns: list[str] = Field(
         default_factory=lambda: [
             "subject_category",
@@ -724,11 +799,27 @@ class EdgeReportConfig(BaseModel):
             "object_namespace",
             "primary_knowledge_source",
             "aggregator_knowledge_source",
+            "supporting_data_source",
             "knowledge_level",
             "agent_type",
             "provided_by",
         ]
     )
+
+    # Opt-in "shape of the edge type" enrichment (kgxval-style SPQO summary).
+    # When set_columns is non-empty, those slots are NOT grouped on — instead each
+    # group keeps the distinct set of their values via array_agg, so e.g. the
+    # (subject_category, predicate, object_category) group reports the full set of
+    # knowledge_level / agent_type / knowledge-source terms it spans. A slot named
+    # in both lists is treated as a set column (pulled out of the GROUP BY).
+    set_columns: list[str] = Field(default_factory=list)
+    # Per-group numeric summaries. For a list-typed slot (e.g. publications) the
+    # element COUNT per edge is summarized (missing → 0); for a numeric slot the
+    # value itself is. Each yields `<slot>_avg` and `<slot>_quantiles`
+    # ([min, p25, median, p75, p90, max]).
+    percentile_columns: list[str] = Field(default_factory=list)
+    # Add a `proportion` column: each group's count / total edge count.
+    include_proportion: bool = False
 
     quiet: bool = False
 
@@ -829,6 +920,37 @@ class EdgeExamplesResult(BaseModel):
     output_file: Path | None = None
     types_sampled: int = 0
     total_examples: int = 0
+    total_time_seconds: float = 0.0
+
+
+# Biolink-check models
+
+
+class BiolinkCheckConfig(BaseModel):
+    """Configuration for the biolink-check (edge domain/range + node prefixes)."""
+
+    database_path: Path
+    output_dir: Path | None = None  # Directory for subobj_errors / prefix_errors tables
+    output_format: TabularReportFormat = TabularReportFormat.PARQUET
+    quiet: bool = False
+
+    @field_validator("database_path")
+    @classmethod
+    def validate_database_exists(cls, v: Path) -> Path:
+        if not v.exists():
+            raise ValueError(f"Database file not found: {v}")
+        return v
+
+
+class BiolinkCheckResult(BaseModel):
+    """Result from Biolink validation. Counts are of violating *types*, not edges."""
+
+    database_path: Path
+    output_dir: Path | None = None
+    subobj_error_types: int = 0  # distinct edge types in violation
+    subobj_strict_error_types: int = 0  # checked against the edge's asserted association class
+    subobj_advisory_error_types: int = 0  # fallback union check (coverage-limited, advisory)
+    prefix_error_types: int = 0  # distinct (category, prefix) violations
     total_time_seconds: float = 0.0
 
 
