@@ -27,6 +27,7 @@ from .information_content import compute_information_content
 from .schema import generate_schema_report, print_schema_summary, write_schema_report_yaml
 from .split import split_graph
 from .utils import GraphDatabase, print_operation_summary
+from .biolink_check import run_biolink_check
 
 __all__ = [
     "join_graphs",
@@ -56,6 +57,7 @@ __all__ = [
     # Tabular reports
     "generate_node_report",
     "generate_edge_report",
+    "run_biolink_check",
     "generate_node_examples",
     "generate_edge_examples",
 ]
