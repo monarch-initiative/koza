@@ -31,7 +31,9 @@ from koza.graph_operations import (
     prepare_load_config_from_paths,
     prepare_mapping_file_specs_from_paths,
     prepare_merge_config_from_paths,
+    profile_graph,
     prune_graph,
+    render_profile,
     split_graph,
 )
 from koza.model.formats import InputFormat, OutputFormat
@@ -49,6 +51,7 @@ from koza.model.graph_operations import (
     NodeExamplesConfig,
     NodeReportConfig,
     NormalizeConfig,
+    ProfileConfig,
     PruneConfig,
     InformationContentConfig,
     QCReportConfig,
@@ -822,6 +825,69 @@ def information_content(
                 f"Information-content completed: {result.ic_term_count:,} terms, "
                 f"{result.closure_size_entity_count:,} entities"
             )
+    except Exception as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(1)
+
+
+@typer_app.command()
+def profile(
+    database: Annotated[str, typer.Argument(help="Path to the DuckDB database file to profile")],
+    tables: Annotated[
+        list[str] | None,
+        typer.Option("--table", "-t", help="Table(s) to profile (repeatable). Default: auto-detect "
+                     "nodes / edges / denormalized_* that are present."),
+    ] = None,
+    columns: Annotated[
+        list[str] | None,
+        typer.Option("--column", "-c", help="Override auto-detection — profile exactly these columns (repeatable)."),
+    ] = None,
+    top_n: Annotated[int, typer.Option("--top", "-n", help="Top values to show per column")] = 10,
+    max_distinct: Annotated[
+        int, typer.Option("--max-distinct", help="Cardinality cap for treating a column as categorical")
+    ] = 50,
+    max_ratio: Annotated[
+        float, typer.Option("--max-ratio", help="Or distinct/row-count ratio cap for categorical")
+    ] = 0.01,
+    output_file: Annotated[
+        str | None,
+        typer.Option("--output", "-o", help="Also write long-form (table, column, value, count) to a file"),
+    ] = None,
+    output_format: Annotated[
+        TabularReportFormat, typer.Option("--format", "-f", help="Format for --output")
+    ] = TabularReportFormat.TSV,
+    quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress the rendered summary")] = False,
+) -> None:
+    """Profile the shape of a graph: schema-smart categorical breakdowns.
+
+    Renders per-column marginal distributions (counts by predicate, category,
+    namespace, knowledge source, ...) for each table. Which columns are
+    "categorical" is auto-detected from the Biolink schema (enums, the category
+    designator, knowledge-source/`type` slot families) plus a DuckDB cardinality
+    probe — so it adapts to whatever graph you point it at, not a fixed list.
+
+    Examples:
+        koza profile graph.duckdb
+        koza profile graph.duckdb -t denormalized_edges --top 15
+        koza profile graph.duckdb -o shape.parquet -f parquet
+    """
+    try:
+        config = ProfileConfig(
+            database_path=Path(database),
+            tables=tables or None,
+            columns=columns or None,
+            top_n=top_n,
+            max_distinct=max_distinct,
+            max_ratio=max_ratio,
+            output_file=Path(output_file) if output_file else None,
+            output_format=output_format,
+            quiet=quiet,
+        )
+        result = profile_graph(config)
+        if not quiet:
+            typer.echo(render_profile(result))
+        if result.output_file:
+            typer.echo(f"Wrote marginals to {result.output_file}")
     except Exception as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(1)

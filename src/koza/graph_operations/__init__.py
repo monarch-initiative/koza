@@ -13,6 +13,7 @@ from .join import join_graphs, prepare_file_specs_from_paths
 from .load import load_graph, prepare_load_config_from_paths
 from .merge import merge_graphs, prepare_merge_config_from_paths
 from .normalize import normalize_graph, prepare_mapping_file_specs_from_paths
+from .profile import detect_categorical_columns, profile_graph, render_profile
 from .prune import prune_graph
 from .report import (
     generate_edge_examples,
@@ -33,6 +34,9 @@ __all__ = [
     "join_graphs",
     "load_graph",
     "prepare_load_config_from_paths",
+    "profile_graph",
+    "render_profile",
+    "detect_categorical_columns",
     "split_graph",
     "prune_graph",
     "append_graphs",
