@@ -1646,6 +1646,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#koza-profile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        koza profile
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#koza-prune" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1738,6 +1749,28 @@
     <span class="md-ellipsis">
       
         koza edge-examples
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        koza export
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza-convert" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        koza convert
       
     </span>
   </a>
@@ -1894,6 +1927,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#koza-profile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        koza profile
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#koza-prune" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1993,6 +2037,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#koza-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        koza export
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza-convert" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        koza convert
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#koza-biolink-check" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2043,6 +2109,7 @@
 <li><code>schema-export</code>: Export the koza graph schema from a DuckDB...</li>
 <li><code>closurize</code>: Apply closure expansion to a merged graph:...</li>
 <li><code>information-content</code>: Compute information-content and...</li>
+<li><code>profile</code>: Profile the shape of a graph: schema-smart...</li>
 <li><code>prune</code>: Prune graph by removing dangling edges and...</li>
 <li><code>append</code>: Append new KGX files to an existing graph...</li>
 <li><code>normalize</code>: Apply SSSOM mappings to normalize edge...</li>
@@ -2052,6 +2119,8 @@
 <li><code>edge-report</code>: Generate tabular edge report with...</li>
 <li><code>node-examples</code>: Generate sample rows per node type.</li>
 <li><code>edge-examples</code>: Generate sample rows per edge type.</li>
+<li><code>export</code>: Write a koza DuckDB graph&#x27;s nodes/edges...</li>
+<li><code>convert</code>: One-shot KGX file format conversion (=...</li>
 <li><code>biolink-check</code>: Check a graph against Biolink type...</li>
 </ul>
 <h2 id="koza-transform"><code>koza transform</code></h2>
@@ -2268,6 +2337,36 @@ koza information-content graph.duckdb \
 <li><code>--association-predicate TEXT</code>: Edge predicate for entity-&gt;term associations. Default: biolink:has_phenotype</li>
 <li><code>--include-negated</code>: Include negated associations in the closure-size table (default: excluded)</li>
 <li><code>-q, --quiet</code>: Suppress output</li>
+<li><code>--help</code>: Show this message and exit.</li>
+</ul>
+<h2 id="koza-profile"><code>koza profile</code></h2>
+<p>Profile the shape of a graph: schema-smart categorical breakdowns.</p>
+<p>Renders per-column marginal distributions (counts by predicate, category,
+namespace, knowledge source, ...) for each table. Which columns are
+&quot;categorical&quot; is auto-detected from the Biolink schema (enums, the category
+designator, knowledge-source/<code>type</code> slot families) plus a DuckDB cardinality
+probe — so it adapts to whatever graph you point it at, not a fixed list.</p>
+<p>Examples:
+    koza profile graph.duckdb
+    koza profile graph.duckdb -t denormalized_edges --top 15
+    koza profile graph.duckdb -o shape.parquet -f parquet</p>
+<p><strong>Usage</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>profile<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>DATABASE
+</code></pre></div>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>DATABASE</code>: Path to the DuckDB database file to profile  [required]</li>
+</ul>
+<p><strong>Options</strong>:</p>
+<ul>
+<li><code>-t, --table TEXT</code>: Table(s) to profile (repeatable). Default: auto-detect nodes / edges / denormalized_* that are present.</li>
+<li><code>-c, --column TEXT</code>: Override auto-detection — profile exactly these columns (repeatable).</li>
+<li><code>-n, --top INTEGER</code>: Top values to show per column  [default: 10]</li>
+<li><code>--max-distinct INTEGER</code>: Cardinality cap for treating a column as categorical  [default: 50]</li>
+<li><code>--max-ratio FLOAT</code>: Or distinct/row-count ratio cap for categorical  [default: 0.01]</li>
+<li><code>-o, --output TEXT</code>: Also write long-form (table, column, value, count) to a file</li>
+<li><code>-f, --format [tsv|parquet|jsonl]</code>: Format for --output  [default: tsv]</li>
+<li><code>-q, --quiet</code>: Suppress the rendered summary</li>
 <li><code>--help</code>: Show this message and exit.</li>
 </ul>
 <h2 id="koza-prune"><code>koza prune</code></h2>
@@ -2560,6 +2659,49 @@ koza edge-examples -d merged.duckdb -o examples.tsv -t predicate -t primary_know
 <li><code>-s, --sample-size INTEGER</code>: Number of examples per type  [default: 5]</li>
 <li><code>-t, --type-column TEXT</code>: Columns to partition examples by (can specify multiple)</li>
 <li><code>-q, --quiet</code>: Suppress progress output</li>
+<li><code>--help</code>: Show this message and exit.</li>
+</ul>
+<h2 id="koza-export"><code>koza export</code></h2>
+<p>Write a koza DuckDB graph&#x27;s nodes/edges out as single KGX files.</p>
+<p>The inverse of load/join: one file per table, no fragmentation (unlike split).
+For TSV, scalar multivalued columns are |-delimited and nested object columns
+(sources, ...) are written as JSON-in-cell; JSONL/Parquet keep nested data
+natively.</p>
+<p>Examples:
+    koza export graph.duckdb -o output/ -f tsv
+    koza export graph.duckdb -o output/ -f jsonl</p>
+<p><strong>Usage</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>DATABASE
+</code></pre></div>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>DATABASE</code>: Path to the DuckDB graph to export  [required]</li>
+</ul>
+<p><strong>Options</strong>:</p>
+<ul>
+<li><code>-o, --output-dir TEXT</code>: Output directory  [default: ./output]</li>
+<li><code>-f, --format [tsv|jsonl|parquet]</code>: Output format  [default: tsv]</li>
+<li><code>-q, --quiet</code>: Suppress output</li>
+<li><code>--help</code>: Show this message and exit.</li>
+</ul>
+<h2 id="koza-convert"><code>koza convert</code></h2>
+<p>One-shot KGX file format conversion (= load + export).</p>
+<p>Loads the input file(s) into a temporary DuckDB and writes them back out in
+the requested format, applying the same serialization policy as <code>export</code>.</p>
+<p>Examples:
+    koza convert -e edges.jsonl -o output/ -f tsv
+    koza convert -n nodes.jsonl -e edges.jsonl -o output/ -f parquet</p>
+<p><strong>Usage</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>convert<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</code></pre></div>
+<p><strong>Options</strong>:</p>
+<ul>
+<li><code>-n, --nodes TEXT</code>: Node file(s) or glob(s)</li>
+<li><code>-e, --edges TEXT</code>: Edge file(s) or glob(s)</li>
+<li><code>-o, --output-dir TEXT</code>: Output directory  [default: ./output]</li>
+<li><code>-f, --format [tsv|jsonl|parquet]</code>: Output format  [default: tsv]</li>
+<li><code>--slots-file TEXT</code>: YAML {nodes:[...], edges:[...]} explicit JSONL schema (skips inference)</li>
+<li><code>-q, --quiet</code>: Suppress output</li>
 <li><code>--help</code>: Show this message and exit.</li>
 </ul>
 <h2 id="koza-biolink-check"><code>koza biolink-check</code></h2>
