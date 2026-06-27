@@ -784,7 +784,12 @@ class EdgeReportConfig(BaseModel):
     output_file: Path | None = None
     output_format: TabularReportFormat = TabularReportFormat.TSV
 
-    # Default categorical columns for edges
+    # Default categorical columns for edges.
+    # NOTE: `supporting_data_source` is included by default. On graphs that carry
+    # that column this adds a GROUP BY dimension, so the default report gains a
+    # column and splits rows relative to the prior default — a deliberate change,
+    # not a behavior-preserving one. Columns absent from a graph are skipped, so
+    # graphs without it are unaffected.
     categorical_columns: list[str] = Field(
         default_factory=lambda: [
             "subject_category",
@@ -794,11 +799,27 @@ class EdgeReportConfig(BaseModel):
             "object_namespace",
             "primary_knowledge_source",
             "aggregator_knowledge_source",
+            "supporting_data_source",
             "knowledge_level",
             "agent_type",
             "provided_by",
         ]
     )
+
+    # Opt-in "shape of the edge type" enrichment (kgxval-style SPQO summary).
+    # When set_columns is non-empty, those slots are NOT grouped on — instead each
+    # group keeps the distinct set of their values via array_agg, so e.g. the
+    # (subject_category, predicate, object_category) group reports the full set of
+    # knowledge_level / agent_type / knowledge-source terms it spans. A slot named
+    # in both lists is treated as a set column (pulled out of the GROUP BY).
+    set_columns: list[str] = Field(default_factory=list)
+    # Per-group numeric summaries. For a list-typed slot (e.g. publications) the
+    # element COUNT per edge is summarized (missing → 0); for a numeric slot the
+    # value itself is. Each yields `<slot>_avg` and `<slot>_quantiles`
+    # ([min, p25, median, p75, p90, max]).
+    percentile_columns: list[str] = Field(default_factory=list)
+    # Add a `proportion` column: each group's count / total edge count.
+    include_proportion: bool = False
 
     quiet: bool = False
 
