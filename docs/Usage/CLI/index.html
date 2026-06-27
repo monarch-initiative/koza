@@ -2438,7 +2438,7 @@ koza node-report -d merged.duckdb -o report.tsv -c namespace -c category -c prov
 <li><code>-d, --database TEXT</code>: Path to DuckDB database file</li>
 <li><code>-f, --file TEXT</code>: Path to node file (TSV, JSONL, or Parquet)</li>
 <li><code>-o, --output TEXT</code>: Path to output report file</li>
-<li><code>--format [tsv|parquet|jsonl]</code>: Output format  [default: tsv]</li>
+<li><code>--format [tsv|parquet|jsonl]</code>: Output format (default: infer from -o extension, else tsv)</li>
 <li><code>-c, --column TEXT</code>: Categorical columns to group by (can specify multiple)</li>
 <li><code>-q, --quiet</code>: Suppress progress output</li>
 <li><code>--help</code>: Show this message and exit.</li>
@@ -2447,6 +2447,9 @@ koza node-report -d merged.duckdb -o report.tsv -c namespace -c category -c prov
 <p>Generate tabular edge report with denormalized node info.</p>
 <p>Joins edges to nodes to get subject_category, object_category, etc., then
 outputs count of edges grouped by categorical columns.</p>
+<p>With --set-column, switches to a kgxval-style &quot;edge type shape&quot; summary: one
+row per (subject_category, predicate, object_category, ...) group, with each
+set column reported as the distinct set of values that group spans.</p>
 <p>Examples:</p>
 <pre><code># From database
 koza edge-report -d merged.duckdb -o edge_report.tsv
@@ -2457,6 +2460,11 @@ koza edge-report -n nodes.tsv -e edges.tsv -o edge_report.parquet --format parqu
 # Custom columns
 koza edge-report -d merged.duckdb -o report.tsv \
     -c subject_category -c predicate -c object_category -c primary_knowledge_source
+
+# SPQO edge-type-shape summary with proportion + term sets
+koza edge-report -d merged.duckdb -o summary.parquet --format parquet --proportion \
+    -c subject_category -c predicate -c object_category \
+    -s knowledge_level -s agent_type -s primary_knowledge_source
 </code></pre>
 <p><strong>Usage</strong>:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>edge-report<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
@@ -2467,8 +2475,11 @@ koza edge-report -d merged.duckdb -o report.tsv \
 <li><code>-n, --nodes TEXT</code>: Path to node file (for denormalization)</li>
 <li><code>-e, --edges TEXT</code>: Path to edge file (TSV, JSONL, or Parquet)</li>
 <li><code>-o, --output TEXT</code>: Path to output report file</li>
-<li><code>--format [tsv|parquet|jsonl]</code>: Output format  [default: tsv]</li>
+<li><code>--format [tsv|parquet|jsonl]</code>: Output format (default: infer from -o extension, else tsv)</li>
 <li><code>-c, --column TEXT</code>: Categorical columns to group by (can specify multiple)</li>
+<li><code>-s, --set-column TEXT</code>: Slots to summarize as the distinct set of values per group instead of grouping on them (e.g. knowledge_level, agent_type, primary_knowledge_source). Switches to the SPQO &#x27;edge type shape&#x27; summary.</li>
+<li><code>-P, --percentile-column TEXT</code>: Numeric slots to summarize per group as <code>&amp;lt;slot&amp;gt;_avg</code> + <code>&amp;lt;slot&amp;gt;_quantiles</code> (list slots summarize element count, e.g. publications; numeric slots the value).</li>
+<li><code>--proportion</code>: Add a <code>proportion</code> column (group count / total edges).</li>
 <li><code>-q, --quiet</code>: Suppress progress output</li>
 <li><code>--help</code>: Show this message and exit.</li>
 </ul>
@@ -2493,7 +2504,7 @@ koza node-examples -d merged.duckdb -o examples.tsv -t provided_by
 <li><code>-d, --database TEXT</code>: Path to DuckDB database file</li>
 <li><code>-f, --file TEXT</code>: Path to node file (TSV, JSONL, or Parquet)</li>
 <li><code>-o, --output TEXT</code>: Path to output examples file</li>
-<li><code>--format [tsv|parquet|jsonl]</code>: Output format  [default: tsv]</li>
+<li><code>--format [tsv|parquet|jsonl]</code>: Output format (default: infer from -o extension, else tsv)</li>
 <li><code>-n, --sample-size INTEGER</code>: Number of examples per type  [default: 5]</li>
 <li><code>-t, --type-column TEXT</code>: Column to partition examples by  [default: category]</li>
 <li><code>-q, --quiet</code>: Suppress progress output</li>
@@ -2522,7 +2533,7 @@ koza edge-examples -d merged.duckdb -o examples.tsv -t predicate -t primary_know
 <li><code>-n, --nodes TEXT</code>: Path to node file (for denormalization)</li>
 <li><code>-e, --edges TEXT</code>: Path to edge file (TSV, JSONL, or Parquet)</li>
 <li><code>-o, --output TEXT</code>: Path to output examples file</li>
-<li><code>--format [tsv|parquet|jsonl]</code>: Output format  [default: tsv]</li>
+<li><code>--format [tsv|parquet|jsonl]</code>: Output format (default: infer from -o extension, else tsv)</li>
 <li><code>-s, --sample-size INTEGER</code>: Number of examples per type  [default: 5]</li>
 <li><code>-t, --type-column TEXT</code>: Columns to partition examples by (can specify multiple)</li>
 <li><code>-q, --quiet</code>: Suppress progress output</li>
