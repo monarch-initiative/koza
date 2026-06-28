@@ -96,14 +96,25 @@ def compute_information_content(config: InformationContentConfig) -> Information
             ).fetchone()[0]
 
             # closure_size: per entity, the number of distinct closure ancestors
-            # (subsumers) of the terms it is associated with.
+            # (subsumers) of the terms it is associated with. `category` may be
+            # single-valued (VARCHAR) or multivalued (VARCHAR[] — koza's default
+            # for Biolink-multivalued slots), so pick the matching membership
+            # test: scalar IN vs list_has_any on the array.
+            cat_type = conn.execute(
+                "SELECT data_type FROM information_schema.columns "
+                f"WHERE table_name = '{config.edges_table}' AND column_name = 'category'"
+            ).fetchone()
+            if cat_type and cat_type[0].endswith("[]"):
+                category_filter = f"list_has_any(category, [{categories}])"
+            else:
+                category_filter = f"category IN ({categories})"
             conn.execute(f"""
                 CREATE OR REPLACE TABLE closure_size AS
                 WITH assoc AS (
                     SELECT {config.association_subject_column} AS entity,
                            {config.association_object_column} AS term
                     FROM {config.edges_table}
-                    WHERE category IN ({categories})
+                    WHERE {category_filter}
                       AND predicate = {_quote_list([config.association_predicate])}{negated_filter}
                 ),
                 clo AS (
