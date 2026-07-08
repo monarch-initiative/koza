@@ -16,3 +16,7 @@ class MapItemException(KeyError):
 
 class NoTransformException(ValueError):
     """Exception raised when a transform was not passed to KozaRunner"""
+
+
+class CountValidationError(ValueError):
+    """Raised when a writer's node or edge count violates its configured min/max bounds"""

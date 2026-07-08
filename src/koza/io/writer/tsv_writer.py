@@ -25,6 +25,7 @@ class TSVWriter(KozaWriter):
         self.delimiter = "\t"
         self.list_delimiter = "|"
         self.converter = KGXConverter()
+        self.config = config
         self.sssom_config = config.sssom_config
 
         Path(self.dirname).mkdir(parents=True, exist_ok=True)
@@ -61,6 +62,7 @@ class TSVWriter(KozaWriter):
         for node in nodes:
             node = self.converter.convert_node(node)
             self.write_row(node, record_type="node")
+            self.node_count += 1
 
     def write_edges(self, edges: Iterable):
         for edge in edges:
@@ -68,6 +70,7 @@ class TSVWriter(KozaWriter):
             if self.sssom_config:
                 edge = self.sssom_config.apply_mapping(edge)
             self.write_row(edge, record_type="edge")
+            self.edge_count += 1
 
     def write_row(self, record: dict, record_type: Literal["node", "edge"]) -> None:
         """Write a row to the underlying store.

@@ -1,5 +1,11 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
+from typing import TYPE_CHECKING
+
+from koza.utils.exceptions import CountValidationError
+
+if TYPE_CHECKING:
+    from koza.model.writer import WriterConfig
 
 
 class KozaWriter(ABC):
@@ -10,6 +16,13 @@ class KozaWriter(ABC):
     # def writeheader(self) -> Optional[int]:
     #     pass
     """
+
+    #: Set by concrete writers so count validation can read the configured bounds.
+    #: Left as None (the default) by writers without a config, e.g. PassthroughWriter.
+    config: "WriterConfig | None" = None
+    #: Running tallies of rows written, maintained by concrete writers.
+    node_count: int = 0
+    edge_count: int = 0
 
     @abstractmethod
     def write(self, entities: Iterable):
@@ -26,6 +39,45 @@ class KozaWriter(ABC):
     @abstractmethod
     def finalize(self):
         pass
+
+    def tally_entity(self, entity) -> None:
+        """Increment the node or edge tally for a single, already-written entity.
+
+        Classification is lenient so it can run on the passthrough path, which
+        also carries raw mapping records: anything with subject/object/predicate
+        counts as an edge, anything else with an id counts as a node, and
+        everything else (e.g. a plain mapping dict) is ignored rather than raised
+        on. Writers that already know an entity's kind should increment
+        node_count/edge_count directly instead of calling this.
+        """
+        if all(hasattr(entity, attr) for attr in ("subject", "object", "predicate")):
+            self.edge_count += 1
+        elif hasattr(entity, "id"):
+            self.node_count += 1
+
+    def validate_counts(self) -> None:
+        """Enforce the writer's configured min/max node and edge counts.
+
+        A no-op when no config (or no bound) is set. Raises CountValidationError
+        naming every violated bound so a build fails loudly rather than shipping a
+        silently truncated graph.
+        """
+        config = self.config
+        if config is None:
+            return
+
+        violations: list[str] = []
+        for label, count, minimum, maximum in (
+            ("node", self.node_count, config.min_node_count, config.max_node_count),
+            ("edge", self.edge_count, config.min_edge_count, config.max_edge_count),
+        ):
+            if minimum is not None and count < minimum:
+                violations.append(f"{label} count {count} is below the configured min_{label}_count of {minimum}")
+            if maximum is not None and count > maximum:
+                violations.append(f"{label} count {count} is above the configured max_{label}_count of {maximum}")
+
+        if violations:
+            raise CountValidationError("; ".join(violations))
 
     def result(self):
         raise NotImplementedError()
