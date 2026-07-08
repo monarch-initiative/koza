@@ -22,6 +22,7 @@ class JSONLWriter(KozaWriter):
     ):
         self.output_dir = output_dir
         self.source_name = source_name
+        self.config = config
         self.sssom_config = config.sssom_config
 
         self.converter = KGXConverter()
@@ -73,6 +74,7 @@ class JSONLWriter(KozaWriter):
             self._node_buf.append(self._serialize(node))
             self._node_buf.append(_NEWLINE)
             self.written_node_ids.add(node_id)
+            self.node_count += 1
             if len(self._node_buf) >= _WRITE_BATCH * 2:
                 self.nodeFH.write(b"".join(self._node_buf))
                 self._node_buf.clear()
@@ -88,6 +90,7 @@ class JSONLWriter(KozaWriter):
                 edge_dict = self.sssom_config.apply_mapping(edge_dict)
                 self._edge_buf.append(orjson.dumps(edge_dict))
                 self._edge_buf.append(_NEWLINE)
+                self.edge_count += 1
                 if len(self._edge_buf) >= _WRITE_BATCH * 2:
                     self.edgeFH.write(b"".join(self._edge_buf))
                     self._edge_buf.clear()
@@ -95,6 +98,7 @@ class JSONLWriter(KozaWriter):
             for edge in edges:
                 self._edge_buf.append(self._serialize(edge))
                 self._edge_buf.append(_NEWLINE)
+                self.edge_count += 1
                 if len(self._edge_buf) >= _WRITE_BATCH * 2:
                     self.edgeFH.write(b"".join(self._edge_buf))
                     self._edge_buf.clear()

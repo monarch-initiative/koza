@@ -177,6 +177,7 @@ class KozaRunner:
             self.run_for_tag(tag, mappings)
 
         self.writer.finalize()
+        self.writer.validate_counts()
 
         return self.writer
 
