@@ -5,6 +5,7 @@ from biolink_model.datamodel.pydanticmodel_v2 import Disease, Gene, VariantToPop
 
 import koza
 from koza.io.writer.jsonl_writer import JSONLWriter
+from koza.io.writer.passthrough_writer import PassthroughWriter
 from koza.io.writer.tsv_writer import TSVWriter
 from koza.model.writer import WriterConfig
 from koza.runner import KozaRunner, KozaTransform, KozaTransformHooks
@@ -106,6 +107,65 @@ def test_jsonl_writer_counts_and_enforces(tmp_path):
     assert writer.edge_count == 1
     with pytest.raises(CountValidationError, match="min_edge_count"):
         writer.validate_counts()
+
+
+def test_passthrough_writer_counts_and_enforces():
+    config = WriterConfig(min_edge_count=100)
+    writer = PassthroughWriter(config=config)
+    _write(writer)
+    assert writer.node_count == 2
+    assert writer.edge_count == 1
+    assert len(writer.result()) == 3  # entities pass through untouched
+    with pytest.raises(CountValidationError, match="min_edge_count"):
+        writer.validate_counts()
+
+
+def test_passthrough_writer_ignores_non_entities():
+    """The mappings path writes raw dict records through a passthrough writer;
+    these must pass through untouched and not be miscounted as nodes/edges."""
+    config = WriterConfig(min_node_count=1, min_edge_count=1)
+    writer = PassthroughWriter(config=config)
+    rows = [{"key": "a", "value": "1"}, {"key": "b", "value": "2"}]
+    writer.write(rows)
+    writer.finalize()
+    assert writer.result() == rows
+    assert writer.node_count == 0
+    assert writer.edge_count == 0
+    with pytest.raises(CountValidationError):
+        writer.validate_counts()
+
+
+def test_passthrough_writer_no_config_is_noop():
+    writer = PassthroughWriter()
+    _write(writer)
+    writer.validate_counts()  # config is None -> no-op even though counts are tracked
+
+
+def test_runner_passthrough_enforces_min_edge_count():
+    """End-to-end through KozaRunner with a passthrough writer."""
+    config = WriterConfig(min_edge_count=100)
+    writer = PassthroughWriter(config=config)
+
+    @koza.transform_record()
+    def transform_record(koza_transform: KozaTransform, record):
+        koza_transform.write(
+            VariantToPopulationAssociation(
+                id="uuid:5b06e86f-d768-4cd9-ac27-abe31e95ab1e",
+                subject="HGNC:11603",
+                object="MONDO:0005002",
+                predicate="biolink:contributes_to",
+                knowledge_level="not_provided",
+                agent_type="not_provided",
+            )
+        )
+
+    runner = KozaRunner(
+        data=[{"a": 1}],
+        writer=writer,
+        hooks=KozaTransformHooks(transform_record=[transform_record]),
+    )
+    with pytest.raises(CountValidationError, match="min_edge_count"):
+        runner.run()
 
 
 def test_runner_run_enforces_min_edge_count(tmp_path):

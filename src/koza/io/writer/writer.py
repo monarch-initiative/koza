@@ -40,6 +40,21 @@ class KozaWriter(ABC):
     def finalize(self):
         pass
 
+    def tally_entity(self, entity) -> None:
+        """Increment the node or edge tally for a single, already-written entity.
+
+        Classification is lenient so it can run on the passthrough path, which
+        also carries raw mapping records: anything with subject/object/predicate
+        counts as an edge, anything else with an id counts as a node, and
+        everything else (e.g. a plain mapping dict) is ignored rather than raised
+        on. Writers that already know an entity's kind should increment
+        node_count/edge_count directly instead of calling this.
+        """
+        if all(hasattr(entity, attr) for attr in ("subject", "object", "predicate")):
+            self.edge_count += 1
+        elif hasattr(entity, "id"):
+            self.node_count += 1
+
     def validate_counts(self) -> None:
         """Enforce the writer's configured min/max node and edge counts.
 

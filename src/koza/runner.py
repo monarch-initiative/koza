@@ -293,7 +293,7 @@ class KozaRunner:
         elif config.writer.format == OutputFormat.jsonl:
             writer = JSONLWriter(output_dir=output_dir, source_name=config.name, config=config.writer)
         elif config.writer.format == OutputFormat.passthrough:
-            writer = PassthroughWriter()
+            writer = PassthroughWriter(config=config.writer)
 
         if writer is None:
             raise ValueError("No writer defined")
