@@ -42,40 +42,40 @@ def test_counts_track_written_rows(tmp_path):
     assert writer.edge_count == 1
 
 
-def test_min_edge_count_violation_raises(tmp_path):
+def test_min_edge_count_violation_raises_on_finalize(tmp_path):
     config = WriterConfig(
         node_properties=NODE_PROPERTIES,
         edge_properties=EDGE_PROPERTIES,
         min_edge_count=100,
     )
     writer = TSVWriter(tmp_path, "counts", config=config)
-    _write(writer)
+    writer.write(_entities())
     with pytest.raises(CountValidationError, match="edge count 1 is below the configured min_edge_count of 100"):
-        writer.validate_counts()
+        writer.finalize()
 
 
-def test_min_node_count_violation_raises(tmp_path):
+def test_min_node_count_violation_raises_on_finalize(tmp_path):
     config = WriterConfig(
         node_properties=NODE_PROPERTIES,
         edge_properties=EDGE_PROPERTIES,
         min_node_count=100,
     )
     writer = TSVWriter(tmp_path, "counts", config=config)
-    _write(writer)
+    writer.write(_entities())
     with pytest.raises(CountValidationError, match="node count 2 is below the configured min_node_count of 100"):
-        writer.validate_counts()
+        writer.finalize()
 
 
-def test_max_edge_count_violation_raises(tmp_path):
+def test_max_edge_count_violation_raises_on_finalize(tmp_path):
     config = WriterConfig(
         node_properties=NODE_PROPERTIES,
         edge_properties=EDGE_PROPERTIES,
         max_edge_count=0,
     )
     writer = TSVWriter(tmp_path, "counts", config=config)
-    _write(writer)
+    writer.write(_entities())
     with pytest.raises(CountValidationError, match="edge count 1 is above the configured max_edge_count of 0"):
-        writer.validate_counts()
+        writer.finalize()
 
 
 def test_counts_within_bounds_pass(tmp_path):
@@ -89,35 +89,42 @@ def test_counts_within_bounds_pass(tmp_path):
     )
     writer = TSVWriter(tmp_path, "counts", config=config)
     _write(writer)
-    writer.validate_counts()  # should not raise
 
 
 def test_no_bounds_configured_is_noop(tmp_path):
     config = WriterConfig(node_properties=NODE_PROPERTIES, edge_properties=EDGE_PROPERTIES)
     writer = TSVWriter(tmp_path, "counts", config=config)
     _write(writer)
-    writer.validate_counts()  # no bounds set -> no-op
 
 
 def test_jsonl_writer_counts_and_enforces(tmp_path):
     config = WriterConfig(min_edge_count=100)
     writer = JSONLWriter(str(tmp_path), "counts", config=config)
-    _write(writer)
+    writer.write(_entities())
     assert writer.node_count == 2
     assert writer.edge_count == 1
     with pytest.raises(CountValidationError, match="min_edge_count"):
-        writer.validate_counts()
+        writer.finalize()
+
+
+def test_jsonl_writer_node_count_is_post_dedup(tmp_path):
+    config = WriterConfig()
+    writer = JSONLWriter(str(tmp_path), "counts", config=config)
+    gene = Gene(id="HGNC:11603", symbol="TBX4")
+    writer.write_nodes([gene, gene, gene])
+    writer.finalize()
+    assert writer.node_count == 1
 
 
 def test_passthrough_writer_counts_and_enforces():
     config = WriterConfig(min_edge_count=100)
     writer = PassthroughWriter(config=config)
-    _write(writer)
+    writer.write(_entities())
     assert writer.node_count == 2
     assert writer.edge_count == 1
-    assert len(writer.result()) == 3  # entities pass through untouched
+    assert len(writer.result()) == 3
     with pytest.raises(CountValidationError, match="min_edge_count"):
-        writer.validate_counts()
+        writer.finalize()
 
 
 def test_passthrough_writer_ignores_non_entities():
@@ -127,18 +134,16 @@ def test_passthrough_writer_ignores_non_entities():
     writer = PassthroughWriter(config=config)
     rows = [{"key": "a", "value": "1"}, {"key": "b", "value": "2"}]
     writer.write(rows)
-    writer.finalize()
     assert writer.result() == rows
     assert writer.node_count == 0
     assert writer.edge_count == 0
     with pytest.raises(CountValidationError):
-        writer.validate_counts()
+        writer.finalize()
 
 
 def test_passthrough_writer_no_config_is_noop():
     writer = PassthroughWriter()
     _write(writer)
-    writer.validate_counts()  # config is None -> no-op even though counts are tracked
 
 
 def test_runner_passthrough_enforces_min_edge_count():
@@ -203,9 +208,9 @@ def test_multiple_violations_reported_together(tmp_path):
         min_edge_count=100,
     )
     writer = TSVWriter(tmp_path, "counts", config=config)
-    _write(writer)
+    writer.write(_entities())
     with pytest.raises(CountValidationError) as exc:
-        writer.validate_counts()
+        writer.finalize()
     message = str(exc.value)
     assert "min_node_count" in message
     assert "min_edge_count" in message

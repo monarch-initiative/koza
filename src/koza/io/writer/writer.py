@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
+from loguru import logger
+
 from koza.utils.exceptions import CountValidationError
 
 if TYPE_CHECKING:
@@ -65,6 +67,8 @@ class KozaWriter(ABC):
         config = self.config
         if config is None:
             return
+
+        logger.info(f"Wrote {self.node_count} nodes and {self.edge_count} edges")
 
         violations: list[str] = []
         for label, count, minimum, maximum in (

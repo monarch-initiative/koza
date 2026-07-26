@@ -114,3 +114,4 @@ class JSONLWriter(KozaWriter):
                 self.edgeFH.write(b"".join(self._edge_buf))
                 self._edge_buf.clear()
             self.edgeFH.close()
+        self.validate_counts()
