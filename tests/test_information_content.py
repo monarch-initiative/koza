@@ -20,8 +20,9 @@ from koza.model.graph_operations import InformationContentConfig
 def closurized_kg(tmp_path):
     """A tiny closurized graph: a reflexive rdfs:subClassOf closure over five
     HP terms (two small chains under a shared root), one non-subClassOf closure
-    row that must be ignored, and three has_phenotype associations (one negated,
-    one in a non-matching category)."""
+    row that must be ignored, and has_phenotype associations covering a gene, a
+    disease, a genotype (the entity type the old category allowlist dropped), a
+    negated edge, and an edge under a different predicate."""
     db_path = tmp_path / "kg.duckdb"
     with GraphDatabase(db_path) as db:
         db.conn.execute("""
@@ -54,9 +55,14 @@ def closurized_kg(tmp_path):
                  'biolink:GeneToPhenotypicFeatureAssociation', true),
                 ('e3', 'DISEASE:1', 'biolink:has_phenotype', 'HP:0',
                  'biolink:DiseaseToPhenotypicFeatureAssociation', false),
-                -- non-matching category: always excluded
-                ('e4', 'GENE:2', 'biolink:has_phenotype', 'HP:1',
-                 'biolink:GeneToGeneAssociation', false);
+                -- a genotype: the entity type the old Gene/Disease category
+                -- allowlist silently dropped from closure_size
+                ('e4', 'GENOTYPE:1', 'biolink:has_phenotype', 'HP:2',
+                 'biolink:GenotypeToPhenotypicFeatureAssociation', false),
+                -- different predicate: excluded, since the predicate is what
+                -- decides membership
+                ('e5', 'GENE:2', 'biolink:has_phenotype_TYPO', 'HP:1',
+                 'biolink:GeneToPhenotypicFeatureAssociation', false);
         """)
     return db_path
 
@@ -78,17 +84,41 @@ def test_information_content_matches_ic_formula(closurized_kg):
     assert "GO:1" not in ic  # the part_of object must not leak in
 
 
-def test_closure_size_excludes_negated_and_other_categories(closurized_kg):
+def test_closure_size_covers_every_category_by_default(closurized_kg):
+    """Every entity with an association-predicate edge gets a size, whatever its
+    category — the genotype included. Gating this on a category allowlist is what
+    left genotypes, variants and cases out of the table."""
     result = compute_information_content(InformationContentConfig(database_path=closurized_kg, quiet=True))
     assert result.success
-    # GENE:1 (HP:1 only) and DISEASE:1 (HP:0); GENE:2 dropped (category),
-    # GENE:1's HP:2 dropped (negated).
-    assert result.closure_size_entity_count == 2
+    # GENE:1 (HP:1), DISEASE:1 (HP:0), GENOTYPE:1 (HP:2). GENE:2 is dropped on
+    # predicate, GENE:1's HP:2 on negation.
+    assert result.closure_size_entity_count == 3
 
     with GraphDatabase(closurized_kg) as db:
         size = dict(db.conn.execute("SELECT entity, size FROM closure_size").fetchall())
 
-    assert size == {"GENE:1": 3, "DISEASE:1": 2}  # {HP:1,HP:0,HP:ROOT} / {HP:0,HP:ROOT}
+    # {HP:1,HP:0,HP:ROOT} / {HP:0,HP:ROOT} / {HP:2,HP:OTHER,HP:ROOT}
+    assert size == {"GENE:1": 3, "DISEASE:1": 2, "GENOTYPE:1": 3}
+
+
+def test_closure_size_categories_narrow_when_given(closurized_kg):
+    """Passing categories still narrows — the old behaviour remains reachable,
+    it just is not what you get by default."""
+    result = compute_information_content(
+        InformationContentConfig(
+            database_path=closurized_kg,
+            association_categories=[
+                "biolink:GeneToPhenotypicFeatureAssociation",
+                "biolink:DiseaseToPhenotypicFeatureAssociation",
+            ],
+            quiet=True,
+        )
+    )
+    assert result.closure_size_entity_count == 2
+    with GraphDatabase(closurized_kg) as db:
+        size = dict(db.conn.execute("SELECT entity, size FROM closure_size").fetchall())
+    assert size == {"GENE:1": 3, "DISEASE:1": 2}
+    assert "GENOTYPE:1" not in size
 
 
 def test_closure_size_include_negated(closurized_kg):
@@ -204,12 +234,35 @@ def closurized_kg_multivalued_category(tmp_path):
 def test_closure_size_handles_multivalued_category(closurized_kg_multivalued_category):
     """`category` as VARCHAR[] must use list_has_any, not scalar IN (which throws
     a cast error on the array column). Regression for the production monarch-kg,
-    where merge preserves Biolink-multivalued category."""
+    where merge preserves Biolink-multivalued category.
+
+    Categories are passed explicitly: the default applies no category filter at
+    all, so the array path only runs when narrowing is actually requested.
+    """
     result = compute_information_content(
-        InformationContentConfig(database_path=closurized_kg_multivalued_category, quiet=True)
+        InformationContentConfig(
+            database_path=closurized_kg_multivalued_category,
+            association_categories=[
+                "biolink:GeneToPhenotypicFeatureAssociation",
+                "biolink:DiseaseToPhenotypicFeatureAssociation",
+            ],
+            quiet=True,
+        )
     )
     assert result.success
     with GraphDatabase(closurized_kg_multivalued_category) as db:
         size = dict(db.conn.execute("SELECT entity, size FROM closure_size").fetchall())
     # GENE:1 -> {HP:1,HP:0,HP:ROOT}=3; DISEASE:1 -> {HP:0,HP:ROOT}=2; GENE:2 dropped (category)
     assert size == {"GENE:1": 3, "DISEASE:1": 2}
+
+
+def test_closure_size_multivalued_category_unfiltered(closurized_kg_multivalued_category):
+    """With no narrowing, an array-typed category column must not be touched at
+    all — GENE:2 is now included rather than dropped, and no cast error occurs."""
+    result = compute_information_content(
+        InformationContentConfig(database_path=closurized_kg_multivalued_category, quiet=True)
+    )
+    assert result.success
+    with GraphDatabase(closurized_kg_multivalued_category) as db:
+        size = dict(db.conn.execute("SELECT entity, size FROM closure_size").fetchall())
+    assert size == {"GENE:1": 3, "DISEASE:1": 2, "GENE:2": 3}

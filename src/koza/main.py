@@ -775,8 +775,9 @@ def information_content(
     )] = None,
     association_category: Annotated[list[str] | None, typer.Option(
         "--association-category",
-        help="Edge category that links an entity to a term, for the closure-size "
-             "table (repeatable). Default: Monarch Gene/Disease has_phenotype categories",
+        help="Narrow the closure-size table to these edge categories (repeatable). "
+             "Default: no category filter — every entity with an association-predicate "
+             "edge gets a size, whatever its category",
     )] = None,
     association_predicate: Annotated[str | None, typer.Option(
         "--association-predicate",
@@ -797,13 +798,16 @@ def information_content(
       information_content  (term, ic)     -- information content per closure term
       closure_size         (entity, size) -- distinct closure subsumers per entity
 
+    `closure_size` covers every entity with an association-predicate edge, so
+    genotypes, variants and cases get sizes alongside genes and diseases.
+
     Run after `closurize`.
 
     Examples:
-        # Monarch defaults (rdfs:subClassOf, Gene/Disease has_phenotype)
+        # Defaults: rdfs:subClassOf closure, every has_phenotype entity
         koza information-content monarch-kg.duckdb
 
-        # Custom closure predicate and association edge
+        # Custom closure predicate, narrowed to one association category
         koza information-content graph.duckdb \\
             --closure-predicate rdfs:subClassOf --closure-predicate BFO:0000050 \\
             --association-category biolink:GeneToPhenotypicFeatureAssociation \\
