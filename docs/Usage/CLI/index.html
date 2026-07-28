@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../images/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -29,7 +29,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2145,23 +2145,23 @@ koza transform transform.py data/*.csv
 koza transform transform.py -d &amp;#x27;\t&amp;#x27; data/*.txt
 </code></pre>
 <p><strong>Usage</strong>:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>transform<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>CONFIG_OR_TRANSFORM<span class="w"> </span><span class="o">[</span>INPUT_FILES<span class="o">]</span>...
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>transform<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span><span class="o">{</span>config_or_transform<span class="o">}</span><span class="w"> </span><span class="o">[</span>input_files<span class="o">]</span>...
 </code></pre></div>
 <p><strong>Arguments</strong>:</p>
 <ul>
-<li><code>CONFIG_OR_TRANSFORM</code>: Configuration YAML file OR Python transform file  [required]</li>
-<li><code>[INPUT_FILES]...</code>: Input files (required for .py transforms, supports shell glob expansion)</li>
+<li><code>config_or_transform</code>: Configuration YAML file OR Python transform file  [required]</li>
+<li><code>input_files...</code>: Input files (required for .py transforms, supports shell glob expansion)</li>
 </ul>
 <p><strong>Options</strong>:</p>
 <ul>
-<li><code>--input-format [csv|jsonl|json|yaml]</code>: Input format (auto-detected if not specified)</li>
-<li><code>-o, --output-dir TEXT</code>: Path to output directory  [default: ./output]</li>
-<li><code>-f, --output-format [tsv|jsonl|kgx|passthrough]</code>: Output format  [default: tsv]</li>
-<li><code>-n, --limit INTEGER</code>: Number of rows to process (if skipped, processes entire source file)  [default: 0]</li>
+<li><code>--input-format &lt;csv|jsonl|json|yaml&gt;</code>: Input format (auto-detected if not specified)</li>
+<li><code>-o, --output-dir &lt;str&gt;</code>: Path to output directory  [default: ./output]</li>
+<li><code>-f, --output-format &lt;tsv|jsonl|kgx|passthrough&gt;</code>: Output format  [default: tsv]</li>
+<li><code>-n, --limit &lt;int&gt;</code>: Number of rows to process (if skipped, processes entire source file)  [default: 0]</li>
 <li><code>-p, --progress</code>: Display progress of transform</li>
 <li><code>-q, --quiet</code>: Disable log output</li>
 <li><code>-v, --verbose</code>: Enable debug-level logging (e.g. per-row &#x27;filtered out&#x27; messages)</li>
-<li><code>-d, --delimiter TEXT</code>: Field delimiter for CSV/TSV files (default: tab for .tsv, comma for .csv)</li>
+<li><code>-d, --delimiter &lt;str&gt;</code>: Field delimiter for CSV/TSV files (default: tab for .tsv, comma for .csv)</li>
 <li><code>--help</code>: Show this message and exit.</li>
 </ul>
 <h2 id="koza-join"><code>koza join</code></h2>
@@ -2183,16 +2183,16 @@ koza join -n file1.tsv -n file2.tsv -e edges.tsv -o graph.duckdb
 </code></pre></div>
 <p><strong>Options</strong>:</p>
 <ul>
-<li><code>-n, --nodes TEXT</code>: Node files or glob patterns (can specify multiple)</li>
-<li><code>-e, --edges TEXT</code>: Edge files or glob patterns (can specify multiple)</li>
-<li><code>-d, --input-dir TEXT</code>: Directory to auto-discover KGX files</li>
-<li><code>-o, --output TEXT</code>: Path to output database file (default: in-memory)</li>
-<li><code>-f, --format [tsv|jsonl|parquet]</code>: Output format for any exported files  [default: tsv]</li>
+<li><code>-n, --nodes &lt;str&gt;</code>: Node files or glob patterns (can specify multiple)</li>
+<li><code>-e, --edges &lt;str&gt;</code>: Edge files or glob patterns (can specify multiple)</li>
+<li><code>-d, --input-dir &lt;str&gt;</code>: Directory to auto-discover KGX files</li>
+<li><code>-o, --output &lt;str&gt;</code>: Path to output database file (default: in-memory)</li>
+<li><code>-f, --format &lt;tsv|jsonl|parquet&gt;</code>: Output format for any exported files  [default: tsv]</li>
 <li><code>--schema-report</code>: Generate schema compliance report</li>
-<li><code>--required-node-field TEXT</code>: Node fields that must be present and non-empty (can specify multiple)</li>
-<li><code>--required-edge-field TEXT</code>: Edge fields that must be present and non-empty (can specify multiple)</li>
-<li><code>--slots-file TEXT</code>: YAML file with {nodes: [...], edges: [...]} — sets explicit JSONL schema, skipping inference. JSON keys NOT in the slot list are silently dropped at read time.</li>
-<li><code>--force-single-valued TEXT</code>: Collapse this Biolink-multivalued slot to a scalar, keeping only the first array element (repeatable). Default: none — Biolink multivalued slots are preserved as arrays. Pass e.g. --force-single-valued category for the historical Monarch convention.</li>
+<li><code>--required-node-field &lt;str&gt;</code>: Node fields that must be present and non-empty (can specify multiple)</li>
+<li><code>--required-edge-field &lt;str&gt;</code>: Edge fields that must be present and non-empty (can specify multiple)</li>
+<li><code>--slots-file &lt;str&gt;</code>: YAML file with {nodes: [...], edges: [...]} — sets explicit JSONL schema, skipping inference. JSON keys NOT in the slot list are silently dropped at read time.</li>
+<li><code>--force-single-valued &lt;str&gt;</code>: Collapse this Biolink-multivalued slot to a scalar, keeping only the first array element (repeatable). Default: none — Biolink multivalued slots are preserved as arrays. Pass e.g. --force-single-valued category for the historical Monarch convention.</li>
 <li><code>-q, --quiet</code>: Suppress output</li>
 <li><code>-p, --progress</code>: Show progress bars  [default: True]</li>
 <li><code>--help</code>: Show this message and exit.</li>
@@ -2217,14 +2217,14 @@ koza load --input-dir kg/ -o graph.duckdb
 </code></pre></div>
 <p><strong>Options</strong>:</p>
 <ul>
-<li><code>-n, --nodes TEXT</code>: Node files or glob patterns (can specify multiple)</li>
-<li><code>-e, --edges TEXT</code>: Edge files or glob patterns (can specify multiple)</li>
-<li><code>-d, --input-dir TEXT</code>: Directory to auto-discover KGX files</li>
-<li><code>-o, --output TEXT</code>: Path to output database file (default: in-memory)</li>
-<li><code>-f, --format [tsv|jsonl|parquet]</code>: Output format for any exported files  [default: tsv]</li>
-<li><code>--slots-file TEXT</code>: YAML file with {nodes: [...], edges: [...]} — sets explicit JSONL schema, skipping inference. JSON keys NOT in the slot list are silently dropped at read time.</li>
-<li><code>--required-node-field TEXT</code>: Node fields that must be present and non-empty (can specify multiple)</li>
-<li><code>--required-edge-field TEXT</code>: Edge fields that must be present and non-empty (can specify multiple)</li>
+<li><code>-n, --nodes &lt;str&gt;</code>: Node files or glob patterns (can specify multiple)</li>
+<li><code>-e, --edges &lt;str&gt;</code>: Edge files or glob patterns (can specify multiple)</li>
+<li><code>-d, --input-dir &lt;str&gt;</code>: Directory to auto-discover KGX files</li>
+<li><code>-o, --output &lt;str&gt;</code>: Path to output database file (default: in-memory)</li>
+<li><code>-f, --format &lt;tsv|jsonl|parquet&gt;</code>: Output format for any exported files  [default: tsv]</li>
+<li><code>--slots-file &lt;str&gt;</code>: YAML file with {nodes: [...], edges: [...]} — sets explicit JSONL schema, skipping inference. JSON keys NOT in the slot list are silently dropped at read time.</li>
+<li><code>--required-node-field &lt;str&gt;</code>: Node fields that must be present and non-empty (can specify multiple)</li>
+<li><code>--required-edge-field &lt;str&gt;</code>: Edge fields that must be present and non-empty (can specify multiple)</li>
 <li><code>--generate-provided-by</code>: Overwrite provided_by with the source filename (cat-merge style). Off by default: load preserves any existing provided_by.</li>
 <li><code>--schema-report</code>: Generate schema compliance report</li>
 <li><code>-q, --quiet</code>: Suppress output</li>
@@ -2234,17 +2234,17 @@ koza load --input-dir kg/ -o graph.duckdb
 <h2 id="koza-split"><code>koza split</code></h2>
 <p>Split a KGX file by specified fields with format conversion support</p>
 <p><strong>Usage</strong>:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>split<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>FILE<span class="w"> </span>FIELDS
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>split<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span><span class="o">{</span>file<span class="o">}</span><span class="w"> </span><span class="o">{</span>fields<span class="o">}</span>
 </code></pre></div>
 <p><strong>Arguments</strong>:</p>
 <ul>
-<li><code>FILE</code>: Path to the KGX file to split  [required]</li>
-<li><code>FIELDS</code>: Comma-separated list of fields to split on  [required]</li>
+<li><code>file</code>: Path to the KGX file to split  [required]</li>
+<li><code>fields</code>: Comma-separated list of fields to split on  [required]</li>
 </ul>
 <p><strong>Options</strong>:</p>
 <ul>
-<li><code>-o, --output-dir TEXT</code>: Output directory for split files  [default: ./output]</li>
-<li><code>-f, --format [tsv|jsonl|parquet]</code>: Output format (default: preserve input format)</li>
+<li><code>-o, --output-dir &lt;str&gt;</code>: Output directory for split files  [default: ./output]</li>
+<li><code>-f, --format &lt;tsv|jsonl|parquet&gt;</code>: Output format (default: preserve input format)</li>
 <li><code>--remove-prefixes</code>: Remove prefixes from values in filenames</li>
 <li><code>-q, --quiet</code>: Suppress output</li>
 <li><code>-p, --progress</code>: Show progress bars  [default: True]</li>
@@ -2259,15 +2259,15 @@ note that downstream consumers (monarch-app&#x27;s import target, lsolr
 create-schema invocations) expect the projected names, so --raw output
 isn&#x27;t drop-in compatible with the default downstream toolchain.</p>
 <p><strong>Usage</strong>:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>schema-export<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>DATABASE
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>schema-export<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span><span class="o">{</span>database<span class="o">}</span>
 </code></pre></div>
 <p><strong>Arguments</strong>:</p>
 <ul>
-<li><code>DATABASE</code>: Path to a koza-built DuckDB containing _koza_schema  [required]</li>
+<li><code>database</code>: Path to a koza-built DuckDB containing _koza_schema  [required]</li>
 </ul>
 <p><strong>Options</strong>:</p>
 <ul>
-<li><code>-o, --output TEXT</code>: Path to write the exported schema YAML  [required]</li>
+<li><code>-o, --output &lt;str&gt;</code>: Path to write the exported schema YAML  [required]</li>
 <li><code>--raw</code>: Export the schema as-is (DenormalizedEntity/DenormalizedAssociation preserved). Default is to project denormalized classes to consumer-facing Entity/Association names.</li>
 <li><code>--help</code>: Show this message and exit.</li>
 </ul>
@@ -2290,19 +2290,19 @@ and DenormalizedAssociation classes.</p>
         --node-field has_phenotype \
         --additional-node-constraints &quot;e.negated IS NULL OR e.negated = false OR e.negated = &#x27;False&#x27;&quot;</p>
 <p><strong>Usage</strong>:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>closurize<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>DATABASE
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>closurize<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span><span class="o">{</span>database<span class="o">}</span>
 </code></pre></div>
 <p><strong>Arguments</strong>:</p>
 <ul>
-<li><code>DATABASE</code>: Path to the DuckDB database file to closurize  [required]</li>
+<li><code>database</code>: Path to the DuckDB database file to closurize  [required]</li>
 </ul>
 <p><strong>Options</strong>:</p>
 <ul>
-<li><code>-c, --closure-file TEXT</code>: Path to the relation-graph TSV file (subject_id, predicate_id, object_id). Omit to build denormalized views without closure: no <em>_closure / *_closure_label slots and no node-level has_descendant</em> slots.</li>
-<li><code>--node-field TEXT</code>: Predicate to expand into per-node aggregations (repeatable)</li>
-<li><code>--edge-field TEXT</code>: Edge field to fully expand (label + category + namespace + closure) (repeatable)</li>
-<li><code>--edge-field-to-label TEXT</code>: Edge field to expand with label/category/namespace only — no closure (repeatable)</li>
-<li><code>--additional-node-constraints TEXT</code>: SQL WHERE-clause fragment applied to per-predicate node aggregation joins. Reference edges columns via the alias <code>e</code> (e.g. <code>e.negated IS NULL</code>).</li>
+<li><code>-c, --closure-file &lt;str&gt;</code>: Path to the relation-graph TSV file (subject_id, predicate_id, object_id). Omit to build denormalized views without closure: no <em>_closure / *_closure_label slots and no node-level has_descendant</em> slots.</li>
+<li><code>--node-field &lt;str&gt;</code>: Predicate to expand into per-node aggregations (repeatable)</li>
+<li><code>--edge-field &lt;str&gt;</code>: Edge field to fully expand (label + category + namespace + closure) (repeatable)</li>
+<li><code>--edge-field-to-label &lt;str&gt;</code>: Edge field to expand with label/category/namespace only — no closure (repeatable)</li>
+<li><code>--additional-node-constraints &lt;str&gt;</code>: SQL WHERE-clause fragment applied to per-predicate node aggregation joins. Reference edges columns via the alias <code>e</code> (e.g. <code>e.negated IS NULL</code>).</li>
 <li><code>-q, --quiet</code>: Suppress output</li>
 <li><code>--help</code>: Show this message and exit.</li>
 </ul>
@@ -2324,17 +2324,17 @@ koza information-content graph.duckdb \
     --association-predicate biolink:has_phenotype
 </code></pre>
 <p><strong>Usage</strong>:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>information-content<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>DATABASE
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>information-content<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span><span class="o">{</span>database<span class="o">}</span>
 </code></pre></div>
 <p><strong>Arguments</strong>:</p>
 <ul>
-<li><code>DATABASE</code>: Path to an already-closurized DuckDB database file  [required]</li>
+<li><code>database</code>: Path to an already-closurized DuckDB database file  [required]</li>
 </ul>
 <p><strong>Options</strong>:</p>
 <ul>
-<li><code>--closure-predicate TEXT</code>: Closure predicate(s) that define ancestry for IC / closure-size (repeatable). Default: rdfs:subClassOf</li>
-<li><code>--association-category TEXT</code>: Edge category that links an entity to a term, for the closure-size table (repeatable). Default: Monarch Gene/Disease has_phenotype categories</li>
-<li><code>--association-predicate TEXT</code>: Edge predicate for entity-&gt;term associations. Default: biolink:has_phenotype</li>
+<li><code>--closure-predicate &lt;str&gt;</code>: Closure predicate(s) that define ancestry for IC / closure-size (repeatable). Default: rdfs:subClassOf</li>
+<li><code>--association-category &lt;str&gt;</code>: Edge category that links an entity to a term, for the closure-size table (repeatable). Default: Monarch Gene/Disease has_phenotype categories</li>
+<li><code>--association-predicate &lt;str&gt;</code>: Edge predicate for entity-&gt;term associations. Default: biolink:has_phenotype</li>
 <li><code>--include-negated</code>: Include negated associations in the closure-size table (default: excluded)</li>
 <li><code>-q, --quiet</code>: Suppress output</li>
 <li><code>--help</code>: Show this message and exit.</li>
@@ -2351,21 +2351,21 @@ probe — so it adapts to whatever graph you point it at, not a fixed list.</p>
     koza profile graph.duckdb -t denormalized_edges --top 15
     koza profile graph.duckdb -o shape.parquet -f parquet</p>
 <p><strong>Usage</strong>:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>profile<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>DATABASE
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>profile<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span><span class="o">{</span>database<span class="o">}</span>
 </code></pre></div>
 <p><strong>Arguments</strong>:</p>
 <ul>
-<li><code>DATABASE</code>: Path to the DuckDB database file to profile  [required]</li>
+<li><code>database</code>: Path to the DuckDB database file to profile  [required]</li>
 </ul>
 <p><strong>Options</strong>:</p>
 <ul>
-<li><code>-t, --table TEXT</code>: Table(s) to profile (repeatable). Default: auto-detect nodes / edges / denormalized_* that are present.</li>
-<li><code>-c, --column TEXT</code>: Override auto-detection — profile exactly these columns (repeatable).</li>
-<li><code>-n, --top INTEGER</code>: Top values to show per column  [default: 10]</li>
-<li><code>--max-distinct INTEGER</code>: Cardinality cap for treating a column as categorical  [default: 50]</li>
-<li><code>--max-ratio FLOAT</code>: Or distinct/row-count ratio cap for categorical  [default: 0.01]</li>
-<li><code>-o, --output TEXT</code>: Also write long-form (table, column, value, count) to a file</li>
-<li><code>-f, --format [tsv|parquet|jsonl]</code>: Format for --output  [default: tsv]</li>
+<li><code>-t, --table &lt;str&gt;</code>: Table(s) to profile (repeatable). Default: auto-detect nodes / edges / denormalized_* that are present.</li>
+<li><code>-c, --column &lt;str&gt;</code>: Override auto-detection — profile exactly these columns (repeatable).</li>
+<li><code>-n, --top &lt;int&gt;</code>: Top values to show per column  [default: 10]</li>
+<li><code>--max-distinct &lt;int&gt;</code>: Cardinality cap for treating a column as categorical  [default: 50]</li>
+<li><code>--max-ratio &lt;float&gt;</code>: Or distinct/row-count ratio cap for categorical  [default: 0.01]</li>
+<li><code>-o, --output &lt;str&gt;</code>: Also write long-form (table, column, value, count) to a file</li>
+<li><code>-f, --format &lt;tsv|parquet|jsonl&gt;</code>: Format for --output  [default: tsv]</li>
 <li><code>-q, --quiet</code>: Suppress the rendered summary</li>
 <li><code>--help</code>: Show this message and exit.</li>
 </ul>
@@ -2381,17 +2381,17 @@ koza prune graph.duckdb --remove-singletons
 koza prune graph.duckdb --min-component-size 10
 </code></pre>
 <p><strong>Usage</strong>:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>prune<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>DATABASE
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>prune<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span><span class="o">{</span>database<span class="o">}</span>
 </code></pre></div>
 <p><strong>Arguments</strong>:</p>
 <ul>
-<li><code>DATABASE</code>: Path to the DuckDB database file to prune  [required]</li>
+<li><code>database</code>: Path to the DuckDB database file to prune  [required]</li>
 </ul>
 <p><strong>Options</strong>:</p>
 <ul>
 <li><code>--keep-singletons</code>: Keep singleton nodes in main table</li>
 <li><code>--remove-singletons</code>: Move singleton nodes to separate table</li>
-<li><code>--min-component-size INTEGER</code>: Minimum connected component size (experimental)</li>
+<li><code>--min-component-size &lt;int&gt;</code>: Minimum connected component size (experimental)</li>
 <li><code>-q, --quiet</code>: Suppress output</li>
 <li><code>-p, --progress</code>: Show progress bars  [default: True]</li>
 <li><code>--help</code>: Show this message and exit.</li>
@@ -2408,17 +2408,17 @@ koza append graph.duckdb --input-dir new_data/
 koza append graph.duckdb -n &amp;quot;*.tsv&amp;quot; --deduplicate --schema-report
 </code></pre>
 <p><strong>Usage</strong>:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>append<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>DATABASE
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>append<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span><span class="o">{</span>database<span class="o">}</span>
 </code></pre></div>
 <p><strong>Arguments</strong>:</p>
 <ul>
-<li><code>DATABASE</code>: Path to existing DuckDB database file  [required]</li>
+<li><code>database</code>: Path to existing DuckDB database file  [required]</li>
 </ul>
 <p><strong>Options</strong>:</p>
 <ul>
-<li><code>-n, --nodes TEXT</code>: Node files or glob patterns (can specify multiple)</li>
-<li><code>-e, --edges TEXT</code>: Edge files or glob patterns (can specify multiple)</li>
-<li><code>-d, --input-dir TEXT</code>: Directory to auto-discover KGX files</li>
+<li><code>-n, --nodes &lt;str&gt;</code>: Node files or glob patterns (can specify multiple)</li>
+<li><code>-e, --edges &lt;str&gt;</code>: Edge files or glob patterns (can specify multiple)</li>
+<li><code>-d, --input-dir &lt;str&gt;</code>: Directory to auto-discover KGX files</li>
 <li><code>--deduplicate</code>: Remove duplicates during append</li>
 <li><code>--schema-report</code>: Generate schema compliance report</li>
 <li><code>-q, --quiet</code>: Suppress output</li>
@@ -2440,16 +2440,16 @@ koza normalize graph.duckdb --mappings-dir ./sssom/
 koza normalize graph.duckdb -m &amp;quot;*.sssom.tsv&amp;quot;
 </code></pre>
 <p><strong>Usage</strong>:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>normalize<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>DATABASE
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>normalize<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span><span class="o">{</span>database<span class="o">}</span>
 </code></pre></div>
 <p><strong>Arguments</strong>:</p>
 <ul>
-<li><code>DATABASE</code>: Path to existing DuckDB database file  [required]</li>
+<li><code>database</code>: Path to existing DuckDB database file  [required]</li>
 </ul>
 <p><strong>Options</strong>:</p>
 <ul>
-<li><code>-m, --mappings TEXT</code>: SSSOM mapping files or glob patterns (can specify multiple)</li>
-<li><code>-d, --mappings-dir TEXT</code>: Directory containing SSSOM mapping files</li>
+<li><code>-m, --mappings &lt;str&gt;</code>: SSSOM mapping files or glob patterns (can specify multiple)</li>
+<li><code>-d, --mappings-dir &lt;str&gt;</code>: Directory containing SSSOM mapping files</li>
 <li><code>-q, --quiet</code>: Suppress output</li>
 <li><code>-p, --progress</code>: Show progress bars  [default: True]</li>
 <li><code>--help</code>: Show this message and exit.</li>
@@ -2478,25 +2478,25 @@ koza merge --input-dir ./data/ -m &amp;quot;*.sssom.tsv&amp;quot; --remove-singl
 </code></pre></div>
 <p><strong>Options</strong>:</p>
 <ul>
-<li><code>-n, --nodes TEXT</code>: Node files or glob patterns (can specify multiple)</li>
-<li><code>-e, --edges TEXT</code>: Edge files or glob patterns (can specify multiple)</li>
-<li><code>-m, --mappings TEXT</code>: SSSOM mapping files or glob patterns (can specify multiple)</li>
-<li><code>-d, --input-dir TEXT</code>: Directory to auto-discover KGX files</li>
-<li><code>--mappings-dir TEXT</code>: Directory containing SSSOM mapping files</li>
-<li><code>-o, --output TEXT</code>: Path to output database file (default: temporary)</li>
+<li><code>-n, --nodes &lt;str&gt;</code>: Node files or glob patterns (can specify multiple)</li>
+<li><code>-e, --edges &lt;str&gt;</code>: Edge files or glob patterns (can specify multiple)</li>
+<li><code>-m, --mappings &lt;str&gt;</code>: SSSOM mapping files or glob patterns (can specify multiple)</li>
+<li><code>-d, --input-dir &lt;str&gt;</code>: Directory to auto-discover KGX files</li>
+<li><code>--mappings-dir &lt;str&gt;</code>: Directory containing SSSOM mapping files</li>
+<li><code>-o, --output &lt;str&gt;</code>: Path to output database file (default: temporary)</li>
 <li><code>--export</code>: Export final clean data to files</li>
-<li><code>--export-dir TEXT</code>: Directory for exported files (required if --export)</li>
-<li><code>-f, --format [tsv|jsonl|parquet]</code>: Output format for exported files  [default: tsv]</li>
+<li><code>--export-dir &lt;str&gt;</code>: Directory for exported files (required if --export)</li>
+<li><code>-f, --format &lt;tsv|jsonl|parquet&gt;</code>: Output format for exported files  [default: tsv]</li>
 <li><code>--archive</code>: Export as archive (tar) instead of loose files</li>
 <li><code>--compress</code>: Compress archive as tar.gz (requires --archive)</li>
-<li><code>--graph-name TEXT</code>: Name for graph files in archive (default: merged_graph)</li>
+<li><code>--graph-name &lt;str&gt;</code>: Name for graph files in archive (default: merged_graph)</li>
 <li><code>--skip-normalize</code>: Skip normalization step</li>
 <li><code>--skip-prune</code>: Skip pruning step</li>
 <li><code>--keep-singletons</code>: Keep singleton nodes (default)  [default: True]</li>
 <li><code>--remove-singletons</code>: Move singleton nodes to separate table</li>
-<li><code>--required-node-field TEXT</code>: Node fields that must be present and non-empty (can specify multiple)</li>
-<li><code>--required-edge-field TEXT</code>: Edge fields that must be present and non-empty (can specify multiple)</li>
-<li><code>--force-single-valued TEXT</code>: Collapse this Biolink-multivalued slot to a scalar during the join step, keeping only the first array element (repeatable). Default: none — Biolink multivalued slots are preserved as arrays.</li>
+<li><code>--required-node-field &lt;str&gt;</code>: Node fields that must be present and non-empty (can specify multiple)</li>
+<li><code>--required-edge-field &lt;str&gt;</code>: Edge fields that must be present and non-empty (can specify multiple)</li>
+<li><code>--force-single-valued &lt;str&gt;</code>: Collapse this Biolink-multivalued slot to a scalar during the join step, keeping only the first array element (repeatable). Default: none — Biolink multivalued slots are preserved as arrays.</li>
 <li><code>-q, --quiet</code>: Suppress output</li>
 <li><code>-p, --progress</code>: Show progress bars  [default: True]</li>
 <li><code>--help</code>: Show this message and exit.</li>
@@ -2525,17 +2525,17 @@ koza report connectivity -d merged.duckdb --output-dir cc_output/ -o cc_summary.
 koza report qc -d merged.duckdb
 </code></pre>
 <p><strong>Usage</strong>:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>report<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>REPORT_TYPE
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>report<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span><span class="o">{</span>report_type<span class="o">}</span>
 </code></pre></div>
 <p><strong>Arguments</strong>:</p>
 <ul>
-<li><code>REPORT_TYPE</code>: Type of report: qc, graph-stats, schema, or connectivity  [required]</li>
+<li><code>report_type</code>: Type of report: qc, graph-stats, schema, or connectivity  [required]</li>
 </ul>
 <p><strong>Options</strong>:</p>
 <ul>
-<li><code>-d, --database TEXT</code>: Path to DuckDB database file  [required]</li>
-<li><code>-o, --output TEXT</code>: Path to output report file (YAML format)</li>
-<li><code>--output-dir TEXT</code>: Directory for sidecar output files (used by connectivity report)</li>
+<li><code>-d, --database &lt;str&gt;</code>: Path to DuckDB database file  [required]</li>
+<li><code>-o, --output &lt;str&gt;</code>: Path to output report file (YAML format)</li>
+<li><code>--output-dir &lt;str&gt;</code>: Directory for sidecar output files (used by connectivity report)</li>
 <li><code>-q, --quiet</code>: Suppress progress output</li>
 <li><code>--help</code>: Show this message and exit.</li>
 </ul>
@@ -2557,11 +2557,11 @@ koza node-report -d merged.duckdb -o report.tsv -c namespace -c category -c prov
 </code></pre></div>
 <p><strong>Options</strong>:</p>
 <ul>
-<li><code>-d, --database TEXT</code>: Path to DuckDB database file</li>
-<li><code>-f, --file TEXT</code>: Path to node file (TSV, JSONL, or Parquet)</li>
-<li><code>-o, --output TEXT</code>: Path to output report file</li>
-<li><code>--format [tsv|parquet|jsonl]</code>: Output format (default: infer from -o extension, else tsv)</li>
-<li><code>-c, --column TEXT</code>: Categorical columns to group by (can specify multiple)</li>
+<li><code>-d, --database &lt;str&gt;</code>: Path to DuckDB database file</li>
+<li><code>-f, --file &lt;str&gt;</code>: Path to node file (TSV, JSONL, or Parquet)</li>
+<li><code>-o, --output &lt;str&gt;</code>: Path to output report file</li>
+<li><code>--format &lt;tsv|parquet|jsonl&gt;</code>: Output format (default: infer from -o extension, else tsv)</li>
+<li><code>-c, --column &lt;str&gt;</code>: Categorical columns to group by (can specify multiple)</li>
 <li><code>-q, --quiet</code>: Suppress progress output</li>
 <li><code>--help</code>: Show this message and exit.</li>
 </ul>
@@ -2593,14 +2593,14 @@ koza edge-report -d merged.duckdb -o summary.parquet --format parquet --proporti
 </code></pre></div>
 <p><strong>Options</strong>:</p>
 <ul>
-<li><code>-d, --database TEXT</code>: Path to DuckDB database file</li>
-<li><code>-n, --nodes TEXT</code>: Path to node file (for denormalization)</li>
-<li><code>-e, --edges TEXT</code>: Path to edge file (TSV, JSONL, or Parquet)</li>
-<li><code>-o, --output TEXT</code>: Path to output report file</li>
-<li><code>--format [tsv|parquet|jsonl]</code>: Output format (default: infer from -o extension, else tsv)</li>
-<li><code>-c, --column TEXT</code>: Categorical columns to group by (can specify multiple)</li>
-<li><code>-s, --set-column TEXT</code>: Slots to summarize as the distinct set of values per group instead of grouping on them (e.g. knowledge_level, agent_type, primary_knowledge_source). Switches to the SPQO &#x27;edge type shape&#x27; summary.</li>
-<li><code>-P, --percentile-column TEXT</code>: Numeric slots to summarize per group as <code>&amp;lt;slot&amp;gt;_avg</code> + <code>&amp;lt;slot&amp;gt;_quantiles</code> (list slots summarize element count, e.g. publications; numeric slots the value).</li>
+<li><code>-d, --database &lt;str&gt;</code>: Path to DuckDB database file</li>
+<li><code>-n, --nodes &lt;str&gt;</code>: Path to node file (for denormalization)</li>
+<li><code>-e, --edges &lt;str&gt;</code>: Path to edge file (TSV, JSONL, or Parquet)</li>
+<li><code>-o, --output &lt;str&gt;</code>: Path to output report file</li>
+<li><code>--format &lt;tsv|parquet|jsonl&gt;</code>: Output format (default: infer from -o extension, else tsv)</li>
+<li><code>-c, --column &lt;str&gt;</code>: Categorical columns to group by (can specify multiple)</li>
+<li><code>-s, --set-column &lt;str&gt;</code>: Slots to summarize as the distinct set of values per group instead of grouping on them (e.g. knowledge_level, agent_type, primary_knowledge_source). Switches to the SPQO &#x27;edge type shape&#x27; summary.</li>
+<li><code>-P, --percentile-column &lt;str&gt;</code>: Numeric slots to summarize per group as <code>&amp;lt;slot&amp;gt;_avg</code> + <code>&amp;lt;slot&amp;gt;_quantiles</code> (list slots summarize element count, e.g. publications; numeric slots the value).</li>
 <li><code>--proportion</code>: Add a <code>proportion</code> column (group count / total edges).</li>
 <li><code>-q, --quiet</code>: Suppress progress output</li>
 <li><code>--help</code>: Show this message and exit.</li>
@@ -2623,12 +2623,12 @@ koza node-examples -d merged.duckdb -o examples.tsv -t provided_by
 </code></pre></div>
 <p><strong>Options</strong>:</p>
 <ul>
-<li><code>-d, --database TEXT</code>: Path to DuckDB database file</li>
-<li><code>-f, --file TEXT</code>: Path to node file (TSV, JSONL, or Parquet)</li>
-<li><code>-o, --output TEXT</code>: Path to output examples file</li>
-<li><code>--format [tsv|parquet|jsonl]</code>: Output format (default: infer from -o extension, else tsv)</li>
-<li><code>-n, --sample-size INTEGER</code>: Number of examples per type  [default: 5]</li>
-<li><code>-t, --type-column TEXT</code>: Column to partition examples by  [default: category]</li>
+<li><code>-d, --database &lt;str&gt;</code>: Path to DuckDB database file</li>
+<li><code>-f, --file &lt;str&gt;</code>: Path to node file (TSV, JSONL, or Parquet)</li>
+<li><code>-o, --output &lt;str&gt;</code>: Path to output examples file</li>
+<li><code>--format &lt;tsv|parquet|jsonl&gt;</code>: Output format (default: infer from -o extension, else tsv)</li>
+<li><code>-n, --sample-size &lt;int&gt;</code>: Number of examples per type  [default: 5]</li>
+<li><code>-t, --type-column &lt;str&gt;</code>: Column to partition examples by  [default: category]</li>
 <li><code>-q, --quiet</code>: Suppress progress output</li>
 <li><code>--help</code>: Show this message and exit.</li>
 </ul>
@@ -2651,13 +2651,13 @@ koza edge-examples -d merged.duckdb -o examples.tsv -t predicate -t primary_know
 </code></pre></div>
 <p><strong>Options</strong>:</p>
 <ul>
-<li><code>-d, --database TEXT</code>: Path to DuckDB database file</li>
-<li><code>-n, --nodes TEXT</code>: Path to node file (for denormalization)</li>
-<li><code>-e, --edges TEXT</code>: Path to edge file (TSV, JSONL, or Parquet)</li>
-<li><code>-o, --output TEXT</code>: Path to output examples file</li>
-<li><code>--format [tsv|parquet|jsonl]</code>: Output format (default: infer from -o extension, else tsv)</li>
-<li><code>-s, --sample-size INTEGER</code>: Number of examples per type  [default: 5]</li>
-<li><code>-t, --type-column TEXT</code>: Columns to partition examples by (can specify multiple)</li>
+<li><code>-d, --database &lt;str&gt;</code>: Path to DuckDB database file</li>
+<li><code>-n, --nodes &lt;str&gt;</code>: Path to node file (for denormalization)</li>
+<li><code>-e, --edges &lt;str&gt;</code>: Path to edge file (TSV, JSONL, or Parquet)</li>
+<li><code>-o, --output &lt;str&gt;</code>: Path to output examples file</li>
+<li><code>--format &lt;tsv|parquet|jsonl&gt;</code>: Output format (default: infer from -o extension, else tsv)</li>
+<li><code>-s, --sample-size &lt;int&gt;</code>: Number of examples per type  [default: 5]</li>
+<li><code>-t, --type-column &lt;str&gt;</code>: Columns to partition examples by (can specify multiple)</li>
 <li><code>-q, --quiet</code>: Suppress progress output</li>
 <li><code>--help</code>: Show this message and exit.</li>
 </ul>
@@ -2671,16 +2671,16 @@ natively.</p>
     koza export graph.duckdb -o output/ -f tsv
     koza export graph.duckdb -o output/ -f jsonl</p>
 <p><strong>Usage</strong>:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>DATABASE
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span><span class="o">{</span>database<span class="o">}</span>
 </code></pre></div>
 <p><strong>Arguments</strong>:</p>
 <ul>
-<li><code>DATABASE</code>: Path to the DuckDB graph to export  [required]</li>
+<li><code>database</code>: Path to the DuckDB graph to export  [required]</li>
 </ul>
 <p><strong>Options</strong>:</p>
 <ul>
-<li><code>-o, --output-dir TEXT</code>: Output directory  [default: ./output]</li>
-<li><code>-f, --format [tsv|jsonl|parquet]</code>: Output format  [default: tsv]</li>
+<li><code>-o, --output-dir &lt;str&gt;</code>: Output directory  [default: ./output]</li>
+<li><code>-f, --format &lt;tsv|jsonl|parquet&gt;</code>: Output format  [default: tsv]</li>
 <li><code>-q, --quiet</code>: Suppress output</li>
 <li><code>--help</code>: Show this message and exit.</li>
 </ul>
@@ -2696,11 +2696,11 @@ the requested format, applying the same serialization policy as <code>export</co
 </code></pre></div>
 <p><strong>Options</strong>:</p>
 <ul>
-<li><code>-n, --nodes TEXT</code>: Node file(s) or glob(s)</li>
-<li><code>-e, --edges TEXT</code>: Edge file(s) or glob(s)</li>
-<li><code>-o, --output-dir TEXT</code>: Output directory  [default: ./output]</li>
-<li><code>-f, --format [tsv|jsonl|parquet]</code>: Output format  [default: tsv]</li>
-<li><code>--slots-file TEXT</code>: YAML {nodes:[...], edges:[...]} explicit JSONL schema (skips inference)</li>
+<li><code>-n, --nodes &lt;str&gt;</code>: Node file(s) or glob(s)</li>
+<li><code>-e, --edges &lt;str&gt;</code>: Edge file(s) or glob(s)</li>
+<li><code>-o, --output-dir &lt;str&gt;</code>: Output directory  [default: ./output]</li>
+<li><code>-f, --format &lt;tsv|jsonl|parquet&gt;</code>: Output format  [default: tsv]</li>
+<li><code>--slots-file &lt;str&gt;</code>: YAML {nodes:[...], edges:[...]} explicit JSONL schema (skips inference)</li>
 <li><code>-q, --quiet</code>: Suppress output</li>
 <li><code>--help</code>: Show this message and exit.</li>
 </ul>
@@ -2722,16 +2722,16 @@ nodes/edges (no row iteration):</p>
 <p>Example:
     koza biolink-check graph.duckdb -o checks/</p>
 <p><strong>Usage</strong>:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>biolink-check<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>DATABASE
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>biolink-check<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span><span class="o">{</span>database<span class="o">}</span>
 </code></pre></div>
 <p><strong>Arguments</strong>:</p>
 <ul>
-<li><code>DATABASE</code>: Path to the DuckDB database file to check  [required]</li>
+<li><code>database</code>: Path to the DuckDB database file to check  [required]</li>
 </ul>
 <p><strong>Options</strong>:</p>
 <ul>
-<li><code>-o, --output-dir TEXT</code>: Directory to write subobj_errors / prefix_errors tables</li>
-<li><code>-f, --format [tsv|parquet|jsonl]</code>: Output format  [default: parquet]</li>
+<li><code>-o, --output-dir &lt;str&gt;</code>: Directory to write subobj_errors / prefix_errors tables</li>
+<li><code>-f, --format &lt;tsv|parquet|jsonl&gt;</code>: Output format  [default: parquet]</li>
 <li><code>-q, --quiet</code>: Suppress summary output</li>
 <li><code>--help</code>: Show this message and exit.</li>
 </ul>
@@ -2814,7 +2814,7 @@ nodes/edges (no row iteration):</p>
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.code.copy", "navigation.expand", "navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>
