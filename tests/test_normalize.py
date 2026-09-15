@@ -380,5 +380,280 @@ uuid:22222222-2222-2222-2222-222222222222	HGNC:10450	biolink:interacts_with	TEST
         )
 
 
+#
+# Predicate (use_match) filtering - https://github.com/monarch-initiative/koza/issues/249
+#
+
+MIXED_PREDICATE_SSSOM = """# curie_map:
+#   skos: http://www.w3.org/2004/02/skos/core#
+#   semapv: https://w3id.org/semapv/vocab/
+subject_id	predicate_id	object_id	mapping_justification
+NCBIGene:43852	skos:exactMatch	FB:FBgn0000008	semapv:UnspecifiedMatching
+UniProtKB:P12345	skos:closeMatch	HGNC:123	semapv:UnspecifiedMatching
+UBERON:0001977	skos:broadMatch	LOINC:LP7567-3	semapv:UnspecifiedMatching
+"""
+
+MIXED_PREDICATE_EDGES = """id	subject	predicate	object	category
+e1	FB:FBgn0000008	biolink:related_to	MONDO:0000001	biolink:Association
+e2	HGNC:123	biolink:related_to	MONDO:0000001	biolink:Association
+e3	LOINC:LP7567-3	biolink:related_to	MONDO:0000001	biolink:Association
+"""
+
+
+def _write_edges_database(temp_dir: Path, name: str, edges_content: str) -> Path:
+    """Create a DuckDB database with an edges table loaded from TSV content."""
+    edges_file = temp_dir / f"{name}.edges.tsv"
+    edges_file.write_text(edges_content)
+
+    db_file = temp_dir / f"{name}.duckdb"
+    with GraphDatabase(db_file) as db:
+        db.conn.execute(
+            "CREATE TABLE edges AS SELECT * FROM read_csv(?, delim='\t', header=true, all_varchar=true)",
+            [str(edges_file)],
+        )
+    return db_file
+
+
+def _subjects_by_id(db_file: Path) -> dict[str, str]:
+    with GraphDatabase(db_file) as db:
+        return dict(db.conn.execute("SELECT id, subject FROM edges").fetchall())
+
+
+@pytest.fixture
+def mixed_predicate_sssom_file(temp_dir):
+    """SSSOM file mixing exactMatch, closeMatch and broadMatch rows."""
+    sssom_file = temp_dir / "mixed_predicates.sssom.tsv"
+    sssom_file.write_text(MIXED_PREDICATE_SSSOM)
+    return sssom_file
+
+
+@pytest.fixture
+def no_predicate_column_sssom_file(temp_dir):
+    """SSSOM file that omits the optional predicate_id column entirely."""
+    sssom_content = """# curie_map:
+#   semapv: https://w3id.org/semapv/vocab/
+subject_id	object_id	mapping_justification
+NCBIGene:43852	FB:FBgn0000008	semapv:UnspecifiedMatching
+UniProtKB:P12345	HGNC:123	semapv:UnspecifiedMatching
+"""
+    sssom_file = temp_dir / "no_predicate_column.sssom.tsv"
+    sssom_file.write_text(sssom_content)
+    return sssom_file
+
+
+def test_normalize_default_applies_every_predicate(temp_dir, mixed_predicate_sssom_file):
+    """Without use_match, behaviour is unchanged: every mapping row is applied as an identity."""
+    db_file = _write_edges_database(temp_dir, "default_predicates", MIXED_PREDICATE_EDGES)
+
+    config = NormalizeConfig(
+        database_path=db_file,
+        mapping_files=prepare_mapping_file_specs_from_paths([mixed_predicate_sssom_file]),
+        quiet=True,
+        show_progress=False,
+    )
+    result = normalize_graph(config)
+
+    assert result.success is True
+    assert result.edges_normalized == 3
+
+    subjects = _subjects_by_id(db_file)
+    assert subjects["e1"] == "NCBIGene:43852"  # exactMatch
+    assert subjects["e2"] == "UniProtKB:P12345"  # closeMatch, applied as today
+    assert subjects["e3"] == "UBERON:0001977"  # broadMatch, applied as today
+
+
+def test_normalize_use_match_exact_only(temp_dir, mixed_predicate_sssom_file):
+    """use_match=['skos:exactMatch'] applies only the exact rows."""
+    db_file = _write_edges_database(temp_dir, "exact_only", MIXED_PREDICATE_EDGES)
+
+    config = NormalizeConfig(
+        database_path=db_file,
+        mapping_files=prepare_mapping_file_specs_from_paths([mixed_predicate_sssom_file]),
+        use_match=["skos:exactMatch"],
+        quiet=True,
+        show_progress=False,
+    )
+    result = normalize_graph(config)
+
+    assert result.success is True
+    assert result.edges_normalized == 1
+
+    subjects = _subjects_by_id(db_file)
+    assert subjects["e1"] == "NCBIGene:43852"
+    assert subjects["e2"] == "HGNC:123"  # closeMatch not applied
+    assert subjects["e3"] == "LOINC:LP7567-3"  # broadMatch not applied
+
+    # Only the exact mapping survives into the mappings table
+    with GraphDatabase(db_file) as db:
+        predicates = [row[0] for row in db.conn.execute("SELECT predicate_id FROM mappings").fetchall()]
+        assert predicates == ["skos:exactMatch"]
+
+
+def test_normalize_use_match_multiple_predicates(temp_dir, mixed_predicate_sssom_file):
+    """Several predicates can be opted into at once."""
+    db_file = _write_edges_database(temp_dir, "exact_and_close", MIXED_PREDICATE_EDGES)
+
+    config = NormalizeConfig(
+        database_path=db_file,
+        mapping_files=prepare_mapping_file_specs_from_paths([mixed_predicate_sssom_file]),
+        use_match=["skos:exactMatch", "skos:closeMatch"],
+        quiet=True,
+        show_progress=False,
+    )
+    result = normalize_graph(config)
+
+    assert result.success is True
+    assert result.edges_normalized == 2
+
+    subjects = _subjects_by_id(db_file)
+    assert subjects["e1"] == "NCBIGene:43852"
+    assert subjects["e2"] == "UniProtKB:P12345"
+    assert subjects["e3"] == "LOINC:LP7567-3"  # broadMatch still not applied
+
+
+def test_non_exact_predicates_warn_when_use_match_unset(temp_dir, mixed_predicate_sssom_file, caplog):
+    """Mixed input with no use_match warns and names the per-predicate counts."""
+    db_file = _write_edges_database(temp_dir, "warning_fires", MIXED_PREDICATE_EDGES)
+
+    config = NormalizeConfig(
+        database_path=db_file,
+        mapping_files=prepare_mapping_file_specs_from_paths([mixed_predicate_sssom_file]),
+        quiet=True,
+        show_progress=False,
+    )
+    result = normalize_graph(config)
+
+    assert result.success is True
+
+    non_exact_warnings = [w for w in result.warnings if "non-exact SSSOM mappings" in w]
+    assert len(non_exact_warnings) == 1
+
+    warning = non_exact_warnings[0]
+    assert "Applying 2 non-exact SSSOM mappings" in warning  # the exactMatch row is not counted
+    assert "skos:broadMatch: 1" in warning
+    assert "skos:closeMatch: 1" in warning
+    assert "skos:exactMatch: " not in warning
+    assert "use_match" in warning
+
+    # The same message reaches the logger
+    assert any("non-exact SSSOM mappings" in record.message for record in caplog.records)
+
+
+def test_no_non_exact_warning_for_all_exact_mappings(test_database, sample_sssom_file):
+    """An all-exactMatch mapping set produces no predicate warning."""
+    config = NormalizeConfig(
+        database_path=test_database,
+        mapping_files=prepare_mapping_file_specs_from_paths([sample_sssom_file]),
+        quiet=True,
+        show_progress=False,
+    )
+    result = normalize_graph(config)
+
+    assert result.success is True
+    assert [w for w in result.warnings if "non-exact SSSOM mappings" in w] == []
+
+
+def test_no_non_exact_warning_when_use_match_set(temp_dir, mixed_predicate_sssom_file):
+    """Opting in silences the warning - the caller has made the choice explicit."""
+    db_file = _write_edges_database(temp_dir, "warning_silenced", MIXED_PREDICATE_EDGES)
+
+    config = NormalizeConfig(
+        database_path=db_file,
+        mapping_files=prepare_mapping_file_specs_from_paths([mixed_predicate_sssom_file]),
+        use_match=["skos:exactMatch"],
+        quiet=True,
+        show_progress=False,
+    )
+    result = normalize_graph(config)
+
+    assert result.success is True
+    assert [w for w in result.warnings if "non-exact SSSOM mappings" in w] == []
+
+
+def test_mapping_file_without_predicate_id_column(temp_dir, no_predicate_column_sssom_file):
+    """predicate_id is optional in SSSOM - such files must keep working unchanged."""
+    db_file = _write_edges_database(temp_dir, "no_predicate_column", MIXED_PREDICATE_EDGES)
+
+    config = NormalizeConfig(
+        database_path=db_file,
+        mapping_files=prepare_mapping_file_specs_from_paths([no_predicate_column_sssom_file]),
+        quiet=True,
+        show_progress=False,
+    )
+    result = normalize_graph(config)
+
+    assert result.success is True
+    assert result.edges_normalized == 2
+    assert [w for w in result.warnings if "non-exact SSSOM mappings" in w] == []
+
+    subjects = _subjects_by_id(db_file)
+    assert subjects["e1"] == "NCBIGene:43852"
+    assert subjects["e2"] == "UniProtKB:P12345"
+
+
+def test_use_match_with_missing_predicate_id_column_keeps_all_mappings(
+    temp_dir, no_predicate_column_sssom_file, caplog
+):
+    """use_match cannot be enforced without predicate_id, so nothing is dropped."""
+    db_file = _write_edges_database(temp_dir, "no_predicate_column_use_match", MIXED_PREDICATE_EDGES)
+
+    config = NormalizeConfig(
+        database_path=db_file,
+        mapping_files=prepare_mapping_file_specs_from_paths([no_predicate_column_sssom_file]),
+        use_match=["skos:exactMatch"],
+        quiet=True,
+        show_progress=False,
+    )
+    result = normalize_graph(config)
+
+    assert result.success is True
+    assert result.edges_normalized == 2
+    assert any("no predicate_id column" in record.message for record in caplog.records)
+
+
+def test_use_match_keeps_rows_from_files_without_predicate_id(
+    temp_dir, mixed_predicate_sssom_file, no_predicate_column_sssom_file
+):
+    """Mixing a file with predicate_id and one without must not drop the latter's rows."""
+    db_file = _write_edges_database(temp_dir, "mixed_files", MIXED_PREDICATE_EDGES)
+
+    # The predicate-less file maps LOINC:LP7567-3, which the mixed file only maps via broadMatch
+    extra = temp_dir / "extra_no_predicate.sssom.tsv"
+    extra.write_text("subject_id\tobject_id\nLOINC:9999-9\tLOINC:LP7567-3\n")
+
+    config = NormalizeConfig(
+        database_path=db_file,
+        mapping_files=prepare_mapping_file_specs_from_paths([mixed_predicate_sssom_file, extra]),
+        use_match=["skos:exactMatch"],
+        quiet=True,
+        show_progress=False,
+    )
+    result = normalize_graph(config)
+
+    assert result.success is True
+
+    subjects = _subjects_by_id(db_file)
+    assert subjects["e1"] == "NCBIGene:43852"  # exactMatch applied
+    assert subjects["e2"] == "HGNC:123"  # closeMatch filtered out
+    assert subjects["e3"] == "LOINC:9999-9"  # NULL predicate_id row retained
+
+
+def test_use_match_empty_list_is_treated_as_unset(test_database, sample_sssom_file):
+    """An empty use_match must not be read as 'keep nothing'."""
+    config = NormalizeConfig(
+        database_path=test_database,
+        mapping_files=prepare_mapping_file_specs_from_paths([sample_sssom_file]),
+        use_match=[],
+        quiet=True,
+        show_progress=False,
+    )
+
+    assert config.use_match is None
+
+    result = normalize_graph(config)
+    assert result.success is True
+    assert result.edges_normalized > 0
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

@@ -299,6 +299,7 @@ Configuration for the normalize operation, which applies SSSOM mappings to norma
 |-------|------|---------|-------------|
 | `database_path` | `Path` | **required** | Path to the DuckDB database |
 | `mapping_files` | `list[FileSpec]` | `[]` | SSSOM mapping files |
+| `use_match` | `list[str] \| None` | `None` | SSSOM predicate CURIEs to apply, e.g. `["skos:exactMatch"]`. `None` applies every mapping regardless of `predicate_id` |
 | `quiet` | `bool` | `False` | Suppress progress output |
 | `show_progress` | `bool` | `True` | Show progress indicators |
 
@@ -306,6 +307,8 @@ Configuration for the normalize operation, which applies SSSOM mappings to norma
 
 - **Database Exists**: The database file must exist
 - **Mapping Files Required**: At least one SSSOM mapping file must be provided
+- **Empty `use_match`**: An empty list is normalized to `None` (apply everything) rather than
+  being read as "keep nothing"
 
 #### Example
 
@@ -317,7 +320,8 @@ config = NormalizeConfig(
     mapping_files=[
         FileSpec(path=Path("mappings/disease_mappings.sssom.tsv")),
         FileSpec(path=Path("mappings/gene_mappings.sssom.tsv")),
-    ]
+    ],
+    use_match=["skos:exactMatch"],
 )
 ```
 

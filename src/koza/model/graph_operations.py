@@ -323,6 +323,14 @@ class NormalizeConfig(BaseModel):
 
     database_path: Path
     mapping_files: list[FileSpec] = Field(default_factory=list)
+    use_match: list[str] | None = Field(
+        default=None,
+        description=(
+            "SSSOM mapping predicate CURIEs to apply, e.g. ['skos:exactMatch']. "
+            "When None (the default) every mapping row is applied regardless of predicate_id, "
+            "which preserves historical behaviour."
+        ),
+    )
     quiet: bool = False
     show_progress: bool = True
 
@@ -332,6 +340,15 @@ class NormalizeConfig(BaseModel):
         if not v.exists():
             raise ValueError(f"Database file not found: {v}")
         return v
+
+    @field_validator("use_match")
+    @classmethod
+    def normalize_use_match(cls, v: list[str] | None) -> list[str] | None:
+        """Treat an empty list as "unset" so no configuration silently drops every mapping."""
+        if v is None:
+            return None
+        cleaned = [predicate.strip() for predicate in v if predicate and predicate.strip()]
+        return cleaned or None
 
     @model_validator(mode="after")
     def validate_mapping_files_provided(self):
@@ -405,6 +422,11 @@ class MergeConfig(BaseModel):
     # Slot names to collapse from arrays to scalars during the join step.
     # Empty by default: Biolink multivalued slot definitions are preserved.
     force_single_valued: list[str] = Field(default_factory=list)
+
+    # Normalize-specific options
+    # SSSOM predicate CURIEs to apply, e.g. ["skos:exactMatch"]. None means apply every
+    # mapping row regardless of predicate_id (historical behaviour).
+    use_match: list[str] | None = None
 
     # Prune-specific options
     keep_singletons: bool = True

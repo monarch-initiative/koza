@@ -37,7 +37,7 @@ The relevant columns for normalization are:
 
 - **subject_id**: The target identifier (what Koza normalizes TO)
 - **object_id**: The source identifier (what Koza normalizes FROM)
-- **predicate_id**: The mapping relationship (e.g., `skos:exactMatch`) - used for filtering but not for determining direction
+- **predicate_id**: The mapping relationship (e.g., `skos:exactMatch`) - optionally used for filtering (see [Filtering by Mapping Predicate](#filtering-by-mapping-predicate)), never for determining direction
 - **mapping_justification**: How the mapping was created (optional but recommended)
 
 **Important**: Normalization changes **edge references** (the `subject` and `object` columns in the edges table), not the node IDs themselves. If an edge references an identifier that appears in the SSSOM `object_id` column, that reference is updated to the corresponding `subject_id`.
@@ -148,6 +148,51 @@ FROM edges
 WHERE original_subject IS NOT NULL
    OR original_object IS NOT NULL;
 ```
+
+## Filtering by Mapping Predicate
+
+Normalization rewrites one identifier into another, which only makes sense for mapping predicates
+that assert identity. A `skos:exactMatch` row says two identifiers denote the same thing; a
+`skos:closeMatch` or `skos:broadMatch` row does not.
+
+### Default Behaviour
+
+By default `normalize` applies **every** mapping row regardless of `predicate_id`. A `broadMatch`
+row rewires an edge endpoint exactly as an `exactMatch` row does, collapsing a narrower concept
+into a broader one.
+
+When the loaded mappings contain non-exact predicates and no filter is configured, Koza warns and
+names the per-predicate counts:
+
+```
+⚠️  Applying 20,385 non-exact SSSOM mappings as identity rewrites because use_match is not set
+    (skos:broadMatch: 8, skos:closeMatch: 20,377). Set use_match=['skos:exactMatch'] to apply only
+    exact matches.
+```
+
+### Opting Into a Predicate Filter
+
+Pass `--use-match` (repeatable) to keep only the mapping predicates you want applied:
+
+```bash
+# Only identity mappings
+koza normalize graph.duckdb -m "mappings/*.sssom.tsv" --use-match skos:exactMatch
+
+# Also accept close matches
+koza normalize graph.duckdb -m "mappings/*.sssom.tsv" \
+  --use-match skos:exactMatch \
+  --use-match skos:closeMatch
+```
+
+The same option is available on `koza merge`, and as `use_match` on `NormalizeConfig` and
+`MergeConfig`.
+
+### Files Without a predicate_id Column
+
+`predicate_id` is optional in SSSOM. Rows without one are always kept, even when `--use-match` is
+set, so a mapping file that omits the column keeps working exactly as before. If none of the loaded
+files carry the column at all, `--use-match` cannot be enforced and Koza says so rather than
+dropping every mapping.
 
 ## Duplicate Mapping Handling
 

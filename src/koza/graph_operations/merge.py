@@ -197,6 +197,7 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
             normalize_config = NormalizeConfig(
                 database_path=database_path,
                 mapping_files=config.mapping_files,
+                use_match=config.use_match,
                 quiet=config.quiet,
                 show_progress=config.show_progress,
             )

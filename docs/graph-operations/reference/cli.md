@@ -159,6 +159,7 @@ This command runs the complete pipeline for creating a production-ready knowledg
 | `--compress` | | bool | False | Compress archive as tar.gz (requires `--archive`) |
 | `--graph-name` | | str | `merged_graph` | Name for graph files in archive |
 | `--skip-normalize` | | bool | False | Skip normalization step |
+| `--use-match` | | List[str] | None | SSSOM predicate CURIE to apply during normalization, e.g. `skos:exactMatch` (can specify multiple) |
 | `--skip-prune` | | bool | False | Skip pruning step |
 | `--keep-singletons` | | bool | True | Keep singleton nodes (default) |
 | `--remove-singletons` | | bool | False | Move singleton nodes to separate table |
@@ -223,6 +224,7 @@ The `normalize` command loads SSSOM (Simple Standard for Sharing Ontological Map
 |--------|-------|------|---------|-------------|
 | `--mappings` | `-m` | List[str] | None | SSSOM mapping files or glob patterns (can specify multiple) |
 | `--mappings-dir` | `-d` | Path | None | Directory containing SSSOM mapping files |
+| `--use-match` | | List[str] | None | SSSOM predicate CURIE to apply, e.g. `skos:exactMatch` (can specify multiple). Default: apply every mapping regardless of `predicate_id` |
 | `--progress` | `-p` | bool | True | Show progress bars |
 | `--quiet` | `-q` | bool | False | Suppress output |
 
@@ -237,6 +239,9 @@ koza normalize graph.duckdb --mappings-dir ./sssom/
 
 # Apply mappings with glob pattern
 koza normalize graph.duckdb -m "mappings/*.sssom.tsv"
+
+# Only apply exact matches, ignoring close/broad/narrow mappings
+koza normalize graph.duckdb -m "mappings/*.sssom.tsv" --use-match skos:exactMatch
 
 # Quiet operation for automation
 koza normalize graph.duckdb -m mappings.sssom.tsv -q
