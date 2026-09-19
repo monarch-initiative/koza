@@ -18,6 +18,9 @@ Divide a graph into subsets based on field values such as source, category, or o
 ### [Normalize IDs](normalize-ids.md)
 Apply SSSOM mappings to harmonize identifiers across different naming conventions and ontologies.
 
+### [Canonicalize Prefixes](canonicalize-prefixes.md)
+Audit CURIE prefixes against a prefixmaps context and repair case variants (`hgnc:` → `HGNC:`).
+
 ### [Clean Graphs](clean-graph.md)
 Remove duplicates, dangling edges, and optionally singleton nodes from a graph.
 
@@ -47,6 +50,7 @@ Each how-to guide follows a consistent structure:
 | Add to existing | `koza append` | [Incremental Updates](incremental-updates.md) |
 | Extract subset | `koza split` | [Split Graphs](split-graph.md) |
 | Harmonize IDs | `koza normalize` | [Normalize IDs](normalize-ids.md) |
+| Repair prefix casing | `koza canonicalize` | [Canonicalize Prefixes](canonicalize-prefixes.md) |
 | Remove issues | `koza prune` / `koza deduplicate` | [Clean Graphs](clean-graph.md) |
 | Quality reports | `koza report` | [Generate Reports](generate-reports.md) |
 | Format conversion | `koza split --format` | [Export Formats](export-formats.md) |

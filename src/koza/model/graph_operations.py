@@ -354,6 +354,85 @@ class NormalizeResult(BaseModel):
     warnings: list[str] = Field(default_factory=list)
 
 
+class PrefixStatus(str, Enum):
+    """Classification of an observed CURIE prefix against a prefixmaps context."""
+
+    CANONICAL = "canonical"
+    CASE_VARIANT = "case_variant"
+    UNKNOWN = "unknown"
+
+
+class PrefixUsage(BaseModel):
+    """One observed prefix: where it appears and how it classifies."""
+
+    prefix: str
+    status: PrefixStatus
+    canonical_prefix: str | None = None
+    node_ids: int = 0
+    edge_subjects: int = 0
+    edge_objects: int = 0
+
+
+class PrefixReport(BaseModel):
+    """Census of every prefix in a graph, classified against a prefixmaps context."""
+
+    context: str
+    total_prefixes: int
+    canonical: int
+    case_variants: int
+    unknown: int
+    prefixes: list[PrefixUsage] = Field(default_factory=list)
+
+
+class PrefixReportConfig(BaseModel):
+    """Configuration for prefix report generation."""
+
+    database_path: Path
+    context: str = "merged"
+    output_file: Path | None = None
+    quiet: bool = False
+
+
+class PrefixReportResult(BaseModel):
+    """Result from prefix report generation."""
+
+    prefix_report: PrefixReport
+    output_file: Path | None = None
+    total_time_seconds: float = 0.0
+
+
+class CanonicalizeConfig(BaseModel):
+    """Configuration for prefix canonicalization."""
+
+    database_path: Path
+    context: str = "merged"
+    dry_run: bool = False
+    quiet: bool = False
+
+    @field_validator("database_path")
+    @classmethod
+    def validate_database_exists(cls, v: Path) -> Path:
+        if not v.exists():
+            raise ValueError(f"Database file not found: {v}")
+        return v
+
+
+class CanonicalizeResult(BaseModel):
+    """Result of prefix canonicalization."""
+
+    success: bool
+    repairs: dict[str, str] = Field(default_factory=dict)
+    node_ids_rewritten: int = 0
+    edge_subjects_rewritten: int = 0
+    edge_objects_rewritten: int = 0
+    node_id_collisions: int = 0
+    final_stats: DatabaseStats | None = None
+    total_time_seconds: float = 0.0
+    summary: Optional["OperationSummary"] = None
+    errors: list[str] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+
+
 class DeduplicateConfig(BaseModel):
     """Configuration for deduplicate operation"""
 

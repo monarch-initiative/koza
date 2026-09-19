@@ -44,7 +44,10 @@ _TABLE_TO_CLASS: dict[str, str] = {
 # Operation modules that may export a DECLARED_OUTPUTS constant. Hardcoded
 # import list rather than entry-point discovery — koza ships a fixed set of
 # operations. Add new operation modules here when they declare outputs.
-_OPERATION_MODULES_WITH_OUTPUTS = ("koza.graph_operations.normalize",)
+_OPERATION_MODULES_WITH_OUTPUTS = (
+    "koza.graph_operations.normalize",
+    "koza.graph_operations.prefixes",
+)
 
 
 @functools.cache

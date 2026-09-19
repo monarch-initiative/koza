@@ -254,6 +254,51 @@ koza normalize graph.duckdb -m mappings.sssom.tsv -q
 
 ---
 
+## koza canonicalize
+
+Repair case-variant CURIE prefixes against a prefixmaps context.
+
+### Synopsis
+
+```bash
+koza canonicalize DATABASE [OPTIONS]
+```
+
+### Description
+
+The `canonicalize` command rewrites node ids and edge subject/object references whose prefix matches a canonical prefix from a [prefixmaps](https://github.com/linkml/prefixmaps) context case-insensitively but not exactly (e.g. `hgnc:746` → `HGNC:746`). Original identifiers are preserved in `original_id` (nodes) and `original_subject`/`original_object` (edges). Prefixes unknown to the context are never touched — audit them first with `koza report prefixes`. Repairs that land on an id the graph already has are counted and reported as collisions for downstream deduplication.
+
+### Arguments
+
+| Argument | Type | Description |
+|----------|------|-------------|
+| `DATABASE` | str | Path to existing DuckDB database file (required) |
+
+### Options
+
+| Option | Short | Type | Default | Description |
+|--------|-------|------|---------|-------------|
+| `--context` | `-c` | str | `merged` | prefixmaps context to canonicalize against |
+| `--dry-run` | | bool | False | Report the repairs without applying them |
+| `--quiet` | `-q` | bool | False | Suppress output |
+
+### Examples
+
+```bash
+# Preview the repairs
+koza canonicalize graph.duckdb --dry-run
+
+# Apply against the default merged context
+koza canonicalize graph.duckdb
+
+# Use a different prefixmaps context
+koza canonicalize graph.duckdb --context bioregistry.upper
+```
+
+**See also**: [How to Canonicalize Prefixes](../how-to/canonicalize-prefixes.md)
+
+---
+
 ## koza deduplicate
 
 Remove duplicate nodes and edges by ID.
@@ -578,6 +623,14 @@ Analyzes database schema and biolink compliance, reporting column types, coverag
 
 ```bash
 koza report schema -d merged.duckdb -o schema_report.yaml
+```
+
+#### prefixes - CURIE Prefix Census
+
+Counts every CURIE prefix appearing in `nodes.id`, `edges.subject`, and `edges.object`, classified against a prefixmaps context (`--context`, default `merged`) as canonical, case_variant (with the suggested canonical spelling), or unknown.
+
+```bash
+koza report prefixes -d merged.duckdb -o prefixes.yaml
 ```
 
 ### Examples

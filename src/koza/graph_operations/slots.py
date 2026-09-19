@@ -17,6 +17,7 @@ from __future__ import annotations
 
 class _NodeSlots:
     id = "id"
+    original_id = "original_id"
     category = "category"
     name = "name"
     description = "description"
