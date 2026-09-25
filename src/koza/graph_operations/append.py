@@ -250,6 +250,95 @@ def _append_files(
     return files_loaded
 
 
+def _is_list_type(duckdb_type: str) -> bool:
+    """Whether a DuckDB type string denotes a LIST (e.g. `VARCHAR[]`)."""
+    return duckdb_type.strip().upper().endswith("[]")
+
+
+def _conform_temp_table_types(
+    db: GraphDatabase,
+    temp_table_name: str,
+    file_columns: dict[str, str],
+    existing_schema: dict[str, str],
+    source: str,
+) -> dict[str, str]:
+    """Reconcile LIST-vs-scalar mismatches between an incoming file and the target table.
+
+    `UNION ALL BY NAME` casts a `VARCHAR[]` into a `VARCHAR` column by taking
+    DuckDB's list representation, so a KGX jsonl `["biolink:Procedure"]` lands as
+    the literal string `['biolink:Procedure']` — a value no category filter or
+    grouping will ever match, inserted without a warning (issue #247).
+
+    Conform each shared column to the target's shape instead:
+
+    - LIST value into a scalar column: keep the single element, matching merge's
+      `force_single_valued` semantics, and warn about rows where that discards data.
+    - scalar value into a LIST column: wrap in a one-element list, preserving NULL.
+
+    Returns the temp table's column types after conforming.
+    """
+    projections: list[str] = []
+    collapsed: list[str] = []
+    wrapped: list[str] = []
+
+    for col_name, file_type in file_columns.items():
+        target_type = existing_schema.get(col_name)
+        quoted = f'"{col_name}"'
+
+        if target_type is None or _is_list_type(file_type) == _is_list_type(target_type):
+            projections.append(quoted)
+            continue
+
+        if _is_list_type(file_type):
+            # List → scalar: element 1 (DuckDB lists are 1-indexed; an empty
+            # list yields NULL), cast to whatever the target column holds.
+            projections.append(f"CAST({quoted}[1] AS {target_type}) AS {quoted}")
+            collapsed.append(col_name)
+        else:
+            # Scalar → list: a one-element list, but keep NULL as NULL rather
+            # than turning it into a list containing NULL.
+            element_type = target_type.strip()[:-2]
+            projections.append(
+                f"CASE WHEN {quoted} IS NULL THEN NULL "
+                f"ELSE [CAST({quoted} AS {element_type})] END AS {quoted}"
+            )
+            wrapped.append(col_name)
+
+    if not collapsed and not wrapped:
+        return file_columns
+
+    for col_name in collapsed:
+        lost = db.conn.execute(
+            f'SELECT COUNT(*) FROM {temp_table_name} WHERE len("{col_name}") > 1'
+        ).fetchone()
+        lost = lost[0] if lost else 0
+        if lost:
+            logger.warning(
+                f"append: {source} supplies multiple values for '{col_name}', but the "
+                f"target column is scalar ({existing_schema[col_name]}) — keeping the first "
+                f"element discards data in {lost:,} row(s)."
+            )
+
+    if collapsed:
+        logger.info(
+            f"append: collapsed list column(s) to scalar for {source}: {', '.join(sorted(collapsed))}"
+        )
+    if wrapped:
+        logger.info(
+            f"append: wrapped scalar column(s) into single-element lists for {source}: "
+            f"{', '.join(sorted(wrapped))}"
+        )
+
+    db.conn.execute(
+        f"CREATE OR REPLACE TEMP TABLE {temp_table_name} AS "
+        f"SELECT {', '.join(projections)} FROM {temp_table_name}"
+    )
+
+    return {
+        col[0]: col[1] for col in db.conn.execute(f"DESCRIBE {temp_table_name}").fetchall()
+    }
+
+
 def _append_single_file(
     db: GraphDatabase, file_spec, table_type: str, existing_schema: dict[str, str]
 ) -> FileLoadResult:
@@ -306,6 +395,13 @@ def _append_single_file(
         # Get file schema from temp table
         file_describe = db.conn.execute(f"DESCRIBE {temp_table_name}").fetchall()
         file_columns = {col[0]: col[1] for col in file_describe}
+
+        # Reconcile LIST-vs-scalar shape against the target table before the
+        # insert below, which would otherwise cast a list to its string repr.
+        if existing_schema:
+            file_columns = _conform_temp_table_types(
+                db, temp_table_name, file_columns, existing_schema, str(file_spec.path)
+            )
 
         # Handle schema evolution - add missing columns to existing table
         if existing_schema:

@@ -488,5 +488,119 @@ HGNC:999	biolink:Gene	gene_special	A special gene	external_db
             assert hgnc_999_count == 1
 
 
+class TestAppendListScalarConformance:
+    """LIST-vs-scalar shape is reconciled against the target table (issue #247).
+
+    `UNION ALL BY NAME` casts a `VARCHAR[]` into a `VARCHAR` column via DuckDB's
+    list representation, so a KGX jsonl `["biolink:Gene"]` used to land as the
+    literal string `['biolink:Gene']` — silently, and invisible to every
+    category filter downstream.
+    """
+
+    def _append_nodes(self, db_path, nodes_file):
+        return append_graphs(
+            AppendConfig(
+                database_path=db_path,
+                node_files=[
+                    FileSpec(path=nodes_file, format=KGXFormat.JSONL, file_type=KGXFileType.NODES)
+                ],
+                edge_files=[],
+                deduplicate=False,
+                quiet=True,
+                show_progress=False,
+                schema_reporting=False,
+            )
+        )
+
+    def test_list_value_into_scalar_column_keeps_the_element(self, existing_database, temp_dir):
+        """A single-element list becomes the element, not its repr string."""
+        nodes_file = temp_dir / "list_nodes.jsonl"
+        nodes_file.write_text('{"id": "HGNC:789", "category": ["biolink:Gene"], "name": "gene3"}\n')
+
+        self._append_nodes(existing_database, nodes_file)
+
+        with GraphDatabase(existing_database) as db:
+            category = db.conn.execute(
+                "SELECT category FROM nodes WHERE id = 'HGNC:789'"
+            ).fetchone()[0]
+        assert category == "biolink:Gene"
+
+        # The whole point: the appended row is reachable by the same filter that
+        # finds rows loaded from TSV.
+        with GraphDatabase(existing_database) as db:
+            matched = db.conn.execute(
+                "SELECT COUNT(*) FROM nodes WHERE category = 'biolink:Gene'"
+            ).fetchone()[0]
+        assert matched == 3  # 2 seeded + the appended one
+
+    def test_multi_element_list_into_scalar_column_warns(self, existing_database, temp_dir, caplog):
+        """Collapsing is lossy when the list has more than one value — say so."""
+        nodes_file = temp_dir / "multi_nodes.jsonl"
+        nodes_file.write_text(
+            '{"id": "HGNC:789", "category": ["biolink:Gene", "biolink:Entity"], "name": "gene3"}\n'
+        )
+
+        with caplog.at_level("WARNING"):
+            self._append_nodes(existing_database, nodes_file)
+
+        with GraphDatabase(existing_database) as db:
+            category = db.conn.execute(
+                "SELECT category FROM nodes WHERE id = 'HGNC:789'"
+            ).fetchone()[0]
+        assert category == "biolink:Gene"  # first element, matching merge's semantics
+        assert "discards data in 1 row" in caplog.text
+
+    def test_scalar_value_into_list_column_is_wrapped(self, temp_dir):
+        """The inverse direction: a scalar lands in a `VARCHAR[]` column as a
+        one-element list, and NULL stays NULL rather than becoming [NULL]."""
+        db_path = temp_dir / "listcols.duckdb"
+        with GraphDatabase(db_path) as db:
+            db.conn.execute(
+                "CREATE TABLE nodes (id VARCHAR, category VARCHAR[], name VARCHAR);"
+                "INSERT INTO nodes VALUES ('HGNC:123', ['biolink:Gene'], 'gene1');"
+            )
+            db.conn.execute("CREATE TABLE edges (subject VARCHAR, predicate VARCHAR, object VARCHAR)")
+
+        nodes_file = temp_dir / "scalar_nodes.jsonl"
+        nodes_file.write_text(
+            '{"id": "HGNC:789", "category": "biolink:Gene", "name": "gene3"}\n'
+            '{"id": "HGNC:790", "name": "gene4"}\n'
+        )
+
+        self._append_nodes(db_path, nodes_file)
+
+        with GraphDatabase(db_path) as db:
+            rows = dict(
+                db.conn.execute(
+                    "SELECT id, category FROM nodes WHERE id IN ('HGNC:789', 'HGNC:790')"
+                ).fetchall()
+            )
+        assert rows["HGNC:789"] == ["biolink:Gene"]
+        assert rows["HGNC:790"] is None
+
+    def test_matching_shapes_are_left_alone(self, temp_dir):
+        """A list into a list column is untouched, including multiple values."""
+        db_path = temp_dir / "listmatch.duckdb"
+        with GraphDatabase(db_path) as db:
+            db.conn.execute(
+                "CREATE TABLE nodes (id VARCHAR, category VARCHAR[], name VARCHAR);"
+                "INSERT INTO nodes VALUES ('HGNC:123', ['biolink:Gene'], 'gene1');"
+            )
+            db.conn.execute("CREATE TABLE edges (subject VARCHAR, predicate VARCHAR, object VARCHAR)")
+
+        nodes_file = temp_dir / "list_nodes.jsonl"
+        nodes_file.write_text(
+            '{"id": "HGNC:789", "category": ["biolink:Gene", "biolink:Entity"], "name": "gene3"}\n'
+        )
+
+        self._append_nodes(db_path, nodes_file)
+
+        with GraphDatabase(db_path) as db:
+            category = db.conn.execute(
+                "SELECT category FROM nodes WHERE id = 'HGNC:789'"
+            ).fetchone()[0]
+        assert category == ["biolink:Gene", "biolink:Entity"]
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
