@@ -10,11 +10,13 @@ import importlib.resources as ir
 
 import duckdb
 import pytest
+import yaml
 from linkml_runtime.utils.schemaview import SchemaView
 
 from koza.graph_operations import prune_graph
 from koza.graph_operations.graph_schema import (
     ASSOCIATION_ROOT,
+    _canonical_slot_order,
     ENTITY_ROOT,
     UnknownSlotsError,
     current_schema,
@@ -539,3 +541,61 @@ def test_columns_permissive_admits_unknown_as_varchar(biolink_schemaview):
         strict=False,
     )
     assert cols == {"id": "VARCHAR", "not_a_real_biolink_slot": "VARCHAR"}
+
+
+def test_canonical_slot_order_leads_with_identity_slots():
+    """Identity slots come first in a fixed order; everything else follows
+    alphabetically. A plain sort would lead with `broad_synonym` and bury `id`."""
+    assert _canonical_slot_order(["xref", "name", "broad_synonym", "id", "category"]) == [
+        "id",
+        "category",
+        "name",
+        "broad_synonym",
+        "xref",
+    ]
+    # Absent lead slots are simply skipped, not invented.
+    assert _canonical_slot_order(["object", "subject", "provided_by"]) == [
+        "subject",
+        "object",
+        "provided_by",
+    ]
+
+
+def test_export_is_ordered_deterministically(biolink_schemaview, tmp_path):
+    """The released schema must be byte-stable across builds, so a diff between
+    two releases carries only real change (issue #253).
+
+    Prefixes previously came off a set — whose iteration order Python randomizes
+    per process via PYTHONHASHSEED — and class slot lists followed DuckDB column
+    order, so semantically identical builds serialized differently. Asserting
+    sorted order here is what makes the output independent of both.
+    """
+    db_path = tmp_path / "test.duckdb"
+    conn = duckdb.connect(str(db_path))
+    try:
+        seed_schema(
+            conn,
+            # Deliberately unsorted, with `id` late, so input order can't be
+            # mistaken for canonical order.
+            nodes_headers=["name", "id", "category", "xref", "description"],
+            edges_headers=["object", "subject", "predicate", "knowledge_source"],
+            biolink_schemaview=biolink_schemaview,
+        )
+        exported = export_schema(conn, project_denormalized=False)
+    finally:
+        conn.close()
+
+    doc = yaml.safe_load(exported)
+
+    assert list(doc["prefixes"]) == sorted(doc["prefixes"])
+    assert list(doc["slots"]) == sorted(doc["slots"])
+    assert list(doc["classes"]) == sorted(doc["classes"])
+
+    # Identity slots lead each class, in _LEAD_SLOTS order, ahead of the
+    # alphabetical tail — this is what reaches users as CLI/TSV column order.
+    for class_name, class_def in doc["classes"].items():
+        slots = class_def["slots"]
+        assert slots == _canonical_slot_order(slots), f"{class_name} slots not canonical"
+
+    assert doc["classes"]["Entity"]["slots"][:3] == ["id", "category", "name"]
+    assert doc["classes"]["Association"]["slots"][:3] == ["subject", "predicate", "object"]
