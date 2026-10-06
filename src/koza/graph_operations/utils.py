@@ -208,6 +208,37 @@ def get_duckdb_read_statement(file_spec: FileSpec, sample_size: int | None = Non
         raise ValueError(f"Unsupported format: {format_type}")
 
 
+def sql_string_list(values: list[str]) -> str:
+    """Render strings as a SQL list body (``'a', 'b'``), single-quote-escaped."""
+    return ", ".join("'" + v.replace("'", "''") + "'" for v in values)
+
+
+def curie_prefix_filter(column: str, prefixes: list[str] | None) -> str:
+    """``AND (starts_with(col, 'P1:') OR ...)`` for CURIE prefixes (colon optional), or ``""`` when none."""
+    if not prefixes:
+        return ""
+    tests = " OR ".join(f"starts_with({column}, {sql_string_list([p.rstrip(':') + ':'])})" for p in prefixes)
+    return f" AND ({tests})"
+
+
+def category_membership_filter(conn: duckdb.DuckDBPyConnection, table: str, categories: list[str],
+                               column: str = "category") -> str:
+    """SQL predicate testing `column` against `categories`.
+
+    `category` may be single-valued (VARCHAR) or multivalued (VARCHAR[], koza's
+    default for Biolink-multivalued slots), so this inspects the column type and
+    returns a scalar ``IN`` test or a ``list_has_any`` test on the array.
+    """
+    col_type = conn.execute(
+        "SELECT data_type FROM information_schema.columns WHERE table_name = ? AND column_name = ?",
+        [table, column],
+    ).fetchone()
+    body = sql_string_list(categories)
+    if col_type and col_type[0].endswith("[]"):
+        return f"list_has_any({column}, [{body}])"
+    return f"{column} IN ({body})"
+
+
 class GraphDatabase:
     """
     DuckDB connection manager for graph operations using Pydantic models.

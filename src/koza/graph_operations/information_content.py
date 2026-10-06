@@ -33,7 +33,7 @@ from koza.model.graph_operations import (
     OperationSummary,
 )
 
-from .utils import GraphDatabase, print_operation_summary
+from .utils import GraphDatabase, category_membership_filter, print_operation_summary
 
 
 def _quote_list(values: list[str]) -> str:
@@ -53,7 +53,6 @@ def compute_information_content(config: InformationContentConfig) -> Information
     errors: list[str] = []
 
     preds = _quote_list(config.closure_predicates)
-    categories = _quote_list(config.association_categories)
     # Robust negation filter: edges.negated may be BOOLEAN or VARCHAR ('False').
     negated_filter = (
         ""
@@ -100,14 +99,9 @@ def compute_information_content(config: InformationContentConfig) -> Information
             # single-valued (VARCHAR) or multivalued (VARCHAR[] — koza's default
             # for Biolink-multivalued slots), so pick the matching membership
             # test: scalar IN vs list_has_any on the array.
-            cat_type = conn.execute(
-                "SELECT data_type FROM information_schema.columns "
-                f"WHERE table_name = '{config.edges_table}' AND column_name = 'category'"
-            ).fetchone()
-            if cat_type and cat_type[0].endswith("[]"):
-                category_filter = f"list_has_any(category, [{categories}])"
-            else:
-                category_filter = f"category IN ({categories})"
+            category_filter = category_membership_filter(
+                conn, config.edges_table, config.association_categories
+            )
             conn.execute(f"""
                 CREATE OR REPLACE TABLE closure_size AS
                 WITH assoc AS (
