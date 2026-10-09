@@ -75,19 +75,22 @@ def append_graphs(config: AppendConfig) -> AppendResult:
             initial_edge_schema = _get_table_schema(db, "edges")
             initial_stats = db.get_stats()
 
-            # Load node files
-            if config.node_files:
-                if not config.quiet:
-                    print(f" Loading {len(config.node_files)} node files...")
+            try:
+                # Load node files
+                if config.node_files:
+                    if not config.quiet:
+                        print(f" Loading {len(config.node_files)} node files...")
 
-                files_loaded.extend(_append_files(db, config.node_files, "nodes", config))
+                    _append_files(db, config.node_files, "nodes", config, files_loaded)
 
-            # Load edge files
-            if config.edge_files:
-                if not config.quiet:
-                    print(f" Loading {len(config.edge_files)} edge files...")
+                # Load edge files
+                if config.edge_files:
+                    if not config.quiet:
+                        print(f" Loading {len(config.edge_files)} edge files...")
 
-                files_loaded.extend(_append_files(db, config.edge_files, "edges", config))
+                    _append_files(db, config.edge_files, "edges", config, files_loaded)
+            except NestedValueError as e:
+                raise NestedValueError(f"{e}{_already_appended_note(files_loaded)}") from e
 
             # Detect schema changes
             final_node_schema = _get_table_schema(db, "nodes")
@@ -206,7 +209,25 @@ def _compare_schemas(table_name: str, old_schema: dict[str, str], new_schema: di
     return changes, len(new_columns)
 
 
-def _append_files(db: GraphDatabase, file_specs: list, table_type: str, config: AppendConfig) -> list[FileLoadResult]:
+def _already_appended_note(files_loaded: list[FileLoadResult]) -> str:
+    """Name the files this run already appended (and did not roll back)."""
+    done = [f for f in files_loaded if not f.errors]
+    if not done:
+        return " No files were appended before this error."
+    listed = ", ".join(f"{f.file_spec.path} ({f.records_loaded:,} records)" for f in done)
+    return (
+        f" Already appended in this run and NOT rolled back: {listed}. "
+        f"Leave them out when re-running, or the rows will be duplicated."
+    )
+
+
+def _append_files(
+    db: GraphDatabase,
+    file_specs: list,
+    table_type: str,
+    config: AppendConfig,
+    files_loaded: list[FileLoadResult] | None = None,
+) -> list[FileLoadResult]:
     """
     Append multiple files to an existing table with schema evolution support.
 
@@ -219,12 +240,15 @@ def _append_files(db: GraphDatabase, file_specs: list, table_type: str, config: 
         file_specs: List of FileSpec objects for files to append
         table_type: Target table name ("nodes" or "edges")
         config: AppendConfig for quiet/progress settings
+        files_loaded: list to append each FileLoadResult to as it completes, so
+            the caller still sees them if a later file raises
 
     Returns:
         List of FileLoadResult objects with per-file load statistics
     """
 
-    files_loaded = []
+    if files_loaded is None:
+        files_loaded = []
 
     # Use progress bar if requested
     if config.show_progress:
@@ -272,6 +296,13 @@ class NestedValueError(ValueError):
     Unlike other per-file load errors, which are recorded on the file's
     `FileLoadResult` and let the append carry on, this aborts the append: the
     input data has to be fixed, and quietly skipping the file would hide that.
+
+    The abort is not rolled back: files appended earlier in the same run stay
+    in the database. (One transaction per run is not an option — DuckDB has no
+    savepoints, and any failed statement aborts the whole transaction, which
+    would turn every recoverable per-file error into a full rollback.) The
+    error raised from `append_graphs` therefore lists the files already
+    appended, so they can be left out of the re-run.
     """
 
 
@@ -320,6 +351,22 @@ def _json_column_as_list(db: GraphDatabase, temp_table_name: str, col_name: str,
     )
 
 
+def _json_list_column_as_list(
+    db: GraphDatabase, temp_table_name: str, col_name: str, source: str, file_type: str, target_type: str
+) -> str:
+    """SQL rendering a `JSON[]` column as a `VARCHAR[]`: each scalar element as
+    its string, JSON `null` as NULL. Array or object elements raise
+    `NestedValueError`."""
+    quoted = f'"{col_name}"'
+    where = f"list_has_any(list_transform({quoted}, x -> json_type(x)), ['ARRAY', 'OBJECT'])"
+    bad = db.conn.execute(f"SELECT COUNT(*) FROM {temp_table_name} WHERE {where}").fetchone()
+    if bad and bad[0]:
+        raise _nested_value_error(db, temp_table_name, col_name, source, file_type, target_type, where)
+    return (
+        f"list_transform({quoted}, x -> CASE WHEN json_type(x) = 'NULL' THEN NULL ELSE json_extract_string(x, '$') END)"
+    )
+
+
 def _list_or_null(list_expr: str, target_type: str) -> str:
     """Cast a list expression to the target LIST type, with an empty list as NULL."""
     return f"CASE WHEN len({list_expr}) = 0 THEN NULL ELSE CAST({list_expr} AS {target_type}) END"
@@ -351,10 +398,13 @@ def _conform_temp_table_types(
       `"a|b"` is taken as one literal value, since jsonl has real arrays.
     - LIST value into a LIST column: NULL elements are dropped.
     - Into a LIST column, a NULL or a list left empty becomes NULL.
-    - `JSON` column (jsonl mixing scalars and arrays in one field): render each row
-      as a list first, then conform as above.
-    - nested values (lists of lists, JSON objects) with no flat rendering raise
-      `NestedValueError` instead of being inserted as repr strings.
+    - `JSON` column (jsonl mixing scalars and arrays in one field) or `JSON[]`
+      column (a list column holding only `[]`/`[null]` in the sampled rows): render
+      each row as a list of strings first, then conform as above.
+    - nested values (lists of lists, structs/objects) going into a column whose
+      values are flat raise `NestedValueError` instead of being inserted as repr
+      strings. Nested into nested (e.g. STRUCT fields in a different order) is
+      left to DuckDB's by-name cast, which fails loudly on a real mismatch.
 
     Returns the temp table's column types after conforming.
     """
@@ -373,11 +423,24 @@ def _conform_temp_table_types(
 
         target_is_list = _is_list_type(target_type)
 
-        if _is_json_type(file_type):
+        if file_type == target_type:
+            if not _is_list_type(target_type):
+                projections.append(quoted)
+                continue
+            # Same list type: still drop NULL elements / empty lists below.
+            list_expr = quoted
+        elif _is_json_type(file_type):
             list_expr = _json_column_as_list(db, temp_table_name, col_name, source, target_type)
+        elif _is_list_type(file_type) and _is_json_type(file_type.strip()[:-2]):
+            # `JSON[]`: what read_json infers for a list column holding only `[]`
+            # / `[null]` (or whose sample saw nothing else). Flatten per element.
+            list_expr = _json_list_column_as_list(db, temp_table_name, col_name, source, file_type, target_type)
         elif _is_list_type(file_type):
             if _is_nested_type(file_type.strip()[:-2]):
-                if file_type == target_type:
+                if target_is_list and _is_nested_type(target_type.strip()[:-2]):
+                    # Nested into nested (e.g. STRUCT fields in another order):
+                    # DuckDB's insert cast matches fields by name, and a real
+                    # mismatch fails that cast loudly.
                     projections.append(quoted)
                     continue
                 raise _nested_value_error(
@@ -385,17 +448,23 @@ def _conform_temp_table_types(
                 )
             list_expr = quoted
         else:
+            target_element = target_type.strip()[:-2] if target_is_list else target_type
+            if _is_nested_type(file_type) and not _is_nested_type(target_element):
+                # A STRUCT/MAP into a scalar (or scalar-list) column would land
+                # as its repr string.
+                raise _nested_value_error(
+                    db, temp_table_name, col_name, source, file_type, target_type, f"{quoted} IS NOT NULL"
+                )
             if not target_is_list:
                 projections.append(quoted)
                 continue
             # Scalar → list. NULL stays NULL rather than becoming [NULL].
-            element_type = target_type.strip()[:-2]
             if split_pipes and file_type.strip().upper() == "VARCHAR":
                 items = f"list_filter(list_transform(string_split({quoted}, '|'), x -> trim(x)), x -> x != '')"
                 projections.append(f"{_list_or_null(items, target_type)} AS {quoted}")
             else:
                 projections.append(
-                    f"CASE WHEN {quoted} IS NULL THEN NULL ELSE [CAST({quoted} AS {element_type})] END AS {quoted}"
+                    f"CASE WHEN {quoted} IS NULL THEN NULL ELSE [CAST({quoted} AS {target_element})] END AS {quoted}"
                 )
             wrapped.append(col_name)
             continue

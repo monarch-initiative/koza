@@ -777,6 +777,87 @@ class TestAppendListScalarConformance:
         assert category == "biolink:Gene"
         assert "discards data" not in caplog.text
 
+    @pytest.mark.parametrize("empty_value", ["[]", "[null]"])
+    @pytest.mark.parametrize("target", ["VARCHAR", "VARCHAR[]"])
+    def test_only_empty_or_null_lists_do_not_abort(self, temp_dir, empty_value, target):
+        """read_json infers `JSON[]` for a column holding only `[]`/`[null]`; that
+        is not a nested value, it conforms to NULL."""
+        db_path = temp_dir / "empty.duckdb"
+        with GraphDatabase(db_path) as db:
+            db.conn.execute(f"CREATE TABLE nodes (id VARCHAR, xref {target})")
+            db.conn.execute("CREATE TABLE edges (subject VARCHAR, predicate VARCHAR, object VARCHAR)")
+        nodes_file = temp_dir / "empty_nodes.jsonl"
+        nodes_file.write_text(f'{{"id": "X:1", "xref": {empty_value}}}\n{{"id": "X:2", "xref": {empty_value}}}\n')
+
+        result = self._append_nodes(db_path, nodes_file)
+
+        assert not result.files_loaded[0].errors
+        with GraphDatabase(db_path) as db:
+            rows = db.conn.execute("SELECT id, xref FROM nodes ORDER BY id").fetchall()
+        assert rows == [("X:1", None), ("X:2", None)]
+
+    @pytest.mark.parametrize(("target", "expected"), [("VARCHAR", "X:1"), ("VARCHAR[]", ["X:1"])])
+    def test_sparse_list_column_beyond_inference_sample(self, temp_dir, target, expected):
+        """Values past read_json's type-inference sample in an otherwise-empty list
+        column (`JSON[]`) are extracted without JSON quoting."""
+        db_path = temp_dir / "sparse.duckdb"
+        with GraphDatabase(db_path) as db:
+            db.conn.execute(f"CREATE TABLE nodes (id VARCHAR, xref {target})")
+            db.conn.execute("CREATE TABLE edges (subject VARCHAR, predicate VARCHAR, object VARCHAR)")
+        nodes_file = temp_dir / "sparse_nodes.jsonl"
+        lines = [f'{{"id": "E:{i}", "xref": []}}' for i in range(25_000)]
+        lines.append('{"id": "X:1", "xref": ["X:1"]}')
+        nodes_file.write_text("\n".join(lines) + "\n")
+
+        result = self._append_nodes(db_path, nodes_file)
+
+        assert not result.files_loaded[0].errors
+        with GraphDatabase(db_path) as db:
+            assert db.conn.execute("SELECT xref FROM nodes WHERE id = 'X:1'").fetchone()[0] == expected
+            assert db.conn.execute("SELECT COUNT(*) FROM nodes WHERE xref IS NOT NULL").fetchone()[0] == 1
+
+    def test_struct_list_with_reordered_fields_is_inserted_by_name(self, temp_dir):
+        """Nested into nested is not a shape mismatch — DuckDB casts structs by name."""
+        db_path = temp_dir / "struct.duckdb"
+        with GraphDatabase(db_path) as db:
+            db.conn.execute("CREATE TABLE nodes (id VARCHAR, attr STRUCT(a VARCHAR, b BIGINT)[])")
+            db.conn.execute("CREATE TABLE edges (subject VARCHAR, predicate VARCHAR, object VARCHAR)")
+        nodes_file = temp_dir / "struct_nodes.jsonl"
+        nodes_file.write_text('{"id": "X:1", "attr": [{"b": 1, "a": "q"}]}\n')
+
+        result = self._append_nodes(db_path, nodes_file)
+
+        assert not result.files_loaded[0].errors
+        with GraphDatabase(db_path) as db:
+            assert db.conn.execute("SELECT attr FROM nodes WHERE id = 'X:1'").fetchone()[0] == [{"a": "q", "b": 1}]
+
+    def test_json_object_into_scalar_column_fails_loudly(self, existing_database, temp_dir):
+        """A STRUCT into a VARCHAR column would land as its repr `{'a': 1}`."""
+        nodes_file = temp_dir / "object_nodes.jsonl"
+        nodes_file.write_text('{"id": "HGNC:789", "category": {"a": 1}, "name": "gene3"}\n')
+
+        with pytest.raises(NestedValueError) as excinfo:
+            self._append_nodes(existing_database, nodes_file)
+
+        assert "'category'" in str(excinfo.value)
+        assert "STRUCT" in str(excinfo.value)
+
+    def test_abort_names_files_already_appended(self, existing_database, temp_dir):
+        """A nested-value abort is not rolled back, so the error says which files
+        of this run are already in the database."""
+        ok_file = temp_dir / "ok_nodes.tsv"
+        ok_file.write_text("id\tcategory\tname\nHGNC:789\tbiolink:Gene\tgene3\n")
+        bad_file = temp_dir / "bad_nodes.jsonl"
+        bad_file.write_text('{"id": "HGNC:790", "category": [["biolink:Gene"]], "name": "gene4"}\n')
+
+        with pytest.raises(NestedValueError) as excinfo:
+            self._append_nodes(existing_database, ok_file, bad_file)
+
+        message = str(excinfo.value)
+        assert "bad_nodes.jsonl" in message
+        assert "NOT rolled back" in message
+        assert "ok_nodes.tsv (1 records)" in message
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
