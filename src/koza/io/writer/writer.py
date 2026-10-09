@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
+from loguru import logger
+
 from koza.utils.exceptions import CountValidationError
 
 if TYPE_CHECKING:
@@ -23,6 +25,9 @@ class KozaWriter(ABC):
     #: Running tallies of rows written, maintained by concrete writers.
     node_count: int = 0
     edge_count: int = 0
+    #: Set once validate_counts() has run, so repeat calls (e.g. the runner's
+    #: safety-net call after finalize()) don't re-validate or re-log.
+    _counts_validated: bool = False
 
     @abstractmethod
     def write(self, entities: Iterable):
@@ -60,11 +65,19 @@ class KozaWriter(ABC):
 
         A no-op when no config (or no bound) is set. Raises CountValidationError
         naming every violated bound so a build fails loudly rather than shipping a
-        silently truncated graph.
+        silently truncated graph. Idempotent: only the first call does anything,
+        so concrete writers can call it from finalize() and the runner can still
+        call it afterwards for custom writers that don't.
         """
+        if self._counts_validated:
+            return
+        self._counts_validated = True
+
         config = self.config
         if config is None:
             return
+
+        logger.info(f"Output counts: {self.node_count} nodes, {self.edge_count} edges")
 
         violations: list[str] = []
         for label, count, minimum, maximum in (

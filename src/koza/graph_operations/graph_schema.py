@@ -46,6 +46,28 @@ _TABLE_TO_CLASS: dict[str, str] = {
 # operations. Add new operation modules here when they declare outputs.
 _OPERATION_MODULES_WITH_OUTPUTS = ("koza.graph_operations.normalize",)
 
+# Slots that lead a class, in this order, when the class has them; everything
+# else follows alphabetically. Slot order reaches users as column order in the
+# CLI's table and TSV output, so a plain alphabetical sort would lead `Entity`
+# with `broad_synonym` and bury `id`.
+_LEAD_SLOTS: tuple[str, ...] = (
+    "id",
+    "category",
+    "subject",
+    "predicate",
+    "object",
+    "name",
+    "full_name",
+    "symbol",
+    "description",
+)
+
+
+def _canonical_slot_order(slots: list[str]) -> list[str]:
+    """Identity slots first in `_LEAD_SLOTS` order, then the rest alphabetically."""
+    lead = [slot for slot in _LEAD_SLOTS if slot in slots]
+    return lead + sorted(set(slots) - set(lead))
+
 
 @functools.cache
 def load_biolink_schemaview() -> SchemaView:
@@ -417,7 +439,7 @@ def export_schema(
         for curie in [slot.slot_uri, *(slot.exact_mappings or [])]:
             if curie and ":" in curie:
                 used_prefixes.add(curie.split(":", 1)[0])
-    for prefix in used_prefixes:
+    for prefix in sorted(used_prefixes):
         uri = _KNOWN_PREFIX_URIS.get(prefix)
         if uri is None:
             raise ValueError(
@@ -485,7 +507,22 @@ def export_schema(
     # schema_as_dict emits the idiomatic compact schema form — `prefix: uri`
     # rather than expanded Prefix objects, and drops redundant per-element
     # `name:` keys — which is what LinkML tooling and humans expect.
-    return yaml.dump(schema_as_dict(schema), sort_keys=False, allow_unicode=True)
+    doc = schema_as_dict(schema)
+
+    # Canonical order, so the released schema is byte-stable across builds and a
+    # diff between two releases carries only real change. Without this, prefixes
+    # follow set-iteration order (which Python randomizes per process via
+    # PYTHONHASHSEED) and class slot lists follow DuckDB column order, so two
+    # semantically identical builds serialize differently — see issue #253.
+    # Ordering the emitted mapping is what makes the output independent of both.
+    for key in ("prefixes", "slots", "classes"):
+        if isinstance(doc.get(key), dict):
+            doc[key] = {name: doc[key][name] for name in sorted(doc[key])}
+    for class_def in doc.get("classes", {}).values():
+        if class_def.get("slots"):
+            class_def["slots"] = _canonical_slot_order(class_def["slots"])
+
+    return yaml.dump(doc, sort_keys=False, allow_unicode=True)
 
 
 def is_seeded(conn: duckdb.DuckDBPyConnection) -> bool:

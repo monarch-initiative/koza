@@ -14,6 +14,7 @@ from .join import join_graphs, prepare_file_specs_from_paths
 from .load import load_graph, prepare_load_config_from_paths
 from .merge import merge_graphs, prepare_merge_config_from_paths
 from .normalize import MalformedMappingError, normalize_graph, prepare_mapping_file_specs_from_paths
+from .prefixes import canonicalize_graph, generate_prefix_report
 from .profile import detect_categorical_columns, profile_graph, render_profile
 from .prune import prune_graph
 from .report import (
@@ -25,13 +26,17 @@ from .report import (
     generate_qc_report,
     generate_schema_compliance_report,
 )
+from .annotation_information_content import compute_annotation_information_content
 from .information_content import compute_information_content
+from .pairwise_similarity import compute_pairwise_similarity
 from .schema import generate_schema_report, print_schema_summary, write_schema_report_yaml
 from .split import split_graph
 from .utils import GraphDatabase, print_operation_summary
 from .biolink_check import run_biolink_check
 
 __all__ = [
+    "canonicalize_graph",
+    "generate_prefix_report",
     "join_graphs",
     "load_graph",
     "prepare_load_config_from_paths",
@@ -44,7 +49,9 @@ __all__ = [
     "prune_graph",
     "append_graphs",
     "closurize_graph",
+    "compute_annotation_information_content",
     "compute_information_content",
+    "compute_pairwise_similarity",
     "deduplicate_graph",
     "normalize_graph",
     "MalformedMappingError",

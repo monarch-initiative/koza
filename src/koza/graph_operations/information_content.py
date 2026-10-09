@@ -11,7 +11,9 @@ rebuilding per process:
   term, ``IC = -log2(freq / N)`` (oaklib's `information-content`).
 - ``closure_size`` (entity, size): the number of distinct closure ancestors
   (subsumers) reachable from the terms an entity is associated with — the
-  search-time profile-size denominator.
+  search-time profile-size denominator. Covers every entity carrying an
+  association-predicate edge, whatever its category, so a consumer joining
+  against it never silently loses an entity type.
 
 Everything is plain DuckDB SQL against the existing tables; nothing is read from
 the Python environment. The operation mutates the database in place and does not
@@ -33,7 +35,7 @@ from koza.model.graph_operations import (
     OperationSummary,
 )
 
-from .utils import GraphDatabase, print_operation_summary
+from .utils import GraphDatabase, category_membership_filter, print_operation_summary
 
 
 def _quote_list(values: list[str]) -> str:
@@ -53,7 +55,6 @@ def compute_information_content(config: InformationContentConfig) -> Information
     errors: list[str] = []
 
     preds = _quote_list(config.closure_predicates)
-    categories = _quote_list(config.association_categories)
     # Robust negation filter: edges.negated may be BOOLEAN or VARCHAR ('False').
     negated_filter = (
         ""
@@ -96,26 +97,28 @@ def compute_information_content(config: InformationContentConfig) -> Information
             ).fetchone()[0]
 
             # closure_size: per entity, the number of distinct closure ancestors
-            # (subsumers) of the terms it is associated with. `category` may be
-            # single-valued (VARCHAR) or multivalued (VARCHAR[] — koza's default
-            # for Biolink-multivalued slots), so pick the matching membership
-            # test: scalar IN vs list_has_any on the array.
-            cat_type = conn.execute(
-                "SELECT data_type FROM information_schema.columns "
-                f"WHERE table_name = '{config.edges_table}' AND column_name = 'category'"
-            ).fetchone()
-            if cat_type and cat_type[0].endswith("[]"):
-                category_filter = f"list_has_any(category, [{categories}])"
-            else:
-                category_filter = f"category IN ({categories})"
+            # (subsumers) of the terms it is associated with.
+            #
+            # Selected by association predicate. `association_categories` only
+            # narrows, and is None by default: gating membership on a category
+            # allowlist silently omitted every entity type not on it (genotypes,
+            # variants, cases), and a consumer joining against the table then
+            # dropped those entities with no error to distinguish "no size
+            # precomputed" from "no result". `category_membership_filter` picks
+            # scalar IN vs list_has_any for a VARCHAR vs VARCHAR[] column.
+            category_filter = (
+                " AND " + category_membership_filter(conn, config.edges_table, config.association_categories)
+                if config.association_categories
+                else ""
+            )
             conn.execute(f"""
                 CREATE OR REPLACE TABLE closure_size AS
                 WITH assoc AS (
                     SELECT {config.association_subject_column} AS entity,
                            {config.association_object_column} AS term
                     FROM {config.edges_table}
-                    WHERE {category_filter}
-                      AND predicate = {_quote_list([config.association_predicate])}{negated_filter}
+                    WHERE predicate = {_quote_list([config.association_predicate])}
+                      {category_filter}{negated_filter}
                 ),
                 clo AS (
                     SELECT {config.closure_subject_column} AS s,
