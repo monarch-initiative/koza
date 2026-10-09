@@ -1156,12 +1156,16 @@ def normalize(
         # Execute normalize operation
         result = normalize_graph(config)
 
-        if not quiet:
-            typer.echo("Normalize operation completed successfully!")
-
     except Exception as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(1)
+
+    if not result.success:
+        typer.echo("Normalize operation failed!", err=True)
+        raise typer.Exit(1)
+
+    if not quiet:
+        typer.echo("Normalize operation completed successfully!")
 
 
 @typer_app.command()
@@ -1367,19 +1371,22 @@ def merge(
         # Execute merge pipeline
         result = merge_graphs(config)
 
-        if not quiet:
-            if result.success:
-                typer.echo("Merge pipeline completed successfully!")
-                if result.exported_files:
-                    print(f"📁 Exported files: {len(result.exported_files)}")
-                    for file_path in result.exported_files:
-                        print(f"   - {file_path}")
-            else:
-                typer.echo("Merge pipeline completed with errors!")
-
     except Exception as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(1)
+
+    if not result.success:
+        for error in result.errors:
+            typer.echo(f"Error: {error}", err=True)
+        typer.echo("Merge pipeline failed!", err=True)
+        raise typer.Exit(1)
+
+    if not quiet:
+        typer.echo("Merge pipeline completed successfully!")
+        if result.exported_files:
+            print(f"📁 Exported files: {len(result.exported_files)}")
+            for file_path in result.exported_files:
+                print(f"   - {file_path}")
 
 
 # Report Commands

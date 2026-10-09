@@ -218,6 +218,11 @@ when the column is present.
 
 Fix the file by filling in the predicate, or by removing the rows.
 
+This error is raised as `MalformedMappingError` (a `ValueError` subclass). It **always stops a
+merge**, whatever `continue_on_pipeline_step_error` is set to: that option only downgrades runtime
+step failures to warnings, never malformed input. `koza normalize` and `koza merge` both exit
+with a non-zero status.
+
 ## Duplicate Mapping Handling
 
 SSSOM files sometimes contain one-to-many mappings where a single `object_id` maps to multiple `subject_id` values. Koza handles this to prevent edge duplication.

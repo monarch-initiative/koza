@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from koza.graph_operations import normalize_graph, prepare_mapping_file_specs_from_paths
+from koza.graph_operations import MalformedMappingError, normalize_graph, prepare_mapping_file_specs_from_paths
 from koza.graph_operations.utils import GraphDatabase
 from koza.model.graph_operations import KGXFormat, NormalizeConfig
 
@@ -311,12 +311,7 @@ uuid:22222222-2222-2222-2222-222222222222	HGNC:10450	biolink:interacts_with	TEST
 
     # Run normalization
     mapping_specs = prepare_mapping_file_specs_from_paths([sssom_file])
-    config = NormalizeConfig(
-        database_path=db_file,
-        mapping_files=mapping_specs,
-        quiet=True,
-        show_progress=False
-    )
+    config = NormalizeConfig(database_path=db_file, mapping_files=mapping_specs, quiet=True, show_progress=False)
 
     result = normalize_graph(config)
 
@@ -346,15 +341,12 @@ uuid:22222222-2222-2222-2222-222222222222	HGNC:10450	biolink:interacts_with	TEST
         """).fetchall()
 
         assert len(duplicate_ids) == 0, (
-            f"Found {len(duplicate_ids)} duplicate edge IDs. "
-            f"Duplicate IDs: {[row[0] for row in duplicate_ids]}"
+            f"Found {len(duplicate_ids)} duplicate edge IDs. Duplicate IDs: {[row[0] for row in duplicate_ids]}"
         )
 
         # Verify mappings table was deduplicated
         mappings_count = db.conn.execute("SELECT COUNT(*) FROM mappings").fetchone()[0]
-        unique_object_ids = db.conn.execute(
-            "SELECT COUNT(DISTINCT object_id) FROM mappings"
-        ).fetchone()[0]
+        unique_object_ids = db.conn.execute("SELECT COUNT(DISTINCT object_id) FROM mappings").fetchone()[0]
 
         # Should have exactly one mapping per object_id
         assert mappings_count == unique_object_ids, (
@@ -781,8 +773,8 @@ UniProtKB:P12345		HGNC:123
 
 
 @pytest.mark.parametrize("use_match", [["skos:exactMatch"], None], ids=["use_match_set", "use_match_unset"])
-def test_blank_predicate_in_file_with_column_fails(temp_dir, use_match):
-    """A blank predicate_id in a file that has the column is malformed SSSOM and fails the run."""
+def test_blank_predicate_in_file_with_column_raises(temp_dir, use_match):
+    """A blank predicate_id in a file that has the column is malformed SSSOM and raises."""
     db_file = _write_edges_database(temp_dir, "blank_predicate", MIXED_PREDICATE_EDGES)
     sssom = temp_dir / "blank.sssom.tsv"
     sssom.write_text(BLANK_PREDICATE_SSSOM)
@@ -794,11 +786,10 @@ def test_blank_predicate_in_file_with_column_fails(temp_dir, use_match):
         quiet=True,
         show_progress=False,
     )
-    result = normalize_graph(config)
+    with pytest.raises(MalformedMappingError) as excinfo:
+        normalize_graph(config)
 
-    assert result.success is False
-    assert result.edges_normalized == 0
-    [error] = result.errors
+    error = str(excinfo.value)
     assert "Malformed SSSOM file" in error
     assert "blank.sssom.tsv" in error
     assert "1 row(s) have a blank predicate_id" in error
@@ -812,28 +803,53 @@ def test_blank_predicate_error_counts_and_limits_examples(temp_dir):
     db_file = _write_edges_database(temp_dir, "many_blanks", MIXED_PREDICATE_EDGES)
     sssom = temp_dir / "many_blanks.sssom.tsv"
     sssom.write_text(
-        "subject_id\tpredicate_id\tobject_id\n"
-        "A:1\t\tB:1\n"
-        "A:2\t \tB:2\n"
-        "A:3\t\tB:3\n"
-        "A:4\tskos:exactMatch\tB:4\n"
+        "subject_id\tpredicate_id\tobject_id\nA:1\t\tB:1\nA:2\t \tB:2\nA:3\t\tB:3\nA:4\tskos:exactMatch\tB:4\n"
     )
 
-    result = normalize_graph(
-        NormalizeConfig(
-            database_path=db_file,
-            mapping_files=prepare_mapping_file_specs_from_paths([sssom]),
-            quiet=True,
-            show_progress=False,
-        )
+    config = NormalizeConfig(
+        database_path=db_file,
+        mapping_files=prepare_mapping_file_specs_from_paths([sssom]),
+        quiet=True,
+        show_progress=False,
     )
+    with pytest.raises(MalformedMappingError) as excinfo:
+        normalize_graph(config)
 
-    assert result.success is False
-    [error] = result.errors
+    error = str(excinfo.value)
     assert "3 row(s) have a blank predicate_id" in error
     assert "A:1 -> B:1" in error
     assert "A:2 -> B:2" in error
     assert "A:3" not in error  # at most two examples
+
+
+def test_cli_normalize_exits_nonzero_on_malformed_mapping_file(temp_dir):
+    from typer.testing import CliRunner
+
+    from koza.main import typer_app
+
+    db_file = _write_edges_database(temp_dir, "cli_blank", MIXED_PREDICATE_EDGES)
+    sssom = temp_dir / "blank.sssom.tsv"
+    sssom.write_text(BLANK_PREDICATE_SSSOM)
+
+    result = CliRunner().invoke(typer_app, ["normalize", str(db_file), "-m", str(sssom), "-q"])
+
+    assert result.exit_code != 0
+    assert "Malformed SSSOM file" in result.output
+
+
+def test_cli_normalize_exits_nonzero_when_operation_fails(temp_dir, sample_sssom_file):
+    """A failed NormalizeResult (here: no nodes/edges tables) must not exit 0."""
+    from typer.testing import CliRunner
+
+    from koza.main import typer_app
+
+    db_file = temp_dir / "empty_cli.duckdb"
+    with GraphDatabase(db_file):
+        pass
+
+    result = CliRunner().invoke(typer_app, ["normalize", str(db_file), "-m", str(sample_sssom_file), "-q"])
+
+    assert result.exit_code != 0
 
 
 def test_predicate_filter_runs_before_object_id_dedup(temp_dir):

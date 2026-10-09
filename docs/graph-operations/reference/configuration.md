@@ -211,7 +211,7 @@ Configuration for the merge operation, which is a composite pipeline combining j
 | `skip_normalize` | `bool` | `False` | Skip normalization step |
 | `skip_prune` | `bool` | `False` | Skip pruning step |
 | `generate_provided_by` | `bool` | `True` | Add `provided_by` column from filename |
-| `continue_on_pipeline_step_error` | `bool` | `True` | Continue on non-critical errors |
+| `continue_on_pipeline_step_error` | `bool` | `True` | Continue on non-critical step errors. Malformed mapping files (e.g. blank `predicate_id`) always stop the merge regardless |
 | **Prune Options** | | | |
 | `keep_singletons` | `bool` | `True` | Preserve isolated nodes |
 | `remove_singletons` | `bool` | `False` | Move singletons to separate table |
@@ -312,7 +312,8 @@ Configuration for the normalize operation, which applies SSSOM mappings to norma
 - **`use_match` values**: Each entry must be a CURIE (`prefix:local`); known skos/owl/rdfs/semapv
   IRIs are contracted to CURIEs. Bare names such as `exactMatch` raise a validation error
 - **Blank `predicate_id`**: Not a config check, but the operation fails if a mapping file has a
-  `predicate_id` column with any blank values (malformed SSSOM). Files without the column are fine
+  `predicate_id` column with any blank values (malformed SSSOM), raising `MalformedMappingError`.
+  Files without the column are fine
 
 #### Example
 

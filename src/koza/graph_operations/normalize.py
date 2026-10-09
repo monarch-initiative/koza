@@ -29,6 +29,16 @@ from .utils import GraphDatabase, print_operation_summary
 EXACT_MATCH_PREDICATES = frozenset({"skos:exactMatch"})
 
 
+class MalformedMappingError(ValueError):
+    """
+    A mapping file is malformed (e.g. a predicate_id column with blank values).
+
+    This is bad input rather than a runtime step failure, so `normalize_graph` re-raises it
+    instead of returning a failed result, and `merge_graphs` always stops on it regardless of
+    `continue_on_pipeline_step_error`.
+    """
+
+
 class MappingsTableSummary(NamedTuple):
     """Outcome of building the unified `mappings` table."""
 
@@ -158,7 +168,11 @@ def normalize_graph(config: NormalizeConfig) -> NormalizeResult:
             - warnings: List of warnings (e.g., duplicate mappings found)
 
     Raises:
-        ValueError: If no nodes/edges tables exist or no mapping files load
+        MalformedMappingError: If a mapping file is malformed (e.g. blank predicate_id values).
+            Unlike other failures, this is raised rather than returned as a failed result.
+
+    Other failures (e.g. no nodes/edges tables, no mapping files loaded) are reported through
+    a NormalizeResult with success=False.
     """
     start_time = time.time()
     mappings_loaded: list[FileLoadResult] = []
@@ -272,6 +286,10 @@ def normalize_graph(config: NormalizeConfig) -> NormalizeResult:
                 errors=errors,
                 warnings=warnings,
             )
+
+    except MalformedMappingError as e:
+        logger.error(f"Normalize operation failed: {e}")
+        raise
 
     except Exception as e:
         total_time = time.time() - start_time
@@ -425,8 +443,9 @@ def _create_mappings_table(
         loaded mappings had a predicate_id column at all
 
     Raises:
-        ValueError: If no mapping files loaded successfully, or if a file that has a
-            predicate_id column leaves it blank on any row (malformed SSSOM)
+        ValueError: If no mapping files loaded successfully
+        MalformedMappingError: If a file that has a predicate_id column leaves it blank on
+            any row
     """
     # Get temp tables that loaded successfully
     loaded = [result for result in mapping_results if result.temp_table_name and not result.errors]
@@ -554,7 +573,7 @@ def _check_no_blank_predicates(db: GraphDatabase, result: FileLoadResult) -> Non
 
     examples = db.conn.execute(f"SELECT subject_id, object_id FROM {table} WHERE {blank_condition} LIMIT 2").fetchall()
     example_text = ", ".join(f"{subject_id} -> {object_id}" for subject_id, object_id in examples)
-    raise ValueError(
+    raise MalformedMappingError(
         f"Malformed SSSOM file {result.file_spec.path}: {blank_count:,} row(s) have a blank predicate_id "
         f"(e.g. subject_id -> object_id: {example_text}). Every row must have a predicate_id when the "
         f"column is present."

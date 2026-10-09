@@ -102,9 +102,9 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
         database_path = Path(temp_db.name)
         temp_db.close()
         using_temp_db = True
-    #TODO: Test db for Duckdb.
+    # TODO: Test db for Duckdb.
 
-    #TODO: break this try block out into a seperate _merge_graph function which can better handle the raising of errors instead of handling all of them.
+    # TODO: break this try block out into a seperate _merge_graph function which can better handle the raising of errors instead of handling all of them.
     try:
         if not config.quiet:
             print("Starting merge pipeline...")
@@ -176,7 +176,9 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
                 if not config.quiet:
                     nodes_removed = deduplicate_result.duplicate_nodes_removed
                     edges_removed = deduplicate_result.duplicate_edges_removed
-                    print(f"Deduplicate completed: {nodes_removed:,} duplicate nodes, {edges_removed:,} duplicate edges removed")
+                    print(
+                        f"Deduplicate completed: {nodes_removed:,} duplicate nodes, {edges_removed:,} duplicate edges removed"
+                    )
             elif config.continue_on_pipeline_step_error:
                 warnings.append("Deduplication failed but pipeline continued")
                 if deduplicate_result.errors:
@@ -202,6 +204,9 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
                 show_progress=config.show_progress,
             )
 
+            # A malformed mapping file raises MalformedMappingError out of normalize_graph.
+            # It is deliberately not routed through continue_on_pipeline_step_error: it
+            # propagates to the pipeline-level handler below and always fails the merge.
             normalize_result = normalize_graph(normalize_config)
             warnings.extend(normalize_result.warnings)
 
@@ -247,7 +252,9 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
                 if not config.quiet:
                     dangling_count = prune_result.dangling_edges_moved
                     singleton_count = prune_result.singleton_nodes_moved
-                    print(f"Prune completed: {dangling_count:,} dangling edges moved | {singleton_count:,} singleton nodes handled")
+                    print(
+                        f"Prune completed: {dangling_count:,} dangling edges moved | {singleton_count:,} singleton nodes handled"
+                    )
             elif config.continue_on_pipeline_step_error:
                 warnings.append("Pruning failed but pipeline continued")
                 if prune_result.errors:
@@ -255,7 +262,7 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
             else:
                 errors.append("Prune step failed. Aborting pipeline.")
                 raise ValueError("Prune step failed. Aborting pipeline.")
-             
+
         else:
             operations_skipped.append("prune")
             if not config.quiet:
@@ -284,7 +291,7 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
                     print("Error occured trying to query Node table.")
                     raise  # Table might not exist
 
-                #TODO: See if we should if this table doesn't exist.
+                # TODO: See if we should if this table doesn't exist.
                 try:
                     edges_count = db.conn.execute("SELECT COUNT(*) FROM edges").fetchone()[0]
                     has_edges = edges_count > 0
