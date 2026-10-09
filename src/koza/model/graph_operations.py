@@ -435,9 +435,7 @@ class CanonicalizeResult(BaseModel):
     edge_subjects_rewritten: int = 0
     edge_objects_rewritten: int = 0
     node_id_collisions: int = 0
-    edge_collisions: int = 0
     nodes_removed: int = 0
-    edges_removed: int = 0
     final_stats: DatabaseStats | None = None
     total_time_seconds: float = 0.0
     summary: Optional["OperationSummary"] = None

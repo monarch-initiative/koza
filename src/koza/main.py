@@ -1317,9 +1317,9 @@ def canonicalize(
         bool,
         typer.Option(
             "--deduplicate",
-            help="Remove rewritten rows that duplicate an existing row (nodes: same id; edges: "
-            "identical apart from id), keeping the pre-existing row. Only acts on rows rewritten "
-            "in this run, so pass it on the repair run itself",
+            help="Nodes only: remove rewritten node rows whose id duplicates an existing node, "
+            "keeping the pre-existing row. Only acts on rows rewritten in this run, so pass it on "
+            "the repair run itself. Edges are never deduplicated",
         ),
     ] = False,
     dry_run: Annotated[
@@ -1349,7 +1349,7 @@ def canonicalize(
         # Repair only one prefix
         koza canonicalize graph.duckdb --only hgnc
 
-        # Preview, then repair and remove the duplicate rows the repair creates
+        # Preview, then repair and remove the duplicate node rows the repair creates
         koza canonicalize graph.duckdb --dry-run --deduplicate
         koza canonicalize graph.duckdb --deduplicate
 

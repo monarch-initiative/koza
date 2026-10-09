@@ -78,24 +78,21 @@ Only the `nodes` and `edges` tables are rewritten, and within them only
 warns when other tables exist; rebuild them afterwards if you could not run
 canonicalize first.
 
-## Collisions and `--deduplicate`
+## Node collisions and `--deduplicate`
 
-A rewrite can make a row a duplicate of another row. Collisions are always
-judged against the rows rewritten **in the same run**:
+A rewritten node id can land on an id the graph already has (`hgnc:746`
+arriving at an existing `HGNC:746` row). Collisions are judged only against
+node rows rewritten **in the same run**: a rewritten node collides when
+another row has the same `id`. Duplicate ids that existed before the run
+(two `HGNC:1` rows) are never counted and never touched.
 
-- **Nodes:** a rewritten node collides when another row has the same `id`
-  (`hgnc:746` arriving at an existing `HGNC:746` row).
-- **Edges:** a rewritten edge collides only when another edge is identical
-  to it on **every column except `id`**. Edges that share
-  subject/predicate/object but differ in sources, qualifiers or anything
-  else are distinct edges and are never collisions.
+`--deduplicate` applies to **nodes only**. Edges are never deduplicated:
+rewritten edge subjects and objects are left as they are, even if an edge
+ends up looking like another one.
 
-Duplicates that existed before the run (two `HGNC:1` rows, two identical
-`HGNC:` edges) are never counted and never touched.
-
-Without `--deduplicate`, collisions are counted and warned about, and the
-rows are kept. With `--deduplicate`, the rewritten row is removed and the
-pre-existing row is kept; if only rewritten rows collide with each other
+Without `--deduplicate`, node collisions are counted and warned about, and
+the rows are kept. With `--deduplicate`, the rewritten row is removed and
+the pre-existing row is kept; if only rewritten rows collide with each other
 (say `hgnc:1` and `Hgnc:1`), one is kept, the first by `file_source` and
 then the earliest inserted. Rows are removed, not merged: a removed node
 may carry a different `name` or other properties than the one kept.
@@ -106,12 +103,8 @@ see what a repair would do first, use `--dry-run --deduplicate`: the dry run
 performs the whole operation and rolls it back, so its counts are exact.
 
 Removed rows are never simply deleted. They are copied, in the same
-transaction, into sidecar tables with the same columns plus `run_at`:
-
-| Table | Holds |
-|-------|-------|
-| `prefix_canonicalization_removed_nodes` | node rows removed by `--deduplicate` |
-| `prefix_canonicalization_removed_edges` | edge rows removed by `--deduplicate` |
+transaction, into `prefix_canonicalization_removed_nodes`, which has the
+same columns as `nodes` plus `run_at`:
 
 ```sql
 SELECT * FROM prefix_canonicalization_removed_nodes ORDER BY run_at;
@@ -127,17 +120,17 @@ enough to reverse it: rewritten values are not kept.
 
 | Column | Meaning |
 |--------|---------|
-| `run_at` | UTC timestamp, shared by every row one run writes (and by the sidecar rows) |
+| `run_at` | UTC timestamp, shared by every row one run writes (and by the removed-nodes rows) |
 | `context` | prefixmaps context the run used |
 | `action` | `rewrite` or `deduplicate` |
-| `table_name` | `nodes` or `edges` |
-| `column_name` | `rewrite`: the column rewritten (`id`, `subject`, `object`). `deduplicate`: what rows matched on (`id` for nodes, `all columns except id` for edges) |
+| `table_name` | `nodes` or `edges` (`deduplicate` rows are always `nodes`) |
+| `column_name` | `rewrite`: the column rewritten (`id`, `subject`, `object`). `deduplicate`: `id` |
 | `old_prefix` / `new_prefix` | spelling before and after (`rewrite` only) |
-| `example_value` | one affected value: an id before the rewrite, or the id / subject of a removed row |
+| `example_value` | one affected value: an id before the rewrite, or the id of a removed node row |
 | `row_count` | rows rewritten, or rows removed |
 
 There is one `rewrite` row per table, column and prefix, and one
-`deduplicate` row per table.
+`deduplicate` row per run that removed nodes.
 
 ```sql
 SELECT action, table_name, column_name, old_prefix, new_prefix, row_count

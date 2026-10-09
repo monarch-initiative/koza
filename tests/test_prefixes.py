@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from koza.graph_operations import canonicalize_graph, generate_prefix_report
-from koza.graph_operations.prefixes import LOG_TABLE, REMOVED_TABLES, load_canonical_prefixes
+from koza.graph_operations.prefixes import LOG_TABLE, REMOVED_NODES_TABLE, load_canonical_prefixes
 from koza.graph_operations.utils import GraphDatabase
 from koza.model.graph_operations import (
     CanonicalizeConfig,
@@ -107,14 +107,14 @@ def test_canonicalize_dry_run_changes_nothing(test_database):
     assert result.repairs == {"hgnc": "HGNC"}
     # a dry run does the work and rolls it back, so the counts are a real preview
     assert result.node_ids_rewritten == 2
-    assert result.nodes_removed == 1 and result.edges_removed == 1
+    assert result.nodes_removed == 1
 
     with GraphDatabase(test_database) as db:
         ids = [row[0] for row in db.conn.execute("SELECT id FROM nodes").fetchall()]
     assert "hgnc:746" in ids and len(ids) == 5
     tables = _tables(test_database)
     assert LOG_TABLE not in tables
-    assert not set(REMOVED_TABLES.values()) & tables
+    assert REMOVED_NODES_TABLE not in tables
 
 
 def test_canonicalize_repairs_alternate_casing(test_database):
@@ -166,8 +166,8 @@ def test_canonicalize_rerun_is_a_noop(test_database):
     assert second.repairs == {}
     assert second.node_ids_rewritten == 0
     # --deduplicate only acts on rows rewritten in the same run: nothing here
-    assert second.node_id_collisions == 0 and second.edge_collisions == 0
-    assert second.nodes_removed == 0 and second.edges_removed == 0
+    assert second.node_id_collisions == 0
+    assert second.nodes_removed == 0
     assert _log(test_database) == first_log
     with GraphDatabase(test_database) as db:
         assert db.conn.execute("SELECT COUNT(*) FROM nodes WHERE id = 'HGNC:746'").fetchone()[0] == 2
@@ -193,37 +193,35 @@ def test_canonicalize_all_canonical_graph(temp_dir):
     assert LOG_TABLE not in _tables(db_file)
 
 
-def test_canonicalize_counts_edge_collisions(test_database):
-    # ('hgnc:746', causes, MONDO) becomes a copy of the existing ('HGNC:746', causes, MONDO)
-    result = canonicalize_graph(CanonicalizeConfig(database_path=test_database, quiet=True))
-    assert result.edge_collisions == 1
-    assert any("identical (apart from id)" in w for w in result.warnings)
+def test_canonicalize_never_deduplicates_edges(test_database):
+    # ('hgnc:746', causes, MONDO) becomes a copy of the existing ('HGNC:746', causes, MONDO); both stay
+    result = canonicalize_graph(CanonicalizeConfig(database_path=test_database, deduplicate=True, quiet=True))
+    assert result.success
+    with GraphDatabase(test_database) as db:
+        count = db.conn.execute(
+            "SELECT COUNT(*) FROM edges WHERE subject = 'HGNC:746' AND object = 'MONDO:0000001'"
+        ).fetchone()[0]
+    assert count == 2
+    assert "prefix_canonicalization_removed_edges" not in _tables(test_database)
 
 
 def test_canonicalize_deduplicate_removes_collisions(test_database):
     result = canonicalize_graph(CanonicalizeConfig(database_path=test_database, deduplicate=True, quiet=True))
 
     assert result.success
-    assert result.node_id_collisions == 1 and result.edge_collisions == 1
-    assert result.nodes_removed == 1 and result.edges_removed == 1
+    assert result.node_id_collisions == 1
+    assert result.nodes_removed == 1
     assert not any("--deduplicate" in w for w in result.warnings)
 
     with GraphDatabase(test_database) as db:
         nodes = db.conn.execute("SELECT id, name FROM nodes WHERE id = 'HGNC:746'").fetchall()
-        edge_count = db.conn.execute(
-            "SELECT COUNT(*) FROM edges WHERE subject = 'HGNC:746' AND object = 'MONDO:0000001'"
-        ).fetchone()[0]
         total_nodes = db.conn.execute("SELECT COUNT(*) FROM nodes").fetchone()[0]
     # the pre-existing canonical row wins over the rewritten one
     assert nodes == [("HGNC:746", "gene1-canonical")]
-    assert edge_count == 1
     assert total_nodes == 4
 
     dedup_rows = [row for row in _log(test_database) if row[0] == "deduplicate"]
-    assert dedup_rows == [
-        ("deduplicate", "edges", "all columns except id", None, None, "HGNC:746", 1),
-        ("deduplicate", "nodes", "id", None, None, "HGNC:746", 1),
-    ]
+    assert dedup_rows == [("deduplicate", "nodes", "id", None, None, "HGNC:746", 1)]
 
 
 def test_canonicalize_deduplicate_leaves_unrelated_duplicates(temp_dir):
@@ -317,13 +315,13 @@ def test_canonicalize_edges_only_database(temp_dir):
 def test_canonicalize_rolls_back_on_failure(test_database, monkeypatch):
     from koza.graph_operations import prefixes
 
-    real = prefixes._remove_collisions
+    real = prefixes._remove_node_collisions
 
-    def boom(db, table, log_params):
-        real(db, table, log_params)  # sidecar written, rows deleted ...
+    def boom(db, log_params):
+        real(db, log_params)  # sidecar written, rows deleted ...
         raise RuntimeError("injected failure")  # ... then fail
 
-    monkeypatch.setattr(prefixes, "_remove_collisions", boom)
+    monkeypatch.setattr(prefixes, "_remove_node_collisions", boom)
     result = canonicalize_graph(CanonicalizeConfig(database_path=test_database, deduplicate=True, quiet=True))
     assert not result.success
 
@@ -334,7 +332,7 @@ def test_canonicalize_rolls_back_on_failure(test_database, monkeypatch):
     assert "hgnc:746" in subjects
     tables = _tables(test_database)
     assert LOG_TABLE not in tables
-    assert not set(REMOVED_TABLES.values()) & tables
+    assert REMOVED_NODES_TABLE not in tables
 
 
 def test_prefix_report_rejects_missing_database(temp_dir):
@@ -344,20 +342,16 @@ def test_prefix_report_rejects_missing_database(temp_dir):
     assert not missing.exists()
 
 
-def test_canonicalize_deduplicate_copies_removed_rows_to_sidecars(test_database):
+def test_canonicalize_deduplicate_copies_removed_nodes_to_sidecar(test_database):
     result = canonicalize_graph(CanonicalizeConfig(database_path=test_database, deduplicate=True, quiet=True))
-    assert result.nodes_removed == 1 and result.edges_removed == 1
+    assert result.nodes_removed == 1
 
     with GraphDatabase(test_database) as db:
         removed_nodes = db.conn.execute(
-            f"SELECT run_at IS NOT NULL, id, category, name FROM {REMOVED_TABLES['nodes']}"
-        ).fetchall()
-        removed_edges = db.conn.execute(
-            f"SELECT run_at IS NOT NULL, subject, predicate, object FROM {REMOVED_TABLES['edges']}"
+            f"SELECT run_at IS NOT NULL, id, category, name FROM {REMOVED_NODES_TABLE}"
         ).fetchall()
     # the rewritten row is the one removed; it differed from the kept row in `name`
     assert removed_nodes == [(True, "HGNC:746", "biolink:Gene", "gene1")]
-    assert removed_edges == [(True, "HGNC:746", "biolink:causes", "MONDO:0000001")]
 
 
 def _repro_database(db_file):
@@ -391,29 +385,27 @@ def test_canonicalize_never_removes_preexisting_rows(temp_dir):
 
     plain = canonicalize_graph(CanonicalizeConfig(database_path=db_file, quiet=True))
     assert plain.node_id_collisions == 1  # hgnc:746 onto HGNC:746; the HGNC:1 pair predates the run
-    assert plain.edge_collisions == 1  # only e5 is identical (apart from id) to an existing edge
     assert any("run the repair itself with --deduplicate" in w for w in plain.warnings)
 
     # following up with --deduplicate does nothing: nothing was rewritten in this run
     followup = canonicalize_graph(CanonicalizeConfig(database_path=db_file, deduplicate=True, quiet=True))
-    assert followup.nodes_removed == 0 and followup.edges_removed == 0
+    assert followup.nodes_removed == 0
     with GraphDatabase(db_file) as db:
         assert db.conn.execute("SELECT COUNT(*) FROM nodes").fetchone()[0] == 4
         assert db.conn.execute("SELECT COUNT(*) FROM edges").fetchone()[0] == 8
 
 
-def test_canonicalize_deduplicate_keeps_preexisting_and_distinct_edges(temp_dir):
+def test_canonicalize_deduplicate_keeps_preexisting_rows(temp_dir):
     db_file = temp_dir / "repro.duckdb"
     _repro_database(db_file)
 
     result = canonicalize_graph(CanonicalizeConfig(database_path=db_file, deduplicate=True, quiet=True))
-    assert result.nodes_removed == 1 and result.edges_removed == 1
+    assert result.nodes_removed == 1
 
     with GraphDatabase(db_file) as db:
         nodes = db.conn.execute("SELECT id, name FROM nodes ORDER BY id, name").fetchall()
         edge_ids = {row[0] for row in db.conn.execute("SELECT id FROM edges").fetchall()}
     # pre-existing duplicate HGNC:1 rows untouched; canonical HGNC:746 kept over the repaired row
     assert nodes == [("HGNC:1", "gene1"), ("HGNC:1", "gene1b"), ("HGNC:746", "canon")]
-    # only e5 (identical to e4 apart from id) is removed; pre-existing e1/e2 duplicates stay,
-    # and edges differing in source (e6) or qualifier (e8) are kept
-    assert edge_ids == {"e1", "e2", "e3", "e4", "e6", "e7", "e8"}
+    # edges are never deduplicated: all eight remain, including e5 (now identical to e4 apart from id)
+    assert edge_ids == {f"e{i}" for i in range(1, 9)}
