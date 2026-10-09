@@ -25,6 +25,7 @@ which is why this module builds its own case-insensitive lookup over the
 context's prefixes.
 """
 
+import difflib
 import time
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -193,26 +194,32 @@ def canonicalize_graph(config: CanonicalizeConfig) -> CanonicalizeResult:
 
     Repairs ``nodes.id``, ``edges.subject`` and ``edges.object`` for every
     prefix that matches a canonical prefix case-insensitively but not exactly
-    (restricted to ``config.only`` when given). Unknown prefixes are left
+    (restricted to ``config.only`` when given; an ``--only`` prefix that
+    appears nowhere in the graph is an error). Unknown prefixes are left
     untouched. Each change is recorded in the ``prefix_canonicalization_log``
     audit table (see :func:`_ensure_log_table`); no ``original_*`` columns are
     written. The rewrites, the audit rows and any deduplication run in a single
-    transaction, so a failure leaves the database unchanged.
+    transaction, so a failure leaves the database unchanged. A dry run does
+    the same work and rolls it back, so its counts are exact.
 
     Only ``nodes`` and ``edges`` are rewritten. Any other table in the
     database (``closure``, ``denormalized_*``, ``mappings``, ...) keeps the
     old ids; a warning names those tables so they can be rebuilt.
 
-    A rewrite can land a repaired node id on an id the graph already has
-    (``hgnc:746`` arriving at an existing ``HGNC:746`` row), or make two
-    edges share the same subject/predicate/object. Those collisions are
-    counted and warned about. With ``config.deduplicate`` they are removed:
-    within each colliding group one row is kept, preferring a row that was
-    not rewritten, then the first by ``file_source``, then insertion order.
+    Collisions are defined relative to the rows rewritten in this run only:
 
-    On a run with nothing left to rewrite, collisions are looked for among ids
-    whose prefix an earlier run canonicalized (per the audit table), so a
-    re-run reports them and ``--deduplicate`` can still remove them.
+    - a rewritten node row collides when another row has the same ``id``;
+    - a rewritten edge row collides when another row is identical to it on
+      every column except ``id``. Edges that differ in sources, qualifiers or
+      anything else do not collide.
+
+    The collision counts are the rows ``--deduplicate`` would remove. With
+    ``config.deduplicate`` they are removed: the pre-existing row is kept and
+    the rewritten one dropped; when only rewritten rows collide, one of them
+    is kept (first by ``file_source``, then insertion order). Rows that
+    already duplicated each other before the run are never touched. Removed
+    rows are copied, with ``run_at``, into
+    ``prefix_canonicalization_removed_nodes`` / ``..._removed_edges``.
 
     Args:
         config: CanonicalizeConfig with database_path, context, only,
@@ -231,7 +238,10 @@ def canonicalize_graph(config: CanonicalizeConfig) -> CanonicalizeResult:
         only = {p.lower() for p in config.only} if config.only else None
 
         with GraphDatabase(config.database_path) as db:
-            usages = _classify(_prefix_census(db), canonical)
+            census = _prefix_census(db)
+            if only is not None:
+                _check_only(only, census)
+            usages = _classify(census, canonical)
             repairs = {
                 u.prefix: u.canonical_prefix
                 for u in usages
@@ -240,65 +250,59 @@ def canonicalize_graph(config: CanonicalizeConfig) -> CanonicalizeResult:
             if only is not None:
                 matched = {v.lower() for v in repairs}
                 for requested in sorted(only - matched):
-                    _warn(warnings, f"--only {requested!r}: no alternately-cased spelling of this prefix in the graph")
-
-            if repairs:
-                other_tables = _other_tables(db)
-                if other_tables:
                     _warn(
-                        warnings,
-                        "Only nodes and edges are rewritten; these tables may still hold the old ids "
-                        f"and should be rebuilt: {', '.join(other_tables)}",
+                        warnings, f"--only {requested!r}: already canonical everywhere in the graph, nothing to repair"
                     )
 
-            if config.dry_run:
-                message = (
-                    "Dry run — would repair: "
-                    + ", ".join(f"{variant} → {target}" for variant, target in sorted(repairs.items()))
-                    if repairs
-                    else f"Dry run — no prefixes with alternate casing to repair against context {config.context!r}"
-                )
+            if not repairs:
+                message = f"No prefixes with alternate casing to repair against context {config.context!r}"
                 summary = _summary(True, message, db, 0, start_time, warnings, errors)
                 if not config.quiet:
                     print_operation_summary(summary)
                 return CanonicalizeResult(
                     success=True,
-                    repairs=repairs,
+                    repairs={},
                     final_stats=db.get_stats(),
                     total_time_seconds=time.time() - start_time,
                     summary=summary,
                     warnings=warnings,
                 )
 
+            other_tables = _other_tables(db)
+            if other_tables:
+                _warn(
+                    warnings,
+                    "Only nodes and edges are rewritten; these tables may still hold the old ids "
+                    f"and should be rebuilt: {', '.join(other_tables)}",
+                )
+
             run_at = datetime.now(timezone.utc).replace(tzinfo=None)
+            log_params = (run_at, config.context)
             rewritten = {"nodes": 0, "subject": 0, "object": 0}
             removed = {"nodes": 0, "edges": 0}
 
             db.conn.execute("BEGIN TRANSACTION")
             try:
+                _ensure_log_table(db)
                 db.conn.execute("CREATE OR REPLACE TEMP TABLE _canon_touched (tbl VARCHAR, rid BIGINT)")
-                if repairs:
-                    _ensure_log_table(db)
-                    db.conn.execute("CREATE OR REPLACE TEMP TABLE _canon_repairs (variant VARCHAR, canonical VARCHAR)")
-                    db.conn.executemany("INSERT INTO _canon_repairs VALUES (?, ?)", list(repairs.items()))
-                    log_params = (run_at, config.context)
-                    rewritten["nodes"] = _rewrite_column(db, "nodes", nodes.id, log_params)
-                    rewritten["subject"] = _rewrite_column(db, "edges", edges.subject, log_params)
-                    rewritten["object"] = _rewrite_column(db, "edges", edges.object, log_params)
-                    db.conn.execute("DROP TABLE _canon_repairs")
-                else:
-                    _mark_touched_from_log(db)
+                db.conn.execute("CREATE OR REPLACE TEMP TABLE _canon_repairs (variant VARCHAR, canonical VARCHAR)")
+                db.conn.executemany("INSERT INTO _canon_repairs VALUES (?, ?)", list(repairs.items()))
+                rewritten["nodes"] = _rewrite_column(db, "nodes", nodes.id, log_params)
+                rewritten["subject"] = _rewrite_column(db, "edges", edges.subject, log_params)
+                rewritten["object"] = _rewrite_column(db, "edges", edges.object, log_params)
 
-                node_collisions, edge_collisions = _count_collisions(db)
-                if config.deduplicate and (node_collisions or edge_collisions):
-                    _ensure_log_table(db)
-                    removed["nodes"] = _deduplicate(db, "nodes", [nodes.id], (run_at, config.context))
-                    removed["edges"] = _deduplicate(
-                        db, "edges", [edges.subject, edges.predicate, edges.object], (run_at, config.context)
-                    )
+                _find_collisions(db)
+                node_collisions, edge_collisions = (
+                    db.conn.execute(f"SELECT COUNT(*) FROM _canon_doomed WHERE tbl = '{t}'").fetchone()[0]
+                    for t in ("nodes", "edges")
+                )
+                if config.deduplicate:
+                    removed["nodes"] = _remove_collisions(db, "nodes", log_params)
+                    removed["edges"] = _remove_collisions(db, "edges", log_params)
 
-                db.conn.execute("DROP TABLE _canon_touched")
-                db.conn.execute("COMMIT")
+                for temp in ("_canon_doomed", "_canon_touched", "_canon_repairs"):
+                    db.conn.execute(f"DROP TABLE {temp}")
+                db.conn.execute("ROLLBACK" if config.dry_run else "COMMIT")
             except Exception:
                 # DuckDB may already have aborted the transaction; don't let a
                 # failed ROLLBACK mask the original error.
@@ -308,25 +312,21 @@ def canonicalize_graph(config: CanonicalizeConfig) -> CanonicalizeResult:
                     logger.debug(f"ROLLBACK after canonicalize failure: {rollback_error}")
                 raise
 
-            if config.deduplicate:
-                if removed["nodes"] or removed["edges"]:
-                    logger.info(
-                        f"Removed {removed['nodes']:,} colliding node rows and {removed['edges']:,} colliding edge rows"
-                    )
-            else:
+            if not config.deduplicate:
                 _warn_collisions(warnings, node_collisions, edge_collisions)
 
             total = sum(rewritten.values())
-            if repairs:
-                message = (
-                    f"Canonicalized {len(repairs)} prefixes "
-                    f"({', '.join(f'{v} → {t}' for v, t in sorted(repairs.items()))}); "
-                    f"rewrote {total:,} references"
-                )
-            else:
-                message = f"No prefixes with alternate casing to repair against context {config.context!r}"
+            verb = "Dry run — would canonicalize" if config.dry_run else "Canonicalized"
+            message = (
+                f"{verb} {len(repairs)} prefixes "
+                f"({', '.join(f'{v} → {t}' for v, t in sorted(repairs.items()))}); "
+                f"{'would rewrite' if config.dry_run else 'rewrote'} {total:,} references"
+            )
             if removed["nodes"] or removed["edges"]:
-                message += f"; removed {removed['nodes']:,} node and {removed['edges']:,} edge rows that collided"
+                message += (
+                    f"; {'would remove' if config.dry_run else 'removed'} {removed['nodes']:,} node and "
+                    f"{removed['edges']:,} edge rows that duplicated another row"
+                )
             summary = _summary(True, message, db, total, start_time, warnings, errors)
             if not config.quiet:
                 print_operation_summary(summary)
@@ -372,8 +372,14 @@ def canonicalize_graph(config: CanonicalizeConfig) -> CanonicalizeResult:
         )
 
 
-# Tables koza maintains alongside nodes/edges that carry no graph ids.
-_NON_ID_TABLES = {"nodes", "edges", "file_schemas", _KOZA_SCHEMA_TABLE, LOG_TABLE}
+#: Sidecar tables holding rows removed by ``--deduplicate`` (same columns plus run_at).
+REMOVED_TABLES = {
+    "nodes": "prefix_canonicalization_removed_nodes",
+    "edges": "prefix_canonicalization_removed_edges",
+}
+
+# Tables koza maintains alongside nodes/edges that carry no graph ids to rebuild.
+_NON_ID_TABLES = {"nodes", "edges", "file_schemas", _KOZA_SCHEMA_TABLE, LOG_TABLE, *REMOVED_TABLES.values()}
 
 
 def _warn(warnings: list[str], message: str) -> None:
@@ -381,16 +387,31 @@ def _warn(warnings: list[str], message: str) -> None:
     logger.warning(message)
 
 
-def _table_columns(db: GraphDatabase, table: str) -> set[str]:
-    """Column names of a main-schema table, or an empty set when it does not exist."""
+def _check_only(only: set[str], census: dict[str, dict[str, int]]) -> None:
+    """Raise when an --only prefix appears nowhere in the graph (likely a typo)."""
+    observed = {p.lower() for p in census}
+    missing = sorted(only - observed)
+    if not missing:
+        return
+    parts = []
+    for prefix in missing:
+        close = difflib.get_close_matches(prefix, sorted(observed), n=3)
+        hint = f" (did you mean: {', '.join(close)}?)" if close else ""
+        parts.append(f"{prefix!r}{hint}")
+    raise ValueError(f"--only prefix not found in the graph: {'; '.join(parts)}")
+
+
+def _table_columns(db: GraphDatabase, table: str) -> list[str]:
+    """Column names of a main-schema table in order, or an empty list when it does not exist."""
     rows = db.conn.execute(
         """
         SELECT column_name FROM information_schema.columns
         WHERE table_name = ? AND table_schema = 'main' AND table_catalog = current_database()
+        ORDER BY ordinal_position
         """,
         [table],
     ).fetchall()
-    return {row[0] for row in rows}
+    return [row[0] for row in rows]
 
 
 def _other_tables(db: GraphDatabase) -> list[str]:
@@ -416,12 +437,12 @@ def _ensure_log_table(db: GraphDatabase) -> None:
             (colliding rows were removed).
         table_name: ``nodes`` or ``edges``.
         column_name: for ``rewrite``, the column rewritten (``id``,
-            ``subject`` or ``object``); for ``deduplicate``, the key the
-            collision was on (``id`` or ``subject,predicate,object``).
+            ``subject`` or ``object``); for ``deduplicate``, what the rows
+            matched on (``id`` for nodes, ``all columns except id`` for edges).
         old_prefix / new_prefix: the spelling before and after (``rewrite``
             only; NULL for ``deduplicate``).
         example_value: one affected value — an id as it was before the
-            rewrite, or the key of a group that lost rows.
+            rewrite, or the id / subject of a removed row.
         row_count: rows rewritten, or rows removed.
     """
     db.conn.execute(f"""
@@ -472,121 +493,111 @@ def _rewrite_column(db: GraphDatabase, table: str, column: str, log_params: tupl
     return result[0] if result else 0
 
 
-def _mark_touched_from_log(db: GraphDatabase) -> None:
+def _find_collisions(db: GraphDatabase) -> None:
     """
-    Mark rows whose prefix an earlier run canonicalized (per the audit table).
+    Fill _canon_doomed (tbl, rid) with the rewritten rows that duplicate another row.
 
-    Used on runs with nothing left to rewrite, so collisions from an earlier
-    run are still reported and can still be deduplicated.
+    Identity is ``id`` for nodes and every column except ``id`` for edges.
+    Within each identity group: if any row was not rewritten in this run, every
+    rewritten row is doomed (the pre-existing row wins); otherwise all
+    rewritten rows but one are (first by ``file_source``, then insertion
+    order). Rows not rewritten in this run are never doomed, so duplicates
+    that predate the run are left alone.
     """
-    if not _table_columns(db, LOG_TABLE):
-        return
-    for table, column in (("nodes", nodes.id), ("edges", edges.subject), ("edges", edges.object)):
-        if column not in _table_columns(db, table):
+    db.conn.execute("CREATE OR REPLACE TEMP TABLE _canon_doomed (tbl VARCHAR, rid BIGINT)")
+    for table in ("nodes", "edges"):
+        columns = _table_columns(db, table)
+        if table == "nodes":
+            key = [nodes.id] if nodes.id in columns else []
+            # Narrow to groups that contain a rewritten row before windowing.
+            candidates = f"""
+                SELECT t.rowid AS _canon_rid, t.* FROM nodes t
+                WHERE t.{nodes.id} IN (
+                    SELECT n.{nodes.id} FROM nodes n JOIN _canon_touched w ON w.tbl = 'nodes' AND n.rowid = w.rid
+                )
+            """
+        else:
+            key = [c for c in columns if c != "id"]
+            spo = [edges.subject, edges.predicate, edges.object]
+            if not set(spo) <= set(columns):
+                key = []
+            on = " AND ".join(f"t.{c} IS NOT DISTINCT FROM k.{c}" for c in spo)
+            candidates = f"""
+                SELECT t.rowid AS _canon_rid, t.* FROM edges t
+                SEMI JOIN (
+                    SELECT DISTINCT {", ".join(f"e.{c}" for c in spo)}
+                    FROM edges e JOIN (SELECT DISTINCT rid FROM _canon_touched WHERE tbl = 'edges') w
+                      ON e.rowid = w.rid
+                ) k ON {on}
+            """
+        if not key:
             continue
-        db.conn.execute(
-            f"""
-            INSERT INTO _canon_touched
-            SELECT '{table}', t.rowid FROM {table} t
-            WHERE split_part(t.{column}, ':', 1) IN (
-                SELECT new_prefix FROM {LOG_TABLE}
-                WHERE action = 'rewrite' AND table_name = ? AND column_name = ?
+
+        partition = ", ".join(f'c."{k}"' for k in key)
+        order = 'c."file_source" NULLS LAST, c._canon_rid' if "file_source" in columns else "c._canon_rid"
+        db.conn.execute(f"""
+            INSERT INTO _canon_doomed
+            SELECT '{table}', rid FROM (
+                SELECT c._canon_rid AS rid,
+                       w.rid IS NOT NULL AS touched,
+                       COUNT(*) FILTER (WHERE w.rid IS NULL) OVER (PARTITION BY {partition}) AS untouched,
+                       ROW_NUMBER() OVER (PARTITION BY {partition}, (w.rid IS NOT NULL) ORDER BY {order}) AS rn
+                FROM ({candidates}) c
+                LEFT JOIN (SELECT DISTINCT rid FROM _canon_touched WHERE tbl = '{table}') w ON c._canon_rid = w.rid
             )
-            """,
-            [table, column],
-        )
+            WHERE touched AND (untouched > 0 OR rn > 1)
+        """)
 
 
-def _collision_groups_sql(table: str, key: list[str]) -> str:
-    """SQL selecting the key of every duplicate group in `table` that contains a touched row."""
-    key_cols = ", ".join(f"t.{k}" for k in key)
-    return f"""
-        SELECT {key_cols}
-        FROM {table} t
-        LEFT JOIN (SELECT DISTINCT rid FROM _canon_touched WHERE tbl = '{table}') w ON t.rowid = w.rid
-        GROUP BY {key_cols}
-        HAVING COUNT(*) > 1 AND COUNT(w.rid) > 0
+def _remove_collisions(db: GraphDatabase, table: str, log_params: tuple) -> int:
     """
+    Move the doomed rows of `table` into its removed-rows sidecar.
 
-
-def _count_collisions(db: GraphDatabase) -> tuple[int, int]:
+    Copies them (with ``run_at``) into ``REMOVED_TABLES[table]``, logs one
+    ``deduplicate`` audit row, deletes them, and returns how many were removed.
     """
-    Count duplicate groups that involve a touched row (see _canon_touched).
-
-    Returns (node ids shared by more than one node row, subject/predicate/object
-    triples shared by more than one edge row). Missing tables or key columns
-    contribute 0.
-    """
-    counts = []
-    for table, key in (("nodes", [nodes.id]), ("edges", [edges.subject, edges.predicate, edges.object])):
-        if not set(key) <= _table_columns(db, table):
-            counts.append(0)
-            continue
-        counts.append(db.conn.execute(f"SELECT COUNT(*) FROM ({_collision_groups_sql(table, key)})").fetchone()[0])
-    return counts[0], counts[1]
-
-
-def _deduplicate(db: GraphDatabase, table: str, key: list[str], log_params: tuple) -> int:
-    """
-    Remove all but one row from each duplicate group that involves a touched row.
-
-    Keeps a row that was not touched (i.e. the pre-existing canonical row)
-    when there is one, then the first by ``file_source`` (the same tie-break
-    koza's id-based deduplication uses), then insertion order. Logs one
-    ``deduplicate`` audit row and returns rows removed.
-    """
-    columns = _table_columns(db, table)
-    if not set(key) <= columns:
+    removed = db.conn.execute(f"SELECT COUNT(*) FROM _canon_doomed WHERE tbl = '{table}'").fetchone()[0]
+    if not removed:
         return 0
 
-    on = " AND ".join(f"t.{k} IS NOT DISTINCT FROM g.{k}" for k in key)
-    partition = ", ".join(f"t.{k}" for k in key)
-    order = ["(w.rid IS NOT NULL)"]
-    if "file_source" in columns:
-        order.append("t.file_source NULLS LAST")
-    order.append("t.rowid")
-    example_key = " || ',' || ".join(f"coalesce(g.{k}, '')" for k in key)
+    sidecar = REMOVED_TABLES[table]
+    doomed = f"FROM {table} WHERE rowid IN (SELECT rid FROM _canon_doomed WHERE tbl = '{table}')"
+    if not _table_columns(db, sidecar):
+        db.conn.execute(f"CREATE TABLE {sidecar} AS SELECT CAST(NULL AS TIMESTAMP) AS run_at, * FROM {table} LIMIT 0")
+    else:
+        # The graph may have gained columns since the sidecar was created.
+        sidecar_cols = set(_table_columns(db, sidecar))
+        for name, dtype in db.conn.execute(f"SELECT column_name, column_type FROM (DESCRIBE {table})").fetchall():
+            if name not in sidecar_cols:
+                db.conn.execute(f'ALTER TABLE {sidecar} ADD COLUMN "{name}" {dtype}')
+    db.conn.execute(f"INSERT INTO {sidecar} BY NAME SELECT ?::TIMESTAMP AS run_at, * {doomed}", [log_params[0]])
 
-    db.conn.execute(f"""
-        CREATE OR REPLACE TEMP TABLE _canon_doomed AS
-        SELECT rid, example FROM (
-            SELECT t.rowid AS rid, {example_key} AS example,
-                   ROW_NUMBER() OVER (PARTITION BY {partition} ORDER BY {", ".join(order)}) AS rn
-            FROM {table} t
-            JOIN ({_collision_groups_sql(table, key)}) g ON {on}
-            LEFT JOIN (SELECT DISTINCT rid FROM _canon_touched WHERE tbl = '{table}') w ON t.rowid = w.rid
-        ) WHERE rn > 1
-    """)
-    removed = db.conn.execute("SELECT COUNT(*) FROM _canon_doomed").fetchone()[0]
-    if removed:
-        db.conn.execute(
-            f"""
-            INSERT INTO {LOG_TABLE}
-            SELECT ?, ?, 'deduplicate', '{table}', '{",".join(key)}', NULL, NULL, min(example), COUNT(*)
-            FROM _canon_doomed
-            """,
-            list(log_params),
-        )
-        db.conn.execute(f"DELETE FROM {table} WHERE rowid IN (SELECT rid FROM _canon_doomed)")
-    db.conn.execute("DROP TABLE _canon_doomed")
+    example_col = nodes.id if table == "nodes" else edges.subject
+    column_name = nodes.id if table == "nodes" else "all columns except id"
+    db.conn.execute(
+        f"""
+        INSERT INTO {LOG_TABLE}
+        SELECT ?, ?, 'deduplicate', '{table}', '{column_name}', NULL, NULL, min({example_col}), COUNT(*) {doomed}
+        """,
+        list(log_params),
+    )
+    db.conn.execute(f"DELETE {doomed}")
     return removed
 
 
 def _warn_collisions(warnings: list[str], node_collisions: int, edge_collisions: int) -> None:
-    """Warn about canonicalized ids that duplicate other nodes/edges."""
+    """Warn about rewritten rows that duplicate other nodes/edges (kept without --deduplicate)."""
+    advice = (
+        "They were kept. To remove them, run the repair itself with --deduplicate (preview with "
+        "--dry-run --deduplicate); a later --deduplicate run cannot, since it only acts on rows "
+        "rewritten in the same run."
+    )
     if node_collisions:
-        _warn(
-            warnings,
-            f"{node_collisions} canonicalized node ids are shared by more than one row "
-            f"(a repaired id landed on an existing one). The rows were kept; "
-            f"run `koza canonicalize --deduplicate` to remove the extras.",
-        )
+        _warn(warnings, f"{node_collisions} rewritten node rows now share an id with another node row. {advice}")
     if edge_collisions:
         _warn(
             warnings,
-            f"{edge_collisions} subject/predicate/object triples involving canonicalized ids are "
-            f"shared by more than one edge. The rows were kept; run `koza canonicalize --deduplicate` "
-            f"to remove the extras.",
+            f"{edge_collisions} rewritten edge rows are now identical (apart from id) to another edge row. {advice}",
         )
 
 

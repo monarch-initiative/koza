@@ -266,7 +266,7 @@ koza canonicalize DATABASE [OPTIONS]
 
 ### Description
 
-The `canonicalize` command rewrites node ids and edge subject/object references whose prefix matches a canonical prefix from a [prefixmaps](https://github.com/linkml/prefixmaps) context case-insensitively but not exactly (e.g. `hgnc:746` → `HGNC:746`). No `original_*` columns are written (those belong to `normalize`); every change is recorded in the `prefix_canonicalization_log` audit table. Prefixes unknown to the context are never touched — audit them first with `koza report prefixes`. The rewrites, audit rows and any deduplication run in a single transaction. Only `nodes.id`, `edges.subject` and `edges.object` are rewritten: derived tables (`closure`, `denormalized_*`, `mappings`, ...) keep the old ids, so run it before `closurize`; the command warns when such tables exist. Repairs that land on an id the graph already has, or that make two edges share a subject/predicate/object, are counted and reported as collisions. `--deduplicate` removes the extra rows, keeping the pre-existing row, then the first by `file_source`.
+The `canonicalize` command rewrites node ids and edge subject/object references whose prefix matches a canonical prefix from a [prefixmaps](https://github.com/linkml/prefixmaps) context case-insensitively but not exactly (e.g. `hgnc:746` → `HGNC:746`). No `original_*` columns are written (those belong to `normalize`); every change is recorded in the `prefix_canonicalization_log` audit table. Prefixes unknown to the context are never touched — audit them first with `koza report prefixes`. The rewrites, audit rows and any deduplication run in a single transaction. Only `nodes.id`, `edges.subject` and `edges.object` are rewritten: derived tables (`closure`, `denormalized_*`, `mappings`, ...) keep the old ids, so run it before `closurize`; the command warns when such tables exist. Repairs that land on an id the graph already has, or that make two edges share a subject/predicate/object, are counted and reported as collisions. Collisions only involve rows rewritten in the same run: a rewritten node sharing an `id` with another row, or a rewritten edge identical to another edge on every column except `id`. `--deduplicate`, passed on the repair run, removes the rewritten row and keeps the pre-existing one; removed rows are copied to `prefix_canonicalization_removed_nodes` / `prefix_canonicalization_removed_edges`.
 
 ### Arguments
 
@@ -279,9 +279,9 @@ The `canonicalize` command rewrites node ids and edge subject/object references 
 | Option | Short | Type | Default | Description |
 |--------|-------|------|---------|-------------|
 | `--context` | `-c` | str | `merged` | prefixmaps context to canonicalize against |
-| `--only` | | List[str] | all | Repair only these prefixes (case-insensitive). Repeatable. |
-| `--deduplicate` | | bool | False | Remove rows that collide after the rewrite (nodes sharing an id, edges sharing subject/predicate/object) |
-| `--dry-run` | | bool | False | Report the repairs without applying them |
+| `--only` | | List[str] | all | Repair only these prefixes (case-insensitive). Repeatable. A prefix not in the graph is an error. |
+| `--deduplicate` | | bool | False | Remove rewritten rows that duplicate an existing row (nodes: same id; edges: identical apart from id). Only acts on rows rewritten in this run |
+| `--dry-run` | | bool | False | Run everything and roll it back, reporting exact counts |
 | `--quiet` | `-q` | bool | False | Suppress output |
 
 ### Examples

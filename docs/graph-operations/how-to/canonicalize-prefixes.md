@@ -47,7 +47,8 @@ koza canonicalize graph.duckdb
 # Repair only the prefix you care about (repeatable)
 koza canonicalize graph.duckdb --only hgnc
 
-# Apply and remove the duplicate rows the repair creates
+# Apply and remove the duplicate rows the repair creates (preview first)
+koza canonicalize graph.duckdb --dry-run --deduplicate
 koza canonicalize graph.duckdb --deduplicate
 
 # Use a different prefixmaps context
@@ -58,7 +59,8 @@ Check the dry run before applying. A context's canonical spelling is not
 always the one your graph has settled on: against `merged`, for example,
 `FBDV` becomes `FBdv`, `Orphanet` becomes `ORPHANET` and `OBO` becomes `obo`.
 When only some of the reported prefixes are real problems, repair just those
-with `--only`.
+with `--only`. An `--only` prefix that appears nowhere in the graph is an
+error (with close matches suggested), so a typo can't silently do nothing.
 
 Canonicalize rewrites node ids and edge subject/object references whose
 prefix is an alternately-cased spelling of a canonical prefix. It does not
@@ -66,7 +68,8 @@ write `original_id` / `original_subject` / `original_object`; those columns
 belong to [`koza normalize`](normalize-ids.md). Instead, every change is
 recorded in the `prefix_canonicalization_log` table (see below). The
 rewrites, the audit rows and any deduplication run in one transaction: if
-anything fails, the database is left unchanged.
+anything fails, the database is left unchanged. `--dry-run` runs the same
+transaction and rolls it back.
 
 Only the `nodes` and `edges` tables are rewritten, and within them only
 `id`, `subject` and `object`. Derived tables (`closure`, `denormalized_*`,
@@ -77,41 +80,60 @@ canonicalize first.
 
 ## Collisions and `--deduplicate`
 
-A repaired id can land on an id the graph already has (`hgnc:746` arriving
-at an existing `HGNC:746` row), and two edges can end up with the same
-subject/predicate/object. Both kinds of collision are counted and warned
-about. Without `--deduplicate` the rows are kept as they are.
+A rewrite can make a row a duplicate of another row. Collisions are always
+judged against the rows rewritten **in the same run**:
 
-With `--deduplicate`, canonicalize removes the extra rows in each colliding
-group, in the same transaction as the rewrite. It keeps the row that was not
-rewritten (the pre-existing canonical row) when there is one, then the first
-by `file_source`, then the earliest inserted. Rows are removed, not merged:
-properties on the dropped row are not copied onto the kept one.
+- **Nodes:** a rewritten node collides when another row has the same `id`
+  (`hgnc:746` arriving at an existing `HGNC:746` row).
+- **Edges:** a rewritten edge collides only when another edge is identical
+  to it on **every column except `id`**. Edges that share
+  subject/predicate/object but differ in sources, qualifiers or anything
+  else are distinct edges and are never collisions.
 
-Only groups that involve a rewritten row are touched. On a re-run that finds
-nothing left to rewrite, canonicalize instead looks at ids in the prefixes
-an earlier run canonicalized (according to the audit table), so collisions
-left by an earlier run are still reported and `--deduplicate` can still
-remove them. Within those prefixes this also catches duplicates that
-predate canonicalization.
+Duplicates that existed before the run (two `HGNC:1` rows, two identical
+`HGNC:` edges) are never counted and never touched.
+
+Without `--deduplicate`, collisions are counted and warned about, and the
+rows are kept. With `--deduplicate`, the rewritten row is removed and the
+pre-existing row is kept; if only rewritten rows collide with each other
+(say `hgnc:1` and `Hgnc:1`), one is kept, the first by `file_source` and
+then the earliest inserted. Rows are removed, not merged: a removed node
+may carry a different `name` or other properties than the one kept.
+
+`--deduplicate` must be passed **on the run that does the repair**. A later
+run finds nothing to rewrite, so `--deduplicate` then removes nothing. To
+see what a repair would do first, use `--dry-run --deduplicate`: the dry run
+performs the whole operation and rolls it back, so its counts are exact.
+
+Removed rows are never simply deleted. They are copied, in the same
+transaction, into sidecar tables with the same columns plus `run_at`:
+
+| Table | Holds |
+|-------|-------|
+| `prefix_canonicalization_removed_nodes` | node rows removed by `--deduplicate` |
+| `prefix_canonicalization_removed_edges` | edge rows removed by `--deduplicate` |
+
+```sql
+SELECT * FROM prefix_canonicalization_removed_nodes ORDER BY run_at;
+```
 
 ## The audit table
 
 Each run that changes something appends rows to
 `prefix_canonicalization_log`; earlier rows are never modified, so the
-table is a history of runs. A run that finds nothing to rewrite or
-deduplicate (including a plain re-run) adds nothing, and `--dry-run` never
-writes.
+table is a history of runs. A run that finds nothing to rewrite adds
+nothing, and `--dry-run` never writes. The log records what changed, not
+enough to reverse it: rewritten values are not kept.
 
 | Column | Meaning |
 |--------|---------|
-| `run_at` | UTC timestamp, shared by every row one run writes |
+| `run_at` | UTC timestamp, shared by every row one run writes (and by the sidecar rows) |
 | `context` | prefixmaps context the run used |
 | `action` | `rewrite` or `deduplicate` |
 | `table_name` | `nodes` or `edges` |
-| `column_name` | `rewrite`: the column rewritten (`id`, `subject`, `object`). `deduplicate`: the collision key (`id` or `subject,predicate,object`) |
+| `column_name` | `rewrite`: the column rewritten (`id`, `subject`, `object`). `deduplicate`: what rows matched on (`id` for nodes, `all columns except id` for edges) |
 | `old_prefix` / `new_prefix` | spelling before and after (`rewrite` only) |
-| `example_value` | one affected value: an id before the rewrite, or the key of a group that lost rows |
+| `example_value` | one affected value: an id before the rewrite, or the id / subject of a removed row |
 | `row_count` | rows rewritten, or rows removed |
 
 There is one `rewrite` row per table, column and prefix, and one

@@ -1170,12 +1170,13 @@ def canonicalize(
         bool,
         typer.Option(
             "--deduplicate",
-            help="Remove rows that collide after the rewrite (nodes sharing an id, edges sharing "
-            "subject/predicate/object), keeping the pre-existing row",
+            help="Remove rewritten rows that duplicate an existing row (nodes: same id; edges: "
+            "identical apart from id), keeping the pre-existing row. Only acts on rows rewritten "
+            "in this run, so pass it on the repair run itself",
         ),
     ] = False,
     dry_run: Annotated[
-        bool, typer.Option("--dry-run", help="Report the repairs without applying them")
+        bool, typer.Option("--dry-run", help="Run everything and roll it back, reporting exact counts")
     ] = False,
     quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress output")] = False,
 ) -> None:
@@ -1201,7 +1202,8 @@ def canonicalize(
         # Repair only one prefix
         koza canonicalize graph.duckdb --only hgnc
 
-        # Repair and remove the duplicate rows the repair creates
+        # Preview, then repair and remove the duplicate rows the repair creates
+        koza canonicalize graph.duckdb --dry-run --deduplicate
         koza canonicalize graph.duckdb --deduplicate
 
         # Use a different prefixmaps context
