@@ -68,7 +68,7 @@ class KozaWriter(ABC):
         if config is None:
             return
 
-        logger.info(f"Wrote {self.node_count} nodes and {self.edge_count} edges")
+        logger.info(f"Output counts: {self.node_count} nodes, {self.edge_count} edges")
 
         violations: list[str] = []
         for label, count, minimum, maximum in (
