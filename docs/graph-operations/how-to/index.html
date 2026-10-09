@@ -1006,6 +1006,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#canonicalize-prefixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Canonicalize Prefixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#clean-graphs" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1162,6 +1173,34 @@
     
   
     Normalize IDs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="canonicalize-prefixes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Canonicalize Prefixes
   
 
     
@@ -1856,6 +1895,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#canonicalize-prefixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Canonicalize Prefixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#clean-graphs" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1964,6 +2014,8 @@
 <p>Divide a graph into subsets based on field values such as source, category, or other attributes.</p>
 <h3 id="normalize-ids"><a href="normalize-ids/">Normalize IDs</a></h3>
 <p>Apply SSSOM mappings to harmonize identifiers across different naming conventions and ontologies.</p>
+<h3 id="canonicalize-prefixes"><a href="canonicalize-prefixes/">Canonicalize Prefixes</a></h3>
+<p>Audit CURIE prefixes against a prefixmaps context and repair alternately-cased prefixes (<code>hgnc:</code> → <code>HGNC:</code>).</p>
 <h3 id="clean-graphs"><a href="clean-graph/">Clean Graphs</a></h3>
 <p>Remove duplicates, dangling edges, and optionally singleton nodes from a graph.</p>
 <h2 id="reporting-analysis">Reporting &amp; Analysis</h2>
@@ -2009,6 +2061,11 @@
 <td>Harmonize IDs</td>
 <td><code>koza normalize</code></td>
 <td><a href="normalize-ids/">Normalize IDs</a></td>
+</tr>
+<tr>
+<td>Repair prefix casing</td>
+<td><code>koza canonicalize</code></td>
+<td><a href="canonicalize-prefixes/">Canonicalize Prefixes</a></td>
 </tr>
 <tr>
 <td>Remove issues</td>

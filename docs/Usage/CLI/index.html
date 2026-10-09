@@ -982,6 +982,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../graph-operations/how-to/canonicalize-prefixes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Canonicalize Prefixes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../graph-operations/how-to/clean-graph/" class="md-nav__link">
         
   
@@ -1712,6 +1740,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#koza-canonicalize" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        koza canonicalize
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#koza-merge" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2015,6 +2054,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#koza-canonicalize" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        koza canonicalize
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#koza-merge" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2159,6 +2209,7 @@
 <li><code>prune</code>: Prune graph by removing dangling edges and...</li>
 <li><code>append</code>: Append new KGX files to an existing graph...</li>
 <li><code>normalize</code>: Apply SSSOM mappings to normalize edge...</li>
+<li><code>canonicalize</code>: Repair CURIE prefixes with alternate...</li>
 <li><code>merge</code>: Complete merge pipeline: join → normalize...</li>
 <li><code>report</code>: Generate comprehensive reports for KGX...</li>
 <li><code>node-report</code>: Generate tabular node report with GROUP BY...</li>
@@ -2568,6 +2619,48 @@ koza normalize graph.duckdb -m &amp;quot;*.sssom.tsv&amp;quot;
 <li><code>-p, --progress</code>: Show progress bars  [default: True]</li>
 <li><code>--help</code>: Show this message and exit.</li>
 </ul>
+<h2 id="koza-canonicalize"><code>koza canonicalize</code></h2>
+<p>Repair CURIE prefixes with alternate casing against a prefixmaps context</p>
+<p>Rewrites node ids and edge subject/object references whose prefix matches a
+canonical prefix case-insensitively but not exactly (e.g. hgnc:746 -&gt;
+HGNC:746). Each change is recorded in the prefix_canonicalization_log
+table. Prefixes unknown to the context are reported by <code>koza report
+prefixes</code> and never touched.</p>
+<p>Only the nodes and edges tables are rewritten. Derived tables (closure,
+denormalized_*, mappings, ...) keep the old ids, so run this before
+closurize / denormalize, or rebuild them afterwards.</p>
+<p>Examples:
+    # Preview the repairs
+    koza canonicalize graph.duckdb --dry-run</p>
+<pre><code># Apply against the default merged context
+koza canonicalize graph.duckdb
+
+# Repair only one prefix
+koza canonicalize graph.duckdb --only hgnc
+
+# Preview, then repair and remove the duplicate node rows the repair creates
+koza canonicalize graph.duckdb --dry-run --deduplicate
+koza canonicalize graph.duckdb --deduplicate
+
+# Use a different prefixmaps context
+koza canonicalize graph.duckdb --context bioregistry.upper
+</code></pre>
+<p><strong>Usage</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>canonicalize<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span><span class="o">{</span>database<span class="o">}</span>
+</code></pre></div>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>database</code>: Path to existing DuckDB database file  [required]</li>
+</ul>
+<p><strong>Options</strong>:</p>
+<ul>
+<li><code>-c, --context &lt;str&gt;</code>: prefixmaps context to canonicalize against  [default: merged]</li>
+<li><code>--only &lt;str&gt;</code>: Repair only this prefix (case-insensitive, e.g. --only hgnc); repeatable. Default: every prefix with alternate casing.</li>
+<li><code>--deduplicate</code>: Nodes only: remove rewritten node rows whose id duplicates an existing node, keeping the pre-existing row. Only acts on rows rewritten in this run, so pass it on the repair run itself. Edges are never deduplicated</li>
+<li><code>--dry-run</code>: Run everything and roll it back, reporting exact counts</li>
+<li><code>-q, --quiet</code>: Suppress output</li>
+<li><code>--help</code>: Show this message and exit.</li>
+</ul>
 <h2 id="koza-merge"><code>koza merge</code></h2>
 <p>Complete merge pipeline: join → normalize → prune</p>
 <p>This composite operation orchestrates the full graph processing pipeline:
@@ -2622,6 +2715,7 @@ koza merge --input-dir ./data/ -m &amp;quot;*.sssom.tsv&amp;quot; --remove-singl
 <p>• graph-stats: Comprehensive graph statistics (similar to merged_graph_stats.yaml)</p>
 <p>• schema: Database schema analysis and biolink compliance</p>
 <p>• connectivity: Connected component analysis (requires koza)</p>
+<p>• prefixes: CURIE prefix census against a prefixmaps context</p>
 <p>Examples:</p>
 <pre><code># Generate QC report
 koza report qc -d merged.duckdb -o qc_report.yaml
@@ -2635,6 +2729,9 @@ koza report schema -d merged.duckdb -o schema_report.yaml
 # Generate connectivity report with parquet sidecars
 koza report connectivity -d merged.duckdb --output-dir cc_output/ -o cc_summary.yaml
 
+# Census CURIE prefixes against the merged prefixmaps context
+koza report prefixes -d merged.duckdb -o prefixes.yaml
+
 # Quick QC analysis (console output only)
 koza report qc -d merged.duckdb
 </code></pre>
@@ -2643,7 +2740,7 @@ koza report qc -d merged.duckdb
 </code></pre></div>
 <p><strong>Arguments</strong>:</p>
 <ul>
-<li><code>report_type</code>: Type of report: qc, graph-stats, schema, or connectivity  [required]</li>
+<li><code>report_type</code>: Type of report: qc, graph-stats, schema, connectivity, or prefixes  [required]</li>
 </ul>
 <p><strong>Options</strong>:</p>
 <ul>
@@ -2651,6 +2748,7 @@ koza report qc -d merged.duckdb
 <li><code>-o, --output &lt;str&gt;</code>: Path to output report file (YAML format)</li>
 <li><code>--output-dir &lt;str&gt;</code>: Directory for sidecar output files (used by connectivity report)</li>
 <li><code>-q, --quiet</code>: Suppress progress output</li>
+<li><code>--context &lt;str&gt;</code>: prefixmaps context (prefixes report only)  [default: merged]</li>
 <li><code>--help</code>: Show this message and exit.</li>
 </ul>
 <h2 id="koza-node-report"><code>koza node-report</code></h2>

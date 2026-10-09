@@ -8,13 +8,13 @@
       
       
       
-        <link rel="canonical" href="https://koza.monarchinitiative.org/graph-operations/how-to/clean-graph/">
+        <link rel="canonical" href="https://koza.monarchinitiative.org/graph-operations/how-to/canonicalize-prefixes/">
       
       
-        <link rel="prev" href="../canonicalize-prefixes/">
+        <link rel="prev" href="../normalize-ids/">
       
       
-        <link rel="next" href="../closurize/">
+        <link rel="next" href="../clean-graph/">
       
       
         
@@ -25,7 +25,7 @@
     
     
       
-        <title>Clean Graphs - Koza Documentation</title>
+        <title>Canonicalize Prefixes - Koza Documentation</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#how-to-clean-graphs" class="md-skip">
+        <a href="#canonicalize-prefixes" class="md-skip">
           Skip to content
         </a>
       
@@ -113,7 +113,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Clean Graphs
+              Canonicalize Prefixes
             
           </span>
         </div>
@@ -982,34 +982,6 @@
                 
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../canonicalize-prefixes/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Canonicalize Prefixes
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
     
   
   
@@ -1029,7 +1001,7 @@
   <span class="md-ellipsis">
     
   
-    Clean Graphs
+    Canonicalize Prefixes
   
 
     
@@ -1047,7 +1019,7 @@
   <span class="md-ellipsis">
     
   
-    Clean Graphs
+    Canonicalize Prefixes
   
 
     
@@ -1073,10 +1045,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#goal" class="md-nav__link">
+  <a href="#audit-a-graphs-prefixes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Goal
+        Audit a graph's prefixes
       
     </span>
   </a>
@@ -1084,10 +1056,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
+  <a href="#repair-prefixes-with-alternate-casing" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Prerequisites
+        Repair prefixes with alternate casing
       
     </span>
   </a>
@@ -1095,288 +1067,43 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#removing-dangling-edges" class="md-nav__link">
+  <a href="#node-collisions-and-deduplicate" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Removing Dangling Edges
+        Node collisions and --deduplicate
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Removing Dangling Edges">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#how-it-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How It Works
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#example-output" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example Output
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#handling-singleton-nodes" class="md-nav__link">
+  <a href="#the-audit-table" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Handling Singleton Nodes
+        The audit table
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Handling Singleton Nodes">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#keep-singletons-default" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Keep Singletons (Default)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#remove-singletons" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Remove Singletons
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#deduplicating-nodes-and-edges" class="md-nav__link">
+  <a href="#what-canonicalize-deliberately-does-not-do" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Deduplicating Nodes and Edges
+        What canonicalize deliberately does not do
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Deduplicating Nodes and Edges">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#how-it-works_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How It Works
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#using-deduplication-via-append" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Using Deduplication via Append
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#inspecting-archived-data" class="md-nav__link">
+  <a href="#typical-workflow" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Inspecting Archived Data
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Inspecting Archived Data">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#view-dangling-edges" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        View Dangling Edges
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#view-duplicate-nodes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        View Duplicate Nodes
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#view-duplicate-edges" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        View Duplicate Edges
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#view-singleton-nodes-if-removed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        View Singleton Nodes (if removed)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#combined-cleanup-with-merge" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Combined Cleanup with Merge
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Combined Cleanup with Merge">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#selective-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Selective Steps
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#example-merge-output" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example Merge Output
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#verification" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Verification
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Verification">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#generate-qc-report" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Generate QC Report
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#generate-graph-statistics" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Generate Graph Statistics
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#check-archive-tables" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Check Archive Tables
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#verify-no-dangling-edges-remain" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Verify No Dangling Edges Remain
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        See Also
+        Typical workflow
       
     </span>
   </a>
@@ -1387,6 +1114,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../clean-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Clean Graphs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -1972,10 +1727,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#goal" class="md-nav__link">
+  <a href="#audit-a-graphs-prefixes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Goal
+        Audit a graph's prefixes
       
     </span>
   </a>
@@ -1983,10 +1738,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
+  <a href="#repair-prefixes-with-alternate-casing" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Prerequisites
+        Repair prefixes with alternate casing
       
     </span>
   </a>
@@ -1994,288 +1749,43 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#removing-dangling-edges" class="md-nav__link">
+  <a href="#node-collisions-and-deduplicate" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Removing Dangling Edges
+        Node collisions and --deduplicate
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Removing Dangling Edges">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#how-it-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How It Works
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#example-output" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example Output
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#handling-singleton-nodes" class="md-nav__link">
+  <a href="#the-audit-table" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Handling Singleton Nodes
+        The audit table
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Handling Singleton Nodes">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#keep-singletons-default" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Keep Singletons (Default)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#remove-singletons" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Remove Singletons
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#deduplicating-nodes-and-edges" class="md-nav__link">
+  <a href="#what-canonicalize-deliberately-does-not-do" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Deduplicating Nodes and Edges
+        What canonicalize deliberately does not do
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Deduplicating Nodes and Edges">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#how-it-works_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How It Works
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#using-deduplication-via-append" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Using Deduplication via Append
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#inspecting-archived-data" class="md-nav__link">
+  <a href="#typical-workflow" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Inspecting Archived Data
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Inspecting Archived Data">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#view-dangling-edges" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        View Dangling Edges
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#view-duplicate-nodes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        View Duplicate Nodes
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#view-duplicate-edges" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        View Duplicate Edges
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#view-singleton-nodes-if-removed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        View Singleton Nodes (if removed)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#combined-cleanup-with-merge" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Combined Cleanup with Merge
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Combined Cleanup with Merge">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#selective-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Selective Steps
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#example-merge-output" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example Merge Output
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#verification" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Verification
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Verification">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#generate-qc-report" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Generate QC Report
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#generate-graph-statistics" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Generate Graph Statistics
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#check-archive-tables" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Check Archive Tables
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#verify-no-dangling-edges-remain" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Verify No Dangling Edges Remain
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        See Also
+        Typical workflow
       
     </span>
   </a>
@@ -2302,242 +1812,163 @@
   
 
 
-<h1 id="how-to-clean-graphs">How to Clean Graphs</h1>
-<h2 id="goal">Goal</h2>
-<p>Remove duplicates, dangling edges, and optionally singleton nodes from your knowledge graph. This guide covers cleanup operations that identify and archive problematic data while preserving it for later inspection.</p>
-<h2 id="prerequisites">Prerequisites</h2>
+<h1 id="canonicalize-prefixes">Canonicalize Prefixes</h1>
+<p>Two graphs that spell the same CURIE prefix differently (<code>hgnc:746</code> vs
+<code>HGNC:746</code>) join and append without error — and land as disjoint node sets.
+The prefix report makes that visible before it happens; <code>koza canonicalize</code>
+repairs it.</p>
+<p>Both operations classify every prefix appearing in <code>nodes.id</code>,
+<code>edges.subject</code>, and <code>edges.object</code> against a
+<a href="https://github.com/linkml/prefixmaps">prefixmaps</a> context (default:
+<code>merged</code>):</p>
 <ul>
-<li>A DuckDB database containing your graph (created via <code>koza join</code>, <code>koza merge</code>, or <code>koza append</code>)</li>
-<li>Koza installed and available in your PATH</li>
+<li><strong>canonical</strong> — exact match in the context</li>
+<li><strong>alternate_casing</strong> — matches a context prefix case-insensitively but
+  not exactly (<code>hgnc</code> → <code>HGNC</code>)</li>
+<li><strong>unknown</strong> — not in the context at all (internal prefixes, typos)</li>
 </ul>
-<h2 id="removing-dangling-edges">Removing Dangling Edges</h2>
-<p>Dangling edges are edges that reference nodes which do not exist in the graph. This commonly occurs when:</p>
+<h2 id="audit-a-graphs-prefixes">Audit a graph's prefixes</h2>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>report<span class="w"> </span>prefixes<span class="w"> </span>-d<span class="w"> </span>graph.duckdb<span class="w"> </span>-o<span class="w"> </span>prefixes.yaml
+</code></pre></div>
+<p>Console output flags the actionable cases:</p>
+<div class="highlight"><pre><span></span><code>Prefixes in graph: 12 (10 canonical, 1 with alternate casing, 1 unknown to context 'merged')
+  ⚠️  hgnc → HGNC (15,297 references)
+</code></pre></div>
+<p>The YAML report lists every prefix with per-column counts, so a mixed graph
+shows <code>HGNC</code> and <code>hgnc</code> side by side before anyone joins against it.</p>
+<h2 id="repair-prefixes-with-alternate-casing">Repair prefixes with alternate casing</h2>
+<p>Run canonicalize <strong>before</strong> <code>koza closurize</code> / denormalization and before
+computing information content: only <code>nodes</code> and <code>edges</code> are rewritten, so
+anything derived from them beforehand keeps the old ids.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Preview what would change</span>
+koza<span class="w"> </span>canonicalize<span class="w"> </span>graph.duckdb<span class="w"> </span>--dry-run
+
+<span class="c1"># Apply</span>
+koza<span class="w"> </span>canonicalize<span class="w"> </span>graph.duckdb
+
+<span class="c1"># Repair only the prefix you care about (repeatable)</span>
+koza<span class="w"> </span>canonicalize<span class="w"> </span>graph.duckdb<span class="w"> </span>--only<span class="w"> </span>hgnc
+
+<span class="c1"># Apply and remove the duplicate rows the repair creates (preview first)</span>
+koza<span class="w"> </span>canonicalize<span class="w"> </span>graph.duckdb<span class="w"> </span>--dry-run<span class="w"> </span>--deduplicate
+koza<span class="w"> </span>canonicalize<span class="w"> </span>graph.duckdb<span class="w"> </span>--deduplicate
+
+<span class="c1"># Use a different prefixmaps context</span>
+koza<span class="w"> </span>canonicalize<span class="w"> </span>graph.duckdb<span class="w"> </span>--context<span class="w"> </span>bioregistry.upper
+</code></pre></div>
+<p>Check the dry run before applying. A context's canonical spelling is not
+always the one your graph has settled on: against <code>merged</code>, for example,
+<code>FBDV</code> becomes <code>FBdv</code>, <code>Orphanet</code> becomes <code>ORPHANET</code> and <code>OBO</code> becomes <code>obo</code>.
+When only some of the reported prefixes are real problems, repair just those
+with <code>--only</code>. An <code>--only</code> prefix that appears nowhere in the graph is an
+error (with close matches suggested), so a typo can't silently do nothing.</p>
+<p>Canonicalize rewrites node ids and edge subject/object references whose
+prefix is an alternately-cased spelling of a canonical prefix. It does not
+write <code>original_id</code> / <code>original_subject</code> / <code>original_object</code>; those columns
+belong to <a href="../normalize-ids/"><code>koza normalize</code></a>. Instead, every change is
+recorded in the <code>prefix_canonicalization_log</code> table (see below). The
+rewrites, the audit rows and any deduplication run in one transaction: if
+anything fails, the database is left unchanged. <code>--dry-run</code> runs the same
+transaction and rolls it back.</p>
+<p>Only the <code>nodes</code> and <code>edges</code> tables are rewritten, and within them only
+<code>id</code>, <code>subject</code> and <code>object</code>. Derived tables (<code>closure</code>, <code>denormalized_*</code>,
+<code>mappings</code>, <code>information_content</code>, ...) and other CURIE-valued columns
+(<code>in_taxon</code>, <code>xref</code>, qualifiers, ...) keep the old spellings. Canonicalize
+warns when other tables exist; rebuild them afterwards if you could not run
+canonicalize first.</p>
+<h2 id="node-collisions-and-deduplicate">Node collisions and <code>--deduplicate</code></h2>
+<p>A rewritten node id can land on an id the graph already has (<code>hgnc:746</code>
+arriving at an existing <code>HGNC:746</code> row). Collisions are judged only against
+node rows rewritten <strong>in the same run</strong>: a rewritten node collides when
+another row has the same <code>id</code>. Duplicate ids that existed before the run
+(two <code>HGNC:1</code> rows) are never counted and never touched.</p>
+<p><code>--deduplicate</code> applies to <strong>nodes only</strong>. Edges are never deduplicated:
+rewritten edge subjects and objects are left as they are, even if an edge
+ends up looking like another one.</p>
+<p>Without <code>--deduplicate</code>, node collisions are counted and warned about, and
+the rows are kept. With <code>--deduplicate</code>, the rewritten row is removed and
+the pre-existing row is kept; if only rewritten rows collide with each other
+(say <code>hgnc:1</code> and <code>Hgnc:1</code>), one is kept, the first by <code>file_source</code> and
+then the earliest inserted. Rows are removed, not merged: a removed node
+may carry a different <code>name</code> or other properties than the one kept.</p>
+<p><code>--deduplicate</code> must be passed <strong>on the run that does the repair</strong>. A later
+run finds nothing to rewrite, so <code>--deduplicate</code> then removes nothing. To
+see what a repair would do first, use <code>--dry-run --deduplicate</code>: the dry run
+performs the whole operation and rolls it back, so its counts are exact.</p>
+<p>Removed rows are never simply deleted. They are copied, in the same
+transaction, into <code>prefix_canonicalization_removed_nodes</code>, which has the
+same columns as <code>nodes</code> plus <code>run_at</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">prefix_canonicalization_removed_nodes</span><span class="w"> </span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">run_at</span><span class="p">;</span>
+</code></pre></div>
+<h2 id="the-audit-table">The audit table</h2>
+<p>Each run that changes something appends rows to
+<code>prefix_canonicalization_log</code>; earlier rows are never modified, so the
+table is a history of runs. A run that finds nothing to rewrite adds
+nothing, and <code>--dry-run</code> never writes. The log records what changed, not
+enough to reverse it: rewritten values are not kept.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>run_at</code></td>
+<td>UTC timestamp, shared by every row one run writes (and by the removed-nodes rows)</td>
+</tr>
+<tr>
+<td><code>context</code></td>
+<td>prefixmaps context the run used</td>
+</tr>
+<tr>
+<td><code>action</code></td>
+<td><code>rewrite</code> or <code>deduplicate</code></td>
+</tr>
+<tr>
+<td><code>table_name</code></td>
+<td><code>nodes</code> or <code>edges</code> (<code>deduplicate</code> rows are always <code>nodes</code>)</td>
+</tr>
+<tr>
+<td><code>column_name</code></td>
+<td><code>rewrite</code>: the column rewritten (<code>id</code>, <code>subject</code>, <code>object</code>). <code>deduplicate</code>: <code>id</code></td>
+</tr>
+<tr>
+<td><code>old_prefix</code> / <code>new_prefix</code></td>
+<td>spelling before and after (<code>rewrite</code> only)</td>
+</tr>
+<tr>
+<td><code>example_value</code></td>
+<td>one affected value: an id before the rewrite, or the id of a removed node row</td>
+</tr>
+<tr>
+<td><code>row_count</code></td>
+<td>rows rewritten, or rows removed</td>
+</tr>
+</tbody>
+</table>
+<p>There is one <code>rewrite</code> row per table, column and prefix, and one
+<code>deduplicate</code> row per run that removed nodes.</p>
+<div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">action</span><span class="p">,</span><span class="w"> </span><span class="k">table_name</span><span class="p">,</span><span class="w"> </span><span class="k">column_name</span><span class="p">,</span><span class="w"> </span><span class="n">old_prefix</span><span class="p">,</span><span class="w"> </span><span class="n">new_prefix</span><span class="p">,</span><span class="w"> </span><span class="k">row_count</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">prefix_canonicalization_log</span><span class="w"> </span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">run_at</span><span class="p">;</span>
+</code></pre></div>
+<h2 id="what-canonicalize-deliberately-does-not-do">What canonicalize deliberately does not do</h2>
 <ul>
-<li>Node and edge files come from different sources with incomplete overlap</li>
-<li>Data has been filtered or subset, leaving orphaned edge references</li>
-<li>There are ID mismatches between node definitions and edge references</li>
+<li><strong>It never renames one known prefix to a different one.</strong> Mapping
+  <code>NCBIGene</code> to <code>ENTREZ</code> is an identifier-level decision — that is
+  <a href="../normalize-ids/"><code>koza normalize</code></a> with SSSOM mappings.</li>
+<li><strong>It never touches unknown prefixes.</strong> A prefix absent from the context is
+  reported for a person to look at; it may be an internal namespace or a
+  typo, and no registry can tell those apart.</li>
 </ul>
-<p>Use the <code>prune</code> command to identify and remove dangling edges:</p>
-<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>prune<span class="w"> </span>graph.duckdb<span class="w"> </span>--keep-singletons
+<h2 id="typical-workflow">Typical workflow</h2>
+<div class="highlight"><pre><span></span><code><span class="c1"># Before appending an external graph onto a reference graph:</span>
+koza<span class="w"> </span>report<span class="w"> </span>prefixes<span class="w"> </span>-d<span class="w"> </span>external.duckdb<span class="w">        </span><span class="c1"># audit</span>
+koza<span class="w"> </span>canonicalize<span class="w"> </span>external.duckdb<span class="w">              </span><span class="c1"># repair alternate casing</span>
+koza<span class="w"> </span><span class="nb">export</span><span class="w"> </span>external.duckdb<span class="w"> </span>-o<span class="w"> </span>external/<span class="w"> </span>-f<span class="w"> </span>jsonl
+koza<span class="w"> </span>append<span class="w"> </span>reference.duckdb<span class="w"> </span>--input-dir<span class="w"> </span>external/
 </code></pre></div>
-<h3 id="how-it-works">How It Works</h3>
-<p>The prune operation:</p>
-<ol>
-<li>Identifies edges where the <code>subject</code> does not match any node <code>id</code></li>
-<li>Identifies edges where the <code>object</code> does not match any node <code>id</code></li>
-<li>Moves these dangling edges to the <code>dangling_edges</code> archive table</li>
-<li>Reports statistics on what was found and moved</li>
-</ol>
-<h3 id="example-output">Example Output</h3>
-<div class="highlight"><pre><span></span><code>Prune completed successfully
-  - 156 dangling edges moved to dangling_edges table
-  - 23 singleton nodes preserved (--keep-singletons)
-  - Main graph: 174,844 connected edges remain
-Dangling edges by source:
-  - source_a: 89 edges (missing 12 target nodes)
-  - source_b: 67 edges (missing 8 target nodes)
-</code></pre></div>
-<div class="admonition info">
-<p class="admonition-title">Non-Destructive Operation</p>
-<p>Dangling edges are <strong>moved</strong> to the <code>dangling_edges</code> table, not deleted. You can always inspect or recover this data later.</p>
-</div>
-<h2 id="handling-singleton-nodes">Handling Singleton Nodes</h2>
-<p>Singleton nodes are nodes that have no edges connecting them to other nodes. Depending on your use case, you may want to keep or remove them.</p>
-<h3 id="keep-singletons-default">Keep Singletons (Default)</h3>
-<p>Use <code>--keep-singletons</code> to preserve isolated nodes in your graph:</p>
-<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>prune<span class="w"> </span>graph.duckdb<span class="w"> </span>--keep-singletons
-</code></pre></div>
-<p>Use this option when:</p>
-<ul>
-<li>Nodes have standalone meaning (e.g., ontology terms, reference data)</li>
-<li>Edges connecting these nodes may be added later</li>
-<li>All node metadata should be preserved regardless of connectivity</li>
-</ul>
-<h3 id="remove-singletons">Remove Singletons</h3>
-<p>Use <code>--remove-singletons</code> to move isolated nodes to an archive table:</p>
-<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>prune<span class="w"> </span>graph.duckdb<span class="w"> </span>--remove-singletons
-</code></pre></div>
-<p>Use this option when:</p>
-<ul>
-<li>Only nodes that participate in relationships are needed</li>
-<li>The graph will be used primarily for traversal queries</li>
-<li>Isolated nodes represent incomplete data</li>
-</ul>
-<p>When singletons are removed, they are moved to the <code>singleton_nodes</code> table for later inspection.</p>
-<h2 id="deduplicating-nodes-and-edges">Deduplicating Nodes and Edges</h2>
-<p>Deduplication is performed automatically as part of the <code>merge</code> or <code>append</code> pipelines. There is no standalone <code>koza deduplicate</code> command.</p>
-<h3 id="how-it-works_1">How It Works</h3>
-<p>For nodes:</p>
-<ol>
-<li>Nodes are grouped by their <code>id</code> field</li>
-<li>For duplicate IDs, the first occurrence is kept (ordered by <code>file_source</code> or <code>provided_by</code>)</li>
-<li>All other occurrences are moved to the <code>duplicate_nodes</code> archive table</li>
-</ol>
-<p>For edges:</p>
-<ol>
-<li>Edges are grouped by their <code>id</code> field (or by subject-predicate-object if no ID)</li>
-<li>For duplicates, the first occurrence is kept</li>
-<li>All other occurrences are moved to the <code>duplicate_edges</code> archive table</li>
-</ol>
-<p>This applies when:</p>
-<ul>
-<li>Multiple source files define the same node with different attributes</li>
-<li>Appended data overlaps with existing nodes</li>
-<li>Deterministic, unique node records are required</li>
-</ul>
-<h3 id="using-deduplication-via-append">Using Deduplication via Append</h3>
-<p>To deduplicate an existing database, use the <code>--deduplicate</code> flag with append:</p>
-<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>append<span class="w"> </span>graph.duckdb<span class="w"> </span>--deduplicate
-</code></pre></div>
-<h2 id="inspecting-archived-data">Inspecting Archived Data</h2>
-<p>All cleanup operations preserve data in archive tables. You can inspect these using SQL queries.</p>
-<h3 id="view-dangling-edges">View Dangling Edges</h3>
-<div class="highlight"><pre><span></span><code><span class="c1">-- Connect to the database</span>
-<span class="c1">-- duckdb graph.duckdb</span>
-
-<span class="c1">-- View sample of dangling edges</span>
-<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">dangling_edges</span><span class="w"> </span><span class="k">LIMIT</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span>
-
-<span class="c1">-- Count dangling edges by source</span>
-<span class="k">SELECT</span>
-<span class="w">    </span><span class="n">file_source</span><span class="p">,</span>
-<span class="w">    </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="k">count</span>
-<span class="k">FROM</span><span class="w"> </span><span class="n">dangling_edges</span>
-<span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">file_source</span>
-<span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">count</span><span class="w"> </span><span class="k">DESC</span><span class="p">;</span>
-
-<span class="c1">-- Find which nodes are missing</span>
-<span class="k">SELECT</span><span class="w"> </span><span class="k">DISTINCT</span><span class="w"> </span><span class="n">subject</span>
-<span class="k">FROM</span><span class="w"> </span><span class="n">dangling_edges</span>
-<span class="k">WHERE</span><span class="w"> </span><span class="n">subject</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="k">SELECT</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">nodes</span><span class="p">);</span>
-</code></pre></div>
-<h3 id="view-duplicate-nodes">View Duplicate Nodes</h3>
-<div class="highlight"><pre><span></span><code><span class="c1">-- View sample of duplicate nodes</span>
-<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">duplicate_nodes</span><span class="w"> </span><span class="k">LIMIT</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span>
-
-<span class="c1">-- Count duplicates by category</span>
-<span class="k">SELECT</span>
-<span class="w">    </span><span class="n">category</span><span class="p">,</span>
-<span class="w">    </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">duplicate_count</span>
-<span class="k">FROM</span><span class="w"> </span><span class="n">duplicate_nodes</span>
-<span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">category</span>
-<span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">duplicate_count</span><span class="w"> </span><span class="k">DESC</span><span class="p">;</span>
-
-<span class="c1">-- See all versions of a specific duplicated node</span>
-<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">duplicate_nodes</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'MONDO:0005148'</span><span class="p">;</span>
-</code></pre></div>
-<h3 id="view-duplicate-edges">View Duplicate Edges</h3>
-<div class="highlight"><pre><span></span><code><span class="c1">-- View sample of duplicate edges</span>
-<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">duplicate_edges</span><span class="w"> </span><span class="k">LIMIT</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span>
-
-<span class="c1">-- Count duplicates by predicate</span>
-<span class="k">SELECT</span>
-<span class="w">    </span><span class="n">predicate</span><span class="p">,</span>
-<span class="w">    </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">duplicate_count</span>
-<span class="k">FROM</span><span class="w"> </span><span class="n">duplicate_edges</span>
-<span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">predicate</span>
-<span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">duplicate_count</span><span class="w"> </span><span class="k">DESC</span><span class="p">;</span>
-</code></pre></div>
-<h3 id="view-singleton-nodes-if-removed">View Singleton Nodes (if removed)</h3>
-<div class="highlight"><pre><span></span><code><span class="c1">-- View sample of singleton nodes</span>
-<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">singleton_nodes</span><span class="w"> </span><span class="k">LIMIT</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span>
-
-<span class="c1">-- Count singletons by category</span>
-<span class="k">SELECT</span>
-<span class="w">    </span><span class="n">category</span><span class="p">,</span>
-<span class="w">    </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">singleton_count</span>
-<span class="k">FROM</span><span class="w"> </span><span class="n">singleton_nodes</span>
-<span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">category</span>
-<span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">singleton_count</span><span class="w"> </span><span class="k">DESC</span><span class="p">;</span>
-</code></pre></div>
-<h2 id="combined-cleanup-with-merge">Combined Cleanup with Merge</h2>
-<p>For a complete cleanup pipeline, the <code>merge</code> command combines all cleanup operations in sequence:</p>
-<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--nodes<span class="w"> </span>*.nodes.*<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--edges<span class="w"> </span>*.edges.*<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--output<span class="w"> </span>clean_graph.duckdb
-</code></pre></div>
-<p>The merge pipeline runs: <strong>join -&gt; deduplicate -&gt; normalize -&gt; prune</strong></p>
-<h3 id="selective-steps">Selective Steps</h3>
-<p>You can skip steps you do not need:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Skip normalization (no SSSOM mappings needed)</span>
-koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--nodes<span class="w"> </span>*.nodes.*<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--edges<span class="w"> </span>*.edges.*<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--output<span class="w"> </span>clean_graph.duckdb<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--skip-normalize
-
-<span class="c1"># Skip deduplication</span>
-koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--nodes<span class="w"> </span>*.nodes.*<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--edges<span class="w"> </span>*.edges.*<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--output<span class="w"> </span>clean_graph.duckdb<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--skip-deduplicate
-
-<span class="c1"># Skip pruning</span>
-koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--nodes<span class="w"> </span>*.nodes.*<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--edges<span class="w"> </span>*.edges.*<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--output<span class="w"> </span>clean_graph.duckdb<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--skip-prune
-</code></pre></div>
-<h3 id="example-merge-output">Example Merge Output</h3>
-<div class="highlight"><pre><span></span><code>Starting merge pipeline...
-Pipeline: join -&gt; deduplicate -&gt; normalize -&gt; prune
-Output database: clean_graph.duckdb
-Step 1: Join - Loading input files...
-Join completed: 6 files | 125,340 nodes | 298,567 edges
-Step 2: Deduplicate - Removing duplicate nodes/edges...
-Deduplicate completed: 45 duplicate nodes, 123 duplicate edges removed
-Step 3: Normalize - Applying SSSOM mappings...
-Normalize completed: 3 mapping files | 15,234 edge references normalized
-Step 4: Prune - Cleaning graph structure...
-Prune completed: 156 dangling edges moved | 23 singleton nodes handled
-Merge pipeline completed successfully!
-</code></pre></div>
-<h2 id="verification">Verification</h2>
-<p>After cleanup, verify your graph integrity with reports.</p>
-<h3 id="generate-qc-report">Generate QC Report</h3>
-<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>report<span class="w"> </span>qc<span class="w"> </span>-d<span class="w"> </span>graph.duckdb<span class="w"> </span>-o<span class="w"> </span>qc_report.yaml
-</code></pre></div>
-<p>This will show:</p>
-<ul>
-<li>Total node and edge counts</li>
-<li>Breakdown by source/category/predicate</li>
-<li>Any remaining integrity issues</li>
-</ul>
-<h3 id="generate-graph-statistics">Generate Graph Statistics</h3>
-<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>report<span class="w"> </span>graph-stats<span class="w"> </span>-d<span class="w"> </span>graph.duckdb<span class="w"> </span>-o<span class="w"> </span>graph_stats.yaml
-</code></pre></div>
-<h3 id="check-archive-tables">Check Archive Tables</h3>
-<p>Verify archive tables exist and contain expected data:</p>
-<div class="highlight"><pre><span></span><code><span class="c1">-- Check what archive tables exist</span>
-<span class="k">SELECT</span><span class="w"> </span><span class="k">table_name</span>
-<span class="k">FROM</span><span class="w"> </span><span class="n">information_schema</span><span class="p">.</span><span class="n">tables</span>
-<span class="k">WHERE</span><span class="w"> </span><span class="k">table_name</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">'dangling_edges'</span><span class="p">,</span><span class="w"> </span><span class="s1">'duplicate_nodes'</span><span class="p">,</span><span class="w"> </span><span class="s1">'duplicate_edges'</span><span class="p">,</span><span class="w"> </span><span class="s1">'singleton_nodes'</span><span class="p">);</span>
-
-<span class="c1">-- Get counts from each archive table</span>
-<span class="k">SELECT</span><span class="w"> </span><span class="s1">'dangling_edges'</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="k">table_name</span><span class="p">,</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="k">count</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">dangling_edges</span>
-<span class="k">UNION</span><span class="w"> </span><span class="k">ALL</span>
-<span class="k">SELECT</span><span class="w"> </span><span class="s1">'duplicate_nodes'</span><span class="p">,</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">duplicate_nodes</span>
-<span class="k">UNION</span><span class="w"> </span><span class="k">ALL</span>
-<span class="k">SELECT</span><span class="w"> </span><span class="s1">'duplicate_edges'</span><span class="p">,</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">duplicate_edges</span><span class="p">;</span>
-</code></pre></div>
-<h3 id="verify-no-dangling-edges-remain">Verify No Dangling Edges Remain</h3>
-<div class="highlight"><pre><span></span><code><span class="c1">-- This should return 0 rows after prune</span>
-<span class="k">SELECT</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">dangling_count</span>
-<span class="k">FROM</span><span class="w"> </span><span class="n">edges</span><span class="w"> </span><span class="n">e</span>
-<span class="k">LEFT</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">nodes</span><span class="w"> </span><span class="n">n1</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">subject</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">n1</span><span class="p">.</span><span class="n">id</span>
-<span class="k">LEFT</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">nodes</span><span class="w"> </span><span class="n">n2</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="k">object</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">n2</span><span class="p">.</span><span class="n">id</span>
-<span class="k">WHERE</span><span class="w"> </span><span class="n">n1</span><span class="p">.</span><span class="n">id</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="n">n2</span><span class="p">.</span><span class="n">id</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NULL</span><span class="p">;</span>
-</code></pre></div>
-<h2 id="see-also">See Also</h2>
-<ul>
-<li><a href="../../reference/cli/">CLI Reference</a> - Complete command documentation</li>
-<li><a href="../join-files/">How to Join Files</a> - Creating the initial database</li>
-<li><a href="../normalize-ids/">How to Normalize IDs</a> - SSSOM-based identifier normalization</li>
-<li><a href="../generate-reports/">How to Generate Reports</a> - QC and statistics reporting</li>
-</ul>
 
 
 
