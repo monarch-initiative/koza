@@ -664,8 +664,6 @@ class ClosurizeResult(BaseModel):
     errors: list[str] = Field(default_factory=list)
 
 
-
-
 class InformationContentConfig(BaseModel):
     """Configuration for the information-content operation.
 
@@ -722,6 +720,17 @@ class InformationContentConfig(BaseModel):
     def validate_path_exists(cls, v: Path) -> Path:
         if not v.exists():
             raise ValueError(f"File not found: {v}")
+        return v
+
+    @field_validator("association_categories")
+    @classmethod
+    def validate_association_categories_not_empty(cls, v: list[str] | None) -> list[str] | None:
+        # An empty list is ambiguous: "narrow to nothing" or "no filter"? Reject
+        # it rather than guess — None is the explicit "no category filter".
+        if v is not None and len(v) == 0:
+            raise ValueError(
+                "association_categories must be None (no category filter) or a non-empty list"
+            )
         return v
 
 

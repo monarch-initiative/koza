@@ -266,3 +266,12 @@ def test_closure_size_multivalued_category_unfiltered(closurized_kg_multivalued_
     with GraphDatabase(closurized_kg_multivalued_category) as db:
         size = dict(db.conn.execute("SELECT entity, size FROM closure_size").fetchall())
     assert size == {"GENE:1": 3, "DISEASE:1": 2, "GENE:2": 3}
+
+
+def test_empty_association_categories_rejected(closurized_kg):
+    """`[]` is ambiguous (narrow to nothing vs. no filter), so it is refused;
+    None is the explicit no-filter value."""
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError, match="association_categories"):
+        InformationContentConfig(database_path=closurized_kg, association_categories=[], quiet=True)
