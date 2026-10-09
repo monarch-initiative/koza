@@ -427,7 +427,7 @@ HGNC:456	biolink:Gene
             ],
             edge_files=[],
             deduplicate=False,
-            quiet=False,#TODO; turn back to True
+            quiet=False,  # TODO; turn back to True
             show_progress=False,
             schema_reporting=False,
         )
@@ -497,13 +497,14 @@ class TestAppendListScalarConformance:
     category filter downstream.
     """
 
-    def _append_nodes(self, db_path, nodes_file):
+    def _append_nodes(self, db_path, *nodes_files):
+        def fmt(path):
+            return KGXFormat.TSV if path.suffix == ".tsv" else KGXFormat.JSONL
+
         return append_graphs(
             AppendConfig(
                 database_path=db_path,
-                node_files=[
-                    FileSpec(path=nodes_file, format=KGXFormat.JSONL, file_type=KGXFileType.NODES)
-                ],
+                node_files=[FileSpec(path=f, format=fmt(f), file_type=KGXFileType.NODES) for f in nodes_files],
                 edge_files=[],
                 deduplicate=False,
                 quiet=True,
@@ -520,33 +521,25 @@ class TestAppendListScalarConformance:
         self._append_nodes(existing_database, nodes_file)
 
         with GraphDatabase(existing_database) as db:
-            category = db.conn.execute(
-                "SELECT category FROM nodes WHERE id = 'HGNC:789'"
-            ).fetchone()[0]
+            category = db.conn.execute("SELECT category FROM nodes WHERE id = 'HGNC:789'").fetchone()[0]
         assert category == "biolink:Gene"
 
         # The whole point: the appended row is reachable by the same filter that
         # finds rows loaded from TSV.
         with GraphDatabase(existing_database) as db:
-            matched = db.conn.execute(
-                "SELECT COUNT(*) FROM nodes WHERE category = 'biolink:Gene'"
-            ).fetchone()[0]
+            matched = db.conn.execute("SELECT COUNT(*) FROM nodes WHERE category = 'biolink:Gene'").fetchone()[0]
         assert matched == 3  # 2 seeded + the appended one
 
     def test_multi_element_list_into_scalar_column_warns(self, existing_database, temp_dir, caplog):
         """Collapsing is lossy when the list has more than one value — say so."""
         nodes_file = temp_dir / "multi_nodes.jsonl"
-        nodes_file.write_text(
-            '{"id": "HGNC:789", "category": ["biolink:Gene", "biolink:Entity"], "name": "gene3"}\n'
-        )
+        nodes_file.write_text('{"id": "HGNC:789", "category": ["biolink:Gene", "biolink:Entity"], "name": "gene3"}\n')
 
         with caplog.at_level("WARNING"):
             self._append_nodes(existing_database, nodes_file)
 
         with GraphDatabase(existing_database) as db:
-            category = db.conn.execute(
-                "SELECT category FROM nodes WHERE id = 'HGNC:789'"
-            ).fetchone()[0]
+            category = db.conn.execute("SELECT category FROM nodes WHERE id = 'HGNC:789'").fetchone()[0]
         assert category == "biolink:Gene"  # first element, matching merge's semantics
         assert "discards data in 1 row" in caplog.text
 
@@ -563,17 +556,14 @@ class TestAppendListScalarConformance:
 
         nodes_file = temp_dir / "scalar_nodes.jsonl"
         nodes_file.write_text(
-            '{"id": "HGNC:789", "category": "biolink:Gene", "name": "gene3"}\n'
-            '{"id": "HGNC:790", "name": "gene4"}\n'
+            '{"id": "HGNC:789", "category": "biolink:Gene", "name": "gene3"}\n{"id": "HGNC:790", "name": "gene4"}\n'
         )
 
         self._append_nodes(db_path, nodes_file)
 
         with GraphDatabase(db_path) as db:
             rows = dict(
-                db.conn.execute(
-                    "SELECT id, category FROM nodes WHERE id IN ('HGNC:789', 'HGNC:790')"
-                ).fetchall()
+                db.conn.execute("SELECT id, category FROM nodes WHERE id IN ('HGNC:789', 'HGNC:790')").fetchall()
             )
         assert rows["HGNC:789"] == ["biolink:Gene"]
         assert rows["HGNC:790"] is None
@@ -589,17 +579,128 @@ class TestAppendListScalarConformance:
             db.conn.execute("CREATE TABLE edges (subject VARCHAR, predicate VARCHAR, object VARCHAR)")
 
         nodes_file = temp_dir / "list_nodes.jsonl"
-        nodes_file.write_text(
-            '{"id": "HGNC:789", "category": ["biolink:Gene", "biolink:Entity"], "name": "gene3"}\n'
-        )
+        nodes_file.write_text('{"id": "HGNC:789", "category": ["biolink:Gene", "biolink:Entity"], "name": "gene3"}\n')
 
         self._append_nodes(db_path, nodes_file)
 
         with GraphDatabase(db_path) as db:
-            category = db.conn.execute(
-                "SELECT category FROM nodes WHERE id = 'HGNC:789'"
-            ).fetchone()[0]
+            category = db.conn.execute("SELECT category FROM nodes WHERE id = 'HGNC:789'").fetchone()[0]
         assert category == ["biolink:Gene", "biolink:Entity"]
+
+    def _list_column_db(self, temp_dir):
+        db_path = temp_dir / "listcols.duckdb"
+        with GraphDatabase(db_path) as db:
+            db.conn.execute(
+                "CREATE TABLE nodes (id VARCHAR, category VARCHAR[], name VARCHAR);"
+                "INSERT INTO nodes VALUES ('HGNC:123', ['biolink:Gene'], 'gene1');"
+            )
+            db.conn.execute("CREATE TABLE edges (subject VARCHAR, predicate VARCHAR, object VARCHAR)")
+        return db_path
+
+    def _categories(self, db_path, *ids):
+        with GraphDatabase(db_path) as db:
+            placeholders = ", ".join("?" for _ in ids)
+            return dict(
+                db.conn.execute(f"SELECT id, category FROM nodes WHERE id IN ({placeholders})", list(ids)).fetchall()
+            )
+
+    def test_pipe_delimited_tsv_value_into_list_column_is_split(self, temp_dir):
+        """A KGX TSV multivalued cell is split on `|`, not wrapped whole as one
+        element (which would silently store `['biolink:Gene|biolink:Entity']`)."""
+        db_path = self._list_column_db(temp_dir)
+        nodes_file = temp_dir / "pipe_nodes.tsv"
+        nodes_file.write_text(
+            "id\tcategory\tname\n"
+            "HGNC:789\tbiolink:Gene| biolink:Entity |\tgene3\n"
+            "HGNC:790\tbiolink:Gene\tgene4\n"
+            "HGNC:791\t\tgene5\n"
+        )
+
+        result = self._append_nodes(db_path, nodes_file)
+
+        assert not result.files_loaded[0].errors
+        rows = self._categories(db_path, "HGNC:789", "HGNC:790", "HGNC:791")
+        assert rows["HGNC:789"] == ["biolink:Gene", "biolink:Entity"]
+        assert rows["HGNC:790"] == ["biolink:Gene"]
+        assert rows["HGNC:791"] is None
+
+    def test_column_added_by_earlier_file_is_conformed(self, existing_database, temp_dir):
+        """A column introduced by an earlier file in the same append is part of
+        the target schema for later files, so a list there is still collapsed."""
+        tsv_file = temp_dir / "a_nodes.tsv"
+        tsv_file.write_text("id\tcategory\tname\tsynonym\nHGNC:789\tbiolink:Gene\tgene3\ts1\n")
+        jsonl_file = temp_dir / "b_nodes.jsonl"
+        jsonl_file.write_text('{"id": "HGNC:790", "category": "biolink:Gene", "synonym": ["s2"]}\n')
+
+        self._append_nodes(existing_database, tsv_file, jsonl_file)
+
+        with GraphDatabase(existing_database) as db:
+            synonym = db.conn.execute("SELECT synonym FROM nodes WHERE id = 'HGNC:790'").fetchone()[0]
+        assert synonym == "s2"
+
+    def test_mixed_scalar_and_array_jsonl_into_scalar_column(self, existing_database, temp_dir):
+        """jsonl mixing `"x"` and `["x"]` in one field reads as a JSON column; its
+        values must not land with literal quotes and brackets."""
+        nodes_file = temp_dir / "mixed_nodes.jsonl"
+        nodes_file.write_text(
+            '{"id": "HGNC:789", "category": "biolink:Gene", "name": "gene3"}\n'
+            '{"id": "HGNC:790", "category": ["biolink:Gene"], "name": "gene4"}\n'
+            '{"id": "HGNC:791", "category": null, "name": "gene5"}\n'
+        )
+
+        self._append_nodes(existing_database, nodes_file)
+
+        with GraphDatabase(existing_database) as db:
+            rows = dict(
+                db.conn.execute(
+                    "SELECT id, category FROM nodes WHERE id IN ('HGNC:789', 'HGNC:790', 'HGNC:791')"
+                ).fetchall()
+            )
+        assert rows == {"HGNC:789": "biolink:Gene", "HGNC:790": "biolink:Gene", "HGNC:791": None}
+
+    def test_mixed_scalar_and_array_jsonl_into_list_column(self, temp_dir):
+        db_path = self._list_column_db(temp_dir)
+        nodes_file = temp_dir / "mixed_nodes.jsonl"
+        nodes_file.write_text(
+            '{"id": "HGNC:789", "category": "biolink:Gene", "name": "gene3"}\n'
+            '{"id": "HGNC:790", "category": ["biolink:Gene", "biolink:Entity"], "name": "gene4"}\n'
+            '{"id": "HGNC:791", "name": "gene5"}\n'
+        )
+
+        self._append_nodes(db_path, nodes_file)
+
+        rows = self._categories(db_path, "HGNC:789", "HGNC:790", "HGNC:791")
+        assert rows["HGNC:789"] == ["biolink:Gene"]
+        assert rows["HGNC:790"] == ["biolink:Gene", "biolink:Entity"]
+        assert rows["HGNC:791"] is None
+
+    def test_nested_list_into_scalar_column_fails_loudly(self, existing_database, temp_dir):
+        """A list of lists has no faithful scalar rendering — reject the file
+        rather than insert `"['biolink:Gene']"`."""
+        nodes_file = temp_dir / "nested_nodes.jsonl"
+        nodes_file.write_text('{"id": "HGNC:789", "category": [["biolink:Gene"]], "name": "gene3"}\n')
+
+        result = self._append_nodes(existing_database, nodes_file)
+
+        assert result.files_loaded[0].errors
+        assert "nested" in result.files_loaded[0].errors[0]
+        with GraphDatabase(existing_database) as db:
+            count = db.conn.execute("SELECT COUNT(*) FROM nodes WHERE id = 'HGNC:789'").fetchone()[0]
+        assert count == 0
+
+    def test_null_first_element_does_not_discard_the_value(self, existing_database, temp_dir, caplog):
+        """Collapse keeps the first non-NULL element, and a NULL alongside one
+        real value is not reported as data loss."""
+        nodes_file = temp_dir / "null_first_nodes.jsonl"
+        nodes_file.write_text('{"id": "HGNC:789", "category": [null, "biolink:Gene"], "name": "gene3"}\n')
+
+        with caplog.at_level("WARNING"):
+            self._append_nodes(existing_database, nodes_file)
+
+        with GraphDatabase(existing_database) as db:
+            category = db.conn.execute("SELECT category FROM nodes WHERE id = 'HGNC:789'").fetchone()[0]
+        assert category == "biolink:Gene"
+        assert "discards data" not in caplog.text
 
 
 if __name__ == "__main__":

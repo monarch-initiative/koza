@@ -10,7 +10,7 @@ import time
 from loguru import logger
 from tqdm import tqdm
 
-from koza.model.graph_operations import AppendConfig, AppendResult, FileLoadResult, OperationSummary
+from koza.model.graph_operations import AppendConfig, AppendResult, FileLoadResult, KGXFormat, OperationSummary
 
 from .schema import generate_schema_report, print_schema_summary, write_schema_report_yaml
 from .utils import GraphDatabase, get_duckdb_read_statement, print_operation_summary
@@ -80,14 +80,14 @@ def append_graphs(config: AppendConfig) -> AppendResult:
                 if not config.quiet:
                     print(f" Loading {len(config.node_files)} node files...")
 
-                files_loaded.extend(_append_files(db, config.node_files, "nodes", config, initial_node_schema))
+                files_loaded.extend(_append_files(db, config.node_files, "nodes", config))
 
             # Load edge files
             if config.edge_files:
                 if not config.quiet:
                     print(f" Loading {len(config.edge_files)} edge files...")
 
-                files_loaded.extend(_append_files(db, config.edge_files, "edges", config, initial_edge_schema))
+                files_loaded.extend(_append_files(db, config.edge_files, "edges", config))
 
             # Detect schema changes
             final_node_schema = _get_table_schema(db, "nodes")
@@ -206,9 +206,7 @@ def _compare_schemas(table_name: str, old_schema: dict[str, str], new_schema: di
     return changes, len(new_columns)
 
 
-def _append_files(
-    db: GraphDatabase, file_specs: list, table_type: str, config: AppendConfig, existing_schema: dict[str, str]
-) -> list[FileLoadResult]:
+def _append_files(db: GraphDatabase, file_specs: list, table_type: str, config: AppendConfig) -> list[FileLoadResult]:
     """
     Append multiple files to an existing table with schema evolution support.
 
@@ -221,7 +219,6 @@ def _append_files(
         file_specs: List of FileSpec objects for files to append
         table_type: Target table name ("nodes" or "edges")
         config: AppendConfig for quiet/progress settings
-        existing_schema: Dict of existing column names to types for schema comparison
 
     Returns:
         List of FileLoadResult objects with per-file load statistics
@@ -239,7 +236,7 @@ def _append_files(
         if config.show_progress:
             file_progress.set_description(f"Loading {file_spec.path.name}")
 
-        result = _append_single_file(db, file_spec, table_type, existing_schema)
+        result = _append_single_file(db, file_spec, table_type)
         files_loaded.append(result)
 
         if not config.quiet and not config.show_progress:
@@ -255,12 +252,51 @@ def _is_list_type(duckdb_type: str) -> bool:
     return duckdb_type.strip().upper().endswith("[]")
 
 
+def _is_json_type(duckdb_type: str) -> bool:
+    """Whether a DuckDB type string is `JSON` — what `read_json` infers for a
+    column whose rows mix scalars and arrays."""
+    return duckdb_type.strip().upper() == "JSON"
+
+
+def _is_nested_type(duckdb_type: str) -> bool:
+    """Whether a value of this type cannot be rendered as a plain scalar
+    (a list, struct, map or JSON value)."""
+    upper = duckdb_type.strip().upper()
+    return _is_list_type(upper) or upper == "JSON" or upper.startswith(("STRUCT", "MAP", "UNION"))
+
+
+def _json_column_as_list(db: GraphDatabase, temp_table_name: str, col_name: str, source: str) -> str:
+    """SQL rendering a mixed scalar/array `JSON` column as a `VARCHAR[]`.
+
+    A JSON scalar becomes a one-element list, an array its (string) elements,
+    and a JSON `null` or SQL NULL becomes NULL. Objects and nested arrays have no
+    faithful flat rendering, so they are rejected rather than stringified.
+    """
+    quoted = f'"{col_name}"'
+    bad = db.conn.execute(
+        f"SELECT COUNT(*) FROM {temp_table_name} WHERE json_type({quoted}) = 'OBJECT' "
+        f"OR (json_type({quoted}) = 'ARRAY' "
+        f"AND list_has_any(json_type({quoted}, '$[*]'), ['ARRAY', 'OBJECT']))"
+    ).fetchone()
+    if bad and bad[0]:
+        raise ValueError(
+            f"{source}: column '{col_name}' holds JSON objects or nested arrays in {bad[0]:,} row(s); "
+            f"refusing to insert them as strings"
+        )
+    return (
+        f"CASE WHEN {quoted} IS NULL OR json_type({quoted}) = 'NULL' THEN NULL "
+        f"WHEN json_type({quoted}) = 'ARRAY' THEN json_extract_string({quoted}, '$[*]') "
+        f"ELSE [json_extract_string({quoted}, '$')] END"
+    )
+
+
 def _conform_temp_table_types(
     db: GraphDatabase,
     temp_table_name: str,
     file_columns: dict[str, str],
     existing_schema: dict[str, str],
     source: str,
+    split_pipes: bool = False,
 ) -> dict[str, str]:
     """Reconcile LIST-vs-scalar mismatches between an incoming file and the target table.
 
@@ -271,46 +307,83 @@ def _conform_temp_table_types(
 
     Conform each shared column to the target's shape instead:
 
-    - LIST value into a scalar column: keep the single element, matching merge's
-      `force_single_valued` semantics, and warn about rows where that discards data.
-    - scalar value into a LIST column: wrap in a one-element list, preserving NULL.
+    - LIST value into a scalar column: keep the first non-NULL element, matching
+      merge's `force_single_valued` semantics, and warn about rows where that
+      discards data.
+    - scalar value into a LIST column: for TSV input (`split_pipes`), split the
+      KGX pipe-delimited value into its items (trimmed, empties dropped), as join
+      does; otherwise wrap in a one-element list. NULL stays NULL.
+    - `JSON` column (jsonl mixing scalars and arrays in one field): render each row
+      as a list first, then conform as above.
+    - nested values (lists of lists, JSON objects) with no flat rendering raise
+      `ValueError` instead of being inserted as repr strings.
 
     Returns the temp table's column types after conforming.
     """
     projections: list[str] = []
     collapsed: list[str] = []
     wrapped: list[str] = []
+    multi_value_checks: list[tuple[str, str]] = []
 
     for col_name, file_type in file_columns.items():
         target_type = existing_schema.get(col_name)
         quoted = f'"{col_name}"'
 
-        if target_type is None or _is_list_type(file_type) == _is_list_type(target_type):
+        if target_type is None or _is_json_type(target_type) or file_type == target_type:
             projections.append(quoted)
             continue
 
-        if _is_list_type(file_type):
-            # List → scalar: element 1 (DuckDB lists are 1-indexed; an empty
-            # list yields NULL), cast to whatever the target column holds.
-            projections.append(f"CAST({quoted}[1] AS {target_type}) AS {quoted}")
-            collapsed.append(col_name)
+        target_is_list = _is_list_type(target_type)
+
+        if _is_json_type(file_type):
+            list_expr = _json_column_as_list(db, temp_table_name, col_name, source)
+        elif _is_list_type(file_type):
+            if _is_nested_type(file_type.strip()[:-2]):
+                raise ValueError(
+                    f"{source}: column '{col_name}' is {file_type} but the target column is "
+                    f"{target_type}; refusing to insert nested values as strings"
+                )
+            if target_is_list:
+                # Same (flat) shape; let the insert cast the element type.
+                projections.append(quoted)
+                continue
+            list_expr = quoted
         else:
-            # Scalar → list: a one-element list, but keep NULL as NULL rather
-            # than turning it into a list containing NULL.
+            if not target_is_list:
+                projections.append(quoted)
+                continue
+            # Scalar → list. NULL stays NULL rather than becoming [NULL].
             element_type = target_type.strip()[:-2]
-            projections.append(
-                f"CASE WHEN {quoted} IS NULL THEN NULL "
-                f"ELSE [CAST({quoted} AS {element_type})] END AS {quoted}"
-            )
+            if split_pipes and file_type.strip().upper() == "VARCHAR":
+                projections.append(
+                    f"CASE WHEN {quoted} IS NULL OR trim({quoted}) = '' THEN NULL "
+                    f"ELSE CAST(list_filter(list_transform(string_split({quoted}, '|'), x -> trim(x)), "
+                    f"x -> x != '') AS {target_type}) END AS {quoted}"
+                )
+            else:
+                projections.append(
+                    f"CASE WHEN {quoted} IS NULL THEN NULL ELSE [CAST({quoted} AS {element_type})] END AS {quoted}"
+                )
             wrapped.append(col_name)
+            continue
+
+        # List-shaped source (a LIST column, or a JSON column rendered as one).
+        if target_is_list:
+            projections.append(f"CAST({list_expr} AS {target_type}) AS {quoted}")
+            wrapped.append(col_name)
+        else:
+            # List → scalar: first non-NULL element (DuckDB lists are 1-indexed;
+            # an empty list yields NULL), cast to whatever the target column holds.
+            non_null = f"list_filter({list_expr}, x -> x IS NOT NULL)"
+            projections.append(f"CAST({non_null}[1] AS {target_type}) AS {quoted}")
+            multi_value_checks.append((col_name, non_null))
+            collapsed.append(col_name)
 
     if not collapsed and not wrapped:
         return file_columns
 
-    for col_name in collapsed:
-        lost = db.conn.execute(
-            f'SELECT COUNT(*) FROM {temp_table_name} WHERE len("{col_name}") > 1'
-        ).fetchone()
+    for col_name, non_null in multi_value_checks:
+        lost = db.conn.execute(f"SELECT COUNT(*) FROM {temp_table_name} WHERE len({non_null}) > 1").fetchone()
         lost = lost[0] if lost else 0
         if lost:
             logger.warning(
@@ -320,28 +393,18 @@ def _conform_temp_table_types(
             )
 
     if collapsed:
-        logger.info(
-            f"append: collapsed list column(s) to scalar for {source}: {', '.join(sorted(collapsed))}"
-        )
+        logger.info(f"append: collapsed list column(s) to scalar for {source}: {', '.join(sorted(collapsed))}")
     if wrapped:
-        logger.info(
-            f"append: wrapped scalar column(s) into single-element lists for {source}: "
-            f"{', '.join(sorted(wrapped))}"
-        )
+        logger.info(f"append: conformed column(s) to the target's list type for {source}: {', '.join(sorted(wrapped))}")
 
     db.conn.execute(
-        f"CREATE OR REPLACE TEMP TABLE {temp_table_name} AS "
-        f"SELECT {', '.join(projections)} FROM {temp_table_name}"
+        f"CREATE OR REPLACE TEMP TABLE {temp_table_name} AS SELECT {', '.join(projections)} FROM {temp_table_name}"
     )
 
-    return {
-        col[0]: col[1] for col in db.conn.execute(f"DESCRIBE {temp_table_name}").fetchall()
-    }
+    return {col[0]: col[1] for col in db.conn.execute(f"DESCRIBE {temp_table_name}").fetchall()}
 
 
-def _append_single_file(
-    db: GraphDatabase, file_spec, table_type: str, existing_schema: dict[str, str]
-) -> FileLoadResult:
+def _append_single_file(db: GraphDatabase, file_spec, table_type: str) -> FileLoadResult:
     """
     Append a single file to an existing table with schema evolution.
 
@@ -353,7 +416,6 @@ def _append_single_file(
         db: GraphDatabase instance with active connection
         file_spec: FileSpec object for the file to append
         table_type: Target table name ("nodes" or "edges")
-        existing_schema: Dict of existing column names to types
 
     Returns:
         FileLoadResult with load statistics and any errors encountered
@@ -398,9 +460,17 @@ def _append_single_file(
 
         # Reconcile LIST-vs-scalar shape against the target table before the
         # insert below, which would otherwise cast a list to its string repr.
+        # Read the target schema now, not once per append: an earlier file in
+        # this same append may have added columns this file must conform to.
+        existing_schema = _get_table_schema(db, table_type)
         if existing_schema:
             file_columns = _conform_temp_table_types(
-                db, temp_table_name, file_columns, existing_schema, str(file_spec.path)
+                db,
+                temp_table_name,
+                file_columns,
+                existing_schema,
+                str(file_spec.path),
+                split_pipes=file_spec.format == KGXFormat.TSV,
             )
 
         # Handle schema evolution - add missing columns to existing table
@@ -408,10 +478,12 @@ def _append_single_file(
             new_columns = set(file_columns.keys()) - set(existing_schema.keys())
             for col_name in new_columns:
                 col_type = file_columns[col_name]
-                #Checks if the name of the column is somewhere in the set of columns.
-                #This is fairly likely to happen if you have multiple tables which all share the same incorrect schema.
-                col_already_in_db = col_name in set(db.conn.execute(f"PRAGMA table_info ('{table_type}')").fetchdf()["name"])
-                if(not col_already_in_db):
+                # Checks if the name of the column is somewhere in the set of columns.
+                # This is fairly likely to happen if you have multiple tables which all share the same incorrect schema.
+                col_already_in_db = col_name in set(
+                    db.conn.execute(f"PRAGMA table_info ('{table_type}')").fetchdf()["name"]
+                )
+                if not col_already_in_db:
                     alter_sql = f"ALTER TABLE {table_type} ADD COLUMN {col_name} {col_type}"
                     db.conn.execute(alter_sql)
                     logger.info(f"Added new column {col_name} ({col_type}) to {table_type} table")
