@@ -664,15 +664,6 @@ class ClosurizeResult(BaseModel):
     errors: list[str] = Field(default_factory=list)
 
 
-# Default Biolink association categories that link an entity to a phenotype term.
-# Used to derive each entity's annotation-closure size. Monarch-flavored, like
-# ClosurizeConfig's defaults — non-Monarch consumers should pass their own.
-_DEFAULT_ASSOCIATION_CATEGORIES = [
-    "biolink:GeneToPhenotypicFeatureAssociation",
-    "biolink:DiseaseToPhenotypicFeatureAssociation",
-]
-
-
 class InformationContentConfig(BaseModel):
     """Configuration for the information-content operation.
 
@@ -690,9 +681,18 @@ class InformationContentConfig(BaseModel):
       profile-size denominator.
 
     Both tables let a downstream similarity engine skip the per-process build.
-    Defaults are Monarch-flavored (rdfs:subClassOf for closure, has_phenotype
-    Gene/Disease associations), matching the ClosurizeConfig convention — other
-    consumers should pass explicit values.
+    `closure_predicates` defaults to rdfs:subClassOf, matching the
+    ClosurizeConfig convention; non-Monarch consumers should pass their own.
+
+    `closure_size` covers every entity carrying an `association_predicate` edge.
+    The predicate is the semantic contract — an entity that has a phenotype has
+    a profile size — so membership is not additionally gated on an association
+    category allowlist. It once was, defaulting to Gene and Disease, which meant
+    every genotype, variant and case was silently absent from the table: a
+    consumer joining against it dropped those entities and got an empty result
+    that looked like a legitimate one rather than a missing precompute. Set
+    `association_categories` to narrow deliberately; leave it None to cover
+    everything the predicate selects.
     """
 
     database_path: Path
@@ -707,9 +707,9 @@ class InformationContentConfig(BaseModel):
     edges_table: str = "edges"
     association_subject_column: str = "subject"
     association_object_column: str = "object"
-    association_categories: list[str] = Field(
-        default_factory=lambda: list(_DEFAULT_ASSOCIATION_CATEGORIES)
-    )
+    # Optional narrowing. None (the default) means every entity with an
+    # `association_predicate` edge gets a closure size, whatever its category.
+    association_categories: list[str] | None = None
     association_predicate: str = "biolink:has_phenotype"
     # When False, negated associations are excluded from the closure-size table.
     include_negated: bool = False
@@ -722,6 +722,17 @@ class InformationContentConfig(BaseModel):
             raise ValueError(f"File not found: {v}")
         return v
 
+    @field_validator("association_categories")
+    @classmethod
+    def validate_association_categories_not_empty(cls, v: list[str] | None) -> list[str] | None:
+        # An empty list is ambiguous: "narrow to nothing" or "no filter"? Reject
+        # it rather than guess — None is the explicit "no category filter".
+        if v is not None and len(v) == 0:
+            raise ValueError(
+                "association_categories must be None (no category filter) or a non-empty list"
+            )
+        return v
+
 
 class InformationContentResult(BaseModel):
     """Result of the information-content operation."""
@@ -729,6 +740,158 @@ class InformationContentResult(BaseModel):
     success: bool
     ic_term_count: int
     closure_size_entity_count: int
+    total_time_seconds: float
+    summary: "OperationSummary"
+    errors: list[str] = Field(default_factory=list)
+
+
+_SQL_IDENTIFIER = r"^[A-Za-z_][A-Za-z0-9_]*$"
+
+
+class AnnotationInformationContentConfig(BaseModel):
+    """Configuration for the annotation-information-content operation.
+
+    Writes one table, `output_table` (term, ic), holding the information content
+    of each closure term with the *annotated entities* as the corpus (oaklib's
+    `information-content --use-associations`):
+
+        IC(t) = -log2(n(t) / N)
+
+    where n(t) is the number of distinct entities with an association to t or
+    to any closure descendant of t, and N is the number of distinct entities
+    with any selected association. Only terms reached from an association get a
+    row. Duplicate association rows (one pair from several sources) count once.
+
+    Associations are the `edges` rows matching every given filter: predicate,
+    category, subject/object CURIE prefixes, and negation. Run it once per
+    annotation corpus (e.g. mouse genes -> MP, zebrafish genes -> ZP), each into
+    its own table. This differs from `information-content`, whose corpus is the
+    closure itself (ontology-structure IC).
+    """
+
+    database_path: Path
+    output_table: str = Field(pattern=_SQL_IDENTIFIER)
+    # Closure source (the table + columns closurize materializes).
+    closure_table: str = Field(default="closure", pattern=_SQL_IDENTIFIER)
+    closure_subject_column: str = Field(default="subject_id", pattern=_SQL_IDENTIFIER)
+    closure_predicate_column: str = Field(default="predicate_id", pattern=_SQL_IDENTIFIER)
+    closure_object_column: str = Field(default="object_id", pattern=_SQL_IDENTIFIER)
+    closure_predicates: list[str] = Field(default_factory=lambda: ["rdfs:subClassOf"])
+    # Association source (entity -> term edges).
+    edges_table: str = Field(default="edges", pattern=_SQL_IDENTIFIER)
+    association_subject_column: str = Field(default="subject", pattern=_SQL_IDENTIFIER)
+    association_object_column: str = Field(default="object", pattern=_SQL_IDENTIFIER)
+    association_predicate: str = "biolink:has_phenotype"
+    # Required: which association categories make up the corpus.
+    association_categories: list[str] = Field(min_length=1)
+    # Optional CURIE prefix filters (without the colon), e.g. ["MGI"] / ["MP"].
+    subject_prefixes: list[str] | None = None
+    object_prefixes: list[str] | None = None
+    # When False, negated associations are excluded from the corpus.
+    include_negated: bool = False
+    quiet: bool = False
+
+    @field_validator("database_path")
+    @classmethod
+    def validate_path_exists(cls, v: Path) -> Path:
+        if not v.exists():
+            raise ValueError(f"File not found: {v}")
+        return v
+
+
+class PairwiseSimilarityConfig(BaseModel):
+    """Configuration for the pairwise-similarity operation.
+
+    All-by-all term similarity between two term sets over a closurized graph
+    (semsimian's `all_by_all_pairwise_similarity`). For each subject term s and
+    object term o, with anc(t) the reflexive closure ancestors of t:
+
+    - jaccard_similarity = |anc(s) & anc(o)| / |anc(s) | anc(o)|
+    - ancestor_information_content (Resnik) = max IC over shared ancestors that
+      have a row in `ic_table` (ancestors without one are ignored)
+    - ancestor_id = the shared ancestor with that IC; ties go to the smallest id
+    - phenodigm_score = sqrt(Resnik * Jaccard)
+
+    Only pairs with Resnik strictly greater than
+    `min_ancestor_information_content` are written. Term sets are the closure
+    descendants (reflexive) of a root term, optionally limited to CURIE prefixes.
+
+    The graph database is only read (attached read-only), so this can run
+    alongside other readers; intermediates go to a scratch DuckDB file next to
+    `output_path`, removed afterwards. The output format follows the
+    `output_path` suffix: .parquet, .tsv or .tsv.gz.
+    """
+
+    database_path: Path
+    output_path: Path
+    ic_table: str = Field(pattern=_SQL_IDENTIFIER)
+    subject_root: str
+    object_root: str
+    subject_prefixes: list[str] | None = None
+    object_prefixes: list[str] | None = None
+    min_ancestor_information_content: float = 1.5
+    closure_table: str = Field(default="closure", pattern=_SQL_IDENTIFIER)
+    closure_subject_column: str = Field(default="subject_id", pattern=_SQL_IDENTIFIER)
+    closure_predicate_column: str = Field(default="predicate_id", pattern=_SQL_IDENTIFIER)
+    closure_object_column: str = Field(default="object_id", pattern=_SQL_IDENTIFIER)
+    closure_predicates: list[str] = Field(default_factory=lambda: ["rdfs:subClassOf"])
+    # Labels: (id, name) columns of a nodes table; set labels_table=None to skip labels.
+    labels_table: str | None = Field(default="nodes", pattern=_SQL_IDENTIFIER)
+    labels_id_column: str = Field(default="id", pattern=_SQL_IDENTIFIER)
+    labels_name_column: str = Field(default="name", pattern=_SQL_IDENTIFIER)
+    # Subject terms per SQL batch; bounds the size of the shared-ancestor join.
+    # Peak memory grows ~ batch_size x |objects| x ancestor depth (near-root
+    # ancestors are shared with every object), so lower it for large term sets.
+    batch_size: int = Field(default=500, ge=1)
+    memory_limit: str | None = None  # DuckDB memory_limit, e.g. "64GB" (set it under SLURM / CI)
+    threads: int | None = Field(default=None, ge=1)
+    quiet: bool = False
+
+    @field_validator("database_path")
+    @classmethod
+    def validate_path_exists(cls, v: Path) -> Path:
+        if not v.exists():
+            raise ValueError(f"File not found: {v}")
+        return v
+
+    @field_validator("output_path")
+    @classmethod
+    def validate_output_suffix(cls, v: Path) -> Path:
+        if not (v.name.endswith(".parquet") or v.name.endswith(".tsv") or v.name.endswith(".tsv.gz")):
+            raise ValueError("output_path must end in .parquet, .tsv or .tsv.gz")
+        return v
+
+    @field_validator("memory_limit")
+    @classmethod
+    def validate_memory_limit(cls, v: str | None) -> str | None:
+        import re
+
+        if v is not None and not re.fullmatch(r"\d+(\.\d+)?\s*(B|KB|MB|GB|TB|KiB|MiB|GiB|TiB)", v):
+            raise ValueError(f"memory_limit must look like '64GB', got {v!r}")
+        return v
+
+
+class PairwiseSimilarityResult(BaseModel):
+    """Result of the pairwise-similarity operation."""
+
+    success: bool
+    output_path: Path
+    subject_count: int
+    object_count: int
+    row_count: int
+    total_time_seconds: float
+    summary: "OperationSummary"
+    errors: list[str] = Field(default_factory=list)
+
+
+class AnnotationInformationContentResult(BaseModel):
+    """Result of the annotation-information-content operation."""
+
+    success: bool
+    output_table: str
+    term_count: int
+    entity_count: int
+    association_count: int
     total_time_seconds: float
     summary: "OperationSummary"
     errors: list[str] = Field(default_factory=list)

@@ -12,7 +12,9 @@ from tqdm import tqdm
 
 from koza.graph_operations import (
     append_graphs,
+    compute_annotation_information_content,
     compute_information_content,
+    compute_pairwise_similarity,
     convert_graph,
     export_graph,
     generate_connectivity_report,
@@ -57,7 +59,9 @@ from koza.model.graph_operations import (
     NormalizeConfig,
     ProfileConfig,
     PruneConfig,
+    AnnotationInformationContentConfig,
     InformationContentConfig,
+    PairwiseSimilarityConfig,
     QCReportConfig,
     SchemaReportConfig,
     SplitConfig,
@@ -775,8 +779,9 @@ def information_content(
     )] = None,
     association_category: Annotated[list[str] | None, typer.Option(
         "--association-category",
-        help="Edge category that links an entity to a term, for the closure-size "
-             "table (repeatable). Default: Monarch Gene/Disease has_phenotype categories",
+        help="Narrow the closure-size table to these edge categories (repeatable). "
+             "Default: no category filter — every entity with an association-predicate "
+             "edge gets a size, whatever its category",
     )] = None,
     association_predicate: Annotated[str | None, typer.Option(
         "--association-predicate",
@@ -797,13 +802,16 @@ def information_content(
       information_content  (term, ic)     -- information content per closure term
       closure_size         (entity, size) -- distinct closure subsumers per entity
 
+    `closure_size` covers every entity with an association-predicate edge, so
+    genotypes, variants and cases get sizes alongside genes and diseases.
+
     Run after `closurize`.
 
     Examples:
-        # Monarch defaults (rdfs:subClassOf, Gene/Disease has_phenotype)
+        # Defaults: rdfs:subClassOf closure, every has_phenotype entity
         koza information-content monarch-kg.duckdb
 
-        # Custom closure predicate and association edge
+        # Custom closure predicate, narrowed to one association category
         koza information-content graph.duckdb \\
             --closure-predicate rdfs:subClassOf --closure-predicate BFO:0000050 \\
             --association-category biolink:GeneToPhenotypicFeatureAssociation \\
@@ -832,6 +840,145 @@ def information_content(
     except Exception as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(1)
+
+
+@typer_app.command(name="annotation-information-content")
+def annotation_information_content(
+    database: Annotated[str, typer.Argument(help="Path to an already-closurized DuckDB database file")],
+    output_table: Annotated[str, typer.Option(
+        "--output-table", help="Table to write (term, ic), e.g. information_content_mgi_mp",
+    )],
+    association_category: Annotated[list[str], typer.Option(
+        "--association-category",
+        help="Edge category making up the annotation corpus (repeatable, required), "
+             "e.g. biolink:GeneToPhenotypicFeatureAssociation",
+    )],
+    subject_prefix: Annotated[list[str] | None, typer.Option(
+        "--subject-prefix", help="Keep associations whose subject has this CURIE prefix (repeatable), e.g. MGI",
+    )] = None,
+    object_prefix: Annotated[list[str] | None, typer.Option(
+        "--object-prefix", help="Keep associations whose object has this CURIE prefix (repeatable), e.g. MP",
+    )] = None,
+    association_predicate: Annotated[str | None, typer.Option(
+        "--association-predicate", help="Edge predicate for entity->term associations. Default: biolink:has_phenotype",
+    )] = None,
+    closure_predicate: Annotated[list[str] | None, typer.Option(
+        "--closure-predicate",
+        help="Closure predicate(s) that define ancestry (repeatable). Default: rdfs:subClassOf",
+    )] = None,
+    include_negated: Annotated[bool, typer.Option(
+        "--include-negated", help="Include negated associations in the corpus (default: excluded)",
+    )] = False,
+    quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress output")] = False,
+) -> None:
+    """Compute annotation-based information content into a named table.
+
+    IC(t) = -log2(n(t) / N): n(t) = distinct entities annotated to t or a closure
+    descendant of t, N = distinct annotated entities (oaklib's
+    `information-content --use-associations`). Run once per annotation corpus.
+
+    Run after `closurize`.
+
+    Examples:
+        # mouse gene -> MP corpus
+        koza annotation-information-content monarch-kg.duckdb \\
+            --output-table information_content_mgi_mp \\
+            --association-category biolink:GeneToPhenotypicFeatureAssociation \\
+            --subject-prefix MGI --object-prefix MP
+    """
+    try:
+        config_kwargs = {
+            "database_path": Path(database),
+            "output_table": output_table,
+            "association_categories": association_category,
+            "subject_prefixes": subject_prefix or None,
+            "object_prefixes": object_prefix or None,
+            "include_negated": include_negated,
+            "quiet": quiet,
+        }
+        if association_predicate is not None:
+            config_kwargs["association_predicate"] = association_predicate
+        if closure_predicate is not None:
+            config_kwargs["closure_predicates"] = closure_predicate
+        result = compute_annotation_information_content(AnnotationInformationContentConfig(**config_kwargs))
+        if not quiet:
+            typer.echo(
+                f"Annotation-information-content completed: {result.output_table} "
+                f"({result.term_count:,} terms, {result.entity_count:,} entities)"
+            )
+    except Exception as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(1) from e
+
+
+@typer_app.command(name="pairwise-similarity")
+def pairwise_similarity(
+    database: Annotated[str, typer.Argument(help="Closurized DuckDB database (opened read-only)")],
+    output: Annotated[str, typer.Option("--output", "-o", help="Output file: .parquet, .tsv or .tsv.gz")],
+    ic_table: Annotated[str, typer.Option(
+        "--ic-table", help="Table of (term, ic) to score shared ancestors, e.g. information_content_mgi_mp",
+    )],
+    subject_root: Annotated[str, typer.Option("--subject-root", help="Subject terms: descendants of this term")],
+    object_root: Annotated[str, typer.Option("--object-root", help="Object terms: descendants of this term")],
+    subject_prefix: Annotated[list[str] | None, typer.Option(
+        "--subject-prefix", help="Keep subject terms with this CURIE prefix (repeatable)")] = None,
+    object_prefix: Annotated[list[str] | None, typer.Option(
+        "--object-prefix", help="Keep object terms with this CURIE prefix (repeatable)")] = None,
+    min_ancestor_ic: Annotated[float, typer.Option(
+        "--min-ancestor-information-content", help="Keep pairs whose Resnik score is strictly greater",
+    )] = 1.5,
+    closure_predicate: Annotated[list[str] | None, typer.Option(
+        "--closure-predicate", help="Closure predicate(s) defining ancestry (repeatable). Default: rdfs:subClassOf",
+    )] = None,
+    no_labels: Annotated[bool, typer.Option("--no-labels", help="Skip the label columns")] = False,
+    batch_size: Annotated[int, typer.Option("--batch-size", help="Subject terms per SQL batch; peak memory grows with it, so lower it for large term sets")] = 500,
+    memory_limit: Annotated[str | None, typer.Option(
+        "--memory-limit", help="DuckDB memory limit, e.g. 64GB (set it under SLURM / CI)")] = None,
+    threads: Annotated[int | None, typer.Option("--threads", help="DuckDB threads")] = None,
+    quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress output")] = False,
+) -> None:
+    """All-by-all term similarity (Jaccard, Resnik, Phenodigm) between two term sets.
+
+    Semsimian's all_by_all_pairwise_similarity, computed in DuckDB over the
+    closure. Pairs are kept when Resnik (max IC of a shared ancestor, from
+    --ic-table) is strictly above the threshold.
+
+    Run after `closurize` and an IC operation (e.g. `annotation-information-content`).
+
+    Examples:
+        koza pairwise-similarity monarch-kg.duckdb -o HP_vs_MP.parquet \\
+            --ic-table information_content_mgi_mp \\
+            --subject-root HP:0000118 --subject-prefix HP \\
+            --object-root MP:0000001 --object-prefix MP
+    """
+    try:
+        config_kwargs = {
+            "database_path": Path(database),
+            "output_path": Path(output),
+            "ic_table": ic_table,
+            "subject_root": subject_root,
+            "object_root": object_root,
+            "subject_prefixes": subject_prefix or None,
+            "object_prefixes": object_prefix or None,
+            "min_ancestor_information_content": min_ancestor_ic,
+            "batch_size": batch_size,
+            "memory_limit": memory_limit,
+            "threads": threads,
+            "quiet": quiet,
+        }
+        if closure_predicate is not None:
+            config_kwargs["closure_predicates"] = closure_predicate
+        if no_labels:
+            config_kwargs["labels_table"] = None
+        result = compute_pairwise_similarity(PairwiseSimilarityConfig(**config_kwargs))
+        if not quiet:
+            typer.echo(
+                f"Pairwise-similarity completed: {result.row_count:,} pairs "
+                f"({result.subject_count:,} x {result.object_count:,} terms) -> {result.output_path}"
+            )
+    except Exception as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(1) from e
 
 
 @typer_app.command()
