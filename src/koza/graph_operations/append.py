@@ -265,29 +265,64 @@ def _is_nested_type(duckdb_type: str) -> bool:
     return _is_list_type(upper) or upper == "JSON" or upper.startswith(("STRUCT", "MAP", "UNION"))
 
 
-def _json_column_as_list(db: GraphDatabase, temp_table_name: str, col_name: str, source: str) -> str:
+class NestedValueError(ValueError):
+    """An incoming column holds nested values (lists of lists, JSON objects) that
+    have no faithful rendering in the target column.
+
+    Unlike other per-file load errors, which are recorded on the file's
+    `FileLoadResult` and let the append carry on, this aborts the append: the
+    input data has to be fixed, and quietly skipping the file would hide that.
+    """
+
+
+def _nested_value_error(
+    db: GraphDatabase,
+    temp_table_name: str,
+    col_name: str,
+    source: str,
+    file_type: str,
+    target_type: str,
+    where: str,
+) -> NestedValueError:
+    """Build a `NestedValueError` naming the file, column, both types, the number
+    of offending rows and an example offending value."""
+    quoted = f'"{col_name}"'
+    row = db.conn.execute(
+        f"SELECT COUNT(*), CAST(any_value({quoted}) AS VARCHAR) FROM {temp_table_name} WHERE {where}"
+    ).fetchone()
+    count, example = (row[0], row[1]) if row else (0, None)
+    return NestedValueError(
+        f"{source}: column '{col_name}' is {file_type} with nested values, but the target column is "
+        f"{target_type}. {count:,} row(s) cannot be flattened without corrupting them, e.g. {example}. "
+        f"Fix the input so '{col_name}' holds scalars or flat lists."
+    )
+
+
+def _json_column_as_list(db: GraphDatabase, temp_table_name: str, col_name: str, source: str, target_type: str) -> str:
     """SQL rendering a mixed scalar/array `JSON` column as a `VARCHAR[]`.
 
     A JSON scalar becomes a one-element list, an array its (string) elements,
     and a JSON `null` or SQL NULL becomes NULL. Objects and nested arrays have no
-    faithful flat rendering, so they are rejected rather than stringified.
+    faithful flat rendering, so they raise `NestedValueError`.
     """
     quoted = f'"{col_name}"'
-    bad = db.conn.execute(
-        f"SELECT COUNT(*) FROM {temp_table_name} WHERE json_type({quoted}) = 'OBJECT' "
-        f"OR (json_type({quoted}) = 'ARRAY' "
+    where = (
+        f"json_type({quoted}) = 'OBJECT' OR (json_type({quoted}) = 'ARRAY' "
         f"AND list_has_any(json_type({quoted}, '$[*]'), ['ARRAY', 'OBJECT']))"
-    ).fetchone()
+    )
+    bad = db.conn.execute(f"SELECT COUNT(*) FROM {temp_table_name} WHERE {where}").fetchone()
     if bad and bad[0]:
-        raise ValueError(
-            f"{source}: column '{col_name}' holds JSON objects or nested arrays in {bad[0]:,} row(s); "
-            f"refusing to insert them as strings"
-        )
+        raise _nested_value_error(db, temp_table_name, col_name, source, "JSON", target_type, where)
     return (
         f"CASE WHEN {quoted} IS NULL OR json_type({quoted}) = 'NULL' THEN NULL "
         f"WHEN json_type({quoted}) = 'ARRAY' THEN json_extract_string({quoted}, '$[*]') "
         f"ELSE [json_extract_string({quoted}, '$')] END"
     )
+
+
+def _list_or_null(list_expr: str, target_type: str) -> str:
+    """Cast a list expression to the target LIST type, with an empty list as NULL."""
+    return f"CASE WHEN len({list_expr}) = 0 THEN NULL ELSE CAST({list_expr} AS {target_type}) END"
 
 
 def _conform_temp_table_types(
@@ -310,13 +345,16 @@ def _conform_temp_table_types(
     - LIST value into a scalar column: keep the first non-NULL element, matching
       merge's `force_single_valued` semantics, and warn about rows where that
       discards data.
-    - scalar value into a LIST column: for TSV input (`split_pipes`), split the
-      KGX pipe-delimited value into its items (trimmed, empties dropped), as join
-      does; otherwise wrap in a one-element list. NULL stays NULL.
+    - scalar value into a LIST column: for TSV input only (`split_pipes`), split
+      the KGX pipe-delimited value into its items (trimmed, empties dropped), as
+      join does. Any other format is wrapped as a one-element list; a jsonl
+      `"a|b"` is taken as one literal value, since jsonl has real arrays.
+    - LIST value into a LIST column: NULL elements are dropped.
+    - Into a LIST column, a NULL or a list left empty becomes NULL.
     - `JSON` column (jsonl mixing scalars and arrays in one field): render each row
       as a list first, then conform as above.
     - nested values (lists of lists, JSON objects) with no flat rendering raise
-      `ValueError` instead of being inserted as repr strings.
+      `NestedValueError` instead of being inserted as repr strings.
 
     Returns the temp table's column types after conforming.
     """
@@ -329,24 +367,22 @@ def _conform_temp_table_types(
         target_type = existing_schema.get(col_name)
         quoted = f'"{col_name}"'
 
-        if target_type is None or _is_json_type(target_type) or file_type == target_type:
+        if target_type is None or _is_json_type(target_type):
             projections.append(quoted)
             continue
 
         target_is_list = _is_list_type(target_type)
 
         if _is_json_type(file_type):
-            list_expr = _json_column_as_list(db, temp_table_name, col_name, source)
+            list_expr = _json_column_as_list(db, temp_table_name, col_name, source, target_type)
         elif _is_list_type(file_type):
             if _is_nested_type(file_type.strip()[:-2]):
-                raise ValueError(
-                    f"{source}: column '{col_name}' is {file_type} but the target column is "
-                    f"{target_type}; refusing to insert nested values as strings"
+                if file_type == target_type:
+                    projections.append(quoted)
+                    continue
+                raise _nested_value_error(
+                    db, temp_table_name, col_name, source, file_type, target_type, f"len({quoted}) > 0"
                 )
-            if target_is_list:
-                # Same (flat) shape; let the insert cast the element type.
-                projections.append(quoted)
-                continue
             list_expr = quoted
         else:
             if not target_is_list:
@@ -355,11 +391,8 @@ def _conform_temp_table_types(
             # Scalar → list. NULL stays NULL rather than becoming [NULL].
             element_type = target_type.strip()[:-2]
             if split_pipes and file_type.strip().upper() == "VARCHAR":
-                projections.append(
-                    f"CASE WHEN {quoted} IS NULL OR trim({quoted}) = '' THEN NULL "
-                    f"ELSE CAST(list_filter(list_transform(string_split({quoted}, '|'), x -> trim(x)), "
-                    f"x -> x != '') AS {target_type}) END AS {quoted}"
-                )
+                items = f"list_filter(list_transform(string_split({quoted}, '|'), x -> trim(x)), x -> x != '')"
+                projections.append(f"{_list_or_null(items, target_type)} AS {quoted}")
             else:
                 projections.append(
                     f"CASE WHEN {quoted} IS NULL THEN NULL ELSE [CAST({quoted} AS {element_type})] END AS {quoted}"
@@ -368,13 +401,13 @@ def _conform_temp_table_types(
             continue
 
         # List-shaped source (a LIST column, or a JSON column rendered as one).
+        non_null = f"list_filter({list_expr}, x -> x IS NOT NULL)"
         if target_is_list:
-            projections.append(f"CAST({list_expr} AS {target_type}) AS {quoted}")
+            projections.append(f"{_list_or_null(non_null, target_type)} AS {quoted}")
             wrapped.append(col_name)
         else:
             # List → scalar: first non-NULL element (DuckDB lists are 1-indexed;
             # an empty list yields NULL), cast to whatever the target column holds.
-            non_null = f"list_filter({list_expr}, x -> x IS NOT NULL)"
             projections.append(f"CAST({non_null}[1] AS {target_type}) AS {quoted}")
             multi_value_checks.append((col_name, non_null))
             collapsed.append(col_name)
@@ -520,6 +553,12 @@ def _append_single_file(db: GraphDatabase, file_spec, table_type: str) -> FileLo
             load_time_seconds=load_time,
             errors=errors,
         )
+
+    except NestedValueError:
+        # Unlike other per-file errors, abort the append so the input gets fixed
+        # (the CLI then exits non-zero with this message).
+        db.conn.execute(f"DROP TABLE IF EXISTS {temp_table_name}")
+        raise
 
     except Exception as e:
         load_time = time.time() - start_time

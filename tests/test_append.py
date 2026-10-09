@@ -6,9 +6,12 @@ import tempfile
 from pathlib import Path
 
 import pytest
+from typer.testing import CliRunner
 
 from koza.graph_operations import append_graphs
+from koza.graph_operations.append import NestedValueError
 from koza.graph_operations.utils import GraphDatabase
+from koza.main import typer_app
 from koza.model.graph_operations import AppendConfig, FileSpec, KGXFileType, KGXFormat
 
 
@@ -675,18 +678,90 @@ class TestAppendListScalarConformance:
         assert rows["HGNC:791"] is None
 
     def test_nested_list_into_scalar_column_fails_loudly(self, existing_database, temp_dir):
-        """A list of lists has no faithful scalar rendering — reject the file
-        rather than insert `"['biolink:Gene']"`."""
+        """A list of lists has no faithful scalar rendering — abort the append
+        rather than insert `"['biolink:Gene']"`, naming file, column, types and
+        an example value."""
         nodes_file = temp_dir / "nested_nodes.jsonl"
         nodes_file.write_text('{"id": "HGNC:789", "category": [["biolink:Gene"]], "name": "gene3"}\n')
 
-        result = self._append_nodes(existing_database, nodes_file)
+        with pytest.raises(NestedValueError) as excinfo:
+            self._append_nodes(existing_database, nodes_file)
 
-        assert result.files_loaded[0].errors
-        assert "nested" in result.files_loaded[0].errors[0]
+        message = str(excinfo.value)
+        assert "nested_nodes.jsonl" in message
+        assert "'category'" in message
+        assert "VARCHAR[][]" in message
+        assert "target column is VARCHAR" in message
+        assert "biolink:Gene" in message  # example offending value
         with GraphDatabase(existing_database) as db:
             count = db.conn.execute("SELECT COUNT(*) FROM nodes WHERE id = 'HGNC:789'").fetchone()[0]
         assert count == 0
+
+    def test_json_object_into_list_column_fails_loudly(self, temp_dir):
+        db_path = self._list_column_db(temp_dir)
+        nodes_file = temp_dir / "object_nodes.jsonl"
+        nodes_file.write_text(
+            '{"id": "HGNC:789", "category": "biolink:Gene"}\n{"id": "HGNC:790", "category": {"k": "v"}}\n'
+        )
+
+        with pytest.raises(NestedValueError) as excinfo:
+            self._append_nodes(db_path, nodes_file)
+
+        message = str(excinfo.value)
+        assert "object_nodes.jsonl" in message
+        assert "'category'" in message
+        assert "JSON" in message and "VARCHAR[]" in message
+        assert '{"k":"v"}' in message
+
+    def test_nested_value_makes_cli_exit_nonzero(self, existing_database, temp_dir):
+        """End to end: `koza append` exits non-zero and prints the reason."""
+        nodes_file = temp_dir / "nested_nodes.jsonl"
+        nodes_file.write_text('{"id": "HGNC:789", "category": [["biolink:Gene"]], "name": "gene3"}\n')
+
+        result = CliRunner().invoke(typer_app, ["append", str(existing_database), "-n", str(nodes_file), "-q"])
+
+        assert result.exit_code != 0
+        assert "nested_nodes.jsonl" in result.output
+        assert "'category'" in result.output
+
+    def test_jsonl_pipe_is_a_literal_value(self, temp_dir):
+        """Pipe-splitting is TSV-only: a jsonl scalar `"a|b"` is one value."""
+        db_path = self._list_column_db(temp_dir)
+        nodes_file = temp_dir / "pipe_nodes.jsonl"
+        nodes_file.write_text('{"id": "HGNC:789", "category": "a|b", "name": "gene3"}\n')
+
+        self._append_nodes(db_path, nodes_file)
+
+        assert self._categories(db_path, "HGNC:789")["HGNC:789"] == ["a|b"]
+
+    def test_null_elements_dropped_in_list_column(self, temp_dir):
+        """Into a list column, NULL elements are dropped and an emptied list is NULL."""
+        db_path = self._list_column_db(temp_dir)
+        nodes_file = temp_dir / "null_nodes.jsonl"
+        nodes_file.write_text(
+            '{"id": "HGNC:789", "category": [null, "biolink:Gene"], "name": "gene3"}\n'
+            '{"id": "HGNC:790", "category": [null], "name": "gene4"}\n'
+            '{"id": "HGNC:791", "category": [], "name": "gene5"}\n'
+        )
+
+        self._append_nodes(db_path, nodes_file)
+
+        rows = self._categories(db_path, "HGNC:789", "HGNC:790", "HGNC:791")
+        assert rows == {"HGNC:789": ["biolink:Gene"], "HGNC:790": None, "HGNC:791": None}
+
+    def test_null_elements_dropped_from_mixed_json_into_list_column(self, temp_dir):
+        db_path = self._list_column_db(temp_dir)
+        nodes_file = temp_dir / "mixed_null_nodes.jsonl"
+        nodes_file.write_text(
+            '{"id": "HGNC:789", "category": "biolink:Gene", "name": "gene3"}\n'
+            '{"id": "HGNC:790", "category": [null, "biolink:Entity"], "name": "gene4"}\n'
+            '{"id": "HGNC:791", "category": [null], "name": "gene5"}\n'
+        )
+
+        self._append_nodes(db_path, nodes_file)
+
+        rows = self._categories(db_path, "HGNC:789", "HGNC:790", "HGNC:791")
+        assert rows == {"HGNC:789": ["biolink:Gene"], "HGNC:790": ["biolink:Entity"], "HGNC:791": None}
 
     def test_null_first_element_does_not_discard_the_value(self, existing_database, temp_dir, caplog):
         """Collapse keeps the first non-NULL element, and a NULL alongside one
