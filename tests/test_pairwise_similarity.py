@@ -36,8 +36,7 @@ ANCESTORS = {  # term -> reflexive ancestors
     "X:2": {"X:2", "X:1", "X:ROOT", "HP:A", "HP:ROOT"},
 }
 # IC; HP:A1 and HP:A2 tie, X:1 deliberately absent (ancestors without IC are ignored)
-IC = {"HP:ROOT": 0.0, "HP:A": 2.0, "HP:A1": 4.0, "HP:A2": 4.0, "HP:B": 1.0, "HP:B1": 3.0,
-      "X:ROOT": 0.0, "X:2": 5.0}
+IC = {"HP:ROOT": 0.0, "HP:A": 2.0, "HP:A1": 4.0, "HP:A2": 4.0, "HP:B": 1.0, "HP:B1": 3.0, "X:ROOT": 0.0, "X:2": 5.0}
 LABELS = {"HP:A": "a", "HP:A1": "a one", "HP:A2": "a two", "HP:B": "b", "HP:B1": "b one", "X:2": "x two"}
 
 
@@ -77,18 +76,23 @@ def expected(subjects, objects, threshold):
 
 def _config(db_path, out, **kw):
     base = dict(
-        database_path=db_path, output_path=out, ic_table="information_content_x",
-        subject_root="HP:A", subject_prefixes=["HP"],
-        object_root="HP:ROOT", object_prefixes=["HP", "X"],
-        min_ancestor_information_content=1.5, batch_size=2, quiet=True,
+        database_path=db_path,
+        output_path=out,
+        ic_table="information_content_x",
+        subject_root="HP:A",
+        subject_prefixes=["HP"],
+        object_root="HP:ROOT",
+        object_prefixes=["HP", "X"],
+        min_ancestor_information_content=1.5,
+        batch_size=2,
+        quiet=True,
     )
     base.update(kw)
     return PairwiseSimilarityConfig(**base)
 
 
 def _read(out):
-    return duckdb.connect().execute(
-        f"SELECT * FROM '{out}' ORDER BY subject_id, object_id").fetchdf()
+    return duckdb.connect().execute(f"SELECT * FROM '{out}' ORDER BY subject_id, object_id").fetchdf()
 
 
 @pytest.mark.parametrize("suffix", ["tsv", "parquet"])
@@ -101,8 +105,15 @@ def test_matches_hand_computed(kg, tmp_path, suffix):
     assert result.subject_count == 3 and result.object_count == len(objects)
     exp = expected(subjects, objects, 1.5)
     df = _read(out)
-    got = {(r.subject_id, r.object_id): (r.ancestor_id, r.ancestor_information_content,
-                                          r.jaccard_similarity, r.phenodigm_score) for r in df.itertuples()}
+    got = {
+        (r.subject_id, r.object_id): (
+            r.ancestor_id,
+            r.ancestor_information_content,
+            r.jaccard_similarity,
+            r.phenodigm_score,
+        )
+        for r in df.itertuples()
+    }
     assert got.keys() == exp.keys()
     for k, (mica, res, jac, ph) in exp.items():
         g = got[k]
@@ -128,8 +139,15 @@ def test_labels_and_columns(kg, tmp_path):
     compute_pairwise_similarity(_config(kg, out))
     df = _read(out)
     assert list(df.columns) == [
-        "subject_id", "subject_label", "object_id", "object_label", "ancestor_id", "ancestor_label",
-        "ancestor_information_content", "jaccard_similarity", "phenodigm_score",
+        "subject_id",
+        "subject_label",
+        "object_id",
+        "object_label",
+        "ancestor_id",
+        "ancestor_label",
+        "ancestor_information_content",
+        "jaccard_similarity",
+        "phenodigm_score",
     ]
     r = df[(df.subject_id == "HP:A1") & (df.object_id == "X:2")].iloc[0]
     assert (r.subject_label, r.object_label, r.ancestor_label) == ("a one", "x two", "a")
@@ -166,8 +184,15 @@ ALL_OBJECTS = ["HP:A", "HP:A1", "HP:A2", "HP:B", "HP:B1", "HP:ROOT", "X:1", "X:2
 def _assert_matches_expected(out, threshold=1.5):
     exp = expected(ALL_SUBJECTS, ALL_OBJECTS, threshold)
     df = _read(out)
-    got = {(r.subject_id, r.object_id): (r.ancestor_id, r.ancestor_information_content,
-                                          r.jaccard_similarity, r.phenodigm_score) for r in df.itertuples()}
+    got = {
+        (r.subject_id, r.object_id): (
+            r.ancestor_id,
+            r.ancestor_information_content,
+            r.jaccard_similarity,
+            r.phenodigm_score,
+        )
+        for r in df.itertuples()
+    }
     assert got.keys() == exp.keys()
     for k, (mica, res, jac, ph) in exp.items():
         assert got[k][0] == mica, k
@@ -176,12 +201,24 @@ def _assert_matches_expected(out, threshold=1.5):
 
 
 def test_closure_without_self_rows(kg, tmp_path):
-    """anc(t) is reflexive whether or not the closure carries (t, t) rows."""
+    """anc(t) is reflexive, and the roots stay in their term sets, whether or not
+    the closure carries any (t, t) rows."""
     with GraphDatabase(kg) as db:
-        db.conn.execute("DELETE FROM closure WHERE subject_id = object_id AND subject_id NOT IN ('HP:A', 'HP:ROOT')")
+        db.conn.execute("DELETE FROM closure WHERE subject_id = object_id")
     out = tmp_path / "pairs.tsv"
-    compute_pairwise_similarity(_config(kg, out))
+    result = compute_pairwise_similarity(_config(kg, out))
+    assert result.subject_count == len(ALL_SUBJECTS)  # subject root HP:A kept
+    assert result.object_count == len(ALL_OBJECTS)  # object root HP:ROOT kept
     df = _assert_matches_expected(out)
+    # pairs that vanished when the root fell out of the subject set
+    exp = expected(ALL_SUBJECTS, ALL_OBJECTS, 1.5)
+    for o in ("HP:A", "HP:A1", "HP:A2", "X:2"):
+        r = df[(df.subject_id == "HP:A") & (df.object_id == o)].iloc[0]
+        mica, res, jac, ph = exp[("HP:A", o)]
+        assert r.ancestor_id == mica
+        assert (r.ancestor_information_content, r.jaccard_similarity, r.phenodigm_score) == pytest.approx(
+            (res, jac, ph)
+        )
     # sibling leaves must not look identical
     r = df[(df.subject_id == "HP:A1") & (df.object_id == "HP:A2")].iloc[0]
     assert r.jaccard_similarity == pytest.approx(2 / 4) and r.ancestor_id == "HP:A"
@@ -211,3 +248,9 @@ def test_output_is_sorted(kg, tmp_path):
     df = duckdb.connect().execute(f"SELECT subject_id, object_id FROM '{out}'").fetchdf()
     keys = list(zip(df.subject_id, df.object_id, strict=True))
     assert keys == sorted(keys)
+
+
+def test_unknown_root_yields_no_terms(kg, tmp_path):
+    """The root is only added back when the closure knows it, so a typo stays empty."""
+    result = compute_pairwise_similarity(_config(kg, tmp_path / "pairs.tsv", subject_root="HP:NOPE"))
+    assert result.subject_count == 0 and result.row_count == 0

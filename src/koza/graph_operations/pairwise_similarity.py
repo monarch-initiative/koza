@@ -62,9 +62,19 @@ def compute_pairwise_similarity(config: PairwiseSimilarityConfig) -> PairwiseSim
     cs, cp, co = config.closure_subject_column, config.closure_predicate_column, config.closure_object_column
 
     def term_set(root: str, prefixes: list[str] | None) -> str:
-        return (f"SELECT DISTINCT {cs} AS t FROM kg.{config.closure_table} "
-                f"WHERE {cp} IN ({preds}) AND {co} = {sql_string_list([root])}"
-                f"{curie_prefix_filter(cs, prefixes)}")
+        # The root is a member of its own term set even when the closure lacks the
+        # (root, root) self-row; it is added only if the closure mentions it at all
+        # (so a mistyped root still yields an empty set) and it passes the prefix filter.
+        r = sql_string_list([root])
+        return (
+            f"SELECT {cs} AS t FROM kg.{config.closure_table} "
+            f"WHERE {cp} IN ({preds}) AND {co} = {r}"
+            f"{curie_prefix_filter(cs, prefixes)} "
+            f"UNION SELECT t FROM (SELECT {r} AS t) "
+            f"WHERE EXISTS (SELECT 1 FROM kg.{config.closure_table} "
+            f"WHERE {cp} IN ({preds}) AND ({cs} = {r} OR {co} = {r}))"
+            f"{curie_prefix_filter('t', prefixes)}"
+        )
 
     try:
         con = duckdb.connect(str(work_db))
@@ -82,8 +92,10 @@ def compute_pairwise_similarity(config: PairwiseSimilarityConfig) -> PairwiseSim
             con.execute(f"CREATE TABLE o_terms AS {term_set(config.object_root, config.object_prefixes)}")
             subject_count = con.execute("SELECT count(*) FROM s_terms").fetchone()[0]
             object_count = con.execute("SELECT count(*) FROM o_terms").fetchone()[0]
-            logger.info(f"pairwise-similarity: {subject_count:,} subjects x {object_count:,} objects, "
-                        f"ic_table={config.ic_table}, min_ancestor_ic>{config.min_ancestor_information_content}")
+            logger.info(
+                f"pairwise-similarity: {subject_count:,} subjects x {object_count:,} objects, "
+                f"ic_table={config.ic_table}, min_ancestor_ic>{config.min_ancestor_information_content}"
+            )
 
             # closure restricted to the compared terms; UNION collapses multi-predicate
             # duplicates. Self-rows are added explicitly: anc(t) is reflexive, and a
@@ -104,14 +116,17 @@ def compute_pairwise_similarity(config: PairwiseSimilarityConfig) -> PairwiseSim
                 f"SELECT count(*) FROM (SELECT term FROM kg.{config.ic_table} GROUP BY term HAVING count(*) > 1)"
             ).fetchone()[0]
             if dup_terms:
-                logger.warning(f"pairwise-similarity: {dup_terms:,} terms appear more than once in "
-                               f"{config.ic_table}; using the max IC for each")
+                logger.warning(
+                    f"pairwise-similarity: {dup_terms:,} terms appear more than once in "
+                    f"{config.ic_table}; using the max IC for each"
+                )
 
             con.execute("""CREATE TABLE result (subject_id VARCHAR, object_id VARCHAR, ancestor_id VARCHAR,
                 ancestor_information_content DOUBLE, jaccard_similarity DOUBLE, phenodigm_score DOUBLE)""")
             n_batches = con.execute("SELECT coalesce(max(batch) + 1, 0) FROM s_terms").fetchone()[0]
             for b in range(n_batches):
-                con.execute("""
+                con.execute(
+                    """
                     INSERT INTO result
                     WITH common AS (
                         SELECT sc.t AS s, oc.t AS o, sc.a AS a
@@ -139,7 +154,9 @@ def compute_pairwise_similarity(config: PairwiseSimilarityConfig) -> PairwiseSim
                     JOIN mica m ON m.s = g.s AND m.o = g.o
                     JOIN sz zs ON zs.t = g.s
                     JOIN sz zo ON zo.t = g.o
-                """, [b, config.min_ancestor_information_content])
+                """,
+                    [b, config.min_ancestor_information_content],
+                )
                 if not config.quiet and (b % 10 == 0 or b == n_batches - 1):
                     logger.info(f"pairwise-similarity: batch {b + 1}/{n_batches}")
 
@@ -170,18 +187,25 @@ def compute_pairwise_similarity(config: PairwiseSimilarityConfig) -> PairwiseSim
 
     except Exception as e:
         if not config.quiet:
-            print_operation_summary(OperationSummary(
-                operation="PairwiseSimilarity", success=False, message=f"Operation failed: {e}",
-                files_processed=0, total_time_seconds=time.time() - start_time, errors=[str(e)],
-            ))
+            print_operation_summary(
+                OperationSummary(
+                    operation="PairwiseSimilarity",
+                    success=False,
+                    message=f"Operation failed: {e}",
+                    files_processed=0,
+                    total_time_seconds=time.time() - start_time,
+                    errors=[str(e)],
+                )
+            )
         raise
 
     total_time = time.time() - start_time
     summary = OperationSummary(
         operation="PairwiseSimilarity",
         success=True,
-        message=(f"Wrote {row_count:,} pairs ({subject_count:,} x {object_count:,} terms) "
-                 f"to {out} in {total_time:.2f}s"),
+        message=(
+            f"Wrote {row_count:,} pairs ({subject_count:,} x {object_count:,} terms) to {out} in {total_time:.2f}s"
+        ),
         files_processed=0,
         total_time_seconds=total_time,
         errors=[],
@@ -189,6 +213,11 @@ def compute_pairwise_similarity(config: PairwiseSimilarityConfig) -> PairwiseSim
     if not config.quiet:
         print_operation_summary(summary)
     return PairwiseSimilarityResult(
-        success=True, output_path=out, subject_count=subject_count, object_count=object_count,
-        row_count=row_count, total_time_seconds=total_time, summary=summary,
+        success=True,
+        output_path=out,
+        subject_count=subject_count,
+        object_count=object_count,
+        row_count=row_count,
+        total_time_seconds=total_time,
+        summary=summary,
     )
