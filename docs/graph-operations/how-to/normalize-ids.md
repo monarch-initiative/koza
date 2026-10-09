@@ -187,12 +187,25 @@ koza normalize graph.duckdb -m "mappings/*.sssom.tsv" \
 The same option is available on `koza merge`, and as `use_match` on `NormalizeConfig` and
 `MergeConfig`.
 
+Predicates are compared exactly and case-sensitively, as CURIEs:
+
+- Values must have a `prefix:` form. A bare `exactMatch` (or the transform-time `exact`) is
+  rejected, because it could never match a `predicate_id`.
+- Full IRIs in the SSSOM file or in `--use-match` are contracted to CURIEs for the `skos`, `owl`,
+  `rdfs` and `semapv` namespaces, so `http://www.w3.org/2004/02/skos/core#exactMatch` matches
+  `skos:exactMatch`.
+- If a requested predicate matches no mappings (for example `skos:exactmatch`), or the filter
+  removes every mapping that has a `predicate_id`, Koza warns and lists the predicates it found.
+
 ### Files Without a predicate_id Column
 
-`predicate_id` is optional in SSSOM. Rows without one are always kept, even when `--use-match` is
-set, so a mapping file that omits the column keeps working exactly as before. If none of the loaded
-files carry the column at all, `--use-match` cannot be enforced and Koza says so rather than
-dropping every mapping.
+`predicate_id` is optional in SSSOM. Rows from a file that has no `predicate_id` column are always
+kept, even when `--use-match` is set, so such a file keeps working exactly as before. If none of
+the loaded files carry the column at all, `--use-match` cannot be enforced and Koza warns rather
+than dropping every mapping.
+
+A file that *has* the column but leaves a row's `predicate_id` blank is different: under
+`--use-match` that row asserts none of the requested predicates and is dropped.
 
 ## Duplicate Mapping Handling
 

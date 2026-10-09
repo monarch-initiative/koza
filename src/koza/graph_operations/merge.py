@@ -203,6 +203,7 @@ def merge_graphs(config: MergeConfig) -> MergeResult:
             )
 
             normalize_result = normalize_graph(normalize_config)
+            warnings.extend(normalize_result.warnings)
 
             if normalize_result.success:
                 operations_completed.append("normalize")

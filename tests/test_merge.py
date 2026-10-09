@@ -379,6 +379,7 @@ class TestMergeOperationConfiguration:
                 skip_prune=False,
                 keep_singletons=False,
                 remove_singletons=True,
+                use_match=["skos:exactMatch", "http://www.w3.org/2004/02/skos/core#closeMatch"],
                 quiet=True,
                 show_progress=False,
                 schema_reporting=False,
@@ -399,6 +400,7 @@ class TestMergeOperationConfiguration:
             normalize_call_args = mock_normalize.call_args[0][0]  # First positional argument (NormalizeConfig)
             assert normalize_call_args.database_path == output_db
             assert normalize_call_args.mapping_files == mapping_specs
+            assert normalize_call_args.use_match == ["skos:exactMatch", "skos:closeMatch"]
             assert normalize_call_args.quiet is True
             assert normalize_call_args.show_progress is False
 
@@ -662,9 +664,65 @@ class TestMergeOperationErrorHandling:
             assert "Normalization failed but pipeline continued" in result.warnings
             assert result.normalize_result.success is False
 
+    @patch("koza.graph_operations.merge.join_graphs")
+    @patch("koza.graph_operations.merge.normalize_graph")
+    @patch("koza.graph_operations.merge.prune_graph")
+    @patch("koza.graph_operations.merge.GraphDatabase")
+    def test_normalize_warnings_propagate_to_merge_result(
+        self,
+        mock_graph_db,
+        mock_prune,
+        mock_normalize,
+        mock_join,
+        sample_file_specs,
+        mock_join_result,
+        mock_normalize_result,
+        mock_prune_result,
+    ):
+        """Warnings raised by the normalize step (e.g. non-exact predicates) reach MergeResult."""
+        node_specs, edge_specs, mapping_specs = sample_file_specs
+
+        mock_join.return_value = mock_join_result
+        mock_normalize.return_value = mock_normalize_result.model_copy(
+            update={"warnings": ["Applying 2 non-exact SSSOM mappings as identity rewrites"]}
+        )
+        mock_prune.return_value = mock_prune_result
+
+        mock_db = MagicMock()
+        mock_db.get_stats.return_value = DatabaseStats(nodes=95, edges=190)
+        mock_graph_db.return_value.__enter__.return_value = mock_db
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_db = Path(temp_dir) / "test.duckdb"
+            output_db.touch()
+
+            config = MergeConfig(
+                node_files=node_specs,
+                edge_files=edge_specs,
+                mapping_files=mapping_specs,
+                output_database=output_db,
+                skip_deduplicate=True,
+                quiet=True,
+                show_progress=False,
+                schema_reporting=False,
+            )
+
+            result = merge_graphs(config)
+
+            assert "Applying 2 non-exact SSSOM mappings as identity rewrites" in result.warnings
+
 
 class TestMergeConfigValidation:
     """Test MergeConfig validation."""
+
+    def test_validation_rejects_use_match_without_prefix(self, sample_file_specs):
+        """A bare predicate name would silently drop every mapping, so it is rejected up front."""
+        node_specs, edge_specs, mapping_specs = sample_file_specs
+
+        with pytest.raises(ValueError, match="predicate CURIEs"):
+            MergeConfig(
+                node_files=node_specs, edge_files=edge_specs, mapping_files=mapping_specs, use_match=["exact"]
+            )
 
     def test_validation_requires_input_files(self):
         """Test that validation requires at least some input files."""

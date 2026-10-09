@@ -10,6 +10,7 @@ from loguru import logger
 from tqdm import tqdm
 
 from koza.model.graph_operations import (
+    MAPPING_PREDICATE_IRI_PREFIXES,
     FileLoadResult,
     FileSpec,
     KGXFormat,
@@ -36,6 +37,12 @@ class MappingsTableSummary(NamedTuple):
     predicate_counts: dict[str | None, int]
     filtered_out_count: int
     has_predicate_column: bool
+    # Rows from files that carry predicate_id which survived the use_match filter
+    kept_with_predicate_count: int = 0
+
+
+# Internal marker column recording, per row, whether its source file had a predicate_id column.
+_HAS_PREDICATE_MARKER = "_koza_has_predicate_id"
 
 
 DECLARED_OUTPUTS: dict[str, dict[str, dict]] = {
@@ -80,6 +87,39 @@ def _non_exact_predicate_warning(config: NormalizeConfig, summary: MappingsTable
         f"Applying {total:,} non-exact SSSOM mappings as identity rewrites because use_match is not set "
         f"({breakdown}). Set use_match=['skos:exactMatch'] to apply only exact matches."
     )
+
+
+def _use_match_warnings(config: NormalizeConfig, summary: MappingsTableSummary) -> list[str]:
+    """
+    Diagnose a use_match filter that is likely misconfigured.
+
+    Predicates are compared exactly (after contracting known IRIs), so a case slip such as
+    `skos:exactmatch` silently matches nothing. Surface that, and the case where the filter
+    removed every mapping that had a predicate_id, instead of quietly normalizing 0 edges.
+    """
+    if not config.use_match:
+        return []
+
+    if not summary.has_predicate_column:
+        return [
+            f"use_match={config.use_match} was requested but the loaded SSSOM mappings have no "
+            f"predicate_id column; applying all mappings unfiltered."
+        ]
+
+    found = sorted(p for p in summary.predicate_counts if p is not None)
+    messages = []
+    unmatched = [p for p in config.use_match if p not in summary.predicate_counts]
+    if unmatched:
+        messages.append(
+            f"use_match predicates {unmatched} matched no SSSOM mappings "
+            f"(predicates present: {found or 'none'}). Predicate matching is exact and case-sensitive."
+        )
+    if summary.kept_with_predicate_count == 0 and summary.filtered_out_count > 0:
+        messages.append(
+            f"use_match={config.use_match} removed all {summary.filtered_out_count:,} SSSOM mappings "
+            f"that carry a predicate_id; no such mappings will be applied."
+        )
+    return messages
 
 
 def normalize_graph(config: NormalizeConfig) -> NormalizeResult:
@@ -170,12 +210,15 @@ def normalize_graph(config: NormalizeConfig) -> NormalizeResult:
                 # Create final mappings table (filters by predicate_id, deduplicates by object_id)
                 mappings_summary = _create_mappings_table(db, mappings_loaded, use_match=config.use_match)
 
+                predicate_warnings = _use_match_warnings(config, mappings_summary)
                 non_exact_warning = _non_exact_predicate_warning(config, mappings_summary)
                 if non_exact_warning:
-                    warnings.append(non_exact_warning)
-                    logger.warning(non_exact_warning)
+                    predicate_warnings.append(non_exact_warning)
+                for predicate_warning in predicate_warnings:
+                    warnings.append(predicate_warning)
+                    logger.warning(predicate_warning)
                     if not config.quiet:
-                        print(f"⚠️  {non_exact_warning}")
+                        print(f"⚠️  {predicate_warning}")
 
                 if mappings_summary.duplicate_count > 0:
                     warning_msg = (
@@ -377,8 +420,10 @@ def _create_mappings_table(
         db: GraphDatabase instance with active connection
         mapping_results: List of FileLoadResult objects with temp_table_name set
         use_match: Optional list of SSSOM predicate CURIEs to keep, e.g.
-            ["skos:exactMatch"]. Rows with a NULL/absent predicate_id are always kept,
-            so mapping files without a predicate_id column keep working unchanged.
+            ["skos:exactMatch"]. Rows from files without a predicate_id column are always
+            kept, so such files keep working unchanged. Rows from files that do have the
+            column but leave it blank are dropped when use_match is set. Known skos/owl/
+            rdfs/semapv predicate IRIs are contracted to CURIEs before comparison.
 
     Returns:
         MappingsTableSummary with the duplicate count, per-predicate row counts before
@@ -397,19 +442,37 @@ def _create_mappings_table(
     if not mapping_tables:
         raise ValueError("No mapping files loaded successfully")
 
+    # SSSOM files are not required to carry predicate_id. Record per file whether it does, so
+    # that after the union a NULL predicate_id from a file without the column (kept: we cannot
+    # filter what is not there) can be told apart from a blank cell in a file with the column.
+    selects = []
+    for table in mapping_tables:
+        table_columns = {row[0] for row in db.conn.execute(f"DESCRIBE {table}").fetchall()}
+        has_column = "predicate_id" in table_columns
+        selects.append(f"SELECT *, {str(has_column).upper()} AS {_HAS_PREDICATE_MARKER} FROM {table}")
+
     # Create mappings table using UNION ALL BY NAME
-    union_stmt = " UNION ALL BY NAME ".join([f"SELECT * FROM {table}" for table in mapping_tables])
+    union_stmt = " UNION ALL BY NAME ".join(selects)
     db.conn.execute(f"CREATE OR REPLACE TABLE mappings_raw AS {union_stmt}")
 
-    # SSSOM files are not required to carry predicate_id, and UNION ALL BY NAME only
-    # produces the column if at least one input file had it.
+    # UNION ALL BY NAME only produces the column if at least one input file had it.
     columns = {row[0] for row in db.conn.execute("DESCRIBE mappings_raw").fetchall()}
     has_predicate_column = "predicate_id" in columns
 
     predicate_counts: dict[str | None, int] = {}
     filtered_out_count = 0
+    kept_with_predicate_count = 0
 
     if has_predicate_column:
+        # Contract IRI-form predicates (e.g. http://www.w3.org/2004/02/skos/core#exactMatch)
+        # to CURIEs so they compare equal to use_match entries and count correctly in warnings.
+        for iri_prefix, curie_prefix in MAPPING_PREDICATE_IRI_PREFIXES.items():
+            db.conn.execute(
+                "UPDATE mappings_raw SET predicate_id = ? || substr(predicate_id, ?) "
+                "WHERE starts_with(predicate_id, ?)",
+                [curie_prefix, len(iri_prefix) + 1, iri_prefix],
+            )
+
         predicate_counts = {
             row[0]: row[1]
             for row in db.conn.execute(
@@ -418,26 +481,27 @@ def _create_mappings_table(
         }
 
         if use_match:
-            # Rows with no predicate_id came from a file without the column; dropping them
-            # would silently discard the whole file, so they are left alone.
+            # Rows from a file without the column are left alone: dropping them would silently
+            # discard the whole file. Rows from a file with the column but a blank predicate_id
+            # do not assert any of the requested predicates, so they are dropped.
             rows_before = db.conn.execute("SELECT COUNT(*) FROM mappings_raw").fetchone()[0]
             db.conn.execute(
-                "DELETE FROM mappings_raw "
-                "WHERE predicate_id IS NOT NULL AND NOT list_contains(?::VARCHAR[], predicate_id)",
+                f"DELETE FROM mappings_raw WHERE {_HAS_PREDICATE_MARKER} "
+                "AND (predicate_id IS NULL OR NOT list_contains(?::VARCHAR[], predicate_id))",
                 [list(use_match)],
             )
             rows_after = db.conn.execute("SELECT COUNT(*) FROM mappings_raw").fetchone()[0]
             filtered_out_count = rows_before - rows_after
+            kept_with_predicate_count = db.conn.execute(
+                f"SELECT COUNT(*) FROM mappings_raw WHERE {_HAS_PREDICATE_MARKER}"
+            ).fetchone()[0]
 
             logger.info(
                 f"Filtered SSSOM mappings to predicates {sorted(use_match)}: "
                 f"kept {rows_after}, dropped {filtered_out_count}"
             )
-    elif use_match:
-        logger.warning(
-            f"use_match={sorted(use_match)} was requested but the loaded SSSOM mappings have no "
-            f"predicate_id column; applying all mappings unfiltered."
-        )
+
+    db.conn.execute(f"ALTER TABLE mappings_raw DROP COLUMN {_HAS_PREDICATE_MARKER}")
 
     # Count total and unique mappings
     total_count = db.conn.execute("SELECT COUNT(*) FROM mappings_raw").fetchone()[0]
@@ -479,6 +543,7 @@ def _create_mappings_table(
         predicate_counts=predicate_counts,
         filtered_out_count=filtered_out_count,
         has_predicate_column=has_predicate_column,
+        kept_with_predicate_count=kept_with_predicate_count,
     )
 
 

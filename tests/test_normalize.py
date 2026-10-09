@@ -655,5 +655,204 @@ def test_use_match_empty_list_is_treated_as_unset(test_database, sample_sssom_fi
     assert result.edges_normalized > 0
 
 
+def test_use_match_typo_warns_instead_of_failing_silently(temp_dir, mixed_predicate_sssom_file):
+    """A use_match predicate that matches nothing (e.g. wrong case) is surfaced as a warning."""
+    db_file = _write_edges_database(temp_dir, "typo", MIXED_PREDICATE_EDGES)
+
+    config = NormalizeConfig(
+        database_path=db_file,
+        mapping_files=prepare_mapping_file_specs_from_paths([mixed_predicate_sssom_file]),
+        use_match=["skos:exactmatch"],
+        quiet=True,
+        show_progress=False,
+    )
+    result = normalize_graph(config)
+
+    assert result.success is True
+    assert result.edges_normalized == 0
+    assert any("['skos:exactmatch'] matched no SSSOM mappings" in w for w in result.warnings)
+    assert any("removed all 3 SSSOM mappings" in w for w in result.warnings)
+
+
+def test_use_match_partially_unmatched_predicate_warns(temp_dir, mixed_predicate_sssom_file):
+    """One good and one unmatched predicate: the good one applies, the bad one is named."""
+    db_file = _write_edges_database(temp_dir, "partial_typo", MIXED_PREDICATE_EDGES)
+
+    config = NormalizeConfig(
+        database_path=db_file,
+        mapping_files=prepare_mapping_file_specs_from_paths([mixed_predicate_sssom_file]),
+        use_match=["skos:exactMatch", "skos:closematch"],
+        quiet=True,
+        show_progress=False,
+    )
+    result = normalize_graph(config)
+
+    assert result.edges_normalized == 1
+    assert any("['skos:closematch'] matched no SSSOM mappings" in w for w in result.warnings)
+    assert not any("removed all" in w for w in result.warnings)
+
+
+def test_no_use_match_warnings_when_all_predicates_match(temp_dir, mixed_predicate_sssom_file):
+    db_file = _write_edges_database(temp_dir, "all_match", MIXED_PREDICATE_EDGES)
+
+    config = NormalizeConfig(
+        database_path=db_file,
+        mapping_files=prepare_mapping_file_specs_from_paths([mixed_predicate_sssom_file]),
+        use_match=["skos:exactMatch"],
+        quiet=True,
+        show_progress=False,
+    )
+    result = normalize_graph(config)
+
+    assert result.warnings == []
+
+
+@pytest.mark.parametrize("bad_value", ["exactMatch", "exact"])
+def test_use_match_rejects_values_without_prefix(test_database, sample_sssom_file, bad_value):
+    """Bare names can never match a predicate_id CURIE, so they are rejected up front."""
+    with pytest.raises(ValueError, match="predicate CURIEs"):
+        NormalizeConfig(
+            database_path=test_database,
+            mapping_files=prepare_mapping_file_specs_from_paths([sample_sssom_file]),
+            use_match=[bad_value],
+        )
+
+
+def test_use_match_iri_entries_are_contracted(test_database, sample_sssom_file):
+    config = NormalizeConfig(
+        database_path=test_database,
+        mapping_files=prepare_mapping_file_specs_from_paths([sample_sssom_file]),
+        use_match=["http://www.w3.org/2004/02/skos/core#exactMatch", "skos:exactMatch"],
+    )
+    assert config.use_match == ["skos:exactMatch"]
+
+
+IRI_PREDICATE_SSSOM = """subject_id	predicate_id	object_id
+NCBIGene:43852	http://www.w3.org/2004/02/skos/core#exactMatch	FB:FBgn0000008
+UniProtKB:P12345	http://www.w3.org/2004/02/skos/core#closeMatch	HGNC:123
+"""
+
+
+def test_iri_form_predicates_match_curie_use_match(temp_dir):
+    """predicate_id written as a full IRI is compared as its CURIE."""
+    db_file = _write_edges_database(temp_dir, "iri_predicates", MIXED_PREDICATE_EDGES)
+    sssom = temp_dir / "iri.sssom.tsv"
+    sssom.write_text(IRI_PREDICATE_SSSOM)
+
+    config = NormalizeConfig(
+        database_path=db_file,
+        mapping_files=prepare_mapping_file_specs_from_paths([sssom]),
+        use_match=["skos:exactMatch"],
+        quiet=True,
+        show_progress=False,
+    )
+    result = normalize_graph(config)
+
+    assert result.edges_normalized == 1
+    assert result.warnings == []
+    subjects = _subjects_by_id(db_file)
+    assert subjects["e1"] == "NCBIGene:43852"
+    assert subjects["e2"] == "HGNC:123"
+
+
+def test_iri_form_exact_match_not_counted_as_non_exact(temp_dir):
+    db_file = _write_edges_database(temp_dir, "iri_warning", MIXED_PREDICATE_EDGES)
+    sssom = temp_dir / "iri.sssom.tsv"
+    sssom.write_text(IRI_PREDICATE_SSSOM)
+
+    config = NormalizeConfig(
+        database_path=db_file,
+        mapping_files=prepare_mapping_file_specs_from_paths([sssom]),
+        quiet=True,
+        show_progress=False,
+    )
+    result = normalize_graph(config)
+
+    [warning] = [w for w in result.warnings if "non-exact SSSOM mappings" in w]
+    assert "Applying 1 non-exact SSSOM mappings" in warning
+    assert "skos:closeMatch: 1" in warning
+    assert "exactMatch" not in warning.split("(")[1].split(")")[0]
+
+
+BLANK_PREDICATE_SSSOM = """subject_id	predicate_id	object_id
+NCBIGene:43852	skos:exactMatch	FB:FBgn0000008
+UniProtKB:P12345		HGNC:123
+"""
+
+
+def test_blank_predicate_in_file_with_column_is_dropped_by_use_match(temp_dir):
+    """A blank predicate_id cell in a file that has the column does not bypass the filter."""
+    db_file = _write_edges_database(temp_dir, "blank_predicate", MIXED_PREDICATE_EDGES)
+    sssom = temp_dir / "blank.sssom.tsv"
+    sssom.write_text(BLANK_PREDICATE_SSSOM)
+
+    config = NormalizeConfig(
+        database_path=db_file,
+        mapping_files=prepare_mapping_file_specs_from_paths([sssom]),
+        use_match=["skos:exactMatch"],
+        quiet=True,
+        show_progress=False,
+    )
+    result = normalize_graph(config)
+
+    assert result.edges_normalized == 1
+    subjects = _subjects_by_id(db_file)
+    assert subjects["e1"] == "NCBIGene:43852"
+    assert subjects["e2"] == "HGNC:123"
+
+
+def test_blank_predicate_applied_without_use_match(temp_dir):
+    db_file = _write_edges_database(temp_dir, "blank_predicate_default", MIXED_PREDICATE_EDGES)
+    sssom = temp_dir / "blank.sssom.tsv"
+    sssom.write_text(BLANK_PREDICATE_SSSOM)
+
+    config = NormalizeConfig(
+        database_path=db_file,
+        mapping_files=prepare_mapping_file_specs_from_paths([sssom]),
+        quiet=True,
+        show_progress=False,
+    )
+    result = normalize_graph(config)
+
+    assert result.edges_normalized == 2
+
+
+def test_predicate_filter_runs_before_object_id_dedup(temp_dir):
+    """
+    One object_id with both a broadMatch and an exactMatch row: without a filter the dedup
+    keeps the broad row (it sorts first by subject_id); with exact-only the exact row must win.
+    """
+    sssom_content = """subject_id	predicate_id	object_id
+AAA:broader	skos:broadMatch	FB:FBgn0000008
+ZZZ:exact	skos:exactMatch	FB:FBgn0000008
+"""
+    sssom = temp_dir / "dedup.sssom.tsv"
+    sssom.write_text(sssom_content)
+
+    default_db = _write_edges_database(temp_dir, "dedup_default", MIXED_PREDICATE_EDGES)
+    normalize_graph(
+        NormalizeConfig(
+            database_path=default_db,
+            mapping_files=prepare_mapping_file_specs_from_paths([sssom]),
+            quiet=True,
+            show_progress=False,
+        )
+    )
+    assert _subjects_by_id(default_db)["e1"] == "AAA:broader"
+
+    exact_db = _write_edges_database(temp_dir, "dedup_exact", MIXED_PREDICATE_EDGES)
+    result = normalize_graph(
+        NormalizeConfig(
+            database_path=exact_db,
+            mapping_files=prepare_mapping_file_specs_from_paths([sssom]),
+            use_match=["skos:exactMatch"],
+            quiet=True,
+            show_progress=False,
+        )
+    )
+    assert _subjects_by_id(exact_db)["e1"] == "ZZZ:exact"
+    assert not any("duplicate mappings" in w for w in result.warnings)
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

@@ -309,6 +309,8 @@ Configuration for the normalize operation, which applies SSSOM mappings to norma
 - **Mapping Files Required**: At least one SSSOM mapping file must be provided
 - **Empty `use_match`**: An empty list is normalized to `None` (apply everything) rather than
   being read as "keep nothing"
+- **`use_match` values**: Each entry must be a CURIE (`prefix:local`); known skos/owl/rdfs/semapv
+  IRIs are contracted to CURIEs. Bare names such as `exactMatch` raise a validation error
 
 #### Example
 
