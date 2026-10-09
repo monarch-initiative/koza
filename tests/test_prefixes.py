@@ -74,9 +74,7 @@ def test_prefix_report_classifies_statuses(test_database):
 
 def test_prefix_report_writes_yaml(test_database, temp_dir):
     output = temp_dir / "prefixes.yaml"
-    result = generate_prefix_report(
-        PrefixReportConfig(database_path=test_database, output_file=output, quiet=True)
-    )
+    result = generate_prefix_report(PrefixReportConfig(database_path=test_database, output_file=output, quiet=True))
     assert result.output_file == output
     assert "case_variant" in output.read_text()
 
@@ -106,9 +104,7 @@ def test_canonicalize_repairs_case_variants(test_database):
 
     with GraphDatabase(test_database) as db:
         nodes = db.conn.execute("SELECT id, original_id FROM nodes ORDER BY id").fetchall()
-        edges = db.conn.execute(
-            "SELECT subject, object, original_subject, original_object FROM edges"
-        ).fetchall()
+        edges = db.conn.execute("SELECT subject, object, original_subject, original_object FROM edges").fetchall()
 
     ids = [row[0] for row in nodes]
     assert "hgnc:746" not in ids and "hgnc:1100" not in ids
@@ -135,10 +131,7 @@ def test_canonicalize_is_idempotent(test_database):
     # originals from the first pass were not overwritten
     with GraphDatabase(test_database) as db:
         originals = {
-            row[0]
-            for row in db.conn.execute(
-                "SELECT original_id FROM nodes WHERE original_id IS NOT NULL"
-            ).fetchall()
+            row[0] for row in db.conn.execute("SELECT original_id FROM nodes WHERE original_id IS NOT NULL").fetchall()
         }
     assert originals == {"hgnc:746", "hgnc:1100"}
 
@@ -160,3 +153,91 @@ def test_canonicalize_all_canonical_graph(temp_dir):
     result = canonicalize_graph(CanonicalizeConfig(database_path=db_file, quiet=True))
     assert result.success
     assert result.repairs == {}
+
+
+def test_canonicalize_counts_edge_collisions(test_database):
+    # ('hgnc:746', causes, MONDO) becomes a copy of the existing ('HGNC:746', causes, MONDO)
+    result = canonicalize_graph(CanonicalizeConfig(database_path=test_database, quiet=True))
+    assert result.edge_collisions == 1
+    assert any("subject/predicate/object" in w for w in result.warnings)
+
+
+def test_canonicalize_rerun_still_reports_collisions(test_database):
+    canonicalize_graph(CanonicalizeConfig(database_path=test_database, quiet=True))
+    second = canonicalize_graph(CanonicalizeConfig(database_path=test_database, quiet=True))
+
+    assert second.repairs == {}
+    assert second.node_id_collisions == 1
+    assert second.edge_collisions == 1
+    assert second.warnings
+
+
+def test_canonicalize_only_restricts_repairs(temp_dir):
+    db_file = temp_dir / "only.duckdb"
+    with GraphDatabase(db_file) as db:
+        db.conn.execute("""
+            CREATE TABLE nodes AS SELECT * FROM (VALUES
+                ('hgnc:746',  'biolink:Gene'),
+                ('mondo:0001', 'biolink:Disease')
+            ) AS t(id, category)
+        """)
+
+    result = canonicalize_graph(CanonicalizeConfig(database_path=db_file, only=["HGNC", "chebi"], quiet=True))
+    assert result.success
+    assert result.repairs == {"hgnc": "HGNC"}
+    # a requested prefix with nothing to repair is called out
+    assert any("chebi" in w for w in result.warnings)
+
+    with GraphDatabase(db_file) as db:
+        ids = {row[0] for row in db.conn.execute("SELECT id FROM nodes").fetchall()}
+    assert ids == {"HGNC:746", "mondo:0001"}
+
+
+def test_canonicalize_warns_about_derived_tables(test_database):
+    with GraphDatabase(test_database) as db:
+        db.conn.execute("CREATE TABLE closure AS SELECT 'hgnc:746' AS subject_id, 'HGNC:746' AS object_id")
+
+    result = canonicalize_graph(CanonicalizeConfig(database_path=test_database, quiet=True))
+    assert result.success
+    assert any("closure" in w for w in result.warnings)
+
+
+def test_canonicalize_edges_only_database(temp_dir):
+    db_file = temp_dir / "edges_only.duckdb"
+    with GraphDatabase(db_file) as db:
+        db.conn.execute("""
+            CREATE TABLE edges AS SELECT * FROM (VALUES
+                ('hgnc:746', 'biolink:causes', 'MONDO:0000001')
+            ) AS t(subject, predicate, object)
+        """)
+
+    result = canonicalize_graph(CanonicalizeConfig(database_path=db_file, quiet=True))
+    assert result.success
+    assert result.edge_subjects_rewritten == 1
+    assert result.node_id_collisions == 0
+
+
+def test_canonicalize_rolls_back_on_failure(test_database, monkeypatch):
+    from koza.graph_operations import prefixes
+
+    def boom(db):
+        raise RuntimeError("injected failure")
+
+    monkeypatch.setattr(prefixes, "_count_collisions", boom)
+    result = canonicalize_graph(CanonicalizeConfig(database_path=test_database, quiet=True))
+    assert not result.success
+
+    with GraphDatabase(test_database) as db:
+        node_ids = {row[0] for row in db.conn.execute("SELECT id FROM nodes").fetchall()}
+        subjects = {row[0] for row in db.conn.execute("SELECT subject FROM edges").fetchall()}
+        node_cols = {row[0] for row in db.conn.execute("DESCRIBE nodes").fetchall()}
+    assert "hgnc:746" in node_ids
+    assert "hgnc:746" in subjects
+    assert "original_id" not in node_cols
+
+
+def test_prefix_report_rejects_missing_database(temp_dir):
+    missing = temp_dir / "nope.duckdb"
+    with pytest.raises(ValueError):
+        PrefixReportConfig(database_path=missing)
+    assert not missing.exists()

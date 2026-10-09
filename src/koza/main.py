@@ -1158,6 +1158,14 @@ def canonicalize(
         str,
         typer.Option("--context", "-c", help="prefixmaps context to canonicalize against"),
     ] = "merged",
+    only: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--only",
+            help="Repair only this prefix (case-insensitive, e.g. --only hgnc); repeatable. "
+            "Default: every case-variant prefix.",
+        ),
+    ] = None,
     dry_run: Annotated[
         bool, typer.Option("--dry-run", help="Report the repairs without applying them")
     ] = False,
@@ -1171,12 +1179,19 @@ def canonicalize(
     original_subject / original_object columns. Prefixes unknown to the context
     are reported by `koza report prefixes` and never touched.
 
+    Only the nodes and edges tables are rewritten. Derived tables (closure,
+    denormalized_*, mappings, ...) keep the old ids, so run this before
+    building them, or rebuild them afterwards.
+
     Examples:
         # Preview the repairs
         koza canonicalize graph.duckdb --dry-run
 
         # Apply against the default merged context
         koza canonicalize graph.duckdb
+
+        # Repair only one prefix
+        koza canonicalize graph.duckdb --only hgnc
 
         # Use a different prefixmaps context
         koza canonicalize graph.duckdb --context bioregistry.upper
@@ -1188,7 +1203,7 @@ def canonicalize(
             raise typer.BadParameter(f"Database file not found: {database}")
 
         config = CanonicalizeConfig(
-            database_path=database_path, context=context, dry_run=dry_run, quiet=quiet
+            database_path=database_path, context=context, only=only, dry_run=dry_run, quiet=quiet
         )
         result = canonicalize_graph(config)
 

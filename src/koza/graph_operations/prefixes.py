@@ -40,7 +40,7 @@ from koza.model.graph_operations import (
     PrefixUsage,
 )
 
-from .graph_schema import ensure_slots
+from .graph_schema import _KOZA_SCHEMA_TABLE, ensure_slots
 from .slots import edges, nodes
 from .utils import GraphDatabase, print_operation_summary
 
@@ -165,7 +165,7 @@ def generate_prefix_report(config: PrefixReportConfig) -> PrefixReportResult:
     start_time = time.time()
     canonical = load_canonical_prefixes(config.context)
 
-    with GraphDatabase(config.database_path) as db:
+    with GraphDatabase(config.database_path, read_only=True) as db:
         usages = _classify(_prefix_census(db), canonical)
 
     report = PrefixReport(
@@ -209,18 +209,25 @@ def canonicalize_graph(config: CanonicalizeConfig) -> CanonicalizeResult:
     Rewrite case-variant prefixes to their canonical spelling.
 
     Repairs ``nodes.id``, ``edges.subject`` and ``edges.object`` for every
-    prefix that matches a canonical prefix case-insensitively but not exactly.
-    Original identifiers are preserved in ``original_id`` /
-    ``original_subject`` / ``original_object`` (existing values in those
-    columns are never overwritten). Unknown prefixes are left untouched.
+    prefix that matches a canonical prefix case-insensitively but not exactly
+    (restricted to ``config.only`` when given). Original identifiers are
+    preserved in ``original_id`` / ``original_subject`` / ``original_object``
+    (existing values in those columns are never overwritten). Unknown
+    prefixes are left untouched. All rewrites run in a single transaction, so
+    a failure leaves the database unchanged.
+
+    Only ``nodes`` and ``edges`` are rewritten. Any other table in the
+    database (``closure``, ``denormalized_*``, ``mappings``, ...) keeps the
+    old ids; a warning names those tables so they can be rebuilt.
 
     A rewrite can land a repaired node id on an id the graph already has
-    (``hgnc:746`` arriving at an existing ``HGNC:746`` row). Those collisions
-    are counted and reported as warnings; resolving them is deduplication and
-    is left to the dedup machinery.
+    (``hgnc:746`` arriving at an existing ``HGNC:746`` row), or make two
+    edges share the same subject/predicate/object. Those collisions are
+    counted and reported as warnings (on every run, including re-runs that
+    find nothing left to repair); they are not merged.
 
     Args:
-        config: CanonicalizeConfig with database_path, context, dry_run, quiet.
+        config: CanonicalizeConfig with database_path, context, only, dry_run, quiet.
 
     Returns:
         CanonicalizeResult with the applied repairs and rewrite counts.
@@ -231,25 +238,45 @@ def canonicalize_graph(config: CanonicalizeConfig) -> CanonicalizeResult:
 
     try:
         canonical = load_canonical_prefixes(config.context)
+        only = {p.lower() for p in config.only} if config.only else None
 
         with GraphDatabase(config.database_path) as db:
             usages = _classify(_prefix_census(db), canonical)
             repairs = {
-                u.prefix: u.canonical_prefix for u in usages if u.status == PrefixStatus.CASE_VARIANT
+                u.prefix: u.canonical_prefix
+                for u in usages
+                if u.status == PrefixStatus.CASE_VARIANT and (only is None or u.prefix.lower() in only)
             }
+            if only is not None:
+                matched = {v.lower() for v in repairs}
+                for requested in sorted(only - matched):
+                    _warn(warnings, f"--only {requested!r}: no case-variant spelling of this prefix in the graph")
 
             if not repairs:
-                message = f"No case-variant prefixes found against context {config.context!r}"
+                # Collisions left by an earlier run are still worth surfacing.
+                node_collisions, edge_collisions = _count_collisions(db)
+                _warn_collisions(warnings, node_collisions, edge_collisions)
+                message = f"No case-variant prefixes to repair against context {config.context!r}"
                 summary = _summary(True, message, db, 0, start_time, warnings, errors)
                 if not config.quiet:
                     print_operation_summary(summary)
                 return CanonicalizeResult(
                     success=True,
                     repairs={},
+                    node_id_collisions=node_collisions,
+                    edge_collisions=edge_collisions,
                     final_stats=db.get_stats(),
                     total_time_seconds=time.time() - start_time,
                     summary=summary,
                     warnings=warnings,
+                )
+
+            other_tables = _other_tables(db)
+            if other_tables:
+                _warn(
+                    warnings,
+                    "Only nodes and edges are rewritten; these tables may still hold the old ids "
+                    f"and should be rebuilt: {', '.join(other_tables)}",
                 )
 
             if config.dry_run:
@@ -268,23 +295,35 @@ def canonicalize_graph(config: CanonicalizeConfig) -> CanonicalizeResult:
                     warnings=warnings,
                 )
 
-            db.conn.execute("CREATE TEMP TABLE _prefix_repairs (variant VARCHAR, canonical VARCHAR)")
-            db.conn.executemany(
-                "INSERT INTO _prefix_repairs VALUES (?, ?)", list(repairs.items())
-            )
+            db.conn.execute("BEGIN TRANSACTION")
+            try:
+                db.conn.execute("CREATE OR REPLACE TEMP TABLE _prefix_repairs (variant VARCHAR, canonical VARCHAR)")
+                db.conn.executemany("INSERT INTO _prefix_repairs VALUES (?, ?)", list(repairs.items()))
 
-            node_ids_rewritten = _rewrite_column(db, "nodes", nodes.id, nodes.original_id)
-            edge_subjects_rewritten = _rewrite_column(db, "edges", edges.subject, edges.original_subject)
-            edge_objects_rewritten = _rewrite_column(db, "edges", edges.object, edges.original_object)
-            collisions = _count_node_collisions(db)
+                # DuckDB refuses to commit a transaction that ALTERs a table
+                # after UPDATEing it, so add every original_* column first.
+                if _table_columns(db, "nodes"):
+                    ensure_slots(db.conn, "nodes", [nodes.original_id])
+                if _table_columns(db, "edges"):
+                    ensure_slots(db.conn, "edges", [edges.original_subject, edges.original_object])
 
-            if collisions:
-                warning = (
-                    f"{collisions} repaired node ids collide with ids already in the graph; "
-                    f"run deduplication to fold them."
-                )
-                warnings.append(warning)
-                logger.warning(warning)
+                node_ids_rewritten = _rewrite_column(db, "nodes", nodes.id, nodes.original_id)
+                edge_subjects_rewritten = _rewrite_column(db, "edges", edges.subject, edges.original_subject)
+                edge_objects_rewritten = _rewrite_column(db, "edges", edges.object, edges.original_object)
+                node_collisions, edge_collisions = _count_collisions(db)
+
+                db.conn.execute("DROP TABLE _prefix_repairs")
+                db.conn.execute("COMMIT")
+            except Exception:
+                # DuckDB may already have aborted the transaction; don't let a
+                # failed ROLLBACK mask the original error.
+                try:
+                    db.conn.execute("ROLLBACK")
+                except Exception as rollback_error:
+                    logger.debug(f"ROLLBACK after canonicalize failure: {rollback_error}")
+                raise
+
+            _warn_collisions(warnings, node_collisions, edge_collisions)
 
             total = node_ids_rewritten + edge_subjects_rewritten + edge_objects_rewritten
             message = (
@@ -302,7 +341,8 @@ def canonicalize_graph(config: CanonicalizeConfig) -> CanonicalizeResult:
                 node_ids_rewritten=node_ids_rewritten,
                 edge_subjects_rewritten=edge_subjects_rewritten,
                 edge_objects_rewritten=edge_objects_rewritten,
-                node_id_collisions=collisions,
+                node_id_collisions=node_collisions,
+                edge_collisions=edge_collisions,
                 final_stats=db.get_stats(),
                 total_time_seconds=time.time() - start_time,
                 summary=summary,
@@ -334,18 +374,48 @@ def canonicalize_graph(config: CanonicalizeConfig) -> CanonicalizeResult:
         )
 
 
+# Tables koza maintains alongside nodes/edges that carry no graph ids.
+_NON_ID_TABLES = {"nodes", "edges", "file_schemas", _KOZA_SCHEMA_TABLE}
+
+
+def _warn(warnings: list[str], message: str) -> None:
+    warnings.append(message)
+    logger.warning(message)
+
+
+def _table_columns(db: GraphDatabase, table: str) -> set[str]:
+    """Column names of a main-schema table, or an empty set when it does not exist."""
+    rows = db.conn.execute(
+        """
+        SELECT column_name FROM information_schema.columns
+        WHERE table_name = ? AND table_schema = 'main' AND table_catalog = current_database()
+        """,
+        [table],
+    ).fetchall()
+    return {row[0] for row in rows}
+
+
+def _other_tables(db: GraphDatabase) -> list[str]:
+    """Tables/views besides nodes and edges (closure, denormalized_*, mappings, ...)."""
+    rows = db.conn.execute(
+        """
+        SELECT table_name FROM information_schema.tables
+        WHERE table_schema = 'main' AND table_catalog = current_database()
+        ORDER BY table_name
+        """
+    ).fetchall()
+    return [row[0] for row in rows if row[0] not in _NON_ID_TABLES]
+
+
 def _rewrite_column(db: GraphDatabase, table: str, column: str, original_column: str) -> int:
-    """Rewrite one CURIE column via the _prefix_repairs temp table. Returns rows changed."""
-    tables = {
-        row[0]
-        for row in db.conn.execute(
-            f"SELECT table_name FROM information_schema.tables WHERE table_name = '{table}'"
-        ).fetchall()
-    }
-    if not tables:
+    """
+    Rewrite one CURIE column via the _prefix_repairs temp table. Returns rows changed.
+
+    ``original_column`` must already exist (see canonicalize_graph).
+    """
+    if not _table_columns(db, table):
         return 0
 
-    ensure_slots(db.conn, table, [original_column])
     result = db.conn.execute(f"""
         UPDATE {table}
         SET {original_column} = COALESCE({original_column}, {column}),
@@ -356,19 +426,66 @@ def _rewrite_column(db: GraphDatabase, table: str, column: str, original_column:
     return result[0] if result else 0
 
 
-def _count_node_collisions(db: GraphDatabase) -> int:
-    """Count distinct repaired node ids that now collide with another node row."""
-    result = db.conn.execute(f"""
-        SELECT COUNT(DISTINCT n.{nodes.id})
-        FROM nodes n
-        WHERE n.original_id IS NOT NULL
-          AND n.original_id != n.{nodes.id}
-          AND EXISTS (
-            SELECT 1 FROM nodes m
-            WHERE m.{nodes.id} = n.{nodes.id} AND m.rowid != n.rowid
-          )
-    """).fetchone()
-    return result[0] if result else 0
+def _count_collisions(db: GraphDatabase) -> tuple[int, int]:
+    """
+    Count collisions involving rewritten ids.
+
+    Returns (node ids shared by more than one node row where at least one row
+    was rewritten, subject/predicate/object triples shared by more than one
+    edge row where at least one row was rewritten). Tables or columns that do
+    not exist contribute 0.
+    """
+    node_collisions = 0
+    node_cols = _table_columns(db, "nodes")
+    if {nodes.id, nodes.original_id} <= node_cols:
+        node_collisions = db.conn.execute(f"""
+            SELECT COUNT(*) FROM (
+                SELECT {nodes.id}
+                FROM nodes
+                GROUP BY {nodes.id}
+                HAVING COUNT(*) > 1
+                   AND bool_or({nodes.original_id} IS NOT NULL AND {nodes.original_id} != {nodes.id})
+            )
+        """).fetchone()[0]
+
+    edge_collisions = 0
+    edge_cols = _table_columns(db, "edges")
+    spo = {edges.subject, edges.predicate, edges.object}
+    rewritten = [
+        f"({orig} IS NOT NULL AND {orig} != {col})"
+        for orig, col in ((edges.original_subject, edges.subject), (edges.original_object, edges.object))
+        if orig in edge_cols
+    ]
+    if spo <= edge_cols and rewritten:
+        edge_collisions = db.conn.execute(f"""
+            SELECT COUNT(*) FROM (
+                SELECT 1
+                FROM edges
+                GROUP BY {edges.subject}, {edges.predicate}, {edges.object}
+                HAVING COUNT(*) > 1 AND bool_or({" OR ".join(rewritten)})
+            )
+        """).fetchone()[0]
+
+    return node_collisions, edge_collisions
+
+
+def _warn_collisions(warnings: list[str], node_collisions: int, edge_collisions: int) -> None:
+    """Warn about rewritten ids that now duplicate existing nodes/edges."""
+    if node_collisions:
+        _warn(
+            warnings,
+            f"{node_collisions} node ids are shared by more than one row after canonicalization "
+            f"(a repaired id landed on an existing one). The rows are kept as-is, not merged; "
+            f"find them with: SELECT * FROM nodes WHERE id IN "
+            f"(SELECT id FROM nodes GROUP BY id HAVING COUNT(*) > 1)",
+        )
+    if edge_collisions:
+        _warn(
+            warnings,
+            f"{edge_collisions} subject/predicate/object triples are shared by more than one edge "
+            f"after canonicalization. The rows are kept as-is, not merged; id-based edge "
+            f"deduplication will not catch them if their ids differ.",
+        )
 
 
 def _summary(

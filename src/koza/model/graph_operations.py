@@ -392,6 +392,13 @@ class PrefixReportConfig(BaseModel):
     output_file: Path | None = None
     quiet: bool = False
 
+    @field_validator("database_path")
+    @classmethod
+    def validate_database_exists(cls, v: Path) -> Path:
+        if not v.exists():
+            raise ValueError(f"Database file not found: {v}")
+        return v
+
 
 class PrefixReportResult(BaseModel):
     """Result from prefix report generation."""
@@ -406,6 +413,7 @@ class CanonicalizeConfig(BaseModel):
 
     database_path: Path
     context: str = "merged"
+    only: list[str] | None = None  # restrict repairs to these prefixes (case-insensitive)
     dry_run: bool = False
     quiet: bool = False
 
@@ -426,6 +434,7 @@ class CanonicalizeResult(BaseModel):
     edge_subjects_rewritten: int = 0
     edge_objects_rewritten: int = 0
     node_id_collisions: int = 0
+    edge_collisions: int = 0
     final_stats: DatabaseStats | None = None
     total_time_seconds: float = 0.0
     summary: Optional["OperationSummary"] = None

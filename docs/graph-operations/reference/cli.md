@@ -266,7 +266,7 @@ koza canonicalize DATABASE [OPTIONS]
 
 ### Description
 
-The `canonicalize` command rewrites node ids and edge subject/object references whose prefix matches a canonical prefix from a [prefixmaps](https://github.com/linkml/prefixmaps) context case-insensitively but not exactly (e.g. `hgnc:746` → `HGNC:746`). Original identifiers are preserved in `original_id` (nodes) and `original_subject`/`original_object` (edges). Prefixes unknown to the context are never touched — audit them first with `koza report prefixes`. Repairs that land on an id the graph already has are counted and reported as collisions for downstream deduplication.
+The `canonicalize` command rewrites node ids and edge subject/object references whose prefix matches a canonical prefix from a [prefixmaps](https://github.com/linkml/prefixmaps) context case-insensitively but not exactly (e.g. `hgnc:746` → `HGNC:746`). Original identifiers are preserved in `original_id` (nodes) and `original_subject`/`original_object` (edges). Prefixes unknown to the context are never touched — audit them first with `koza report prefixes`. All rewrites run in a single transaction. Only `nodes.id`, `edges.subject` and `edges.object` are rewritten: derived tables (`closure`, `denormalized_*`, `mappings`, ...) keep the old ids, and the command warns when such tables exist. Repairs that land on an id the graph already has, or that make two edges share a subject/predicate/object, are counted and reported as collisions; the rows are not merged.
 
 ### Arguments
 
@@ -279,6 +279,7 @@ The `canonicalize` command rewrites node ids and edge subject/object references 
 | Option | Short | Type | Default | Description |
 |--------|-------|------|---------|-------------|
 | `--context` | `-c` | str | `merged` | prefixmaps context to canonicalize against |
+| `--only` | | List[str] | all | Repair only these prefixes (case-insensitive). Repeatable. |
 | `--dry-run` | | bool | False | Report the repairs without applying them |
 | `--quiet` | `-q` | bool | False | Suppress output |
 
@@ -290,6 +291,9 @@ koza canonicalize graph.duckdb --dry-run
 
 # Apply against the default merged context
 koza canonicalize graph.duckdb
+
+# Repair only hgnc
+koza canonicalize graph.duckdb --only hgnc
 
 # Use a different prefixmaps context
 koza canonicalize graph.duckdb --context bioregistry.upper
