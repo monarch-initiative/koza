@@ -14,6 +14,7 @@ from .join import join_graphs, prepare_file_specs_from_paths
 from .load import load_graph, prepare_load_config_from_paths
 from .merge import merge_graphs, prepare_merge_config_from_paths
 from .normalize import normalize_graph, prepare_mapping_file_specs_from_paths
+from .prefixes import canonicalize_graph, generate_prefix_report
 from .profile import detect_categorical_columns, profile_graph, render_profile
 from .prune import prune_graph
 from .report import (
@@ -34,6 +35,8 @@ from .utils import GraphDatabase, print_operation_summary
 from .biolink_check import run_biolink_check
 
 __all__ = [
+    "canonicalize_graph",
+    "generate_prefix_report",
     "join_graphs",
     "load_graph",
     "prepare_load_config_from_paths",

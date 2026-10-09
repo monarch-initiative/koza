@@ -12,6 +12,7 @@ from tqdm import tqdm
 
 from koza.graph_operations import (
     append_graphs,
+    canonicalize_graph,
     compute_annotation_information_content,
     compute_information_content,
     compute_pairwise_similarity,
@@ -25,6 +26,7 @@ from koza.graph_operations import (
     generate_graph_stats,
     generate_node_examples,
     generate_node_report,
+    generate_prefix_report,
     generate_qc_report,
     generate_schema_compliance_report,
     join_graphs,
@@ -43,6 +45,7 @@ from koza.graph_operations import (
 from koza.model.formats import InputFormat, OutputFormat
 from koza.model.graph_operations import (
     AppendConfig,
+    CanonicalizeConfig,
     ClosurizeConfig,
     ConnectivityReportConfig,
     ConvertConfig,
@@ -57,6 +60,7 @@ from koza.model.graph_operations import (
     NodeExamplesConfig,
     NodeReportConfig,
     NormalizeConfig,
+    PrefixReportConfig,
     ProfileConfig,
     PruneConfig,
     AnnotationInformationContentConfig,
@@ -1295,6 +1299,88 @@ def normalize(
 
 
 @typer_app.command()
+def canonicalize(
+    database: Annotated[str, typer.Argument(help="Path to existing DuckDB database file")],
+    context: Annotated[
+        str,
+        typer.Option("--context", "-c", help="prefixmaps context to canonicalize against"),
+    ] = "merged",
+    only: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--only",
+            help="Repair only this prefix (case-insensitive, e.g. --only hgnc); repeatable. "
+            "Default: every prefix with alternate casing.",
+        ),
+    ] = None,
+    deduplicate: Annotated[
+        bool,
+        typer.Option(
+            "--deduplicate",
+            help="Nodes only: remove rewritten node rows whose id duplicates an existing node, "
+            "keeping the pre-existing row. Only acts on rows rewritten in this run, so pass it on "
+            "the repair run itself. Edges are never deduplicated",
+        ),
+    ] = False,
+    dry_run: Annotated[
+        bool, typer.Option("--dry-run", help="Run everything and roll it back, reporting exact counts")
+    ] = False,
+    quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress output")] = False,
+) -> None:
+    """Repair CURIE prefixes with alternate casing against a prefixmaps context
+
+    Rewrites node ids and edge subject/object references whose prefix matches a
+    canonical prefix case-insensitively but not exactly (e.g. hgnc:746 ->
+    HGNC:746). Each change is recorded in the prefix_canonicalization_log
+    table. Prefixes unknown to the context are reported by `koza report
+    prefixes` and never touched.
+
+    Only the nodes and edges tables are rewritten. Derived tables (closure,
+    denormalized_*, mappings, ...) keep the old ids, so run this before
+    closurize / denormalize, or rebuild them afterwards.
+
+    Examples:
+        # Preview the repairs
+        koza canonicalize graph.duckdb --dry-run
+
+        # Apply against the default merged context
+        koza canonicalize graph.duckdb
+
+        # Repair only one prefix
+        koza canonicalize graph.duckdb --only hgnc
+
+        # Preview, then repair and remove the duplicate node rows the repair creates
+        koza canonicalize graph.duckdb --dry-run --deduplicate
+        koza canonicalize graph.duckdb --deduplicate
+
+        # Use a different prefixmaps context
+        koza canonicalize graph.duckdb --context bioregistry.upper
+    """
+
+    try:
+        database_path = Path(database)
+        if not database_path.exists():
+            raise typer.BadParameter(f"Database file not found: {database}")
+
+        config = CanonicalizeConfig(
+            database_path=database_path, context=context, only=only, deduplicate=deduplicate, dry_run=dry_run, quiet=quiet
+        )
+        result = canonicalize_graph(config)
+
+        if not result.success:
+            raise typer.Exit(1)
+
+        if not quiet:
+            typer.echo("Canonicalize operation completed successfully!")
+
+    except typer.Exit:
+        raise
+    except Exception as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(1)
+
+
+@typer_app.command()
 def merge(
     node_files: Annotated[
         list[str] | None, typer.Option("--nodes", "-n", help="Node files or glob patterns (can specify multiple)")
@@ -1507,7 +1593,7 @@ def merge(
 @typer_app.command(name="report")
 def report_cmd(
     report_type: Annotated[
-        str, typer.Argument(help="Type of report: qc, graph-stats, schema, or connectivity")
+        str, typer.Argument(help="Type of report: qc, graph-stats, schema, connectivity, or prefixes")
     ],
     database: Annotated[str, typer.Option("--database", "-d", help="Path to DuckDB database file")],
     output: Annotated[
@@ -1518,6 +1604,10 @@ def report_cmd(
         typer.Option("--output-dir", help="Directory for sidecar output files (used by connectivity report)"),
     ] = None,
     quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress progress output")] = False,
+    context: Annotated[
+        str,
+        typer.Option("--context", help="prefixmaps context (prefixes report only)"),
+    ] = "merged",
 ):
     """
     Generate comprehensive reports for KGX graph databases.
@@ -1532,6 +1622,8 @@ def report_cmd(
 
     • connectivity: Connected component analysis (requires koza[grape])
 
+    • prefixes: CURIE prefix census against a prefixmaps context
+
     Examples:
 
         # Generate QC report
@@ -1545,6 +1637,9 @@ def report_cmd(
 
         # Generate connectivity report with parquet sidecars
         koza report connectivity -d merged.duckdb --output-dir cc_output/ -o cc_summary.yaml
+
+        # Census CURIE prefixes against the merged prefixmaps context
+        koza report prefixes -d merged.duckdb -o prefixes.yaml
 
         # Quick QC analysis (console output only)
         koza report qc -d merged.duckdb
@@ -1600,9 +1695,23 @@ def report_cmd(
                 for name, path in result.parquet_files.items():
                     typer.echo(f"  {name}: {path}")
 
+        elif report_type == "prefixes":
+            prefix_config = PrefixReportConfig(
+                database_path=database_path,
+                context=context,
+                output_file=output_path,
+                quiet=quiet,
+            )
+            result = generate_prefix_report(prefix_config)
+
+            if not quiet:
+                typer.echo("✓ Prefix report generated successfully")
+                if result.output_file:
+                    typer.echo(f"Report saved to: {result.output_file}")
+
         else:
             raise typer.BadParameter(
-                f"Unknown report type: {report_type}. Choose from: qc, graph-stats, schema, connectivity"
+                f"Unknown report type: {report_type}. Choose from: qc, graph-stats, schema, connectivity, prefixes"
             )
 
     except Exception as e:

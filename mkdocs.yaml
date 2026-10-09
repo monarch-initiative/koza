@@ -24,6 +24,7 @@ nav:
       - Join Files: 'graph-operations/how-to/join-files.md'
       - Split Graphs: 'graph-operations/how-to/split-graph.md'
       - Normalize IDs: 'graph-operations/how-to/normalize-ids.md'
+      - Canonicalize Prefixes: 'graph-operations/how-to/canonicalize-prefixes.md'
       - Clean Graphs: 'graph-operations/how-to/clean-graph.md'
       - Closurize: 'graph-operations/how-to/closurize.md'
       - Incremental Updates: 'graph-operations/how-to/incremental-updates.md'
