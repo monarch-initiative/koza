@@ -177,6 +177,9 @@ class KozaRunner:
             self.run_for_tag(tag, mappings)
 
         self.writer.finalize()
+        # Built-in writers validate in finalize(); this is a no-op for them and
+        # enforces bounds for custom writers whose finalize() doesn't.
+        self.writer.validate_counts()
 
         return self.writer
 

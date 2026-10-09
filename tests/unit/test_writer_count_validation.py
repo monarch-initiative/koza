@@ -2,11 +2,13 @@
 
 import pytest
 from biolink_model.datamodel.pydanticmodel_v2 import Disease, Gene, VariantToPopulationAssociation
+from loguru import logger
 
 import koza
 from koza.io.writer.jsonl_writer import JSONLWriter
 from koza.io.writer.passthrough_writer import PassthroughWriter
 from koza.io.writer.tsv_writer import TSVWriter
+from koza.io.writer.writer import KozaWriter
 from koza.model.writer import WriterConfig
 from koza.runner import KozaRunner, KozaTransform, KozaTransformHooks
 from koza.utils.exceptions import CountValidationError
@@ -214,3 +216,53 @@ def test_multiple_violations_reported_together(tmp_path):
     message = str(exc.value)
     assert "min_node_count" in message
     assert "min_edge_count" in message
+
+
+class _NonValidatingWriter(KozaWriter):
+    """A custom writer whose finalize() does not call validate_counts()."""
+
+    def __init__(self, config: WriterConfig | None = None):
+        self.config = config
+
+    def write(self, entities):
+        for entity in entities:
+            self.tally_entity(entity)
+
+    def write_nodes(self, nodes):
+        self.node_count += len(list(nodes))
+
+    def write_edges(self, edges):
+        self.edge_count += len(list(edges))
+
+    def finalize(self):
+        pass
+
+
+def _run_with(writer):
+    @koza.transform_record()
+    def transform_record(koza_transform: KozaTransform, record):
+        koza_transform.write(Gene(id="HGNC:11603", symbol="TBX4"))
+
+    KozaRunner(
+        data=[{"a": 1}],
+        writer=writer,
+        hooks=KozaTransformHooks(transform_record=[transform_record]),
+    ).run()
+
+
+def test_runner_enforces_bounds_for_custom_writer_that_skips_validation():
+    """Custom writers that don't validate in finalize() still get bounds enforced by the runner."""
+    with pytest.raises(CountValidationError, match="min_node_count"):
+        _run_with(_NonValidatingWriter(config=WriterConfig(min_node_count=5)))
+
+
+@pytest.mark.parametrize("writer_cls", [_NonValidatingWriter, PassthroughWriter])
+def test_runner_logs_output_counts_once(writer_cls):
+    """Whether or not finalize() validates, the count line is logged exactly once on success."""
+    messages = []
+    sink_id = logger.add(lambda m: messages.append(m.record["message"]), level="INFO")
+    try:
+        _run_with(writer_cls(config=WriterConfig(min_node_count=1)))
+    finally:
+        logger.remove(sink_id)
+    assert sum(m.startswith("Output counts:") for m in messages) == 1
