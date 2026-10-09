@@ -4265,7 +4265,7 @@
 <td><code>continue_on_pipeline_step_error</code></td>
 <td><code>bool</code></td>
 <td><code>True</code></td>
-<td>Continue on non-critical errors</td>
+<td>Continue on non-critical step errors. Malformed mapping files (e.g. blank <code>predicate_id</code>) always stop the merge regardless</td>
 </tr>
 <tr>
 <td><strong>Prune Options</strong></td>
@@ -4517,6 +4517,12 @@
 <td>SSSOM mapping files</td>
 </tr>
 <tr>
+<td><code>use_match</code></td>
+<td><code>list[str] \| None</code></td>
+<td><code>None</code></td>
+<td>SSSOM predicate CURIEs to apply, e.g. <code>["skos:exactMatch"]</code>. <code>None</code> applies every mapping regardless of <code>predicate_id</code></td>
+</tr>
+<tr>
 <td><code>quiet</code></td>
 <td><code>bool</code></td>
 <td><code>False</code></td>
@@ -4534,6 +4540,13 @@
 <ul>
 <li><strong>Database Exists</strong>: The database file must exist</li>
 <li><strong>Mapping Files Required</strong>: At least one SSSOM mapping file must be provided</li>
+<li><strong>Empty <code>use_match</code></strong>: An empty list is normalized to <code>None</code> (apply everything) rather than
+  being read as "keep nothing"</li>
+<li><strong><code>use_match</code> values</strong>: Each entry must be a CURIE (<code>prefix:local</code>); known skos/owl/rdfs/semapv
+  IRIs are contracted to CURIEs. Bare names such as <code>exactMatch</code> raise a validation error</li>
+<li><strong>Blank <code>predicate_id</code></strong>: Not a config check, but the operation fails if a mapping file has a
+  <code>predicate_id</code> column with any blank values (malformed SSSOM), raising <code>MalformedMappingError</code>.
+  Files without the column are fine</li>
 </ul>
 <h4 id="example_4">Example</h4>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">koza.model.graph_operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalizeConfig</span><span class="p">,</span> <span class="n">FileSpec</span>
@@ -4543,7 +4556,8 @@
     <span class="n">mapping_files</span><span class="o">=</span><span class="p">[</span>
         <span class="n">FileSpec</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"mappings/disease_mappings.sssom.tsv"</span><span class="p">)),</span>
         <span class="n">FileSpec</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"mappings/gene_mappings.sssom.tsv"</span><span class="p">)),</span>
-    <span class="p">]</span>
+    <span class="p">],</span>
+    <span class="n">use_match</span><span class="o">=</span><span class="p">[</span><span class="s2">"skos:exactMatch"</span><span class="p">],</span>
 <span class="p">)</span>
 </code></pre></div>
 <hr />

@@ -2603,6 +2603,9 @@ koza normalize graph.duckdb --mappings-dir ./sssom/
 
 # Apply mappings with glob pattern
 koza normalize graph.duckdb -m &amp;quot;*.sssom.tsv&amp;quot;
+
+# Only apply exact matches, ignoring close/broad/narrow mappings
+koza normalize graph.duckdb -m &amp;quot;*.sssom.tsv&amp;quot; --use-match skos:exactMatch
 </code></pre>
 <p><strong>Usage</strong>:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>normalize<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span><span class="o">{</span>database<span class="o">}</span>
@@ -2615,6 +2618,7 @@ koza normalize graph.duckdb -m &amp;quot;*.sssom.tsv&amp;quot;
 <ul>
 <li><code>-m, --mappings &lt;str&gt;</code>: SSSOM mapping files or glob patterns (can specify multiple)</li>
 <li><code>-d, --mappings-dir &lt;str&gt;</code>: Directory containing SSSOM mapping files</li>
+<li><code>--use-match &lt;str&gt;</code>: SSSOM predicate CURIE to apply, e.g. skos:exactMatch (can specify multiple). Default: apply every mapping regardless of predicate_id.</li>
 <li><code>-q, --quiet</code>: Suppress output</li>
 <li><code>-p, --progress</code>: Show progress bars  [default: True]</li>
 <li><code>--help</code>: Show this message and exit.</li>
@@ -2698,6 +2702,7 @@ koza merge --input-dir ./data/ -m &amp;quot;*.sssom.tsv&amp;quot; --remove-singl
 <li><code>--compress</code>: Compress archive as tar.gz (requires --archive)</li>
 <li><code>--graph-name &lt;str&gt;</code>: Name for graph files in archive (default: merged_graph)</li>
 <li><code>--skip-normalize</code>: Skip normalization step</li>
+<li><code>--use-match &lt;str&gt;</code>: SSSOM predicate CURIE to apply during normalization, e.g. skos:exactMatch (can specify multiple). Default: apply every mapping regardless of predicate_id.</li>
 <li><code>--skip-prune</code>: Skip pruning step</li>
 <li><code>--keep-singletons</code>: Keep singleton nodes (default)  [default: True]</li>
 <li><code>--remove-singletons</code>: Move singleton nodes to separate table</li>

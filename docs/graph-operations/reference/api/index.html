@@ -3614,9 +3614,10 @@ equivalents. This is useful for harmonizing identifiers from different sources
 to a common namespace.</p>
 <p>The normalization process:
 1. Loads SSSOM mapping files (TSV format with YAML header)
-2. Creates a mappings table, deduplicating by object_id to prevent edge duplication
-3. Updates edge subject/object columns using the mappings (object_id -&gt; subject_id)
-4. Preserves original identifiers in original_subject/original_object columns</p>
+2. Optionally filters mappings by predicate_id (see config.use_match)
+3. Creates a mappings table, deduplicating by object_id to prevent edge duplication
+4. Updates edge subject/object columns using the mappings (object_id -&gt; subject_id)
+5. Preserves original identifiers in original_subject/original_object columns</p>
 <p>Note: Only edge references are normalized. Node IDs in the nodes table are
 not modified - use the mappings to update node IDs separately if needed.</p>
 
@@ -3644,6 +3645,9 @@ not modified - use the mappings to update node IDs separately if needed.</p>
                 <p>NormalizeConfig containing:
 - database_path: Path to the DuckDB database to normalize
 - mapping_files: List of FileSpec objects for SSSOM mapping files
+- use_match: Optional list of SSSOM predicate CURIEs to apply, e.g.
+  ["skos:exactMatch"]. When None (the default) every mapping row is applied
+  regardless of predicate_id, and a warning names the non-exact predicates found.
 - quiet: Suppress console output
 - show_progress: Display progress bars during loading</p>
               </div>
@@ -3698,16 +3702,19 @@ not modified - use the mappings to update node IDs separately if needed.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/exceptions.html#ValueError">ValueError</a></code>
+                  <code><span title="koza.graph_operations.normalize.MalformedMappingError">MalformedMappingError</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If no nodes/edges tables exist or no mapping files load</p>
+                <p>If a mapping file is malformed (e.g. blank predicate_id values).
+Unlike other failures, this is raised rather than returned as a failed result.</p>
               </div>
             </td>
           </tr>
       </tbody>
     </table>
+        <p>Other failures (e.g. no nodes/edges tables, no mapping files loaded) are reported through
+a NormalizeResult with success=False.</p>
 
 
     </div>

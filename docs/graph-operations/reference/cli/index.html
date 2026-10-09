@@ -4650,6 +4650,13 @@ koza<span class="w"> </span>split<span class="w"> </span>large_nodes.tsv<span cl
 <td>Skip normalization step</td>
 </tr>
 <tr>
+<td><code>--use-match</code></td>
+<td></td>
+<td>List[str]</td>
+<td>None</td>
+<td>SSSOM predicate CURIE to apply during normalization, e.g. <code>skos:exactMatch</code> (can specify multiple)</td>
+</tr>
+<tr>
 <td><code>--skip-prune</code></td>
 <td></td>
 <td>bool</td>
@@ -4764,6 +4771,13 @@ koza<span class="w"> </span>merge<span class="w"> </span>--input-dir<span class=
 <td>Directory containing SSSOM mapping files</td>
 </tr>
 <tr>
+<td><code>--use-match</code></td>
+<td></td>
+<td>List[str]</td>
+<td>None</td>
+<td>SSSOM predicate CURIE to apply, e.g. <code>skos:exactMatch</code> (can specify multiple). Default: apply every mapping regardless of <code>predicate_id</code></td>
+</tr>
+<tr>
 <td><code>--progress</code></td>
 <td><code>-p</code></td>
 <td>bool</td>
@@ -4788,6 +4802,9 @@ koza<span class="w"> </span>normalize<span class="w"> </span>graph.duckdb<span c
 
 <span class="c1"># Apply mappings with glob pattern</span>
 koza<span class="w"> </span>normalize<span class="w"> </span>graph.duckdb<span class="w"> </span>-m<span class="w"> </span><span class="s2">"mappings/*.sssom.tsv"</span>
+
+<span class="c1"># Only apply exact matches, ignoring close/broad/narrow mappings</span>
+koza<span class="w"> </span>normalize<span class="w"> </span>graph.duckdb<span class="w"> </span>-m<span class="w"> </span><span class="s2">"mappings/*.sssom.tsv"</span><span class="w"> </span>--use-match<span class="w"> </span>skos:exactMatch
 
 <span class="c1"># Quiet operation for automation</span>
 koza<span class="w"> </span>normalize<span class="w"> </span>graph.duckdb<span class="w"> </span>-m<span class="w"> </span>mappings.sssom.tsv<span class="w"> </span>-q

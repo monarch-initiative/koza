@@ -1228,6 +1228,67 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#filtering-by-mapping-predicate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filtering by Mapping Predicate
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Filtering by Mapping Predicate">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#default-behaviour" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Default Behaviour
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#opting-into-a-predicate-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Opting Into a Predicate Filter
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#files-without-a-predicate_id-column" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Files Without a predicate_id Column
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#blank-predicate_id-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Blank predicate_id Values
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#duplicate-mapping-handling" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2266,6 +2327,67 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#filtering-by-mapping-predicate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filtering by Mapping Predicate
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Filtering by Mapping Predicate">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#default-behaviour" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Default Behaviour
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#opting-into-a-predicate-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Opting Into a Predicate Filter
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#files-without-a-predicate_id-column" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Files Without a predicate_id Column
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#blank-predicate_id-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Blank predicate_id Values
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#duplicate-mapping-handling" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2496,7 +2618,7 @@ MONDO:0008199   skos:exactMatch OMIM:176000 semapv:ManualMappingCuration
 <ul>
 <li><strong>subject_id</strong>: The target identifier (what Koza normalizes TO)</li>
 <li><strong>object_id</strong>: The source identifier (what Koza normalizes FROM)</li>
-<li><strong>predicate_id</strong>: The mapping relationship (e.g., <code>skos:exactMatch</code>) - used for filtering but not for determining direction</li>
+<li><strong>predicate_id</strong>: The mapping relationship (e.g., <code>skos:exactMatch</code>) - optionally used for filtering (see <a href="#filtering-by-mapping-predicate">Filtering by Mapping Predicate</a>), never for determining direction</li>
 <li><strong>mapping_justification</strong>: How the mapping was created (optional but recommended)</li>
 </ul>
 <p><strong>Important</strong>: Normalization changes <strong>edge references</strong> (the <code>subject</code> and <code>object</code> columns in the edges table), not the node IDs themselves. If an edge references an identifier that appears in the SSSOM <code>object_id</code> column, that reference is updated to the corresponding <code>subject_id</code>.</p>
@@ -2601,6 +2723,60 @@ Normalization completed successfully
 <span class="k">WHERE</span><span class="w"> </span><span class="n">original_subject</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span>
 <span class="w">   </span><span class="k">OR</span><span class="w"> </span><span class="n">original_object</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">;</span>
 </code></pre></div>
+<h2 id="filtering-by-mapping-predicate">Filtering by Mapping Predicate</h2>
+<p>Normalization rewrites one identifier into another, which only makes sense for mapping predicates
+that assert identity. A <code>skos:exactMatch</code> row says two identifiers denote the same thing; a
+<code>skos:closeMatch</code> or <code>skos:broadMatch</code> row does not.</p>
+<h3 id="default-behaviour">Default Behaviour</h3>
+<p>By default <code>normalize</code> applies <strong>every</strong> mapping row regardless of <code>predicate_id</code>. A <code>broadMatch</code>
+row rewires an edge endpoint exactly as an <code>exactMatch</code> row does, collapsing a narrower concept
+into a broader one.</p>
+<p>When the loaded mappings contain non-exact predicates and no filter is configured, Koza warns and
+names the per-predicate counts:</p>
+<div class="highlight"><pre><span></span><code>⚠️  Applying 20,385 non-exact SSSOM mappings as identity rewrites because use_match is not set
+    (skos:broadMatch: 8, skos:closeMatch: 20,377). Set use_match=['skos:exactMatch'] to apply only
+    exact matches.
+</code></pre></div>
+<h3 id="opting-into-a-predicate-filter">Opting Into a Predicate Filter</h3>
+<p>Pass <code>--use-match</code> (repeatable) to keep only the mapping predicates you want applied:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Only identity mappings</span>
+koza<span class="w"> </span>normalize<span class="w"> </span>graph.duckdb<span class="w"> </span>-m<span class="w"> </span><span class="s2">"mappings/*.sssom.tsv"</span><span class="w"> </span>--use-match<span class="w"> </span>skos:exactMatch
+
+<span class="c1"># Also accept close matches</span>
+koza<span class="w"> </span>normalize<span class="w"> </span>graph.duckdb<span class="w"> </span>-m<span class="w"> </span><span class="s2">"mappings/*.sssom.tsv"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--use-match<span class="w"> </span>skos:exactMatch<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--use-match<span class="w"> </span>skos:closeMatch
+</code></pre></div>
+<p>The same option is available on <code>koza merge</code>, and as <code>use_match</code> on <code>NormalizeConfig</code> and
+<code>MergeConfig</code>.</p>
+<p>Predicates are compared exactly and case-sensitively, as CURIEs:</p>
+<ul>
+<li>Values must have a <code>prefix:</code> form. A bare <code>exactMatch</code> (or the transform-time <code>exact</code>) is
+  rejected, because it could never match a <code>predicate_id</code>.</li>
+<li>Full IRIs in the SSSOM file or in <code>--use-match</code> are contracted to CURIEs for the <code>skos</code>, <code>owl</code>,
+  <code>rdfs</code> and <code>semapv</code> namespaces, so <code>http://www.w3.org/2004/02/skos/core#exactMatch</code> matches
+  <code>skos:exactMatch</code>.</li>
+<li>If a requested predicate matches no mappings (for example <code>skos:exactmatch</code>), or the filter
+  removes every mapping that has a <code>predicate_id</code>, Koza warns and lists the predicates it found.</li>
+</ul>
+<h3 id="files-without-a-predicate_id-column">Files Without a predicate_id Column</h3>
+<p><code>predicate_id</code> is optional in SSSOM. Rows from a file that has no <code>predicate_id</code> column are always
+kept, even when <code>--use-match</code> is set, so such a file keeps working exactly as before. If none of
+the loaded files carry the column at all, <code>--use-match</code> cannot be enforced and Koza warns rather
+than dropping every mapping.</p>
+<h3 id="blank-predicate_id-values">Blank predicate_id Values</h3>
+<p>A file that <em>has</em> a <code>predicate_id</code> column must fill it on every row. A blank value is malformed
+SSSOM, so <code>normalize</code> fails, whether or not <code>--use-match</code> is set. The error names the file, the
+number of blank rows, and up to two example <code>subject_id -&gt; object_id</code> pairs:</p>
+<div class="highlight"><pre><span></span><code>Malformed SSSOM file mappings/example.sssom.tsv: 3 row(s) have a blank predicate_id
+(e.g. subject_id -&gt; object_id: A:1 -&gt; B:1, A:2 -&gt; B:2). Every row must have a predicate_id
+when the column is present.
+</code></pre></div>
+<p>Fix the file by filling in the predicate, or by removing the rows.</p>
+<p>This error is raised as <code>MalformedMappingError</code> (a <code>ValueError</code> subclass). It <strong>always stops a
+merge</strong>, whatever <code>continue_on_pipeline_step_error</code> is set to: that option only downgrades runtime
+step failures to warnings, never malformed input. <code>koza normalize</code> and <code>koza merge</code> both exit
+with a non-zero status.</p>
 <h2 id="duplicate-mapping-handling">Duplicate Mapping Handling</h2>
 <p>SSSOM files sometimes contain one-to-many mappings where a single <code>object_id</code> maps to multiple <code>subject_id</code> values. Koza handles this to prevent edge duplication.</p>
 <h3 id="the-problem">The Problem</h3>
