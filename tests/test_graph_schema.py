@@ -599,3 +599,74 @@ def test_export_is_ordered_deterministically(biolink_schemaview, tmp_path):
 
     assert doc["classes"]["Entity"]["slots"][:3] == ["id", "category", "name"]
     assert doc["classes"]["Association"]["slots"][:3] == ["subject", "predicate", "object"]
+
+
+def _export_projected_after_closurize(biolink_schemaview, db_path, node_cols, edge_cols):
+    """Seed, simulate closurize's denormalized views with the given column order,
+    evolve the schema as closurize does, and export via the default projected path."""
+    from koza.graph_operations.closurize import _evolve_schema_for_denormalized
+
+    conn = duckdb.connect(str(db_path))
+    try:
+        seed_schema(
+            conn,
+            nodes_headers=["id", "category", "name", "xref"],
+            edges_headers=["subject", "predicate", "object", "knowledge_source"],
+            biolink_schemaview=biolink_schemaview,
+        )
+        conn.execute(f"CREATE TABLE denormalized_nodes ({', '.join(node_cols)})")
+        conn.execute(f"CREATE TABLE denormalized_edges ({', '.join(edge_cols)})")
+        _evolve_schema_for_denormalized(conn)
+        return export_schema(conn)  # project_denormalized=True, as released
+    finally:
+        conn.close()
+
+
+def test_projected_export_is_independent_of_denormalized_column_order(biolink_schemaview, tmp_path):
+    """The released artifact goes through the projected path, where Entity /
+    Association take their slot lists from DESCRIBE of the denormalized views.
+    Two builds whose views differ only in column order must export identically."""
+    node_cols = [
+        "id VARCHAR",
+        "category VARCHAR",
+        "name VARCHAR",
+        "xref VARCHAR[]",
+        "has_phenotype VARCHAR[]",
+        "has_phenotype_count BIGINT",
+    ]
+    edge_cols = [
+        "subject VARCHAR",
+        "predicate VARCHAR",
+        "object VARCHAR",
+        "knowledge_source VARCHAR",
+        "subject_closure VARCHAR[]",
+        "object_label VARCHAR",
+    ]
+
+    first = _export_projected_after_closurize(biolink_schemaview, tmp_path / "a.duckdb", node_cols, edge_cols)
+    second = _export_projected_after_closurize(
+        biolink_schemaview,
+        tmp_path / "b.duckdb",
+        list(reversed(node_cols)),
+        edge_cols[3:] + edge_cols[:3],
+    )
+    assert first == second
+
+    doc = yaml.safe_load(first)
+    assert set(doc["classes"]) == {"Entity", "Association"}
+    assert doc["classes"]["Entity"]["slots"] == [
+        "id",
+        "category",
+        "name",
+        "has_phenotype",
+        "has_phenotype_count",
+        "xref",
+    ]
+    assert doc["classes"]["Association"]["slots"] == [
+        "subject",
+        "predicate",
+        "object",
+        "knowledge_source",
+        "object_label",
+        "subject_closure",
+    ]
