@@ -664,15 +664,6 @@ class ClosurizeResult(BaseModel):
     errors: list[str] = Field(default_factory=list)
 
 
-# Default Biolink association categories that link an entity to a phenotype term.
-# Used to derive each entity's annotation-closure size. Monarch-flavored, like
-# ClosurizeConfig's defaults — non-Monarch consumers should pass their own.
-_DEFAULT_ASSOCIATION_CATEGORIES = [
-    "biolink:GeneToPhenotypicFeatureAssociation",
-    "biolink:DiseaseToPhenotypicFeatureAssociation",
-]
-
-
 class InformationContentConfig(BaseModel):
     """Configuration for the information-content operation.
 
@@ -690,9 +681,18 @@ class InformationContentConfig(BaseModel):
       profile-size denominator.
 
     Both tables let a downstream similarity engine skip the per-process build.
-    Defaults are Monarch-flavored (rdfs:subClassOf for closure, has_phenotype
-    Gene/Disease associations), matching the ClosurizeConfig convention — other
-    consumers should pass explicit values.
+    `closure_predicates` defaults to rdfs:subClassOf, matching the
+    ClosurizeConfig convention; non-Monarch consumers should pass their own.
+
+    `closure_size` covers every entity carrying an `association_predicate` edge.
+    The predicate is the semantic contract — an entity that has a phenotype has
+    a profile size — so membership is not additionally gated on an association
+    category allowlist. It once was, defaulting to Gene and Disease, which meant
+    every genotype, variant and case was silently absent from the table: a
+    consumer joining against it dropped those entities and got an empty result
+    that looked like a legitimate one rather than a missing precompute. Set
+    `association_categories` to narrow deliberately; leave it None to cover
+    everything the predicate selects.
     """
 
     database_path: Path
@@ -707,9 +707,9 @@ class InformationContentConfig(BaseModel):
     edges_table: str = "edges"
     association_subject_column: str = "subject"
     association_object_column: str = "object"
-    association_categories: list[str] = Field(
-        default_factory=lambda: list(_DEFAULT_ASSOCIATION_CATEGORIES)
-    )
+    # Optional narrowing. None (the default) means every entity with an
+    # `association_predicate` edge gets a closure size, whatever its category.
+    association_categories: list[str] | None = None
     association_predicate: str = "biolink:has_phenotype"
     # When False, negated associations are excluded from the closure-size table.
     include_negated: bool = False
@@ -720,6 +720,17 @@ class InformationContentConfig(BaseModel):
     def validate_path_exists(cls, v: Path) -> Path:
         if not v.exists():
             raise ValueError(f"File not found: {v}")
+        return v
+
+    @field_validator("association_categories")
+    @classmethod
+    def validate_association_categories_not_empty(cls, v: list[str] | None) -> list[str] | None:
+        # An empty list is ambiguous: "narrow to nothing" or "no filter"? Reject
+        # it rather than guess — None is the explicit "no category filter".
+        if v is not None and len(v) == 0:
+            raise ValueError(
+                "association_categories must be None (no category filter) or a non-empty list"
+            )
         return v
 
 
