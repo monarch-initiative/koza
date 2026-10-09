@@ -1220,6 +1220,16 @@ def normalize(
     mappings_directory: Annotated[
         str | None, typer.Option("--mappings-dir", "-d", help="Directory containing SSSOM mapping files")
     ] = None,
+    use_match: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--use-match",
+            help=(
+                "SSSOM predicate CURIE to apply, e.g. skos:exactMatch (can specify multiple). "
+                "Default: apply every mapping regardless of predicate_id."
+            ),
+        ),
+    ] = None,
     quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress output")] = False,
     show_progress: Annotated[bool, typer.Option("--progress", "-p", help="Show progress bars")] = True,
 ) -> None:
@@ -1238,6 +1248,9 @@ def normalize(
 
         # Apply mappings with glob pattern
         koza normalize graph.duckdb -m "*.sssom.tsv"
+
+        # Only apply exact matches, ignoring close/broad/narrow mappings
+        koza normalize graph.duckdb -m "*.sssom.tsv" --use-match skos:exactMatch
     """
 
     try:
@@ -1284,18 +1297,26 @@ def normalize(
 
         # Create configuration
         config = NormalizeConfig(
-            database_path=database_path, mapping_files=mapping_specs, quiet=quiet, show_progress=show_progress
+            database_path=database_path,
+            mapping_files=mapping_specs,
+            use_match=use_match or None,
+            quiet=quiet,
+            show_progress=show_progress,
         )
 
         # Execute normalize operation
         result = normalize_graph(config)
 
-        if not quiet:
-            typer.echo("Normalize operation completed successfully!")
-
     except Exception as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(1)
+
+    if not result.success:
+        typer.echo("Normalize operation failed!", err=True)
+        raise typer.Exit(1)
+
+    if not quiet:
+        typer.echo("Normalize operation completed successfully!")
 
 
 @typer_app.command()
@@ -1416,6 +1437,16 @@ def merge(
         str | None, typer.Option("--graph-name", help="Name for graph files in archive (default: merged_graph)")
     ] = None,
     skip_normalize: Annotated[bool, typer.Option("--skip-normalize", help="Skip normalization step")] = False,
+    use_match: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--use-match",
+            help=(
+                "SSSOM predicate CURIE to apply during normalization, e.g. skos:exactMatch "
+                "(can specify multiple). Default: apply every mapping regardless of predicate_id."
+            ),
+        ),
+    ] = None,
     skip_prune: Annotated[bool, typer.Option("--skip-prune", help="Skip pruning step")] = False,
     keep_singletons: Annotated[bool, typer.Option("--keep-singletons", help="Keep singleton nodes (default)")] = True,
     remove_singletons: Annotated[
@@ -1553,6 +1584,7 @@ def merge(
             mapping_files=[Path(f) for f in all_mapping_files],
             output_database=Path(output_database) if output_database else None,
             skip_normalize=skip_normalize,
+            use_match=use_match or None,
             skip_prune=skip_prune,
             keep_singletons=keep_singletons,
             remove_singletons=remove_singletons,
@@ -1572,19 +1604,22 @@ def merge(
         # Execute merge pipeline
         result = merge_graphs(config)
 
-        if not quiet:
-            if result.success:
-                typer.echo("Merge pipeline completed successfully!")
-                if result.exported_files:
-                    print(f"📁 Exported files: {len(result.exported_files)}")
-                    for file_path in result.exported_files:
-                        print(f"   - {file_path}")
-            else:
-                typer.echo("Merge pipeline completed with errors!")
-
     except Exception as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(1)
+
+    if not result.success:
+        for error in result.errors:
+            typer.echo(f"Error: {error}", err=True)
+        typer.echo("Merge pipeline failed!", err=True)
+        raise typer.Exit(1)
+
+    if not quiet:
+        typer.echo("Merge pipeline completed successfully!")
+        if result.exported_files:
+            print(f"📁 Exported files: {len(result.exported_files)}")
+            for file_path in result.exported_files:
+                print(f"   - {file_path}")
 
 
 # Report Commands

@@ -4,11 +4,13 @@ Normalize operation for applying SSSOM mappings to graph data.
 
 import time
 from pathlib import Path
+from typing import NamedTuple
 
 from loguru import logger
 from tqdm import tqdm
 
 from koza.model.graph_operations import (
+    MAPPING_PREDICATE_IRI_PREFIXES,
     FileLoadResult,
     FileSpec,
     KGXFormat,
@@ -20,6 +22,32 @@ from koza.model.graph_operations import (
 from .graph_schema import ensure_slots
 from .slots import edges
 from .utils import GraphDatabase, print_operation_summary
+
+# SSSOM predicates that assert identity. Everything else (closeMatch, broadMatch,
+# narrowMatch, relatedMatch, ...) asserts something weaker and is only applied when the
+# caller explicitly opts in via NormalizeConfig.use_match.
+EXACT_MATCH_PREDICATES = frozenset({"skos:exactMatch"})
+
+
+class MalformedMappingError(ValueError):
+    """
+    A mapping file is malformed (e.g. a predicate_id column with blank values).
+
+    This is bad input rather than a runtime step failure, so `normalize_graph` re-raises it
+    instead of returning a failed result, and `merge_graphs` always stops on it regardless of
+    `continue_on_pipeline_step_error`.
+    """
+
+
+class MappingsTableSummary(NamedTuple):
+    """Outcome of building the unified `mappings` table."""
+
+    duplicate_count: int
+    predicate_counts: dict[str | None, int]
+    filtered_out_count: int
+    has_predicate_column: bool
+    # Rows from files that carry predicate_id which survived the use_match filter
+    kept_with_predicate_count: int = 0
 
 
 DECLARED_OUTPUTS: dict[str, dict[str, dict]] = {
@@ -38,6 +66,67 @@ DECLARED_OUTPUTS: dict[str, dict[str, dict]] = {
 }
 
 
+def _non_exact_predicate_warning(config: NormalizeConfig, summary: MappingsTableSummary) -> str | None:
+    """
+    Build the warning shown when non-exact mappings are applied as identities.
+
+    Only fires when the caller did not set `use_match`: in that case every row is applied,
+    so a `skos:closeMatch` or `skos:broadMatch` row rewires an edge endpoint exactly as an
+    `skos:exactMatch` row does. Naming the per-predicate counts makes that visible without
+    changing any output.
+    """
+    if config.use_match or not summary.has_predicate_column:
+        return None
+
+    non_exact = {
+        predicate: count
+        for predicate, count in summary.predicate_counts.items()
+        if predicate is not None and predicate not in EXACT_MATCH_PREDICATES
+    }
+    if not non_exact:
+        return None
+
+    breakdown = ", ".join(f"{predicate}: {count:,}" for predicate, count in sorted(non_exact.items()))
+    total = sum(non_exact.values())
+    return (
+        f"Applying {total:,} non-exact SSSOM mappings as identity rewrites because use_match is not set "
+        f"({breakdown}). Set use_match=['skos:exactMatch'] to apply only exact matches."
+    )
+
+
+def _use_match_warnings(config: NormalizeConfig, summary: MappingsTableSummary) -> list[str]:
+    """
+    Diagnose a use_match filter that is likely misconfigured.
+
+    Predicates are compared exactly (after contracting known IRIs), so a case slip such as
+    `skos:exactmatch` silently matches nothing. Surface that, and the case where the filter
+    removed every mapping that had a predicate_id, instead of quietly normalizing 0 edges.
+    """
+    if not config.use_match:
+        return []
+
+    if not summary.has_predicate_column:
+        return [
+            f"use_match={config.use_match} was requested but the loaded SSSOM mappings have no "
+            f"predicate_id column; applying all mappings unfiltered."
+        ]
+
+    found = sorted(p for p in summary.predicate_counts if p is not None)
+    messages = []
+    unmatched = [p for p in config.use_match if p not in summary.predicate_counts]
+    if unmatched:
+        messages.append(
+            f"use_match predicates {unmatched} matched no SSSOM mappings "
+            f"(predicates present: {found or 'none'}). Predicate matching is exact and case-sensitive."
+        )
+    if summary.kept_with_predicate_count == 0 and summary.filtered_out_count > 0:
+        messages.append(
+            f"use_match={config.use_match} removed all {summary.filtered_out_count:,} SSSOM mappings "
+            f"that carry a predicate_id; no such mappings will be applied."
+        )
+    return messages
+
+
 def normalize_graph(config: NormalizeConfig) -> NormalizeResult:
     """
     Apply SSSOM mappings to normalize node identifiers in edge references.
@@ -49,9 +138,10 @@ def normalize_graph(config: NormalizeConfig) -> NormalizeResult:
 
     The normalization process:
     1. Loads SSSOM mapping files (TSV format with YAML header)
-    2. Creates a mappings table, deduplicating by object_id to prevent edge duplication
-    3. Updates edge subject/object columns using the mappings (object_id -> subject_id)
-    4. Preserves original identifiers in original_subject/original_object columns
+    2. Optionally filters mappings by predicate_id (see config.use_match)
+    3. Creates a mappings table, deduplicating by object_id to prevent edge duplication
+    4. Updates edge subject/object columns using the mappings (object_id -> subject_id)
+    5. Preserves original identifiers in original_subject/original_object columns
 
     Note: Only edge references are normalized. Node IDs in the nodes table are
     not modified - use the mappings to update node IDs separately if needed.
@@ -60,6 +150,9 @@ def normalize_graph(config: NormalizeConfig) -> NormalizeResult:
         config: NormalizeConfig containing:
             - database_path: Path to the DuckDB database to normalize
             - mapping_files: List of FileSpec objects for SSSOM mapping files
+            - use_match: Optional list of SSSOM predicate CURIEs to apply, e.g.
+              ["skos:exactMatch"]. When None (the default) every mapping row is applied
+              regardless of predicate_id, and a warning names the non-exact predicates found.
             - quiet: Suppress console output
             - show_progress: Display progress bars during loading
 
@@ -75,7 +168,11 @@ def normalize_graph(config: NormalizeConfig) -> NormalizeResult:
             - warnings: List of warnings (e.g., duplicate mappings found)
 
     Raises:
-        ValueError: If no nodes/edges tables exist or no mapping files load
+        MalformedMappingError: If a mapping file is malformed (e.g. blank predicate_id values).
+            Unlike other failures, this is raised rather than returned as a failed result.
+
+    Other failures (e.g. no nodes/edges tables, no mapping files loaded) are reported through
+    a NormalizeResult with success=False.
     """
     start_time = time.time()
     mappings_loaded: list[FileLoadResult] = []
@@ -119,12 +216,22 @@ def normalize_graph(config: NormalizeConfig) -> NormalizeResult:
                             f"({result.detected_format.value} format)"
                         )
 
-                # Create final mappings table (deduplicates by object_id)
-                duplicate_mappings = _create_mappings_table(db, mappings_loaded)
+                # Create final mappings table (filters by predicate_id, deduplicates by object_id)
+                mappings_summary = _create_mappings_table(db, mappings_loaded, use_match=config.use_match)
 
-                if duplicate_mappings > 0:
+                predicate_warnings = _use_match_warnings(config, mappings_summary)
+                non_exact_warning = _non_exact_predicate_warning(config, mappings_summary)
+                if non_exact_warning:
+                    predicate_warnings.append(non_exact_warning)
+                for predicate_warning in predicate_warnings:
+                    warnings.append(predicate_warning)
+                    logger.warning(predicate_warning)
+                    if not config.quiet:
+                        print(f"⚠️  {predicate_warning}")
+
+                if mappings_summary.duplicate_count > 0:
                     warning_msg = (
-                        f"Found {duplicate_mappings} duplicate mappings "
+                        f"Found {mappings_summary.duplicate_count} duplicate mappings "
                         f"(one object_id mapped to multiple subject_ids). "
                         f"Keeping only one mapping per object_id to prevent edge duplication."
                     )
@@ -179,6 +286,10 @@ def normalize_graph(config: NormalizeConfig) -> NormalizeResult:
                 errors=errors,
                 warnings=warnings,
             )
+
+    except MalformedMappingError as e:
+        logger.error(f"Normalize operation failed: {e}")
+        raise
 
     except Exception as e:
         total_time = time.time() - start_time
@@ -294,12 +405,23 @@ def _load_sssom_file(db: GraphDatabase, file_spec: FileSpec) -> FileLoadResult:
         )
 
 
-def _create_mappings_table(db: GraphDatabase, mapping_results: list[FileLoadResult]) -> int:
+def _create_mappings_table(
+    db: GraphDatabase,
+    mapping_results: list[FileLoadResult],
+    use_match: list[str] | None = None,
+) -> MappingsTableSummary:
     """
     Create a unified mappings table from all loaded SSSOM temporary tables.
 
-    Combines all temporary mapping tables using UNION ALL BY NAME and deduplicates
-    by object_id to ensure each source identifier maps to exactly one target.
+    Combines all temporary mapping tables using UNION ALL BY NAME, optionally filters
+    on `predicate_id`, and deduplicates by object_id to ensure each source identifier
+    maps to exactly one target.
+
+    Normalization rewrites an identifier to another identifier, which only makes sense
+    for mapping predicates that assert identity. When `use_match` is provided, rows whose
+    `predicate_id` is not listed are dropped before deduplication, so a `skos:broadMatch`
+    row cannot collapse two distinct concepts. When `use_match` is None every row is
+    applied, which is the historical behaviour.
 
     SSSOM mappings can have one-to-many relationships (one object_id mapping to
     multiple subject_id values). This would cause the normalization JOIN to create
@@ -310,25 +432,83 @@ def _create_mappings_table(db: GraphDatabase, mapping_results: list[FileLoadResu
     Args:
         db: GraphDatabase instance with active connection
         mapping_results: List of FileLoadResult objects with temp_table_name set
+        use_match: Optional list of SSSOM predicate CURIEs to keep, e.g.
+            ["skos:exactMatch"]. Rows from files without a predicate_id column are always
+            kept, so such files keep working unchanged. Known skos/owl/rdfs/semapv predicate
+            IRIs are contracted to CURIEs before comparison.
 
     Returns:
-        Number of duplicate mappings that were removed during deduplication
+        MappingsTableSummary with the duplicate count, per-predicate row counts before
+        filtering, the number of rows dropped by the predicate filter, and whether the
+        loaded mappings had a predicate_id column at all
 
     Raises:
         ValueError: If no mapping files loaded successfully
+        MalformedMappingError: If a file that has a predicate_id column leaves it blank on
+            any row
     """
     # Get temp tables that loaded successfully
-    mapping_tables = []
-    for result in mapping_results:
-        if result.temp_table_name and not result.errors:
-            mapping_tables.append(result.temp_table_name)
+    loaded = [result for result in mapping_results if result.temp_table_name and not result.errors]
+    mapping_tables = [result.temp_table_name for result in loaded]
 
     if not mapping_tables:
         raise ValueError("No mapping files loaded successfully")
 
+    # predicate_id is optional in SSSOM, but a file that declares the column must fill it.
+    # Rejecting blanks here means that after the union a NULL predicate_id can only come from
+    # a file without the column, whose rows are always kept.
+    for result in loaded:
+        _check_no_blank_predicates(db, result)
+
     # Create mappings table using UNION ALL BY NAME
     union_stmt = " UNION ALL BY NAME ".join([f"SELECT * FROM {table}" for table in mapping_tables])
     db.conn.execute(f"CREATE OR REPLACE TABLE mappings_raw AS {union_stmt}")
+
+    # UNION ALL BY NAME only produces the column if at least one input file had it.
+    columns = {row[0] for row in db.conn.execute("DESCRIBE mappings_raw").fetchall()}
+    has_predicate_column = "predicate_id" in columns
+
+    predicate_counts: dict[str | None, int] = {}
+    filtered_out_count = 0
+    kept_with_predicate_count = 0
+
+    if has_predicate_column:
+        # Contract IRI-form predicates (e.g. http://www.w3.org/2004/02/skos/core#exactMatch)
+        # to CURIEs so they compare equal to use_match entries and count correctly in warnings.
+        for iri_prefix, curie_prefix in MAPPING_PREDICATE_IRI_PREFIXES.items():
+            db.conn.execute(
+                "UPDATE mappings_raw SET predicate_id = ? || substr(predicate_id, ?) "
+                "WHERE starts_with(predicate_id, ?)",
+                [curie_prefix, len(iri_prefix) + 1, iri_prefix],
+            )
+
+        predicate_counts = {
+            row[0]: row[1]
+            for row in db.conn.execute(
+                "SELECT predicate_id, COUNT(*) AS n FROM mappings_raw GROUP BY predicate_id ORDER BY n DESC"
+            ).fetchall()
+        }
+
+        if use_match:
+            # NULL predicate_id rows come from a file without the column (blanks in files with
+            # the column were rejected above); dropping them would silently discard the whole
+            # file, so they are left alone.
+            rows_before = db.conn.execute("SELECT COUNT(*) FROM mappings_raw").fetchone()[0]
+            db.conn.execute(
+                "DELETE FROM mappings_raw "
+                "WHERE predicate_id IS NOT NULL AND NOT list_contains(?::VARCHAR[], predicate_id)",
+                [list(use_match)],
+            )
+            rows_after = db.conn.execute("SELECT COUNT(*) FROM mappings_raw").fetchone()[0]
+            filtered_out_count = rows_before - rows_after
+            kept_with_predicate_count = db.conn.execute(
+                "SELECT COUNT(*) FROM mappings_raw WHERE predicate_id IS NOT NULL"
+            ).fetchone()[0]
+
+            logger.info(
+                f"Filtered SSSOM mappings to predicates {sorted(use_match)}: "
+                f"kept {rows_after}, dropped {filtered_out_count}"
+            )
 
     # Count total and unique mappings
     total_count = db.conn.execute("SELECT COUNT(*) FROM mappings_raw").fetchone()[0]
@@ -365,7 +545,39 @@ def _create_mappings_table(db: GraphDatabase, mapping_results: list[FileLoadResu
 
     logger.info(f"Created mappings table from {len(mapping_tables)} temp tables ({unique_count} unique mappings)")
 
-    return duplicate_count
+    return MappingsTableSummary(
+        duplicate_count=duplicate_count,
+        predicate_counts=predicate_counts,
+        filtered_out_count=filtered_out_count,
+        has_predicate_column=has_predicate_column,
+        kept_with_predicate_count=kept_with_predicate_count,
+    )
+
+
+def _check_no_blank_predicates(db: GraphDatabase, result: FileLoadResult) -> None:
+    """
+    Raise if a mapping file has a predicate_id column with blank values.
+
+    A blank predicate_id in a file that declares the column is malformed SSSOM: the row
+    asserts no relationship, so it can be neither applied nor filtered meaningfully.
+    """
+    table = result.temp_table_name
+    table_columns = {row[0] for row in db.conn.execute(f"DESCRIBE {table}").fetchall()}
+    if "predicate_id" not in table_columns:
+        return
+
+    blank_condition = "predicate_id IS NULL OR trim(predicate_id) = ''"
+    blank_count = db.conn.execute(f"SELECT COUNT(*) FROM {table} WHERE {blank_condition}").fetchone()[0]
+    if blank_count == 0:
+        return
+
+    examples = db.conn.execute(f"SELECT subject_id, object_id FROM {table} WHERE {blank_condition} LIMIT 2").fetchall()
+    example_text = ", ".join(f"{subject_id} -> {object_id}" for subject_id, object_id in examples)
+    raise MalformedMappingError(
+        f"Malformed SSSOM file {result.file_spec.path}: {blank_count:,} row(s) have a blank predicate_id "
+        f"(e.g. subject_id -> object_id: {example_text}). Every row must have a predicate_id when the "
+        f"column is present."
+    )
 
 
 def _normalize_edges_table(db: GraphDatabase, config: NormalizeConfig) -> int:

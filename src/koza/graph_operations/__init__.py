@@ -13,7 +13,7 @@ from .export import convert_graph, export_graph
 from .join import join_graphs, prepare_file_specs_from_paths
 from .load import load_graph, prepare_load_config_from_paths
 from .merge import merge_graphs, prepare_merge_config_from_paths
-from .normalize import normalize_graph, prepare_mapping_file_specs_from_paths
+from .normalize import MalformedMappingError, normalize_graph, prepare_mapping_file_specs_from_paths
 from .prefixes import canonicalize_graph, generate_prefix_report
 from .profile import detect_categorical_columns, profile_graph, render_profile
 from .prune import prune_graph
@@ -54,6 +54,7 @@ __all__ = [
     "compute_pairwise_similarity",
     "deduplicate_graph",
     "normalize_graph",
+    "MalformedMappingError",
     "merge_graphs",
     "prepare_file_specs_from_paths",
     "prepare_mapping_file_specs_from_paths",

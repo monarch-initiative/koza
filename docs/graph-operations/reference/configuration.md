@@ -211,7 +211,7 @@ Configuration for the merge operation, which is a composite pipeline combining j
 | `skip_normalize` | `bool` | `False` | Skip normalization step |
 | `skip_prune` | `bool` | `False` | Skip pruning step |
 | `generate_provided_by` | `bool` | `True` | Add `provided_by` column from filename |
-| `continue_on_pipeline_step_error` | `bool` | `True` | Continue on non-critical errors |
+| `continue_on_pipeline_step_error` | `bool` | `True` | Continue on non-critical step errors. Malformed mapping files (e.g. blank `predicate_id`) always stop the merge regardless |
 | **Prune Options** | | | |
 | `keep_singletons` | `bool` | `True` | Preserve isolated nodes |
 | `remove_singletons` | `bool` | `False` | Move singletons to separate table |
@@ -299,6 +299,7 @@ Configuration for the normalize operation, which applies SSSOM mappings to norma
 |-------|------|---------|-------------|
 | `database_path` | `Path` | **required** | Path to the DuckDB database |
 | `mapping_files` | `list[FileSpec]` | `[]` | SSSOM mapping files |
+| `use_match` | `list[str] \| None` | `None` | SSSOM predicate CURIEs to apply, e.g. `["skos:exactMatch"]`. `None` applies every mapping regardless of `predicate_id` |
 | `quiet` | `bool` | `False` | Suppress progress output |
 | `show_progress` | `bool` | `True` | Show progress indicators |
 
@@ -306,6 +307,13 @@ Configuration for the normalize operation, which applies SSSOM mappings to norma
 
 - **Database Exists**: The database file must exist
 - **Mapping Files Required**: At least one SSSOM mapping file must be provided
+- **Empty `use_match`**: An empty list is normalized to `None` (apply everything) rather than
+  being read as "keep nothing"
+- **`use_match` values**: Each entry must be a CURIE (`prefix:local`); known skos/owl/rdfs/semapv
+  IRIs are contracted to CURIEs. Bare names such as `exactMatch` raise a validation error
+- **Blank `predicate_id`**: Not a config check, but the operation fails if a mapping file has a
+  `predicate_id` column with any blank values (malformed SSSOM), raising `MalformedMappingError`.
+  Files without the column are fine
 
 #### Example
 
@@ -317,7 +325,8 @@ config = NormalizeConfig(
     mapping_files=[
         FileSpec(path=Path("mappings/disease_mappings.sssom.tsv")),
         FileSpec(path=Path("mappings/gene_mappings.sssom.tsv")),
-    ]
+    ],
+    use_match=["skos:exactMatch"],
 )
 ```
 

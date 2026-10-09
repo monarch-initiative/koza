@@ -10,7 +10,7 @@ import pytest
 import duckdb
 
 from koza.graph_operations.utils import GraphDatabase
-from koza.graph_operations import merge_graphs, prepare_merge_config_from_paths
+from koza.graph_operations import MalformedMappingError, merge_graphs, prepare_merge_config_from_paths
 from koza.model.graph_operations import (
     DatabaseStats,
     FileSpec,
@@ -68,6 +68,7 @@ def mock_normalize_result():
         summary=OperationSummary(operation="normalize", success=True, message="Test", total_time_seconds=0.5),
     )
 
+
 @pytest.fixture
 def mock_deduplicate_result():
     """Create mock normalize result."""
@@ -83,9 +84,6 @@ def mock_deduplicate_result():
         errors=[],
         warnings=[],
     )
-
-
-
 
 
 @pytest.fixture
@@ -379,6 +377,7 @@ class TestMergeOperationConfiguration:
                 skip_prune=False,
                 keep_singletons=False,
                 remove_singletons=True,
+                use_match=["skos:exactMatch", "http://www.w3.org/2004/02/skos/core#closeMatch"],
                 quiet=True,
                 show_progress=False,
                 schema_reporting=False,
@@ -399,6 +398,7 @@ class TestMergeOperationConfiguration:
             normalize_call_args = mock_normalize.call_args[0][0]  # First positional argument (NormalizeConfig)
             assert normalize_call_args.database_path == output_db
             assert normalize_call_args.mapping_files == mapping_specs
+            assert normalize_call_args.use_match == ["skos:exactMatch", "skos:closeMatch"]
             assert normalize_call_args.quiet is True
             assert normalize_call_args.show_progress is False
 
@@ -412,9 +412,7 @@ class TestMergeOperationConfiguration:
 
     @patch("koza.graph_operations.merge.join_graphs")
     @patch("koza.graph_operations.merge.GraphDatabase")
-    def test_required_fields_passed_to_join(
-        self, mock_graph_db, mock_join, sample_file_specs, mock_join_result
-    ):
+    def test_required_fields_passed_to_join(self, mock_graph_db, mock_join, sample_file_specs, mock_join_result):
         """Test that required_node_fields and required_edge_fields are passed through to JoinConfig."""
         node_specs, edge_specs, mapping_specs = sample_file_specs
 
@@ -566,9 +564,9 @@ class TestMergeOperationErrorHandling:
         with tempfile.TemporaryDirectory() as temp_dir:
             output_db = Path(temp_dir) / "test.duckdb"
             # Create the database file to simulate successful join
-            #tmp = GraphDatabase(output_db)
-            #tmp.__init__()
-            #output_db.touch()
+            # tmp = GraphDatabase(output_db)
+            # tmp.__init__()
+            # output_db.touch()
             con = duckdb.connect(output_db)
             con.close()
 
@@ -578,7 +576,7 @@ class TestMergeOperationErrorHandling:
                 mapping_files=mapping_specs,
                 output_database=output_db,
                 quiet=True,
-                continue_on_pipeline_step_error=False, #THIS IS WHAT MAKES IT FAIL.
+                continue_on_pipeline_step_error=False,  # THIS IS WHAT MAKES IT FAIL.
                 handle_errors_silently=True,
             )
 
@@ -590,11 +588,12 @@ class TestMergeOperationErrorHandling:
                 caught_exception = e
 
             assert result.success is False
-            assert caught_exception is None #Because "handle_errors_silently" is True, no Exceptions should be raised.
+            assert caught_exception is None  # Because "handle_errors_silently" is True, no Exceptions should be raised.
             assert "Merge pipeline failed: Normalization step failed. Aborting pipeline." in result.errors
             assert "SAMPLE NORMALIZE RESULT ERROR" in result.errors
             assert result.summary.message == "Merge pipeline failed: Normalization step failed. Aborting pipeline."
-#            exit()
+
+    #            exit()
 
     @patch("koza.graph_operations.merge.join_graphs")
     @patch("koza.graph_operations.merge.normalize_graph")
@@ -646,7 +645,7 @@ class TestMergeOperationErrorHandling:
                 mapping_files=mapping_specs,
                 output_database=output_db,
                 quiet=True,
-                continue_on_pipeline_step_error=True, #THIS IS WHAT MAKES IT KEEP RUNNING EVEN IF NORMALIZATION FAILS.
+                continue_on_pipeline_step_error=True,  # THIS IS WHAT MAKES IT KEEP RUNNING EVEN IF NORMALIZATION FAILS.
             )
 
             result = merge_graphs(config)
@@ -662,9 +661,180 @@ class TestMergeOperationErrorHandling:
             assert "Normalization failed but pipeline continued" in result.warnings
             assert result.normalize_result.success is False
 
+    @patch("koza.graph_operations.merge.join_graphs")
+    @patch("koza.graph_operations.merge.normalize_graph")
+    @patch("koza.graph_operations.merge.prune_graph")
+    @patch("koza.graph_operations.merge.GraphDatabase")
+    def test_normalize_warnings_propagate_to_merge_result(
+        self,
+        mock_graph_db,
+        mock_prune,
+        mock_normalize,
+        mock_join,
+        sample_file_specs,
+        mock_join_result,
+        mock_normalize_result,
+        mock_prune_result,
+    ):
+        """Warnings raised by the normalize step (e.g. non-exact predicates) reach MergeResult."""
+        node_specs, edge_specs, mapping_specs = sample_file_specs
+
+        mock_join.return_value = mock_join_result
+        mock_normalize.return_value = mock_normalize_result.model_copy(
+            update={"warnings": ["Applying 2 non-exact SSSOM mappings as identity rewrites"]}
+        )
+        mock_prune.return_value = mock_prune_result
+
+        mock_db = MagicMock()
+        mock_db.get_stats.return_value = DatabaseStats(nodes=95, edges=190)
+        mock_graph_db.return_value.__enter__.return_value = mock_db
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_db = Path(temp_dir) / "test.duckdb"
+            output_db.touch()
+
+            config = MergeConfig(
+                node_files=node_specs,
+                edge_files=edge_specs,
+                mapping_files=mapping_specs,
+                output_database=output_db,
+                skip_deduplicate=True,
+                quiet=True,
+                show_progress=False,
+                schema_reporting=False,
+            )
+
+            result = merge_graphs(config)
+
+            assert "Applying 2 non-exact SSSOM mappings as identity rewrites" in result.warnings
+
+    @patch("koza.graph_operations.merge.join_graphs")
+    @patch("koza.graph_operations.merge.normalize_graph")
+    @patch("koza.graph_operations.merge.prune_graph")
+    @patch("koza.graph_operations.merge.GraphDatabase")
+    def test_malformed_mapping_stops_pipeline_despite_continue_on_error(
+        self,
+        mock_graph_db,
+        mock_prune,
+        mock_normalize,
+        mock_join,
+        sample_file_specs,
+        mock_join_result,
+        mock_prune_result,
+    ):
+        """MalformedMappingError is never downgraded to a warning by continue_on_pipeline_step_error."""
+        node_specs, edge_specs, mapping_specs = sample_file_specs
+
+        mock_join.return_value = mock_join_result
+        mock_normalize.side_effect = MalformedMappingError("Malformed SSSOM file bad.sssom.tsv: 1 row(s)")
+        mock_prune.return_value = mock_prune_result
+
+        mock_db = MagicMock()
+        mock_db.get_stats.return_value = DatabaseStats(nodes=95, edges=190)
+        mock_graph_db.return_value.__enter__.return_value = mock_db
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_db = Path(temp_dir) / "test.duckdb"
+            output_db.touch()
+
+            config = MergeConfig(
+                node_files=node_specs,
+                edge_files=edge_specs,
+                mapping_files=mapping_specs,
+                output_database=output_db,
+                skip_deduplicate=True,
+                continue_on_pipeline_step_error=True,
+                quiet=True,
+                show_progress=False,
+                schema_reporting=False,
+            )
+
+            result = merge_graphs(config)
+
+            assert result.success is False
+            assert not mock_prune.called
+            assert "normalize" not in result.operations_completed
+            assert any("Malformed SSSOM file bad.sssom.tsv" in e for e in result.errors)
+            assert "Normalization failed but pipeline continued" not in result.warnings
+
+
+BLANK_PREDICATE_SSSOM = """subject_id\tpredicate_id\tobject_id
+NCBIGene:1\tskos:exactMatch\tHGNC:1
+NCBIGene:2\t\tHGNC:2
+"""
+
+
+@pytest.fixture
+def malformed_merge_inputs(tmp_path):
+    nodes = tmp_path / "nodes.tsv"
+    nodes.write_text("id\tcategory\nNCBIGene:1\tbiolink:Gene\nNCBIGene:2\tbiolink:Gene\n")
+    edges = tmp_path / "edges.tsv"
+    edges.write_text(
+        "id\tsubject\tpredicate\tobject\tcategory\ne1\tHGNC:1\tbiolink:related_to\tHGNC:2\tbiolink:Association\n"
+    )
+    mappings = tmp_path / "bad.sssom.tsv"
+    mappings.write_text(BLANK_PREDICATE_SSSOM)
+    return nodes, edges, mappings
+
+
+class TestMalformedMappingEndToEnd:
+    """Real (unmocked) merge runs against a mapping file with a blank predicate_id."""
+
+    def test_default_merge_stops_on_malformed_mapping(self, tmp_path, malformed_merge_inputs):
+        nodes, edges, mappings = malformed_merge_inputs
+
+        config = prepare_merge_config_from_paths(
+            node_files=[nodes],
+            edge_files=[edges],
+            mapping_files=[mappings],
+            output_database=tmp_path / "merged.duckdb",
+            quiet=True,
+            show_progress=False,
+        )
+        assert config.continue_on_pipeline_step_error is True  # the default
+
+        result = merge_graphs(config)
+
+        assert result.success is False
+        assert "prune" not in result.operations_completed
+        assert any("Malformed SSSOM file" in e and "bad.sssom.tsv" in e for e in result.errors)
+
+    def test_cli_merge_exits_nonzero_on_malformed_mapping(self, tmp_path, malformed_merge_inputs):
+        from typer.testing import CliRunner
+
+        from koza.main import typer_app
+
+        nodes, edges, mappings = malformed_merge_inputs
+
+        result = CliRunner().invoke(
+            typer_app,
+            [
+                "merge",
+                "--nodes",
+                str(nodes),
+                "--edges",
+                str(edges),
+                "--mappings",
+                str(mappings),
+                "--output",
+                str(tmp_path / "merged.duckdb"),
+                "--quiet",
+            ],
+        )
+
+        assert result.exit_code != 0
+        assert "Malformed SSSOM file" in result.output
+
 
 class TestMergeConfigValidation:
     """Test MergeConfig validation."""
+
+    def test_validation_rejects_use_match_without_prefix(self, sample_file_specs):
+        """A bare predicate name would silently drop every mapping, so it is rejected up front."""
+        node_specs, edge_specs, mapping_specs = sample_file_specs
+
+        with pytest.raises(ValueError, match="predicate CURIEs"):
+            MergeConfig(node_files=node_specs, edge_files=edge_specs, mapping_files=mapping_specs, use_match=["exact"])
 
     def test_validation_requires_input_files(self):
         """Test that validation requires at least some input files."""

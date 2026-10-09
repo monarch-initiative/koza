@@ -8,6 +8,43 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, Field, ValidationInfo, field_validator, model_validator
 
+# IRI namespaces that SSSOM mapping predicates commonly come from, mapped to their standard
+# CURIE prefixes. Used to contract IRI-form predicate_id values (and use_match entries) so that
+# `http://www.w3.org/2004/02/skos/core#exactMatch` and `skos:exactMatch` compare equal.
+MAPPING_PREDICATE_IRI_PREFIXES: dict[str, str] = {
+    "http://www.w3.org/2004/02/skos/core#": "skos:",
+    "http://www.w3.org/2002/07/owl#": "owl:",
+    "http://www.w3.org/2000/01/rdf-schema#": "rdfs:",
+    "https://w3id.org/semapv/vocab/": "semapv:",
+}
+
+
+def contract_mapping_predicate(predicate: str) -> str:
+    """Contract a known skos/owl/rdfs/semapv predicate IRI to its CURIE; return others unchanged."""
+    for iri_prefix, curie_prefix in MAPPING_PREDICATE_IRI_PREFIXES.items():
+        if predicate.startswith(iri_prefix):
+            return curie_prefix + predicate[len(iri_prefix) :]
+    return predicate
+
+
+def clean_use_match(v: list[str] | None) -> list[str] | None:
+    """
+    Validate and canonicalize a use_match list.
+
+    - None, an empty list, or a list of blanks means "unset" (apply every mapping), so no
+      configuration silently drops every mapping.
+    - Known predicate IRIs are contracted to CURIEs.
+    - Values without a `prefix:` (e.g. `exactMatch`, or the transform-time `exact`) are rejected:
+      they can never match an SSSOM predicate_id and would silently drop every mapping.
+    """
+    if v is None:
+        return None
+    cleaned = [contract_mapping_predicate(p.strip()) for p in v if p and p.strip()]
+    invalid = [p for p in cleaned if ":" not in p]
+    if invalid:
+        raise ValueError(f"use_match entries must be predicate CURIEs such as 'skos:exactMatch'; got {invalid}")
+    return list(dict.fromkeys(cleaned)) or None
+
 
 class KGXFormat(str, Enum):
     """Supported KGX file formats"""
@@ -323,6 +360,14 @@ class NormalizeConfig(BaseModel):
 
     database_path: Path
     mapping_files: list[FileSpec] = Field(default_factory=list)
+    use_match: list[str] | None = Field(
+        default=None,
+        description=(
+            "SSSOM mapping predicate CURIEs to apply, e.g. ['skos:exactMatch']. "
+            "When None (the default) every mapping row is applied regardless of predicate_id, "
+            "which preserves historical behaviour."
+        ),
+    )
     quiet: bool = False
     show_progress: bool = True
 
@@ -332,6 +377,12 @@ class NormalizeConfig(BaseModel):
         if not v.exists():
             raise ValueError(f"Database file not found: {v}")
         return v
+
+    @field_validator("use_match")
+    @classmethod
+    def normalize_use_match(cls, v: list[str] | None) -> list[str] | None:
+        """Treat an empty list as unset, contract known IRIs, and reject non-CURIE values."""
+        return clean_use_match(v)
 
     @model_validator(mode="after")
     def validate_mapping_files_provided(self):
@@ -494,6 +545,17 @@ class MergeConfig(BaseModel):
     # Slot names to collapse from arrays to scalars during the join step.
     # Empty by default: Biolink multivalued slot definitions are preserved.
     force_single_valued: list[str] = Field(default_factory=list)
+
+    # Normalize-specific options
+    # SSSOM predicate CURIEs to apply, e.g. ["skos:exactMatch"]. None means apply every
+    # mapping row regardless of predicate_id (historical behaviour).
+    use_match: list[str] | None = None
+
+    @field_validator("use_match")
+    @classmethod
+    def normalize_use_match(cls, v: list[str] | None) -> list[str] | None:
+        """Same rules as NormalizeConfig.use_match, checked up front before the pipeline runs."""
+        return clean_use_match(v)
 
     # Prune-specific options
     keep_singletons: bool = True

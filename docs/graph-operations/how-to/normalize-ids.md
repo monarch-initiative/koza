@@ -37,7 +37,7 @@ The relevant columns for normalization are:
 
 - **subject_id**: The target identifier (what Koza normalizes TO)
 - **object_id**: The source identifier (what Koza normalizes FROM)
-- **predicate_id**: The mapping relationship (e.g., `skos:exactMatch`) - used for filtering but not for determining direction
+- **predicate_id**: The mapping relationship (e.g., `skos:exactMatch`) - optionally used for filtering (see [Filtering by Mapping Predicate](#filtering-by-mapping-predicate)), never for determining direction
 - **mapping_justification**: How the mapping was created (optional but recommended)
 
 **Important**: Normalization changes **edge references** (the `subject` and `object` columns in the edges table), not the node IDs themselves. If an edge references an identifier that appears in the SSSOM `object_id` column, that reference is updated to the corresponding `subject_id`.
@@ -148,6 +148,80 @@ FROM edges
 WHERE original_subject IS NOT NULL
    OR original_object IS NOT NULL;
 ```
+
+## Filtering by Mapping Predicate
+
+Normalization rewrites one identifier into another, which only makes sense for mapping predicates
+that assert identity. A `skos:exactMatch` row says two identifiers denote the same thing; a
+`skos:closeMatch` or `skos:broadMatch` row does not.
+
+### Default Behaviour
+
+By default `normalize` applies **every** mapping row regardless of `predicate_id`. A `broadMatch`
+row rewires an edge endpoint exactly as an `exactMatch` row does, collapsing a narrower concept
+into a broader one.
+
+When the loaded mappings contain non-exact predicates and no filter is configured, Koza warns and
+names the per-predicate counts:
+
+```
+⚠️  Applying 20,385 non-exact SSSOM mappings as identity rewrites because use_match is not set
+    (skos:broadMatch: 8, skos:closeMatch: 20,377). Set use_match=['skos:exactMatch'] to apply only
+    exact matches.
+```
+
+### Opting Into a Predicate Filter
+
+Pass `--use-match` (repeatable) to keep only the mapping predicates you want applied:
+
+```bash
+# Only identity mappings
+koza normalize graph.duckdb -m "mappings/*.sssom.tsv" --use-match skos:exactMatch
+
+# Also accept close matches
+koza normalize graph.duckdb -m "mappings/*.sssom.tsv" \
+  --use-match skos:exactMatch \
+  --use-match skos:closeMatch
+```
+
+The same option is available on `koza merge`, and as `use_match` on `NormalizeConfig` and
+`MergeConfig`.
+
+Predicates are compared exactly and case-sensitively, as CURIEs:
+
+- Values must have a `prefix:` form. A bare `exactMatch` (or the transform-time `exact`) is
+  rejected, because it could never match a `predicate_id`.
+- Full IRIs in the SSSOM file or in `--use-match` are contracted to CURIEs for the `skos`, `owl`,
+  `rdfs` and `semapv` namespaces, so `http://www.w3.org/2004/02/skos/core#exactMatch` matches
+  `skos:exactMatch`.
+- If a requested predicate matches no mappings (for example `skos:exactmatch`), or the filter
+  removes every mapping that has a `predicate_id`, Koza warns and lists the predicates it found.
+
+### Files Without a predicate_id Column
+
+`predicate_id` is optional in SSSOM. Rows from a file that has no `predicate_id` column are always
+kept, even when `--use-match` is set, so such a file keeps working exactly as before. If none of
+the loaded files carry the column at all, `--use-match` cannot be enforced and Koza warns rather
+than dropping every mapping.
+
+### Blank predicate_id Values
+
+A file that *has* a `predicate_id` column must fill it on every row. A blank value is malformed
+SSSOM, so `normalize` fails, whether or not `--use-match` is set. The error names the file, the
+number of blank rows, and up to two example `subject_id -> object_id` pairs:
+
+```
+Malformed SSSOM file mappings/example.sssom.tsv: 3 row(s) have a blank predicate_id
+(e.g. subject_id -> object_id: A:1 -> B:1, A:2 -> B:2). Every row must have a predicate_id
+when the column is present.
+```
+
+Fix the file by filling in the predicate, or by removing the rows.
+
+This error is raised as `MalformedMappingError` (a `ValueError` subclass). It **always stops a
+merge**, whatever `continue_on_pipeline_step_error` is set to: that option only downgrades runtime
+step failures to warnings, never malformed input. `koza normalize` and `koza merge` both exit
+with a non-zero status.
 
 ## Duplicate Mapping Handling
 
