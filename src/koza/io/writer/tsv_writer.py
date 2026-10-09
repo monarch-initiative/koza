@@ -99,6 +99,7 @@ class TSVWriter(KozaWriter):
             self.nodeFH.close()
         if hasattr(self, "edgeFH"):
             self.edgeFH.close()
+        self.validate_counts()
 
     @staticmethod
     def _order_columns(cols: list[str], record_type: Literal["node", "edge"]) -> OrderedSet[str]:

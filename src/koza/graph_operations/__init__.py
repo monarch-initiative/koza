@@ -26,7 +26,9 @@ from .report import (
     generate_qc_report,
     generate_schema_compliance_report,
 )
+from .annotation_information_content import compute_annotation_information_content
 from .information_content import compute_information_content
+from .pairwise_similarity import compute_pairwise_similarity
 from .schema import generate_schema_report, print_schema_summary, write_schema_report_yaml
 from .split import split_graph
 from .utils import GraphDatabase, print_operation_summary
@@ -47,7 +49,9 @@ __all__ = [
     "prune_graph",
     "append_graphs",
     "closurize_graph",
+    "compute_annotation_information_content",
     "compute_information_content",
+    "compute_pairwise_similarity",
     "deduplicate_graph",
     "normalize_graph",
     "merge_graphs",

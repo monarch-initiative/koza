@@ -25,7 +25,7 @@ class PassthroughWriter(KozaWriter):
             self.edge_count += 1
 
     def finalize(self):
-        pass
+        self.validate_counts()
 
     def result(self):
         return self.data
