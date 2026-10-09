@@ -19,7 +19,7 @@ Divide a graph into subsets based on field values such as source, category, or o
 Apply SSSOM mappings to harmonize identifiers across different naming conventions and ontologies.
 
 ### [Canonicalize Prefixes](canonicalize-prefixes.md)
-Audit CURIE prefixes against a prefixmaps context and repair case variants (`hgnc:` → `HGNC:`).
+Audit CURIE prefixes against a prefixmaps context and repair alternately-cased prefixes (`hgnc:` → `HGNC:`).
 
 ### [Clean Graphs](clean-graph.md)
 Remove duplicates, dangling edges, and optionally singleton nodes from a graph.

@@ -256,7 +256,7 @@ koza normalize graph.duckdb -m mappings.sssom.tsv -q
 
 ## koza canonicalize
 
-Repair case-variant CURIE prefixes against a prefixmaps context.
+Repair CURIE prefixes with alternate casing against a prefixmaps context.
 
 ### Synopsis
 
@@ -266,7 +266,7 @@ koza canonicalize DATABASE [OPTIONS]
 
 ### Description
 
-The `canonicalize` command rewrites node ids and edge subject/object references whose prefix matches a canonical prefix from a [prefixmaps](https://github.com/linkml/prefixmaps) context case-insensitively but not exactly (e.g. `hgnc:746` → `HGNC:746`). Original identifiers are preserved in `original_id` (nodes) and `original_subject`/`original_object` (edges). Prefixes unknown to the context are never touched — audit them first with `koza report prefixes`. All rewrites run in a single transaction. Only `nodes.id`, `edges.subject` and `edges.object` are rewritten: derived tables (`closure`, `denormalized_*`, `mappings`, ...) keep the old ids, and the command warns when such tables exist. Repairs that land on an id the graph already has, or that make two edges share a subject/predicate/object, are counted and reported as collisions; the rows are not merged.
+The `canonicalize` command rewrites node ids and edge subject/object references whose prefix matches a canonical prefix from a [prefixmaps](https://github.com/linkml/prefixmaps) context case-insensitively but not exactly (e.g. `hgnc:746` → `HGNC:746`). No `original_*` columns are written (those belong to `normalize`); every change is recorded in the `prefix_canonicalization_log` audit table. Prefixes unknown to the context are never touched — audit them first with `koza report prefixes`. The rewrites, audit rows and any deduplication run in a single transaction. Only `nodes.id`, `edges.subject` and `edges.object` are rewritten: derived tables (`closure`, `denormalized_*`, `mappings`, ...) keep the old ids, so run it before `closurize`; the command warns when such tables exist. Repairs that land on an id the graph already has, or that make two edges share a subject/predicate/object, are counted and reported as collisions. `--deduplicate` removes the extra rows, keeping the pre-existing row, then the first by `file_source`.
 
 ### Arguments
 
@@ -280,6 +280,7 @@ The `canonicalize` command rewrites node ids and edge subject/object references 
 |--------|-------|------|---------|-------------|
 | `--context` | `-c` | str | `merged` | prefixmaps context to canonicalize against |
 | `--only` | | List[str] | all | Repair only these prefixes (case-insensitive). Repeatable. |
+| `--deduplicate` | | bool | False | Remove rows that collide after the rewrite (nodes sharing an id, edges sharing subject/predicate/object) |
 | `--dry-run` | | bool | False | Report the repairs without applying them |
 | `--quiet` | `-q` | bool | False | Suppress output |
 
@@ -294,6 +295,9 @@ koza canonicalize graph.duckdb
 
 # Repair only hgnc
 koza canonicalize graph.duckdb --only hgnc
+
+# Repair and remove the resulting duplicate rows
+koza canonicalize graph.duckdb --deduplicate
 
 # Use a different prefixmaps context
 koza canonicalize graph.duckdb --context bioregistry.upper
@@ -631,7 +635,7 @@ koza report schema -d merged.duckdb -o schema_report.yaml
 
 #### prefixes - CURIE Prefix Census
 
-Counts every CURIE prefix appearing in `nodes.id`, `edges.subject`, and `edges.object`, classified against a prefixmaps context (`--context`, default `merged`) as canonical, case_variant (with the suggested canonical spelling), or unknown.
+Counts every CURIE prefix appearing in `nodes.id`, `edges.subject`, and `edges.object`, classified against a prefixmaps context (`--context`, default `merged`) as canonical, alternate_casing (with the suggested canonical spelling), or unknown.
 
 ```bash
 koza report prefixes -d merged.duckdb -o prefixes.yaml

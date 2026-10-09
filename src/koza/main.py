@@ -1163,25 +1163,33 @@ def canonicalize(
         typer.Option(
             "--only",
             help="Repair only this prefix (case-insensitive, e.g. --only hgnc); repeatable. "
-            "Default: every case-variant prefix.",
+            "Default: every prefix with alternate casing.",
         ),
     ] = None,
+    deduplicate: Annotated[
+        bool,
+        typer.Option(
+            "--deduplicate",
+            help="Remove rows that collide after the rewrite (nodes sharing an id, edges sharing "
+            "subject/predicate/object), keeping the pre-existing row",
+        ),
+    ] = False,
     dry_run: Annotated[
         bool, typer.Option("--dry-run", help="Report the repairs without applying them")
     ] = False,
     quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress output")] = False,
 ) -> None:
-    """Repair case-variant CURIE prefixes against a prefixmaps context
+    """Repair CURIE prefixes with alternate casing against a prefixmaps context
 
     Rewrites node ids and edge subject/object references whose prefix matches a
     canonical prefix case-insensitively but not exactly (e.g. hgnc:746 ->
-    HGNC:746). Original identifiers are preserved in original_id /
-    original_subject / original_object columns. Prefixes unknown to the context
-    are reported by `koza report prefixes` and never touched.
+    HGNC:746). Each change is recorded in the prefix_canonicalization_log
+    table. Prefixes unknown to the context are reported by `koza report
+    prefixes` and never touched.
 
     Only the nodes and edges tables are rewritten. Derived tables (closure,
     denormalized_*, mappings, ...) keep the old ids, so run this before
-    building them, or rebuild them afterwards.
+    closurize / denormalize, or rebuild them afterwards.
 
     Examples:
         # Preview the repairs
@@ -1193,6 +1201,9 @@ def canonicalize(
         # Repair only one prefix
         koza canonicalize graph.duckdb --only hgnc
 
+        # Repair and remove the duplicate rows the repair creates
+        koza canonicalize graph.duckdb --deduplicate
+
         # Use a different prefixmaps context
         koza canonicalize graph.duckdb --context bioregistry.upper
     """
@@ -1203,7 +1214,7 @@ def canonicalize(
             raise typer.BadParameter(f"Database file not found: {database}")
 
         config = CanonicalizeConfig(
-            database_path=database_path, context=context, only=only, dry_run=dry_run, quiet=quiet
+            database_path=database_path, context=context, only=only, deduplicate=deduplicate, dry_run=dry_run, quiet=quiet
         )
         result = canonicalize_graph(config)
 

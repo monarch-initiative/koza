@@ -358,7 +358,7 @@ class PrefixStatus(str, Enum):
     """Classification of an observed CURIE prefix against a prefixmaps context."""
 
     CANONICAL = "canonical"
-    CASE_VARIANT = "case_variant"
+    ALTERNATE_CASING = "alternate_casing"
     UNKNOWN = "unknown"
 
 
@@ -379,7 +379,7 @@ class PrefixReport(BaseModel):
     context: str
     total_prefixes: int
     canonical: int
-    case_variants: int
+    alternate_casing: int
     unknown: int
     prefixes: list[PrefixUsage] = Field(default_factory=list)
 
@@ -414,6 +414,7 @@ class CanonicalizeConfig(BaseModel):
     database_path: Path
     context: str = "merged"
     only: list[str] | None = None  # restrict repairs to these prefixes (case-insensitive)
+    deduplicate: bool = False  # remove node/edge collisions the rewrite creates
     dry_run: bool = False
     quiet: bool = False
 
@@ -435,6 +436,8 @@ class CanonicalizeResult(BaseModel):
     edge_objects_rewritten: int = 0
     node_id_collisions: int = 0
     edge_collisions: int = 0
+    nodes_removed: int = 0
+    edges_removed: int = 0
     final_stats: DatabaseStats | None = None
     total_time_seconds: float = 0.0
     summary: Optional["OperationSummary"] = None

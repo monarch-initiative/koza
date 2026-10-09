@@ -44,10 +44,7 @@ _TABLE_TO_CLASS: dict[str, str] = {
 # Operation modules that may export a DECLARED_OUTPUTS constant. Hardcoded
 # import list rather than entry-point discovery — koza ships a fixed set of
 # operations. Add new operation modules here when they declare outputs.
-_OPERATION_MODULES_WITH_OUTPUTS = (
-    "koza.graph_operations.normalize",
-    "koza.graph_operations.prefixes",
-)
+_OPERATION_MODULES_WITH_OUTPUTS = ("koza.graph_operations.normalize",)
 
 
 @functools.cache
@@ -339,20 +336,13 @@ def _write_metadata(
 
 
 def _read_metadata(conn: duckdb.DuckDBPyConnection, kind: str) -> str | None:
-    # Check for the table rather than catching CatalogException: a failed
-    # statement aborts any open transaction, which would break callers that
-    # run ensure_slots inside one.
-    exists = conn.execute(
-        "SELECT 1 FROM information_schema.tables "
-        "WHERE table_name = ? AND table_schema = 'main' AND table_catalog = current_database()",
-        [_KOZA_SCHEMA_TABLE],
-    ).fetchone()
-    if exists is None:
+    try:
+        row = conn.execute(
+            f"SELECT content FROM {_KOZA_SCHEMA_TABLE} WHERE kind = ?", [kind]
+        ).fetchone()
+    except duckdb.CatalogException:
         # Table doesn't exist — DB predates the schema feature.
         return None
-    row = conn.execute(
-        f"SELECT content FROM {_KOZA_SCHEMA_TABLE} WHERE kind = ?", [kind]
-    ).fetchone()
     return row[0] if row else None
 
 
