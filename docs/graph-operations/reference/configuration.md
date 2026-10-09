@@ -311,6 +311,8 @@ Configuration for the normalize operation, which applies SSSOM mappings to norma
   being read as "keep nothing"
 - **`use_match` values**: Each entry must be a CURIE (`prefix:local`); known skos/owl/rdfs/semapv
   IRIs are contracted to CURIEs. Bare names such as `exactMatch` raise a validation error
+- **Blank `predicate_id`**: Not a config check, but the operation fails if a mapping file has a
+  `predicate_id` column with any blank values (malformed SSSOM). Files without the column are fine
 
 #### Example
 

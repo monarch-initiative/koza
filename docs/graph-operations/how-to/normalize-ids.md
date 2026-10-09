@@ -204,8 +204,19 @@ kept, even when `--use-match` is set, so such a file keeps working exactly as be
 the loaded files carry the column at all, `--use-match` cannot be enforced and Koza warns rather
 than dropping every mapping.
 
-A file that *has* the column but leaves a row's `predicate_id` blank is different: under
-`--use-match` that row asserts none of the requested predicates and is dropped.
+### Blank predicate_id Values
+
+A file that *has* a `predicate_id` column must fill it on every row. A blank value is malformed
+SSSOM, so `normalize` fails, whether or not `--use-match` is set. The error names the file, the
+number of blank rows, and up to two example `subject_id -> object_id` pairs:
+
+```
+Malformed SSSOM file mappings/example.sssom.tsv: 3 row(s) have a blank predicate_id
+(e.g. subject_id -> object_id: A:1 -> B:1, A:2 -> B:2). Every row must have a predicate_id
+when the column is present.
+```
+
+Fix the file by filling in the predicate, or by removing the rows.
 
 ## Duplicate Mapping Handling
 

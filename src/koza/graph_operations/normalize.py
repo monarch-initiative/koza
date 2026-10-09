@@ -23,7 +23,6 @@ from .graph_schema import ensure_slots
 from .slots import edges
 from .utils import GraphDatabase, print_operation_summary
 
-
 # SSSOM predicates that assert identity. Everything else (closeMatch, broadMatch,
 # narrowMatch, relatedMatch, ...) asserts something weaker and is only applied when the
 # caller explicitly opts in via NormalizeConfig.use_match.
@@ -39,10 +38,6 @@ class MappingsTableSummary(NamedTuple):
     has_predicate_column: bool
     # Rows from files that carry predicate_id which survived the use_match filter
     kept_with_predicate_count: int = 0
-
-
-# Internal marker column recording, per row, whether its source file had a predicate_id column.
-_HAS_PREDICATE_MARKER = "_koza_has_predicate_id"
 
 
 DECLARED_OUTPUTS: dict[str, dict[str, dict]] = {
@@ -421,9 +416,8 @@ def _create_mappings_table(
         mapping_results: List of FileLoadResult objects with temp_table_name set
         use_match: Optional list of SSSOM predicate CURIEs to keep, e.g.
             ["skos:exactMatch"]. Rows from files without a predicate_id column are always
-            kept, so such files keep working unchanged. Rows from files that do have the
-            column but leave it blank are dropped when use_match is set. Known skos/owl/
-            rdfs/semapv predicate IRIs are contracted to CURIEs before comparison.
+            kept, so such files keep working unchanged. Known skos/owl/rdfs/semapv predicate
+            IRIs are contracted to CURIEs before comparison.
 
     Returns:
         MappingsTableSummary with the duplicate count, per-predicate row counts before
@@ -431,28 +425,24 @@ def _create_mappings_table(
         loaded mappings had a predicate_id column at all
 
     Raises:
-        ValueError: If no mapping files loaded successfully
+        ValueError: If no mapping files loaded successfully, or if a file that has a
+            predicate_id column leaves it blank on any row (malformed SSSOM)
     """
     # Get temp tables that loaded successfully
-    mapping_tables = []
-    for result in mapping_results:
-        if result.temp_table_name and not result.errors:
-            mapping_tables.append(result.temp_table_name)
+    loaded = [result for result in mapping_results if result.temp_table_name and not result.errors]
+    mapping_tables = [result.temp_table_name for result in loaded]
 
     if not mapping_tables:
         raise ValueError("No mapping files loaded successfully")
 
-    # SSSOM files are not required to carry predicate_id. Record per file whether it does, so
-    # that after the union a NULL predicate_id from a file without the column (kept: we cannot
-    # filter what is not there) can be told apart from a blank cell in a file with the column.
-    selects = []
-    for table in mapping_tables:
-        table_columns = {row[0] for row in db.conn.execute(f"DESCRIBE {table}").fetchall()}
-        has_column = "predicate_id" in table_columns
-        selects.append(f"SELECT *, {str(has_column).upper()} AS {_HAS_PREDICATE_MARKER} FROM {table}")
+    # predicate_id is optional in SSSOM, but a file that declares the column must fill it.
+    # Rejecting blanks here means that after the union a NULL predicate_id can only come from
+    # a file without the column, whose rows are always kept.
+    for result in loaded:
+        _check_no_blank_predicates(db, result)
 
     # Create mappings table using UNION ALL BY NAME
-    union_stmt = " UNION ALL BY NAME ".join(selects)
+    union_stmt = " UNION ALL BY NAME ".join([f"SELECT * FROM {table}" for table in mapping_tables])
     db.conn.execute(f"CREATE OR REPLACE TABLE mappings_raw AS {union_stmt}")
 
     # UNION ALL BY NAME only produces the column if at least one input file had it.
@@ -481,27 +471,25 @@ def _create_mappings_table(
         }
 
         if use_match:
-            # Rows from a file without the column are left alone: dropping them would silently
-            # discard the whole file. Rows from a file with the column but a blank predicate_id
-            # do not assert any of the requested predicates, so they are dropped.
+            # NULL predicate_id rows come from a file without the column (blanks in files with
+            # the column were rejected above); dropping them would silently discard the whole
+            # file, so they are left alone.
             rows_before = db.conn.execute("SELECT COUNT(*) FROM mappings_raw").fetchone()[0]
             db.conn.execute(
-                f"DELETE FROM mappings_raw WHERE {_HAS_PREDICATE_MARKER} "
-                "AND (predicate_id IS NULL OR NOT list_contains(?::VARCHAR[], predicate_id))",
+                "DELETE FROM mappings_raw "
+                "WHERE predicate_id IS NOT NULL AND NOT list_contains(?::VARCHAR[], predicate_id)",
                 [list(use_match)],
             )
             rows_after = db.conn.execute("SELECT COUNT(*) FROM mappings_raw").fetchone()[0]
             filtered_out_count = rows_before - rows_after
             kept_with_predicate_count = db.conn.execute(
-                f"SELECT COUNT(*) FROM mappings_raw WHERE {_HAS_PREDICATE_MARKER}"
+                "SELECT COUNT(*) FROM mappings_raw WHERE predicate_id IS NOT NULL"
             ).fetchone()[0]
 
             logger.info(
                 f"Filtered SSSOM mappings to predicates {sorted(use_match)}: "
                 f"kept {rows_after}, dropped {filtered_out_count}"
             )
-
-    db.conn.execute(f"ALTER TABLE mappings_raw DROP COLUMN {_HAS_PREDICATE_MARKER}")
 
     # Count total and unique mappings
     total_count = db.conn.execute("SELECT COUNT(*) FROM mappings_raw").fetchone()[0]
@@ -544,6 +532,32 @@ def _create_mappings_table(
         filtered_out_count=filtered_out_count,
         has_predicate_column=has_predicate_column,
         kept_with_predicate_count=kept_with_predicate_count,
+    )
+
+
+def _check_no_blank_predicates(db: GraphDatabase, result: FileLoadResult) -> None:
+    """
+    Raise if a mapping file has a predicate_id column with blank values.
+
+    A blank predicate_id in a file that declares the column is malformed SSSOM: the row
+    asserts no relationship, so it can be neither applied nor filtered meaningfully.
+    """
+    table = result.temp_table_name
+    table_columns = {row[0] for row in db.conn.execute(f"DESCRIBE {table}").fetchall()}
+    if "predicate_id" not in table_columns:
+        return
+
+    blank_condition = "predicate_id IS NULL OR trim(predicate_id) = ''"
+    blank_count = db.conn.execute(f"SELECT COUNT(*) FROM {table} WHERE {blank_condition}").fetchone()[0]
+    if blank_count == 0:
+        return
+
+    examples = db.conn.execute(f"SELECT subject_id, object_id FROM {table} WHERE {blank_condition} LIMIT 2").fetchall()
+    example_text = ", ".join(f"{subject_id} -> {object_id}" for subject_id, object_id in examples)
+    raise ValueError(
+        f"Malformed SSSOM file {result.file_spec.path}: {blank_count:,} row(s) have a blank predicate_id "
+        f"(e.g. subject_id -> object_id: {example_text}). Every row must have a predicate_id when the "
+        f"column is present."
     )
 
 
