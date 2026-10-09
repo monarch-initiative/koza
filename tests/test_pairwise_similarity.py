@@ -157,3 +157,57 @@ def test_does_not_modify_database(kg, tmp_path):
 def test_missing_ic_table_fails(kg, tmp_path):
     with pytest.raises(Exception, match="no_such_ic"):
         compute_pairwise_similarity(_config(kg, tmp_path / "p.tsv", ic_table="no_such_ic"))
+
+
+ALL_SUBJECTS = ["HP:A", "HP:A1", "HP:A2"]
+ALL_OBJECTS = ["HP:A", "HP:A1", "HP:A2", "HP:B", "HP:B1", "HP:ROOT", "X:1", "X:2"]
+
+
+def _assert_matches_expected(out, threshold=1.5):
+    exp = expected(ALL_SUBJECTS, ALL_OBJECTS, threshold)
+    df = _read(out)
+    got = {(r.subject_id, r.object_id): (r.ancestor_id, r.ancestor_information_content,
+                                          r.jaccard_similarity, r.phenodigm_score) for r in df.itertuples()}
+    assert got.keys() == exp.keys()
+    for k, (mica, res, jac, ph) in exp.items():
+        assert got[k][0] == mica, k
+        assert got[k][1:] == pytest.approx((res, jac, ph)), k
+    return df
+
+
+def test_closure_without_self_rows(kg, tmp_path):
+    """anc(t) is reflexive whether or not the closure carries (t, t) rows."""
+    with GraphDatabase(kg) as db:
+        db.conn.execute("DELETE FROM closure WHERE subject_id = object_id AND subject_id NOT IN ('HP:A', 'HP:ROOT')")
+    out = tmp_path / "pairs.tsv"
+    compute_pairwise_similarity(_config(kg, out))
+    df = _assert_matches_expected(out)
+    # sibling leaves must not look identical
+    r = df[(df.subject_id == "HP:A1") & (df.object_id == "HP:A2")].iloc[0]
+    assert r.jaccard_similarity == pytest.approx(2 / 4) and r.ancestor_id == "HP:A"
+
+
+def test_duplicate_ic_rows_do_not_inflate_jaccard(kg, tmp_path):
+    with GraphDatabase(kg) as db:
+        db.conn.executemany("INSERT INTO information_content_x VALUES (?, ?)", list(IC.items()))
+    out = tmp_path / "pairs.tsv"
+    compute_pairwise_similarity(_config(kg, out))
+    df = _assert_matches_expected(out)
+    assert (df.jaccard_similarity <= 1.0).all()
+
+
+def test_duplicate_node_rows_do_not_multiply_output(kg, tmp_path):
+    with GraphDatabase(kg) as db:
+        db.conn.executemany("INSERT INTO nodes VALUES (?, ?)", list(LABELS.items()))
+    out = tmp_path / "pairs.tsv"
+    result = compute_pairwise_similarity(_config(kg, out))
+    _assert_matches_expected(out)
+    assert len(_read(out)) == result.row_count
+
+
+def test_output_is_sorted(kg, tmp_path):
+    out = tmp_path / "pairs.tsv"
+    compute_pairwise_similarity(_config(kg, out, batch_size=1))
+    df = duckdb.connect().execute(f"SELECT subject_id, object_id FROM '{out}'").fetchdf()
+    keys = list(zip(df.subject_id, df.object_id, strict=True))
+    assert keys == sorted(keys)

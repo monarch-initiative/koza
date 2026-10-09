@@ -163,3 +163,23 @@ def test_missing_closure_fails(tmp_path):
         _write_edges(db.conn, array_category=False)
     with pytest.raises(Exception, match="closure"):
         compute_annotation_information_content(_config(db_path))
+
+
+def test_closure_without_self_rows(kg):
+    """Each annotated term counts as its own ancestor even when the closure has
+    no reflexive rows: same IC as with them, and leaf terms still get a row."""
+    with GraphDatabase(kg) as db:
+        db.conn.execute("DELETE FROM closure WHERE subject_id = object_id")
+    compute_annotation_information_content(_config(kg))
+    ic = _ic(kg)
+    # HP:ROOT and the intermediate terms still reached via non-reflexive rows;
+    # leaves HP:1 / HP:2 now come only from the added self-rows.
+    assert ic == pytest.approx({
+        "HP:1": 1.0, "HP:0": 1.0, "HP:2": 1.0, "HP:OTHER": 1.0, "HP:ROOT": 0.0,
+    })
+
+
+def test_no_negative_zero(kg):
+    compute_annotation_information_content(_config(kg))
+    root = _ic(kg)["HP:ROOT"]
+    assert root == 0.0 and math.copysign(1.0, root) == 1.0

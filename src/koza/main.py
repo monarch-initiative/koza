@@ -931,7 +931,7 @@ def pairwise_similarity(
         "--closure-predicate", help="Closure predicate(s) defining ancestry (repeatable). Default: rdfs:subClassOf",
     )] = None,
     no_labels: Annotated[bool, typer.Option("--no-labels", help="Skip the label columns")] = False,
-    batch_size: Annotated[int, typer.Option("--batch-size", help="Subject terms per SQL batch")] = 500,
+    batch_size: Annotated[int, typer.Option("--batch-size", help="Subject terms per SQL batch; peak memory grows with it, so lower it for large term sets")] = 500,
     memory_limit: Annotated[str | None, typer.Option(
         "--memory-limit", help="DuckDB memory limit, e.g. 64GB (set it under SLURM / CI)")] = None,
     threads: Annotated[int | None, typer.Option("--threads", help="DuckDB threads")] = None,

@@ -840,6 +840,8 @@ class PairwiseSimilarityConfig(BaseModel):
     labels_id_column: str = Field(default="id", pattern=_SQL_IDENTIFIER)
     labels_name_column: str = Field(default="name", pattern=_SQL_IDENTIFIER)
     # Subject terms per SQL batch; bounds the size of the shared-ancestor join.
+    # Peak memory grows ~ batch_size x |objects| x ancestor depth (near-root
+    # ancestors are shared with every object), so lower it for large term sets.
     batch_size: int = Field(default=500, ge=1)
     memory_limit: str | None = None  # DuckDB memory_limit, e.g. "64GB" (set it under SLURM / CI)
     threads: int | None = Field(default=None, ge=1)

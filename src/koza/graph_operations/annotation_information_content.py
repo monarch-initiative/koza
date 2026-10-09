@@ -9,8 +9,9 @@ the IC semsimian is given for phenotype comparisons:
     IC(t) = -log2(n(t) / N)
 
 n(t) is the number of distinct entities with an association to t or to any
-closure descendant of t; N is the number of distinct entities with any selected
-association. Associations are the `edges` rows matching the configured
+closure descendant of t (every term counts as its own descendant, whether or not
+the closure carries reflexive rows); N is the number of distinct entities with
+any selected association. Associations are the `edges` rows matching the configured
 predicate, categories, subject/object CURIE prefixes and negation filter, so one
 run covers one annotation corpus (e.g. mouse genes -> MP terms) and writes it to
 its own table.
@@ -80,16 +81,25 @@ def compute_annotation_information_content(
                 "SELECT count(DISTINCT entity), count(*) FROM _annotation_corpus"
             ).fetchone()
 
+            # Every annotated term is its own ancestor. Add those self-rows rather
+            # than trusting the closure to carry them: without them a term's direct
+            # annotations never count toward its own IC and leaf terms get no row.
+            # log2(N / n) rather than -log2(n / N), which yields -0.0 when n = N.
             conn.execute(f"""
                 CREATE OR REPLACE TABLE {config.output_table} AS
-                WITH n AS (SELECT count(DISTINCT entity) AS nn FROM _annotation_corpus)
-                SELECT c.{config.closure_object_column} AS term,
-                       -log2(count(DISTINCT a.entity)::DOUBLE / (SELECT nn FROM n)) AS ic
+                WITH n AS (SELECT count(DISTINCT entity) AS nn FROM _annotation_corpus),
+                clo AS (
+                    SELECT {config.closure_subject_column} AS s, {config.closure_object_column} AS o
+                    FROM {config.closure_table}
+                    WHERE {config.closure_predicate_column} IN ({sql_string_list(config.closure_predicates)})
+                    UNION
+                    SELECT DISTINCT term, term FROM _annotation_corpus
+                )
+                SELECT c.o AS term,
+                       log2((SELECT nn FROM n)::DOUBLE / count(DISTINCT a.entity)) AS ic
                 FROM _annotation_corpus a
-                JOIN {config.closure_table} c
-                  ON c.{config.closure_subject_column} = a.term
-                 AND c.{config.closure_predicate_column} IN ({sql_string_list(config.closure_predicates)})
-                GROUP BY c.{config.closure_object_column}
+                JOIN clo c ON c.s = a.term
+                GROUP BY c.o
             """)
             conn.execute("DROP TABLE _annotation_corpus")
             term_count = conn.execute(f"SELECT count(*) FROM {config.output_table}").fetchone()[0]

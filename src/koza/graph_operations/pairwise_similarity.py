@@ -18,7 +18,11 @@ arbitrarily).
 
 The graph database is attached read-only; subject terms are processed in
 batches (`batch_size`) so the shared-ancestor join stays bounded, with
-intermediates in a scratch DuckDB file beside the output.
+intermediates in a scratch DuckDB file beside the output. Each batch materializes
+every (subject, object, shared ancestor) row before the IC threshold filters
+them, and near-root ancestors are shared with every object, so peak memory grows
+roughly with batch_size x |objects| x ancestor depth; lower `batch_size` (or set
+`memory_limit` to let DuckDB spill) for large term sets.
 """
 
 from __future__ import annotations
@@ -81,14 +85,27 @@ def compute_pairwise_similarity(config: PairwiseSimilarityConfig) -> PairwiseSim
             logger.info(f"pairwise-similarity: {subject_count:,} subjects x {object_count:,} objects, "
                         f"ic_table={config.ic_table}, min_ancestor_ic>{config.min_ancestor_information_content}")
 
-            # closure restricted to the compared terms; DISTINCT collapses multi-predicate duplicates
+            # closure restricted to the compared terms; UNION collapses multi-predicate
+            # duplicates. Self-rows are added explicitly: anc(t) is reflexive, and a
+            # closure without them would drop each term from its own ancestor set
+            # (e.g. sibling leaves scoring Jaccard 1.0 with their parent as MICA).
             con.execute(f"""CREATE TABLE clo AS
-                SELECT DISTINCT c.{cs} AS t, c.{co} AS a FROM kg.{config.closure_table} c
+                SELECT c.{cs} AS t, c.{co} AS a FROM kg.{config.closure_table} c
                 WHERE c.{cp} IN ({preds})
-                  AND c.{cs} IN (SELECT t FROM s_terms UNION SELECT t FROM o_terms)""")
+                  AND c.{cs} IN (SELECT t FROM s_terms UNION SELECT t FROM o_terms)
+                UNION SELECT t, t FROM s_terms
+                UNION SELECT t, t FROM o_terms""")
             con.execute("CREATE TABLE sz AS SELECT t, count(*) AS sz FROM clo GROUP BY t")
             con.execute("CREATE TABLE o_clo AS SELECT c.t, c.a FROM clo c JOIN o_terms o ON o.t = c.t")
-            con.execute(f"CREATE TABLE ic AS SELECT term, ic FROM kg.{config.ic_table}")
+            # One IC per term: a duplicated term would multiply `common` rows in the
+            # LEFT JOIN below, inflating the shared-ancestor count (Jaccard > 1 / inf).
+            con.execute(f"CREATE TABLE ic AS SELECT term, max(ic) AS ic FROM kg.{config.ic_table} GROUP BY term")
+            dup_terms = con.execute(
+                f"SELECT count(*) FROM (SELECT term FROM kg.{config.ic_table} GROUP BY term HAVING count(*) > 1)"
+            ).fetchone()[0]
+            if dup_terms:
+                logger.warning(f"pairwise-similarity: {dup_terms:,} terms appear more than once in "
+                               f"{config.ic_table}; using the max IC for each")
 
             con.execute("""CREATE TABLE result (subject_id VARCHAR, object_id VARCHAR, ancestor_id VARCHAR,
                 ancestor_information_content DOUBLE, jaccard_similarity DOUBLE, phenodigm_score DOUBLE)""")
@@ -127,8 +144,11 @@ def compute_pairwise_similarity(config: PairwiseSimilarityConfig) -> PairwiseSim
                     logger.info(f"pairwise-similarity: batch {b + 1}/{n_batches}")
 
             if config.labels_table:
-                lt = f"kg.{config.labels_table}"
                 lid, lname = config.labels_id_column, config.labels_name_column
+                # One label per id: duplicate node rows would otherwise multiply output rows.
+                con.execute(f"""CREATE TABLE labels AS
+                    SELECT {lid}, min({lname}) AS {lname} FROM kg.{config.labels_table} GROUP BY {lid}""")
+                lt = "labels"
                 select = f"""
                     SELECT r.subject_id, ls.{lname} AS subject_label, r.object_id, lo.{lname} AS object_label,
                            r.ancestor_id, la.{lname} AS ancestor_label,
@@ -139,7 +159,9 @@ def compute_pairwise_similarity(config: PairwiseSimilarityConfig) -> PairwiseSim
                     LEFT JOIN {lt} la ON la.{lid} = r.ancestor_id"""
             else:
                 select = "SELECT * FROM result"
-            con.execute(f"COPY ({select}) TO {sql_string_list([str(out)])} {_copy_options(out)}")
+            # Explicit order: preserve_insertion_order is off, so without it the output is not reproducible.
+            ordered = f"{select} ORDER BY subject_id, object_id"
+            con.execute(f"COPY ({ordered}) TO {sql_string_list([str(out)])} {_copy_options(out)}")
             row_count = con.execute("SELECT count(*) FROM result").fetchone()[0]
         finally:
             con.close()
