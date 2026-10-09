@@ -1646,6 +1646,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#koza-annotation-information-content" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        koza annotation-information-content
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza-pairwise-similarity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        koza pairwise-similarity
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#koza-profile" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1927,6 +1949,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#koza-annotation-information-content" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        koza annotation-information-content
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koza-pairwise-similarity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        koza pairwise-similarity
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#koza-profile" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2109,6 +2153,8 @@
 <li><code>schema-export</code>: Export the koza graph schema from a DuckDB...</li>
 <li><code>closurize</code>: Apply closure expansion to a merged graph:...</li>
 <li><code>information-content</code>: Compute information-content and...</li>
+<li><code>annotation-information-content</code>: Compute annotation-based information...</li>
+<li><code>pairwise-similarity</code>: All-by-all term similarity (Jaccard,...</li>
 <li><code>profile</code>: Profile the shape of a graph: schema-smart...</li>
 <li><code>prune</code>: Prune graph by removing dangling edges and...</li>
 <li><code>append</code>: Append new KGX files to an existing graph...</li>
@@ -2313,11 +2359,13 @@ and writes two tables a downstream similarity engine can read instead of
 rebuilding per process:</p>
 <p>information_content  (term, ic)     -- information content per closure term
   closure_size         (entity, size) -- distinct closure subsumers per entity</p>
+<p><code>closure_size</code> covers every entity with an association-predicate edge, so
+genotypes, variants and cases get sizes alongside genes and diseases.</p>
 <p>Run after <code>closurize</code>.</p>
 <p>Examples:
-    # Monarch defaults (rdfs:subClassOf, Gene/Disease has_phenotype)
+    # Defaults: rdfs:subClassOf closure, every has_phenotype entity
     koza information-content monarch-kg.duckdb</p>
-<pre><code># Custom closure predicate and association edge
+<pre><code># Custom closure predicate, narrowed to one association category
 koza information-content graph.duckdb \
     --closure-predicate rdfs:subClassOf --closure-predicate BFO:0000050 \
     --association-category biolink:GeneToPhenotypicFeatureAssociation \
@@ -2333,9 +2381,75 @@ koza information-content graph.duckdb \
 <p><strong>Options</strong>:</p>
 <ul>
 <li><code>--closure-predicate &lt;str&gt;</code>: Closure predicate(s) that define ancestry for IC / closure-size (repeatable). Default: rdfs:subClassOf</li>
-<li><code>--association-category &lt;str&gt;</code>: Edge category that links an entity to a term, for the closure-size table (repeatable). Default: Monarch Gene/Disease has_phenotype categories</li>
+<li><code>--association-category &lt;str&gt;</code>: Narrow the closure-size table to these edge categories (repeatable). Default: no category filter — every entity with an association-predicate edge gets a size, whatever its category</li>
 <li><code>--association-predicate &lt;str&gt;</code>: Edge predicate for entity-&gt;term associations. Default: biolink:has_phenotype</li>
 <li><code>--include-negated</code>: Include negated associations in the closure-size table (default: excluded)</li>
+<li><code>-q, --quiet</code>: Suppress output</li>
+<li><code>--help</code>: Show this message and exit.</li>
+</ul>
+<h2 id="koza-annotation-information-content"><code>koza annotation-information-content</code></h2>
+<p>Compute annotation-based information content into a named table.</p>
+<p>IC(t) = -log2(n(t) / N): n(t) = distinct entities annotated to t or a closure
+descendant of t, N = distinct annotated entities (oaklib&#x27;s
+<code>information-content --use-associations</code>). Run once per annotation corpus.</p>
+<p>Run after <code>closurize</code>.</p>
+<p>Examples:
+    # mouse gene -&gt; MP corpus
+    koza annotation-information-content monarch-kg.duckdb \
+        --output-table information_content_mgi_mp \
+        --association-category biolink:GeneToPhenotypicFeatureAssociation \
+        --subject-prefix MGI --object-prefix MP</p>
+<p><strong>Usage</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>annotation-information-content<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span><span class="o">{</span>database<span class="o">}</span>
+</code></pre></div>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>database</code>: Path to an already-closurized DuckDB database file  [required]</li>
+</ul>
+<p><strong>Options</strong>:</p>
+<ul>
+<li><code>--output-table &lt;str&gt;</code>: Table to write (term, ic), e.g. information_content_mgi_mp  [required]</li>
+<li><code>--association-category &lt;str&gt;</code>: Edge category making up the annotation corpus (repeatable, required), e.g. biolink:GeneToPhenotypicFeatureAssociation  [required]</li>
+<li><code>--subject-prefix &lt;str&gt;</code>: Keep associations whose subject has this CURIE prefix (repeatable), e.g. MGI</li>
+<li><code>--object-prefix &lt;str&gt;</code>: Keep associations whose object has this CURIE prefix (repeatable), e.g. MP</li>
+<li><code>--association-predicate &lt;str&gt;</code>: Edge predicate for entity-&gt;term associations. Default: biolink:has_phenotype</li>
+<li><code>--closure-predicate &lt;str&gt;</code>: Closure predicate(s) that define ancestry (repeatable). Default: rdfs:subClassOf</li>
+<li><code>--include-negated</code>: Include negated associations in the corpus (default: excluded)</li>
+<li><code>-q, --quiet</code>: Suppress output</li>
+<li><code>--help</code>: Show this message and exit.</li>
+</ul>
+<h2 id="koza-pairwise-similarity"><code>koza pairwise-similarity</code></h2>
+<p>All-by-all term similarity (Jaccard, Resnik, Phenodigm) between two term sets.</p>
+<p>Semsimian&#x27;s all_by_all_pairwise_similarity, computed in DuckDB over the
+closure. Pairs are kept when Resnik (max IC of a shared ancestor, from
+--ic-table) is strictly above the threshold.</p>
+<p>Run after <code>closurize</code> and an IC operation (e.g. <code>annotation-information-content</code>).</p>
+<p>Examples:
+    koza pairwise-similarity monarch-kg.duckdb -o HP_vs_MP.parquet \
+        --ic-table information_content_mgi_mp \
+        --subject-root HP:0000118 --subject-prefix HP \
+        --object-root MP:0000001 --object-prefix MP</p>
+<p><strong>Usage</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>pairwise-similarity<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span><span class="o">{</span>database<span class="o">}</span>
+</code></pre></div>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>database</code>: Closurized DuckDB database (opened read-only)  [required]</li>
+</ul>
+<p><strong>Options</strong>:</p>
+<ul>
+<li><code>-o, --output &lt;str&gt;</code>: Output file: .parquet, .tsv or .tsv.gz  [required]</li>
+<li><code>--ic-table &lt;str&gt;</code>: Table of (term, ic) to score shared ancestors, e.g. information_content_mgi_mp  [required]</li>
+<li><code>--subject-root &lt;str&gt;</code>: Subject terms: descendants of this term  [required]</li>
+<li><code>--object-root &lt;str&gt;</code>: Object terms: descendants of this term  [required]</li>
+<li><code>--subject-prefix &lt;str&gt;</code>: Keep subject terms with this CURIE prefix (repeatable)</li>
+<li><code>--object-prefix &lt;str&gt;</code>: Keep object terms with this CURIE prefix (repeatable)</li>
+<li><code>--min-ancestor-information-content &lt;float&gt;</code>: Keep pairs whose Resnik score is strictly greater  [default: 1.5]</li>
+<li><code>--closure-predicate &lt;str&gt;</code>: Closure predicate(s) defining ancestry (repeatable). Default: rdfs:subClassOf</li>
+<li><code>--no-labels</code>: Skip the label columns</li>
+<li><code>--batch-size &lt;int&gt;</code>: Subject terms per SQL batch; peak memory grows with it, so lower it for large term sets  [default: 500]</li>
+<li><code>--memory-limit &lt;str&gt;</code>: DuckDB memory limit, e.g. 64GB (set it under SLURM / CI)</li>
+<li><code>--threads &lt;int&gt;</code>: DuckDB threads</li>
 <li><code>-q, --quiet</code>: Suppress output</li>
 <li><code>--help</code>: Show this message and exit.</li>
 </ul>
