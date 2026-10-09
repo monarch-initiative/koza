@@ -247,6 +247,11 @@ def _build_closure_tables(db: duckdb.DuckDBPyConnection, closure_file: str) -> N
     descendants_id / descendants_label: descendant sets per node (used by
     has_descendant on the denormalized_nodes view).
     """
+    # Sorted by subject_id so DuckDB's row-group zone maps can prune a lookup by
+    # subject to a handful of row groups. Unsorted, `WHERE subject_id IN (...)`
+    # degrades to a sequential scan of the whole table (~21M rows on monarch-kg)
+    # however selective the filter is, because every row group's min/max spans
+    # the queried values. The secondary keys make the output byte-reproducible.
     db.sql(f"""
         CREATE OR REPLACE TABLE closure AS
         SELECT * FROM read_csv(
@@ -255,6 +260,7 @@ def _build_closure_tables(db: duckdb.DuckDBPyConnection, closure_file: str) -> N
             names=['subject_id', 'predicate_id', 'object_id'],
             AUTO_DETECT=TRUE
         )
+        ORDER BY subject_id, predicate_id, object_id
     """)
     db.sql("""
         CREATE OR REPLACE TABLE closure_id AS
