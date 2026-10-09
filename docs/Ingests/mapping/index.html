@@ -1704,14 +1704,14 @@ and any prefixes you want to use to filter the SSSOM file.<br />
 Koza will automatically create a mapping lookup table which will automatically<br />
 attempt to map any values in the source file to an ID with the target prefix.</p>
 <div class="highlight"><pre><span></span><code><span class="nt">sssom_config</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">sssom_file</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;./path/to/your_mapping_file.sssom.tsv&#39;</span>
+<span class="w">    </span><span class="nt">sssom_file</span><span class="p">:</span><span class="w"> </span><span class="s">'./path/to/your_mapping_file.sssom.tsv'</span>
 <span class="w">    </span><span class="nt">filter_prefixes</span><span class="p">:</span><span class="w"> </span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;SOMEPREFIX&#39;</span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;OTHERPREFIX&#39;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'SOMEPREFIX'</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'OTHERPREFIX'</span>
 <span class="w">    </span><span class="nt">target_prefixes</span><span class="p">:</span><span class="w"> </span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;OTHERPREFIX&#39;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'OTHERPREFIX'</span>
 <span class="w">    </span><span class="nt">use_match</span><span class="p">:</span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;exact&#39;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'exact'</span>
 </code></pre></div>
 <p><strong>Note:</strong> Currently, only the <code>exact</code> match type is supported (<code>narrow</code> and <code>broad</code> match types will be added in the future).</p>
 <h3 id="manual-mapping-additional-data">Manual Mapping / Additional Data</h3>
@@ -1726,15 +1726,15 @@ For example, the following map config yaml maps values from the <code>STRING</co
 <span class="nt">files</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">...</span>
 
 <span class="nt">columns</span><span class="p">:</span>
-<span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;NCBI</span><span class="nv"> </span><span class="s">taxid&#39;</span>
-<span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;entrez&#39;</span>
-<span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;STRING&#39;</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'NCBI</span><span class="nv"> </span><span class="s">taxid'</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'entrez'</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'STRING'</span>
 
-<span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;STRING&#39;</span>
+<span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="s">'STRING'</span>
 
 <span class="nt">values</span><span class="p">:</span>
-<span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;entrez&#39;</span>
-<span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;NCBI</span><span class="nv"> </span><span class="s">taxid&#39;</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'entrez'</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'NCBI</span><span class="nv"> </span><span class="s">taxid'</span>
 </code></pre></div>
 <p>The mapping dict will be available in your transform script from the <code>koza_app</code> object (see the Transform Code section below).</p>
 <hr />

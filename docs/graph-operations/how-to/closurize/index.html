@@ -1935,7 +1935,7 @@
 <span class="w">    </span>--edge-field-to-label<span class="w"> </span>onset_qualifier<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--edge-field-to-label<span class="w"> </span>frequency_qualifier<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--node-field<span class="w"> </span>has_phenotype<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--additional-node-constraints<span class="w"> </span><span class="s2">&quot;e.negated IS NULL OR e.negated = false&quot;</span>
+<span class="w">    </span>--additional-node-constraints<span class="w"> </span><span class="s2">"e.negated IS NULL OR e.negated = false"</span>
 </code></pre></div>
 <p>The <code>--additional-node-constraints</code> flag accepts a SQL <code>WHERE</code>-style fragment applied to the per-predicate edge join. Reference edges columns via the <code>e</code> alias.</p>
 <h2 id="schema-evolution">Schema Evolution</h2>
@@ -1958,11 +1958,11 @@
 <div class="highlight"><pre><span></span><code><span class="c1">-- All edges where the subject is a descendant of MONDO:0700096 (human disease)</span>
 <span class="k">SELECT</span><span class="w"> </span><span class="n">subject_label</span><span class="p">,</span><span class="w"> </span><span class="n">predicate</span><span class="p">,</span><span class="w"> </span><span class="n">object_label</span>
 <span class="k">FROM</span><span class="w"> </span><span class="n">denormalized_edges</span>
-<span class="k">WHERE</span><span class="w"> </span><span class="n">list_contains</span><span class="p">(</span><span class="n">subject_closure</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;MONDO:0700096&#39;</span><span class="p">)</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">list_contains</span><span class="p">(</span><span class="n">subject_closure</span><span class="p">,</span><span class="w"> </span><span class="s1">'MONDO:0700096'</span><span class="p">)</span>
 <span class="k">LIMIT</span><span class="w"> </span><span class="mi">5</span><span class="p">;</span>
 </code></pre></div>
 <p>And confirm <code>_koza_schema</code> knows about the new classes:</p>
-<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">&quot;SELECT kind, length(content) FROM _koza_schema&quot;</span>
+<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">"SELECT kind, length(content) FROM _koza_schema"</span>
 </code></pre></div>
 <h2 id="next-steps">Next Steps</h2>
 <ul>

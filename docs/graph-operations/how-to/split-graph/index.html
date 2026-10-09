@@ -2260,8 +2260,8 @@
 <p>When splitting on array-type fields (like <code>category</code> or <code>provided_by</code> which can contain multiple values), records may appear in multiple output files.</p>
 <p>For example, if a node has:</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;HGNC:1234&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;category&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;biolink:Gene&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;biolink:NamedThing&quot;</span><span class="p">]</span>
+<span class="w">  </span><span class="nt">"id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"HGNC:1234"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"category"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"biolink:Gene"</span><span class="p">,</span><span class="w"> </span><span class="s2">"biolink:NamedThing"</span><span class="p">]</span>
 <span class="p">}</span>
 </code></pre></div>
 <p>This node will appear in both:</p>
@@ -2294,7 +2294,7 @@
 <div class="highlight"><pre><span></span><code><span class="c1"># Output to current directory</span>
 koza<span class="w"> </span>split<span class="w"> </span>data.tsv<span class="w"> </span>provided_by<span class="w"> </span>--output-dir<span class="w"> </span>.
 
-<span class="c1"># Output to nested directory (created if it doesn&#39;t exist)</span>
+<span class="c1"># Output to nested directory (created if it doesn't exist)</span>
 koza<span class="w"> </span>split<span class="w"> </span>data.tsv<span class="w"> </span>category<span class="w"> </span>--output-dir<span class="w"> </span>./processed/split/by_category
 
 <span class="c1"># Absolute path</span>
@@ -2320,14 +2320,14 @@ wc<span class="w"> </span>-l<span class="w"> </span>original_nodes.tsv
 head<span class="w"> </span>-5<span class="w"> </span>./split_output/monarch_hgnc_nodes.tsv
 
 <span class="c1"># Verify records have the expected field value</span>
-grep<span class="w"> </span><span class="s2">&quot;infores:hgnc&quot;</span><span class="w"> </span>./split_output/monarch_hgnc_nodes.tsv<span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-3
+grep<span class="w"> </span><span class="s2">"infores:hgnc"</span><span class="w"> </span>./split_output/monarch_hgnc_nodes.tsv<span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-3
 </code></pre></div>
 <h3 id="use-duckdb-for-detailed-verification">Use DuckDB for detailed verification</h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># Load and inspect a split file</span>
-duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;SELECT COUNT(*) FROM read_csv_auto(&#39;./split_output/monarch_hgnc_nodes.tsv&#39;)&quot;</span>
+duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">"SELECT COUNT(*) FROM read_csv_auto('./split_output/monarch_hgnc_nodes.tsv')"</span>
 
 <span class="c1"># Verify field values</span>
-duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;SELECT DISTINCT provided_by FROM read_csv_auto(&#39;./split_output/monarch_hgnc_nodes.tsv&#39;)&quot;</span>
+duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">"SELECT DISTINCT provided_by FROM read_csv_auto('./split_output/monarch_hgnc_nodes.tsv')"</span>
 </code></pre></div>
 <h2 id="cli-options-reference">CLI Options Reference</h2>
 <table>

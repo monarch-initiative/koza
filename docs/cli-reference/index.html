@@ -2544,10 +2544,10 @@ koza<span class="w"> </span>transform<span class="w"> </span>transform.py<span c
 <div class="highlight"><pre><span></span><code>koza<span class="w"> </span>join<span class="w"> </span>--nodes<span class="w"> </span>genes.tsv<span class="w"> </span>proteins.jsonl<span class="w"> </span>--edges<span class="w"> </span>interactions.parquet
 </code></pre></div></p>
 <p><strong>With source names</strong>:
-<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>join<span class="w"> </span>--nodes<span class="w"> </span><span class="s2">&quot;genes:genes.tsv&quot;</span><span class="w"> </span><span class="s2">&quot;proteins:proteins.jsonl&quot;</span>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>join<span class="w"> </span>--nodes<span class="w"> </span><span class="s2">"genes:genes.tsv"</span><span class="w"> </span><span class="s2">"proteins:proteins.jsonl"</span>
 </code></pre></div></p>
 <p><strong>Glob patterns</strong>:
-<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>join<span class="w"> </span>--nodes<span class="w"> </span><span class="s2">&quot;*.nodes.*&quot;</span><span class="w"> </span>--edges<span class="w"> </span><span class="s2">&quot;*.edges.*&quot;</span>
+<div class="highlight"><pre><span></span><code>koza<span class="w"> </span>join<span class="w"> </span>--nodes<span class="w"> </span><span class="s2">"*.nodes.*"</span><span class="w"> </span>--edges<span class="w"> </span><span class="s2">"*.edges.*"</span>
 </code></pre></div></p>
 <h4 id="examples_1">Examples</h4>
 <div class="highlight"><pre><span></span><code><span class="c1"># Basic join with mixed formats</span>
@@ -2558,8 +2558,8 @@ koza<span class="w"> </span>join<span class="w"> </span><span class="se">\</span
 
 <span class="c1"># Join with schema reporting and progress</span>
 koza<span class="w"> </span>join<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--nodes<span class="w"> </span><span class="s2">&quot;*.nodes.*&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--edges<span class="w"> </span><span class="s2">&quot;*.edges.*&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span><span class="s2">"*.nodes.*"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span><span class="s2">"*.edges.*"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--schema-report<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--show-progress
 
@@ -2567,7 +2567,7 @@ koza<span class="w"> </span>join<span class="w"> </span><span class="se">\</span
 koza<span class="w"> </span>join<span class="w"> </span>--input-dir<span class="w"> </span>./kgx_files<span class="w"> </span>--output<span class="w"> </span>merged.duckdb
 
 <span class="c1"># Quiet operation for scripts</span>
-koza<span class="w"> </span>join<span class="w"> </span>--nodes<span class="w"> </span><span class="s2">&quot;*.nodes.tsv&quot;</span><span class="w"> </span>--edges<span class="w"> </span><span class="s2">&quot;*.edges.tsv&quot;</span><span class="w"> </span>--quiet
+koza<span class="w"> </span>join<span class="w"> </span>--nodes<span class="w"> </span><span class="s2">"*.nodes.tsv"</span><span class="w"> </span>--edges<span class="w"> </span><span class="s2">"*.edges.tsv"</span><span class="w"> </span>--quiet
 </code></pre></div>
 <h4 id="output">Output</h4>
 <ul>
@@ -2657,8 +2657,8 @@ koza<span class="w"> </span>split<span class="w"> </span><span class="se">\</spa
 koza<span class="w"> </span>split<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--split-on<span class="w"> </span>category<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--filter-nodes<span class="w"> </span><span class="s2">&quot;namespace=&#39;HGNC&#39;&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--filter-edges<span class="w"> </span><span class="s2">&quot;predicate=&#39;biolink:interacts_with&#39;&quot;</span>
+<span class="w">  </span>--filter-nodes<span class="w"> </span><span class="s2">"namespace='HGNC'"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--filter-edges<span class="w"> </span><span class="s2">"predicate='biolink:interacts_with'"</span>
 
 <span class="c1"># Split with progress tracking</span>
 koza<span class="w"> </span>split<span class="w"> </span><span class="se">\</span>
@@ -2846,8 +2846,8 @@ koza<span class="w"> </span>append<span class="w"> </span><span class="se">\</sp
 <span class="c1"># Append multiple files with progress</span>
 koza<span class="w"> </span>append<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--nodes<span class="w"> </span><span class="s2">&quot;new_*.nodes.*&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--edges<span class="w"> </span><span class="s2">&quot;new_*.edges.*&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span><span class="s2">"new_*.nodes.*"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span><span class="s2">"new_*.edges.*"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--show-progress
 
 <span class="c1"># Quiet append for automation</span>
@@ -2869,22 +2869,22 @@ koza<span class="w"> </span>append<span class="w"> </span><span class="se">\</sp
 <p>All commands that accept file lists support multiple specification formats:</p>
 <h4 id="glob-patterns">Glob Patterns</h4>
 <div class="highlight"><pre><span></span><code><span class="c1"># Match all node files</span>
---nodes<span class="w"> </span><span class="s2">&quot;*.nodes.*&quot;</span>
+--nodes<span class="w"> </span><span class="s2">"*.nodes.*"</span>
 
 <span class="c1"># Match specific formats</span>
---nodes<span class="w"> </span><span class="s2">&quot;*.tsv&quot;</span><span class="w"> </span>--edges<span class="w"> </span><span class="s2">&quot;*.jsonl&quot;</span>
+--nodes<span class="w"> </span><span class="s2">"*.tsv"</span><span class="w"> </span>--edges<span class="w"> </span><span class="s2">"*.jsonl"</span>
 
 <span class="c1"># Complex patterns</span>
---nodes<span class="w"> </span><span class="s2">&quot;**/genes*.{tsv,jsonl}&quot;</span>
+--nodes<span class="w"> </span><span class="s2">"**/genes*.{tsv,jsonl}"</span>
 </code></pre></div>
 <h4 id="source-attribution">Source Attribution</h4>
 <div class="highlight"><pre><span></span><code><span class="c1"># Assign source names to files</span>
---nodes<span class="w"> </span><span class="s2">&quot;genes:genes.tsv&quot;</span><span class="w"> </span><span class="s2">&quot;proteins:proteins.jsonl&quot;</span>
---edges<span class="w"> </span><span class="s2">&quot;interactions:interactions.parquet&quot;</span>
+--nodes<span class="w"> </span><span class="s2">"genes:genes.tsv"</span><span class="w"> </span><span class="s2">"proteins:proteins.jsonl"</span>
+--edges<span class="w"> </span><span class="s2">"interactions:interactions.parquet"</span>
 </code></pre></div>
 <h4 id="mixed-specifications">Mixed Specifications</h4>
 <div class="highlight"><pre><span></span><code><span class="c1"># Combine different formats</span>
---nodes<span class="w"> </span>genes.tsv<span class="w"> </span><span class="s2">&quot;pathways:pathways.jsonl&quot;</span><span class="w"> </span>proteins.parquet
+--nodes<span class="w"> </span>genes.tsv<span class="w"> </span><span class="s2">"pathways:pathways.jsonl"</span><span class="w"> </span>proteins.parquet
 </code></pre></div>
 <h3 id="progress-and-logging">Progress and Logging</h3>
 <h4 id="progress-indicators">Progress Indicators</h4>
@@ -2928,7 +2928,7 @@ koza<span class="w"> </span>append<span class="w"> </span><span class="se">\</sp
 </code></pre></div>
 <strong>Solution</strong>: Verify database path or create database with <code>join</code> command first</p>
 <h4 id="schema-conflicts">Schema Conflicts</h4>
-<p><div class="highlight"><pre><span></span><code>Warning: Type conflict for column &#39;score&#39; (INTEGER vs VARCHAR)
+<p><div class="highlight"><pre><span></span><code>Warning: Type conflict for column 'score' (INTEGER vs VARCHAR)
 </code></pre></div>
 <strong>Resolution</strong>: DuckDB automatically resolves to most permissive type</p>
 <h4 id="permission-issues">Permission Issues</h4>
@@ -2991,12 +2991,12 @@ koza<span class="w"> </span>append<span class="w"> </span><span class="se">\</sp
 
 <span class="nb">set</span><span class="w"> </span>-e<span class="w">  </span><span class="c1"># Exit on error</span>
 
-<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Starting graph processing pipeline...&quot;</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">"Starting graph processing pipeline..."</span>
 
 <span class="c1"># Join all source files</span>
 koza<span class="w"> </span>join<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--nodes<span class="w"> </span><span class="s2">&quot;sources/*.nodes.*&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--edges<span class="w"> </span><span class="s2">&quot;sources/*.edges.*&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span><span class="s2">"sources/*.nodes.*"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span><span class="s2">"sources/*.edges.*"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--output<span class="w"> </span>raw_graph.duckdb<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--show-progress
 
@@ -3006,7 +3006,7 @@ koza<span class="w"> </span>prune<span class="w"> </span><span class="se">\</spa
 <span class="w">  </span>--keep-singletons
 
 <span class="c1"># Add corrected data</span>
-<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-f<span class="w"> </span><span class="s2">&quot;corrections.tsv&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-f<span class="w"> </span><span class="s2">"corrections.tsv"</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
 <span class="w">  </span>koza<span class="w"> </span>append<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--database<span class="w"> </span>raw_graph.duckdb<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--nodes<span class="w"> </span>corrections.tsv<span class="w"> </span><span class="se">\</span>
@@ -3021,7 +3021,7 @@ koza<span class="w"> </span>split<span class="w"> </span><span class="se">\</spa
 <span class="w">  </span>--output-format<span class="w"> </span>parquet<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--output-dir<span class="w"> </span>final_graphs
 
-<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Pipeline completed successfully&quot;</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">"Pipeline completed successfully"</span>
 </code></pre></div>
 <h3 id="cicd-integration">CI/CD Integration</h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># GitHub Actions example</span>
@@ -3081,14 +3081,14 @@ koza<span class="w"> </span>transform<span class="w"> </span>config.yaml<span cl
 koza<span class="w"> </span>prune<span class="w"> </span>--database<span class="w"> </span>graph.duckdb<span class="w"> </span>--dry-run
 
 <span class="c1"># Generate schema reports for analysis</span>
-koza<span class="w"> </span>join<span class="w"> </span>--nodes<span class="w"> </span><span class="s2">&quot;*.tsv&quot;</span><span class="w"> </span>--schema-report
+koza<span class="w"> </span>join<span class="w"> </span>--nodes<span class="w"> </span><span class="s2">"*.tsv"</span><span class="w"> </span>--schema-report
 </code></pre></div>
 <h3 id="performance-monitoring">Performance Monitoring</h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># Monitor large operations with progress</span>
-koza<span class="w"> </span>join<span class="w"> </span>--nodes<span class="w"> </span><span class="s2">&quot;*.nodes.*&quot;</span><span class="w"> </span>--edges<span class="w"> </span><span class="s2">&quot;*.edges.*&quot;</span><span class="w"> </span>--show-progress
+koza<span class="w"> </span>join<span class="w"> </span>--nodes<span class="w"> </span><span class="s2">"*.nodes.*"</span><span class="w"> </span>--edges<span class="w"> </span><span class="s2">"*.edges.*"</span><span class="w"> </span>--show-progress
 
 <span class="c1"># Time operations for benchmarking</span>
-<span class="nb">time</span><span class="w"> </span>koza<span class="w"> </span>join<span class="w"> </span>--nodes<span class="w"> </span><span class="s2">&quot;*.nodes.tsv&quot;</span><span class="w"> </span>--quiet
+<span class="nb">time</span><span class="w"> </span>koza<span class="w"> </span>join<span class="w"> </span>--nodes<span class="w"> </span><span class="s2">"*.nodes.tsv"</span><span class="w"> </span>--quiet
 </code></pre></div>
 <p>For additional support, consult the <a href="../graph-operations/">comprehensive graph operations guide</a> and the <a href="https://koza.monarchinitiative.org/">Koza documentation</a>.</p>
 

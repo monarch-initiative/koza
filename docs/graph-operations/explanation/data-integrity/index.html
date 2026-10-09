@@ -2262,7 +2262,7 @@
 <span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">occurrence_count</span><span class="w"> </span><span class="k">DESC</span><span class="p">;</span>
 
 <span class="c1">-- Compare duplicates for a specific ID</span>
-<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">duplicate_nodes</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;HGNC:1234&#39;</span><span class="p">;</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">duplicate_nodes</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'HGNC:1234'</span><span class="p">;</span>
 </code></pre></div>
 <p>Duplicate nodes may indicate:</p>
 <ul>
@@ -2359,25 +2359,25 @@ koza<span class="w"> </span>join<span class="w"> </span>--nodes<span class="w"> 
 <span class="k">SHOW</span><span class="w"> </span><span class="n">TABLES</span><span class="p">;</span>
 
 <span class="c1">-- Count records in each archive</span>
-<span class="k">SELECT</span><span class="w"> </span><span class="s1">&#39;dangling_edges&#39;</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="k">table_name</span><span class="p">,</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="k">count</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">dangling_edges</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="s1">'dangling_edges'</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="k">table_name</span><span class="p">,</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="k">count</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">dangling_edges</span>
 <span class="k">UNION</span><span class="w"> </span><span class="k">ALL</span>
-<span class="k">SELECT</span><span class="w"> </span><span class="s1">&#39;duplicate_nodes&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">duplicate_nodes</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="s1">'duplicate_nodes'</span><span class="p">,</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">duplicate_nodes</span>
 <span class="k">UNION</span><span class="w"> </span><span class="k">ALL</span>
-<span class="k">SELECT</span><span class="w"> </span><span class="s1">&#39;duplicate_edges&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">duplicate_edges</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="s1">'duplicate_edges'</span><span class="p">,</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">duplicate_edges</span>
 <span class="k">UNION</span><span class="w"> </span><span class="k">ALL</span>
-<span class="k">SELECT</span><span class="w"> </span><span class="s1">&#39;singleton_nodes&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">singleton_nodes</span><span class="p">;</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="s1">'singleton_nodes'</span><span class="p">,</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">singleton_nodes</span><span class="p">;</span>
 </code></pre></div>
 <h3 id="re-insert-recovered-data">Re-insert Recovered Data</h3>
 <p>If you determine that archived data should be restored:</p>
 <div class="highlight"><pre><span></span><code><span class="c1">-- Restore specific dangling edges (perhaps after adding missing nodes)</span>
 <span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">edges</span>
 <span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">dangling_edges</span>
-<span class="k">WHERE</span><span class="w"> </span><span class="n">file_source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;my_source&#39;</span><span class="p">;</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">file_source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'my_source'</span><span class="p">;</span>
 
 <span class="c1">-- Restore singleton nodes</span>
 <span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">nodes</span>
 <span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">singleton_nodes</span>
-<span class="k">WHERE</span><span class="w"> </span><span class="n">category</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;biolink:Gene&#39;</span><span class="p">;</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">category</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'biolink:Gene'</span><span class="p">;</span>
 </code></pre></div>
 <h3 id="analyze-patterns-in-problem-data">Analyze Patterns in Problem Data</h3>
 <div class="highlight"><pre><span></span><code><span class="c1">-- Find common patterns in dangling edges</span>

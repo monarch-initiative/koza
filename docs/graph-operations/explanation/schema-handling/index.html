@@ -2523,12 +2523,12 @@ For chemicals: <code>taxon</code>, <code>chromosome</code>, <code>definition</co
 <li><strong>Transformation</strong>: For TSV files, pipe-delimited values (<code>value1|value2|value3</code>) are converted to arrays</li>
 </ol>
 <div class="highlight"><pre><span></span><code><span class="c1"># Fields that are always treated as single-valued (overrides schema)</span>
-<span class="n">FORCE_SINGLE_VALUED_FIELDS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;category&quot;</span><span class="p">,</span> <span class="s2">&quot;in_taxon&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">}</span>
+<span class="n">FORCE_SINGLE_VALUED_FIELDS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"category"</span><span class="p">,</span> <span class="s2">"in_taxon"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">}</span>
 
 <span class="c1"># Fallback multivalued fields when schema unavailable</span>
 <span class="n">KGX_MULTIVALUED_FIELDS_FALLBACK</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;xref&quot;</span><span class="p">,</span> <span class="s2">&quot;synonym&quot;</span><span class="p">,</span> <span class="s2">&quot;publications&quot;</span><span class="p">,</span> <span class="s2">&quot;provided_by&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;qualifiers&quot;</span><span class="p">,</span> <span class="s2">&quot;knowledge_source&quot;</span><span class="p">,</span> <span class="s2">&quot;has_evidence&quot;</span><span class="p">,</span> <span class="o">...</span>
+    <span class="s2">"xref"</span><span class="p">,</span> <span class="s2">"synonym"</span><span class="p">,</span> <span class="s2">"publications"</span><span class="p">,</span> <span class="s2">"provided_by"</span><span class="p">,</span>
+    <span class="s2">"qualifiers"</span><span class="p">,</span> <span class="s2">"knowledge_source"</span><span class="p">,</span> <span class="s2">"has_evidence"</span><span class="p">,</span> <span class="o">...</span>
 <span class="p">}</span>
 </code></pre></div>
 <h2 id="schema-evolution-with-append">Schema Evolution with Append</h2>
@@ -2545,7 +2545,7 @@ For chemicals: <code>taxon</code>, <code>chromosome</code>, <code>definition</co
 <span class="n">new_columns</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">file_columns</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">existing_schema</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
 <span class="k">for</span> <span class="n">col_name</span> <span class="ow">in</span> <span class="n">new_columns</span><span class="p">:</span>
     <span class="n">col_type</span> <span class="o">=</span> <span class="n">file_columns</span><span class="p">[</span><span class="n">col_name</span><span class="p">]</span>
-    <span class="n">db</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ALTER TABLE </span><span class="si">{</span><span class="n">table_type</span><span class="si">}</span><span class="s2"> ADD COLUMN </span><span class="si">{</span><span class="n">col_name</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">col_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="sa">f</span><span class="s2">"ALTER TABLE </span><span class="si">{</span><span class="n">table_type</span><span class="si">}</span><span class="s2"> ADD COLUMN </span><span class="si">{</span><span class="n">col_name</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">col_type</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="null-backfill-for-existing-rows">NULL Backfill for Existing Rows</h3>
 <p>When a new column is added to an existing table, all existing rows receive <code>NULL</code> for that column. DuckDB does this automatically.</p>
@@ -2587,7 +2587,7 @@ For chemicals: <code>taxon</code>, <code>chromosome</code>, <code>definition</co
 <p><strong>Review NULL patterns</strong>: After joining, query for NULL patterns to understand data coverage:</p>
 <div class="highlight"><pre><span></span><code><span class="c1">-- Find columns with high NULL rates</span>
 <span class="k">SELECT</span>
-<span class="w">    </span><span class="s1">&#39;taxon&#39;</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="k">column_name</span><span class="p">,</span>
+<span class="w">    </span><span class="s1">'taxon'</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="k">column_name</span><span class="p">,</span>
 <span class="w">    </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">total</span><span class="p">,</span>
 <span class="w">    </span><span class="k">COUNT</span><span class="p">(</span><span class="n">taxon</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">non_null</span><span class="p">,</span>
 <span class="w">    </span><span class="n">ROUND</span><span class="p">(</span><span class="mi">100</span><span class="p">.</span><span class="mi">0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="n">taxon</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">),</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">coverage_pct</span>

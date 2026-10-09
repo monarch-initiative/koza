@@ -2573,7 +2573,7 @@
 </code></pre></div>
 <h3 id="create-the-nodes-file">Create the nodes file</h3>
 <p>Create a file named <code>sample_nodes.tsv</code> with the following content:</p>
-<div class="highlight"><pre><span></span><code>cat<span class="w"> </span>&gt;<span class="w"> </span>sample_nodes.tsv<span class="w"> </span><span class="s">&lt;&lt; &#39;EOF&#39;</span>
+<div class="highlight"><pre><span></span><code>cat<span class="w"> </span>&gt;<span class="w"> </span>sample_nodes.tsv<span class="w"> </span><span class="s">&lt;&lt; 'EOF'</span>
 <span class="s">id  category    name    description provided_by</span>
 <span class="s">HGNC:1100   biolink:Gene    BRCA1   BRCA1 DNA repair associated infores:hgnc</span>
 <span class="s">HGNC:1101   biolink:Gene    BRCA2   BRCA2 DNA repair associated infores:hgnc</span>
@@ -2584,7 +2584,7 @@
 </code></pre></div>
 <h3 id="create-the-edges-file">Create the edges file</h3>
 <p>Create a file named <code>sample_edges.tsv</code> with the following content:</p>
-<div class="highlight"><pre><span></span><code>cat<span class="w"> </span>&gt;<span class="w"> </span>sample_edges.tsv<span class="w"> </span><span class="s">&lt;&lt; &#39;EOF&#39;</span>
+<div class="highlight"><pre><span></span><code>cat<span class="w"> </span>&gt;<span class="w"> </span>sample_edges.tsv<span class="w"> </span><span class="s">&lt;&lt; 'EOF'</span>
 <span class="s">id  subject predicate   object  primary_knowledge_source    provided_by</span>
 <span class="s">uuid:1  HGNC:1100   biolink:gene_associated_with_condition  MONDO:0007254   infores:clinvar infores:clinvar</span>
 <span class="s">uuid:2  HGNC:1101   biolink:gene_associated_with_condition  MONDO:0007254   infores:clinvar infores:clinvar</span>
@@ -2634,7 +2634,7 @@ head<span class="w"> </span>sample_edges.tsv
 <h2 id="step-3-explore-with-sql">Step 3: Explore with SQL</h2>
 <p>DuckDB allows you to query your graph using standard SQL. Let us explore our data.</p>
 <h3 id="count-nodes-and-edges">Count nodes and edges</h3>
-<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>my_graph.duckdb<span class="w"> </span><span class="s2">&quot;SELECT COUNT(*) AS node_count FROM nodes&quot;</span>
+<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>my_graph.duckdb<span class="w"> </span><span class="s2">"SELECT COUNT(*) AS node_count FROM nodes"</span>
 </code></pre></div>
 <p>Output:
 <div class="highlight"><pre><span></span><code>┌────────────┐
@@ -2644,7 +2644,7 @@ head<span class="w"> </span>sample_edges.tsv
 │          5 │
 └────────────┘
 </code></pre></div></p>
-<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>my_graph.duckdb<span class="w"> </span><span class="s2">&quot;SELECT COUNT(*) AS edge_count FROM edges&quot;</span>
+<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>my_graph.duckdb<span class="w"> </span><span class="s2">"SELECT COUNT(*) AS edge_count FROM edges"</span>
 </code></pre></div>
 <p>Output:
 <div class="highlight"><pre><span></span><code>┌────────────┐
@@ -2656,7 +2656,7 @@ head<span class="w"> </span>sample_edges.tsv
 </code></pre></div></p>
 <h3 id="view-the-database-schema">View the database schema</h3>
 <p>See what columns are available:</p>
-<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>my_graph.duckdb<span class="w"> </span><span class="s2">&quot;DESCRIBE nodes&quot;</span>
+<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>my_graph.duckdb<span class="w"> </span><span class="s2">"DESCRIBE nodes"</span>
 </code></pre></div>
 <p>Output:
 <div class="highlight"><pre><span></span><code>┌─────────────┬─────────────┬─────────┬─────────┬─────────┬─────────┐
@@ -2672,7 +2672,7 @@ head<span class="w"> </span>sample_edges.tsv
 </code></pre></div></p>
 <h3 id="list-all-categories">List all categories</h3>
 <p>See what types of entities are in your graph:</p>
-<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>my_graph.duckdb<span class="w"> </span><span class="s2">&quot;SELECT DISTINCT category FROM nodes&quot;</span>
+<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>my_graph.duckdb<span class="w"> </span><span class="s2">"SELECT DISTINCT category FROM nodes"</span>
 </code></pre></div>
 <p>Output:
 <div class="highlight"><pre><span></span><code>┌─────────────────┐
@@ -2684,7 +2684,7 @@ head<span class="w"> </span>sample_edges.tsv
 └─────────────────┘
 </code></pre></div></p>
 <h3 id="count-nodes-by-category">Count nodes by category</h3>
-<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>my_graph.duckdb<span class="w"> </span><span class="s2">&quot;SELECT category, COUNT(*) AS count FROM nodes GROUP BY category&quot;</span>
+<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>my_graph.duckdb<span class="w"> </span><span class="s2">"SELECT category, COUNT(*) AS count FROM nodes GROUP BY category"</span>
 </code></pre></div>
 <p>Output:
 <div class="highlight"><pre><span></span><code>┌─────────────────┬───────┐
@@ -2697,7 +2697,7 @@ head<span class="w"> </span>sample_edges.tsv
 </code></pre></div></p>
 <h3 id="find-specific-nodes">Find specific nodes</h3>
 <p>Search for nodes by name:</p>
-<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>my_graph.duckdb<span class="w"> </span><span class="s2">&quot;SELECT id, name FROM nodes WHERE name LIKE &#39;%BRCA%&#39;&quot;</span>
+<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>my_graph.duckdb<span class="w"> </span><span class="s2">"SELECT id, name FROM nodes WHERE name LIKE '%BRCA%'"</span>
 </code></pre></div>
 <p>Output:
 <div class="highlight"><pre><span></span><code>┌───────────┬───────┐
@@ -2710,7 +2710,7 @@ head<span class="w"> </span>sample_edges.tsv
 </code></pre></div></p>
 <h3 id="explore-edge-relationships">Explore edge relationships</h3>
 <p>List all predicate types:</p>
-<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>my_graph.duckdb<span class="w"> </span><span class="s2">&quot;SELECT predicate, COUNT(*) AS count FROM edges GROUP BY predicate&quot;</span>
+<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>my_graph.duckdb<span class="w"> </span><span class="s2">"SELECT predicate, COUNT(*) AS count FROM edges GROUP BY predicate"</span>
 </code></pre></div>
 <p>Output:
 <div class="highlight"><pre><span></span><code>┌─────────────────────────────────────────┬───────┐
@@ -2723,13 +2723,13 @@ head<span class="w"> </span>sample_edges.tsv
 </code></pre></div></p>
 <h3 id="find-edges-for-a-specific-node">Find edges for a specific node</h3>
 <p>What diseases are associated with BRCA1?</p>
-<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>my_graph.duckdb<span class="w"> </span><span class="s2">&quot;</span>
+<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>my_graph.duckdb<span class="w"> </span><span class="s2">"</span>
 <span class="s2">SELECT e.predicate, n.name AS disease_name</span>
 <span class="s2">FROM edges e</span>
 <span class="s2">JOIN nodes n ON e.object = n.id</span>
-<span class="s2">WHERE e.subject = &#39;HGNC:1100&#39;</span>
-<span class="s2">  AND e.predicate = &#39;biolink:gene_associated_with_condition&#39;</span>
-<span class="s2">&quot;</span>
+<span class="s2">WHERE e.subject = 'HGNC:1100'</span>
+<span class="s2">  AND e.predicate = 'biolink:gene_associated_with_condition'</span>
+<span class="s2">"</span>
 </code></pre></div>
 <p>Output:
 <div class="highlight"><pre><span></span><code>┌────────────────────────────────────────┬───────────────┐
@@ -2803,7 +2803,7 @@ head<span class="w"> </span>sample_edges.tsv
 ls<span class="w"> </span>./parquet_export/
 
 <span class="c1"># Read a Parquet file with DuckDB</span>
-duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;SELECT * FROM read_parquet(&#39;./parquet_export/sample_Gene_nodes.parquet&#39;)&quot;</span>
+duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">"SELECT * FROM read_parquet('./parquet_export/sample_Gene_nodes.parquet')"</span>
 
 <span class="c1"># Check JSONL files</span>
 ls<span class="w"> </span>./jsonl_export/

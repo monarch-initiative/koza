@@ -4219,7 +4219,7 @@
 koza<span class="w"> </span>join<span class="w"> </span>--input-dir<span class="w"> </span>./data/<span class="w"> </span>-o<span class="w"> </span>graph.duckdb
 
 <span class="c1"># Use glob patterns for node and edge files</span>
-koza<span class="w"> </span>join<span class="w"> </span>-n<span class="w"> </span><span class="s2">&quot;data/*_nodes.tsv&quot;</span><span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;data/*_edges.tsv&quot;</span><span class="w"> </span>-o<span class="w"> </span>graph.duckdb
+koza<span class="w"> </span>join<span class="w"> </span>-n<span class="w"> </span><span class="s2">"data/*_nodes.tsv"</span><span class="w"> </span>-e<span class="w"> </span><span class="s2">"data/*_edges.tsv"</span><span class="w"> </span>-o<span class="w"> </span>graph.duckdb
 
 <span class="c1"># Mix directory discovery with additional files</span>
 koza<span class="w"> </span>join<span class="w"> </span>--input-dir<span class="w"> </span>./data/<span class="w"> </span>-n<span class="w"> </span>extra_nodes.tsv<span class="w"> </span>-o<span class="w"> </span>graph.duckdb
@@ -4228,7 +4228,7 @@ koza<span class="w"> </span>join<span class="w"> </span>--input-dir<span class="
 koza<span class="w"> </span>join<span class="w"> </span>-n<span class="w"> </span>genes.tsv<span class="w"> </span>-n<span class="w"> </span>proteins.jsonl<span class="w"> </span>-e<span class="w"> </span>interactions.parquet<span class="w"> </span>-o<span class="w"> </span>graph.duckdb
 
 <span class="c1"># Generate schema compliance report</span>
-koza<span class="w"> </span>join<span class="w"> </span>-n<span class="w"> </span><span class="s2">&quot;*.nodes.*&quot;</span><span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;*.edges.*&quot;</span><span class="w"> </span>-o<span class="w"> </span>graph.duckdb<span class="w"> </span>--schema-report
+koza<span class="w"> </span>join<span class="w"> </span>-n<span class="w"> </span><span class="s2">"*.nodes.*"</span><span class="w"> </span>-e<span class="w"> </span><span class="s2">"*.edges.*"</span><span class="w"> </span>-o<span class="w"> </span>graph.duckdb<span class="w"> </span>--schema-report
 </code></pre></div>
 <h3 id="output">Output</h3>
 <ul>
@@ -4501,14 +4501,14 @@ koza<span class="w"> </span>merge<span class="w"> </span>-n<span class="w"> </sp
 <span class="w">  </span>--export<span class="w"> </span>--export-dir<span class="w"> </span>./output/<span class="w"> </span>-f<span class="w"> </span>parquet
 
 <span class="c1"># Skip normalization (no SSSOM mappings needed)</span>
-koza<span class="w"> </span>merge<span class="w"> </span>-n<span class="w"> </span><span class="s2">&quot;*.nodes.tsv&quot;</span><span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;*.edges.tsv&quot;</span><span class="w"> </span>--skip-normalize<span class="w"> </span>-o<span class="w"> </span>graph.duckdb
+koza<span class="w"> </span>merge<span class="w"> </span>-n<span class="w"> </span><span class="s2">"*.nodes.tsv"</span><span class="w"> </span>-e<span class="w"> </span><span class="s2">"*.edges.tsv"</span><span class="w"> </span>--skip-normalize<span class="w"> </span>-o<span class="w"> </span>graph.duckdb
 
 <span class="c1"># Create compressed archive for distribution</span>
-koza<span class="w"> </span>merge<span class="w"> </span>--input-dir<span class="w"> </span>./data/<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;*.sssom.tsv&quot;</span><span class="w"> </span><span class="se">\</span>
+koza<span class="w"> </span>merge<span class="w"> </span>--input-dir<span class="w"> </span>./data/<span class="w"> </span>-m<span class="w"> </span><span class="s2">"*.sssom.tsv"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--export<span class="w"> </span>--export-dir<span class="w"> </span>./dist/<span class="w"> </span>--archive<span class="w"> </span>--compress<span class="w"> </span>--graph-name<span class="w"> </span>my_kg
 
 <span class="c1"># Custom singleton handling</span>
-koza<span class="w"> </span>merge<span class="w"> </span>--input-dir<span class="w"> </span>./data/<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;*.sssom.tsv&quot;</span><span class="w"> </span>--remove-singletons<span class="w"> </span>-o<span class="w"> </span>graph.duckdb
+koza<span class="w"> </span>merge<span class="w"> </span>--input-dir<span class="w"> </span>./data/<span class="w"> </span>-m<span class="w"> </span><span class="s2">"*.sssom.tsv"</span><span class="w"> </span>--remove-singletons<span class="w"> </span>-o<span class="w"> </span>graph.duckdb
 </code></pre></div>
 <h3 id="output_2">Output</h3>
 <ul>
@@ -4593,7 +4593,7 @@ koza<span class="w"> </span>normalize<span class="w"> </span>graph.duckdb<span c
 koza<span class="w"> </span>normalize<span class="w"> </span>graph.duckdb<span class="w"> </span>--mappings-dir<span class="w"> </span>./sssom/
 
 <span class="c1"># Apply mappings with glob pattern</span>
-koza<span class="w"> </span>normalize<span class="w"> </span>graph.duckdb<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;mappings/*.sssom.tsv&quot;</span>
+koza<span class="w"> </span>normalize<span class="w"> </span>graph.duckdb<span class="w"> </span>-m<span class="w"> </span><span class="s2">"mappings/*.sssom.tsv"</span>
 
 <span class="c1"># Quiet operation for automation</span>
 koza<span class="w"> </span>normalize<span class="w"> </span>graph.duckdb<span class="w"> </span>-m<span class="w"> </span>mappings.sssom.tsv<span class="w"> </span>-q
@@ -4615,7 +4615,7 @@ koza<span class="w"> </span>normalize<span class="w"> </span>graph.duckdb<span c
 <p>Deduplication identifies nodes and edges with duplicate IDs, archives all duplicates to separate tables (<code>duplicate_nodes</code>, <code>duplicate_edges</code>), and keeps only the first occurrence in the main tables. Order is determined by <code>file_source</code> or <code>provided_by</code> fields.</p>
 <h3 id="usage-via-merge">Usage via Merge</h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># Merge includes deduplication by default</span>
-koza<span class="w"> </span>merge<span class="w"> </span>-n<span class="w"> </span><span class="s2">&quot;*.nodes.tsv&quot;</span><span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;*.edges.tsv&quot;</span><span class="w"> </span>--skip-normalize<span class="w"> </span>-o<span class="w"> </span>graph.duckdb
+koza<span class="w"> </span>merge<span class="w"> </span>-n<span class="w"> </span><span class="s2">"*.nodes.tsv"</span><span class="w"> </span>-e<span class="w"> </span><span class="s2">"*.edges.tsv"</span><span class="w"> </span>--skip-normalize<span class="w"> </span>-o<span class="w"> </span>graph.duckdb
 </code></pre></div>
 <h3 id="usage-via-append">Usage via Append</h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># Deduplicate during append operation</span>
@@ -4826,7 +4826,7 @@ koza<span class="w"> </span>closurize<span class="w"> </span>graph.duckdb<span c
 <span class="w">    </span>--edge-field-to-label<span class="w"> </span>onset_qualifier<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--edge-field-to-label<span class="w"> </span>frequency_qualifier<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--node-field<span class="w"> </span>has_phenotype<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--additional-node-constraints<span class="w"> </span><span class="s2">&quot;e.negated IS NULL OR e.negated = false&quot;</span>
+<span class="w">    </span>--additional-node-constraints<span class="w"> </span><span class="s2">"e.negated IS NULL OR e.negated = false"</span>
 </code></pre></div>
 <h3 id="output_5">Output</h3>
 <ul>
@@ -4994,10 +4994,10 @@ koza<span class="w"> </span>append<span class="w"> </span>graph.duckdb<span clas
 koza<span class="w"> </span>append<span class="w"> </span>graph.duckdb<span class="w"> </span>--input-dir<span class="w"> </span>./new_data/
 
 <span class="c1"># Append with deduplication and schema reporting</span>
-koza<span class="w"> </span>append<span class="w"> </span>graph.duckdb<span class="w"> </span>-n<span class="w"> </span><span class="s2">&quot;*.tsv&quot;</span><span class="w"> </span>--deduplicate<span class="w"> </span>--schema-report
+koza<span class="w"> </span>append<span class="w"> </span>graph.duckdb<span class="w"> </span>-n<span class="w"> </span><span class="s2">"*.tsv"</span><span class="w"> </span>--deduplicate<span class="w"> </span>--schema-report
 
 <span class="c1"># Multiple files with glob patterns</span>
-koza<span class="w"> </span>append<span class="w"> </span>graph.duckdb<span class="w"> </span>-n<span class="w"> </span><span class="s2">&quot;batch2/*.nodes.*&quot;</span><span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;batch2/*.edges.*&quot;</span>
+koza<span class="w"> </span>append<span class="w"> </span>graph.duckdb<span class="w"> </span>-n<span class="w"> </span><span class="s2">"batch2/*.nodes.*"</span><span class="w"> </span>-e<span class="w"> </span><span class="s2">"batch2/*.edges.*"</span>
 
 <span class="c1"># Quiet append for automation</span>
 koza<span class="w"> </span>append<span class="w"> </span>graph.duckdb<span class="w"> </span>-n<span class="w"> </span>corrections.tsv<span class="w"> </span>-q
@@ -5470,13 +5470,13 @@ koza<span class="w"> </span>edge-examples<span class="w"> </span>-d<span class="
 <p>All commands that accept file lists support multiple specification formats:</p>
 <h4 id="glob-patterns">Glob Patterns</h4>
 <div class="highlight"><pre><span></span><code><span class="c1"># Match all node files</span>
---nodes<span class="w"> </span><span class="s2">&quot;*.nodes.*&quot;</span>
+--nodes<span class="w"> </span><span class="s2">"*.nodes.*"</span>
 
 <span class="c1"># Match specific formats</span>
---nodes<span class="w"> </span><span class="s2">&quot;*.tsv&quot;</span><span class="w"> </span>--edges<span class="w"> </span><span class="s2">&quot;*.jsonl&quot;</span>
+--nodes<span class="w"> </span><span class="s2">"*.tsv"</span><span class="w"> </span>--edges<span class="w"> </span><span class="s2">"*.jsonl"</span>
 
 <span class="c1"># Match files in subdirectories</span>
---nodes<span class="w"> </span><span class="s2">&quot;data/*_nodes.tsv&quot;</span>
+--nodes<span class="w"> </span><span class="s2">"data/*_nodes.tsv"</span>
 </code></pre></div>
 <h4 id="multiple-files">Multiple Files</h4>
 <div class="highlight"><pre><span></span><code><span class="c1"># Specify multiple files individually</span>

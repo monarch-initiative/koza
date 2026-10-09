@@ -1665,16 +1665,16 @@ This list can then be used to test the output based on the transform script.</p>
 <span class="kn">from</span><span class="w"> </span><span class="nn">koza.utils.testing_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">mock_koza</span>
 
 <span class="c1"># Define the source name and transform script path</span>
-<span class="n">INGEST_NAME</span> <span class="o">=</span> <span class="s2">&quot;your_ingest_name&quot;</span>
-<span class="n">TRANSFORM_SCRIPT</span> <span class="o">=</span> <span class="s2">&quot;./src/{{cookiecutter.__project_slug}}/transform.py&quot;</span>
+<span class="n">INGEST_NAME</span> <span class="o">=</span> <span class="s2">"your_ingest_name"</span>
+<span class="n">TRANSFORM_SCRIPT</span> <span class="o">=</span> <span class="s2">"./src/{{cookiecutter.__project_slug}}/transform.py"</span>
 
 <span class="c1"># Define an example row to test (as a dictionary)</span>
 <span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">example_row</span><span class="p">():</span>
     <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">&quot;example_column_1&quot;</span><span class="p">:</span> <span class="s2">&quot;entity_1&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;example_column_2&quot;</span><span class="p">:</span> <span class="s2">&quot;entity_6&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;example_column_3&quot;</span><span class="p">:</span> <span class="s2">&quot;biolink:related_to&quot;</span><span class="p">,</span>
+        <span class="s2">"example_column_1"</span><span class="p">:</span> <span class="s2">"entity_1"</span><span class="p">,</span>
+        <span class="s2">"example_column_2"</span><span class="p">:</span> <span class="s2">"entity_6"</span><span class="p">,</span>
+        <span class="s2">"example_column_3"</span><span class="p">:</span> <span class="s2">"biolink:related_to"</span><span class="p">,</span>
     <span class="p">}</span>
 
 <span class="c1"># Or a list of rows</span>
@@ -1682,14 +1682,14 @@ This list can then be used to test the output based on the transform script.</p>
 <span class="k">def</span><span class="w"> </span><span class="nf">example_list_of_rows</span><span class="p">():</span>
     <span class="k">return</span> <span class="p">[</span>
         <span class="p">{</span>
-            <span class="s2">&quot;example_column_1&quot;</span><span class="p">:</span> <span class="s2">&quot;entity_1&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;example_column_2&quot;</span><span class="p">:</span> <span class="s2">&quot;entity_6&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;example_column_3&quot;</span><span class="p">:</span> <span class="s2">&quot;biolink:related_to&quot;</span><span class="p">,</span>
+            <span class="s2">"example_column_1"</span><span class="p">:</span> <span class="s2">"entity_1"</span><span class="p">,</span>
+            <span class="s2">"example_column_2"</span><span class="p">:</span> <span class="s2">"entity_6"</span><span class="p">,</span>
+            <span class="s2">"example_column_3"</span><span class="p">:</span> <span class="s2">"biolink:related_to"</span><span class="p">,</span>
         <span class="p">},</span>
         <span class="p">{</span>
-            <span class="s2">&quot;example_column_1&quot;</span><span class="p">:</span> <span class="s2">&quot;entity_2&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;example_column_2&quot;</span><span class="p">:</span> <span class="s2">&quot;entity_7&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;example_column_3&quot;</span><span class="p">:</span> <span class="s2">&quot;biolink:related_to&quot;</span><span class="p">,</span>
+            <span class="s2">"example_column_1"</span><span class="p">:</span> <span class="s2">"entity_2"</span><span class="p">,</span>
+            <span class="s2">"example_column_2"</span><span class="p">:</span> <span class="s2">"entity_7"</span><span class="p">,</span>
+            <span class="s2">"example_column_3"</span><span class="p">:</span> <span class="s2">"biolink:related_to"</span><span class="p">,</span>
         <span class="p">},</span>
     <span class="p">]</span>
 
@@ -1717,15 +1717,15 @@ This list can then be used to test the output based on the transform script.</p>
     <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">mock_transform</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
     <span class="n">entity</span> <span class="o">=</span> <span class="n">mock_transform</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="k">assert</span> <span class="n">entity</span>
-    <span class="k">assert</span> <span class="n">entity</span><span class="o">.</span><span class="n">subject</span> <span class="o">==</span> <span class="s2">&quot;entity_1&quot;</span>
+    <span class="k">assert</span> <span class="n">entity</span><span class="o">.</span><span class="n">subject</span> <span class="o">==</span> <span class="s2">"entity_1"</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">test_multiple_rows</span><span class="p">(</span><span class="n">mock_transform_multiple_rows</span><span class="p">):</span>
     <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">mock_transform_multiple_rows</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>
     <span class="n">entity_1</span> <span class="o">=</span> <span class="n">mock_transform_multiple_rows</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">entity_2</span> <span class="o">=</span> <span class="n">mock_transform_multiple_rows</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-    <span class="k">assert</span> <span class="n">entity_1</span><span class="o">.</span><span class="n">subject</span> <span class="o">==</span> <span class="s2">&quot;entity_1&quot;</span>
-    <span class="k">assert</span> <span class="n">entity_2</span><span class="o">.</span><span class="n">subject</span> <span class="o">==</span> <span class="s2">&quot;entity_2&quot;</span>
+    <span class="k">assert</span> <span class="n">entity_1</span><span class="o">.</span><span class="n">subject</span> <span class="o">==</span> <span class="s2">"entity_1"</span>
+    <span class="k">assert</span> <span class="n">entity_2</span><span class="o">.</span><span class="n">subject</span> <span class="o">==</span> <span class="s2">"entity_2"</span>
 </code></pre></div>
 
 

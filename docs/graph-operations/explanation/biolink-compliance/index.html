@@ -2562,9 +2562,9 @@
 <li><strong>Preserve array structure</strong> when exporting back to KGX format</li>
 </ol>
 <div class="highlight"><pre><span></span><code><span class="c1"># Example: How arrays appear in different formats</span>
-<span class="c1"># TSV: xref column contains &quot;UniProtKB:P12345|ENSEMBL:ENSG00000139618&quot;</span>
-<span class="c1"># DuckDB: xref column stored as [&#39;UniProtKB:P12345&#39;, &#39;ENSEMBL:ENSG00000139618&#39;]</span>
-<span class="c1"># JSONL: &quot;xref&quot;: [&quot;UniProtKB:P12345&quot;, &quot;ENSEMBL:ENSG00000139618&quot;]</span>
+<span class="c1"># TSV: xref column contains "UniProtKB:P12345|ENSEMBL:ENSG00000139618"</span>
+<span class="c1"># DuckDB: xref column stored as ['UniProtKB:P12345', 'ENSEMBL:ENSG00000139618']</span>
+<span class="c1"># JSONL: "xref": ["UniProtKB:P12345", "ENSEMBL:ENSG00000139618"]</span>
 </code></pre></div>
 <h3 id="configuration-for-multivalued-fields">Configuration for Multivalued Fields</h3>
 <p>Some fields that are technically multivalued in Biolink are treated as single-valued in graph operations:</p>
@@ -2583,8 +2583,8 @@
 <p>This produces a YAML report containing:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">metadata</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">operation</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">schema</span>
-<span class="w">  </span><span class="nt">generated_at</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;2024-01-15</span><span class="nv"> </span><span class="s">10:30:00&#39;</span>
-<span class="w">  </span><span class="nt">report_version</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;1.0&#39;</span>
+<span class="w">  </span><span class="nt">generated_at</span><span class="p">:</span><span class="w"> </span><span class="s">'2024-01-15</span><span class="nv"> </span><span class="s">10:30:00'</span>
+<span class="w">  </span><span class="nt">report_version</span><span class="p">:</span><span class="w"> </span><span class="s">'1.0'</span>
 <span class="nt">schema_analysis</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">summary</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">nodes</span><span class="p">:</span>
@@ -2649,7 +2649,7 @@
 <h2 id="common-compliance-issues">Common Compliance Issues</h2>
 <h3 id="missing-required-fields">Missing Required Fields</h3>
 <p><strong>Problem</strong>: Edges missing <code>subject</code>, <code>predicate</code>, or <code>object</code> columns.</p>
-<div class="highlight"><pre><span></span><code>Error: Required edge columns missing: [&#39;predicate&#39;]
+<div class="highlight"><pre><span></span><code>Error: Required edge columns missing: ['predicate']
 </code></pre></div>
 <p><strong>Solution</strong>: Ensure your source data includes all required columns before joining.</p>
 <h3 id="invalid-predicates">Invalid Predicates</h3>

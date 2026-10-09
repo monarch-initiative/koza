@@ -2800,11 +2800,11 @@ Merge pipeline completed successfully!
 </ol>
 <h3 id="verify-normalization-worked">Verify Normalization Worked</h3>
 <p>Check that edge references were normalized. Normalization updates the <code>subject</code> and <code>object</code> columns in the edges table, preserving the original values in <code>original_subject</code> and <code>original_object</code>:</p>
-<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>merged_graph.duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;</span>
+<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>merged_graph.duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">"</span>
 <span class="s2">  SELECT subject, object, original_subject, original_object</span>
 <span class="s2">  FROM edges</span>
 <span class="s2">  WHERE original_object IS NOT NULL</span>
-<span class="s2">&quot;</span>
+<span class="s2">"</span>
 </code></pre></div>
 <p>Expected output:
 <div class="highlight"><pre><span></span><code>subject   | object        | original_subject | original_object
@@ -2816,7 +2816,7 @@ HGNC:3689 | MONDO:0009061 | NULL             | OMIM:219700
 </code></pre></div></p>
 <p>The <code>original_subject</code> and <code>original_object</code> columns preserve the original identifiers for provenance. Note that in this example, the edge objects were normalized from OMIM to MONDO IDs, so <code>original_object</code> contains the original OMIM ID while <code>object</code> now contains the MONDO equivalent.</p>
 <h3 id="verify-edges-connect-properly">Verify Edges Connect Properly</h3>
-<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>merged_graph.duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;</span>
+<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>merged_graph.duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">"</span>
 <span class="s2">  SELECT</span>
 <span class="s2">    e.subject,</span>
 <span class="s2">    n1.name as subject_name,</span>
@@ -2825,16 +2825,16 @@ HGNC:3689 | MONDO:0009061 | NULL             | OMIM:219700
 <span class="s2">  FROM edges e</span>
 <span class="s2">  JOIN nodes n1 ON e.subject = n1.id</span>
 <span class="s2">  JOIN nodes n2 ON e.object = n2.id</span>
-<span class="s2">&quot;</span>
+<span class="s2">"</span>
 </code></pre></div>
 <p>All edges should now join successfully to nodes.</p>
 <h3 id="check-for-dangling-edges">Check for Dangling Edges</h3>
-<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>merged_graph.duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;</span>
+<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>merged_graph.duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">"</span>
 <span class="s2">  SELECT COUNT(*) as dangling_count</span>
 <span class="s2">  FROM edges e</span>
 <span class="s2">  WHERE NOT EXISTS (SELECT 1 FROM nodes n WHERE n.id = e.subject)</span>
 <span class="s2">     OR NOT EXISTS (SELECT 1 FROM nodes n WHERE n.id = e.object)</span>
-<span class="s2">&quot;</span>
+<span class="s2">"</span>
 </code></pre></div>
 <p>Expected output: <code>0</code> (no dangling edges)</p>
 <h2 id="step-5-customize-the-pipeline">Step 5: Customize the Pipeline</h2>
@@ -2842,35 +2842,35 @@ HGNC:3689 | MONDO:0009061 | NULL             | OMIM:219700
 <h3 id="skip-normalization">Skip Normalization</h3>
 <p>If you do not need identifier normalization (e.g., IDs already match):</p>
 <div class="highlight"><pre><span></span><code>koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-n<span class="w"> </span><span class="s2">&quot;*.nodes.tsv&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-e<span class="w"> </span><span class="s2">&quot;*.edges.tsv&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-n<span class="w"> </span><span class="s2">"*.nodes.tsv"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-e<span class="w"> </span><span class="s2">"*.edges.tsv"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-o<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--skip-normalize
 </code></pre></div>
 <h3 id="skip-pruning">Skip Pruning</h3>
 <p>Keep all edges and nodes, even if some are dangling or disconnected:</p>
 <div class="highlight"><pre><span></span><code>koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-n<span class="w"> </span><span class="s2">&quot;*.nodes.tsv&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-e<span class="w"> </span><span class="s2">&quot;*.edges.tsv&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-m<span class="w"> </span><span class="s2">&quot;*.sssom.tsv&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-n<span class="w"> </span><span class="s2">"*.nodes.tsv"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-e<span class="w"> </span><span class="s2">"*.edges.tsv"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-m<span class="w"> </span><span class="s2">"*.sssom.tsv"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-o<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--skip-prune
 </code></pre></div>
 <h3 id="handle-singleton-nodes">Handle Singleton Nodes</h3>
 <p>By default, singleton nodes (nodes with no edges) are kept. To move them to a separate table:</p>
 <div class="highlight"><pre><span></span><code>koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-n<span class="w"> </span><span class="s2">&quot;*.nodes.tsv&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-e<span class="w"> </span><span class="s2">&quot;*.edges.tsv&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-m<span class="w"> </span><span class="s2">&quot;*.sssom.tsv&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-n<span class="w"> </span><span class="s2">"*.nodes.tsv"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-e<span class="w"> </span><span class="s2">"*.edges.tsv"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-m<span class="w"> </span><span class="s2">"*.sssom.tsv"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-o<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--remove-singletons
 </code></pre></div>
 <h3 id="export-final-data">Export Final Data</h3>
 <p>Export the merged graph to files for use in other tools:</p>
 <div class="highlight"><pre><span></span><code>koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-n<span class="w"> </span><span class="s2">&quot;*.nodes.tsv&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-e<span class="w"> </span><span class="s2">&quot;*.edges.tsv&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-m<span class="w"> </span><span class="s2">&quot;*.sssom.tsv&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-n<span class="w"> </span><span class="s2">"*.nodes.tsv"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-e<span class="w"> </span><span class="s2">"*.edges.tsv"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-m<span class="w"> </span><span class="s2">"*.sssom.tsv"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-o<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--export<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--export-dir<span class="w"> </span>./output/<span class="w"> </span><span class="se">\</span>
@@ -2880,9 +2880,9 @@ HGNC:3689 | MONDO:0009061 | NULL             | OMIM:219700
 <h3 id="create-a-compressed-archive">Create a Compressed Archive</h3>
 <p>For distribution, create a compressed tar archive:</p>
 <div class="highlight"><pre><span></span><code>koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-n<span class="w"> </span><span class="s2">&quot;*.nodes.tsv&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-e<span class="w"> </span><span class="s2">&quot;*.edges.tsv&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-m<span class="w"> </span><span class="s2">&quot;*.sssom.tsv&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-n<span class="w"> </span><span class="s2">"*.nodes.tsv"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-e<span class="w"> </span><span class="s2">"*.edges.tsv"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-m<span class="w"> </span><span class="s2">"*.sssom.tsv"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-o<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--export<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--export-dir<span class="w"> </span>./output/<span class="w"> </span><span class="se">\</span>
@@ -2905,23 +2905,23 @@ HGNC:3689 | MONDO:0009061 | NULL             | OMIM:219700
 </code></pre></div>
 <p><strong>Solution</strong>: Either provide SSSOM mappings or skip normalization:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Option 1: Provide mappings</span>
-koza<span class="w"> </span>merge<span class="w"> </span>-n<span class="w"> </span><span class="s2">&quot;*.nodes.tsv&quot;</span><span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;*.edges.tsv&quot;</span><span class="w"> </span><span class="se">\</span>
+koza<span class="w"> </span>merge<span class="w"> </span>-n<span class="w"> </span><span class="s2">"*.nodes.tsv"</span><span class="w"> </span>-e<span class="w"> </span><span class="s2">"*.edges.tsv"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-m<span class="w"> </span>mondo.sssom.tsv<span class="w"> </span>-o<span class="w"> </span>graph.duckdb
 
 <span class="c1"># Option 2: Skip normalization</span>
-koza<span class="w"> </span>merge<span class="w"> </span>-n<span class="w"> </span><span class="s2">&quot;*.nodes.tsv&quot;</span><span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;*.edges.tsv&quot;</span><span class="w"> </span><span class="se">\</span>
+koza<span class="w"> </span>merge<span class="w"> </span>-n<span class="w"> </span><span class="s2">"*.nodes.tsv"</span><span class="w"> </span>-e<span class="w"> </span><span class="s2">"*.edges.tsv"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--skip-normalize<span class="w"> </span>-o<span class="w"> </span>graph.duckdb
 </code></pre></div>
 <h3 id="many-dangling-edges-after-merge">Many Dangling Edges After Merge</h3>
 <p>If you see many dangling edges in the output, your mappings may be incomplete.</p>
 <p><strong>Diagnose</strong>:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Check which edge objects are not in nodes</span>
-duckdb<span class="w"> </span>merged_graph.duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;</span>
+duckdb<span class="w"> </span>merged_graph.duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">"</span>
 <span class="s2">  SELECT DISTINCT e.object</span>
 <span class="s2">  FROM edges e</span>
 <span class="s2">  WHERE NOT EXISTS (SELECT 1 FROM nodes n WHERE n.id = e.object)</span>
 <span class="s2">  LIMIT 20</span>
-<span class="s2">&quot;</span>
+<span class="s2">"</span>
 </code></pre></div>
 <p><strong>Solutions</strong>:</p>
 <ol>
@@ -2937,8 +2937,8 @@ Keeping only one mapping per object_id.
 <p><strong>Solution</strong>: Order your mapping files with preferred mappings first, or curate your SSSOM files to have deterministic mappings:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Preferred mappings file first</span>
 koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-n<span class="w"> </span><span class="s2">&quot;*.nodes.tsv&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-e<span class="w"> </span><span class="s2">&quot;*.edges.tsv&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-n<span class="w"> </span><span class="s2">"*.nodes.tsv"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-e<span class="w"> </span><span class="s2">"*.edges.tsv"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-m<span class="w"> </span>preferred_mappings.sssom.tsv<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-m<span class="w"> </span>secondary_mappings.sssom.tsv<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-o<span class="w"> </span>graph.duckdb

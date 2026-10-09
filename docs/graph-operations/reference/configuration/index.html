@@ -3892,15 +3892,15 @@
 
 <span class="c1"># Full specification</span>
 <span class="n">file_spec</span> <span class="o">=</span> <span class="n">FileSpec</span><span class="p">(</span>
-    <span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data/monarch_nodes.tsv&quot;</span><span class="p">),</span>
-    <span class="n">source_name</span><span class="o">=</span><span class="s2">&quot;monarch&quot;</span><span class="p">,</span>
+    <span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"data/monarch_nodes.tsv"</span><span class="p">),</span>
+    <span class="n">source_name</span><span class="o">=</span><span class="s2">"monarch"</span><span class="p">,</span>
     <span class="nb">format</span><span class="o">=</span><span class="n">KGXFormat</span><span class="o">.</span><span class="n">TSV</span><span class="p">,</span>
     <span class="n">file_type</span><span class="o">=</span><span class="n">KGXFileType</span><span class="o">.</span><span class="n">NODES</span>
 <span class="p">)</span>
 
 <span class="c1"># With auto-detection (recommended)</span>
-<span class="n">file_spec</span> <span class="o">=</span> <span class="n">FileSpec</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data/monarch_nodes.tsv&quot;</span><span class="p">))</span>
-<span class="c1"># Automatically detects: format=TSV, file_type=NODES, source_name=&quot;monarch_nodes&quot;</span>
+<span class="n">file_spec</span> <span class="o">=</span> <span class="n">FileSpec</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"data/monarch_nodes.tsv"</span><span class="p">))</span>
+<span class="c1"># Automatically detects: format=TSV, file_type=NODES, source_name="monarch_nodes"</span>
 </code></pre></div>
 <hr />
 <h2 id="operation-configurations">Operation Configurations</h2>
@@ -3988,14 +3988,14 @@
 
 <span class="n">config</span> <span class="o">=</span> <span class="n">JoinConfig</span><span class="p">(</span>
     <span class="n">node_files</span><span class="o">=</span><span class="p">[</span>
-        <span class="n">FileSpec</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data/source1_nodes.tsv&quot;</span><span class="p">)),</span>
-        <span class="n">FileSpec</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data/source2_nodes.tsv&quot;</span><span class="p">)),</span>
+        <span class="n">FileSpec</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"data/source1_nodes.tsv"</span><span class="p">)),</span>
+        <span class="n">FileSpec</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"data/source2_nodes.tsv"</span><span class="p">)),</span>
     <span class="p">],</span>
     <span class="n">edge_files</span><span class="o">=</span><span class="p">[</span>
-        <span class="n">FileSpec</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data/source1_edges.tsv&quot;</span><span class="p">)),</span>
-        <span class="n">FileSpec</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data/source2_edges.tsv&quot;</span><span class="p">)),</span>
+        <span class="n">FileSpec</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"data/source1_edges.tsv"</span><span class="p">)),</span>
+        <span class="n">FileSpec</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"data/source2_edges.tsv"</span><span class="p">)),</span>
     <span class="p">],</span>
-    <span class="n">output_database</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;merged.duckdb&quot;</span><span class="p">),</span>
+    <span class="n">output_database</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"merged.duckdb"</span><span class="p">),</span>
     <span class="n">generate_provided_by</span><span class="o">=</span><span class="kc">True</span>
 <span class="p">)</span>
 </code></pre></div>
@@ -4113,9 +4113,9 @@
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">koza.model.graph_operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">SplitConfig</span><span class="p">,</span> <span class="n">FileSpec</span>
 
 <span class="n">config</span> <span class="o">=</span> <span class="n">SplitConfig</span><span class="p">(</span>
-    <span class="n">input_file</span><span class="o">=</span><span class="n">FileSpec</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data/all_nodes.tsv&quot;</span><span class="p">)),</span>
-    <span class="n">split_fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;category&quot;</span><span class="p">,</span> <span class="s2">&quot;provided_by&quot;</span><span class="p">],</span>
-    <span class="n">output_directory</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;split_output&quot;</span><span class="p">),</span>
+    <span class="n">input_file</span><span class="o">=</span><span class="n">FileSpec</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"data/all_nodes.tsv"</span><span class="p">)),</span>
+    <span class="n">split_fields</span><span class="o">=</span><span class="p">[</span><span class="s2">"category"</span><span class="p">,</span> <span class="s2">"provided_by"</span><span class="p">],</span>
+    <span class="n">output_directory</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"split_output"</span><span class="p">),</span>
     <span class="n">remove_prefixes</span><span class="o">=</span><span class="kc">True</span>
 <span class="p">)</span>
 </code></pre></div>
@@ -4344,22 +4344,22 @@
 
 <span class="n">config</span> <span class="o">=</span> <span class="n">MergeConfig</span><span class="p">(</span>
     <span class="n">node_files</span><span class="o">=</span><span class="p">[</span>
-        <span class="n">FileSpec</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data/source1_nodes.tsv&quot;</span><span class="p">)),</span>
-        <span class="n">FileSpec</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data/source2_nodes.tsv&quot;</span><span class="p">)),</span>
+        <span class="n">FileSpec</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"data/source1_nodes.tsv"</span><span class="p">)),</span>
+        <span class="n">FileSpec</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"data/source2_nodes.tsv"</span><span class="p">)),</span>
     <span class="p">],</span>
     <span class="n">edge_files</span><span class="o">=</span><span class="p">[</span>
-        <span class="n">FileSpec</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data/source1_edges.tsv&quot;</span><span class="p">)),</span>
-        <span class="n">FileSpec</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data/source2_edges.tsv&quot;</span><span class="p">)),</span>
+        <span class="n">FileSpec</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"data/source1_edges.tsv"</span><span class="p">)),</span>
+        <span class="n">FileSpec</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"data/source2_edges.tsv"</span><span class="p">)),</span>
     <span class="p">],</span>
     <span class="n">mapping_files</span><span class="o">=</span><span class="p">[</span>
-        <span class="n">FileSpec</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;mappings/disease_mappings.sssom.tsv&quot;</span><span class="p">)),</span>
+        <span class="n">FileSpec</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"mappings/disease_mappings.sssom.tsv"</span><span class="p">)),</span>
     <span class="p">],</span>
-    <span class="n">output_database</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;merged.duckdb&quot;</span><span class="p">),</span>
+    <span class="n">output_database</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"merged.duckdb"</span><span class="p">),</span>
     <span class="n">export_final</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="n">export_directory</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;output&quot;</span><span class="p">),</span>
+    <span class="n">export_directory</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"output"</span><span class="p">),</span>
     <span class="n">archive</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="n">compress</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="n">graph_name</span><span class="o">=</span><span class="s2">&quot;my-knowledge-graph&quot;</span>
+    <span class="n">graph_name</span><span class="o">=</span><span class="s2">"my-knowledge-graph"</span>
 <span class="p">)</span>
 </code></pre></div>
 <hr />
@@ -4511,10 +4511,10 @@
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">koza.model.graph_operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalizeConfig</span><span class="p">,</span> <span class="n">FileSpec</span>
 
 <span class="n">config</span> <span class="o">=</span> <span class="n">NormalizeConfig</span><span class="p">(</span>
-    <span class="n">database_path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;merged.duckdb&quot;</span><span class="p">),</span>
+    <span class="n">database_path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"merged.duckdb"</span><span class="p">),</span>
     <span class="n">mapping_files</span><span class="o">=</span><span class="p">[</span>
-        <span class="n">FileSpec</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;mappings/disease_mappings.sssom.tsv&quot;</span><span class="p">)),</span>
-        <span class="n">FileSpec</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;mappings/gene_mappings.sssom.tsv&quot;</span><span class="p">)),</span>
+        <span class="n">FileSpec</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"mappings/disease_mappings.sssom.tsv"</span><span class="p">)),</span>
+        <span class="n">FileSpec</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"mappings/gene_mappings.sssom.tsv"</span><span class="p">)),</span>
     <span class="p">]</span>
 <span class="p">)</span>
 </code></pre></div>
@@ -4636,7 +4636,7 @@
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">koza.model.graph_operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeduplicateConfig</span>
 
 <span class="n">config</span> <span class="o">=</span> <span class="n">DeduplicateConfig</span><span class="p">(</span>
-    <span class="n">database_path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;merged.duckdb&quot;</span><span class="p">),</span>
+    <span class="n">database_path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"merged.duckdb"</span><span class="p">),</span>
     <span class="n">deduplicate_nodes</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="n">deduplicate_edges</span><span class="o">=</span><span class="kc">True</span>
 <span class="p">)</span>
@@ -4784,7 +4784,7 @@
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">koza.model.graph_operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">PruneConfig</span>
 
 <span class="n">config</span> <span class="o">=</span> <span class="n">PruneConfig</span><span class="p">(</span>
-    <span class="n">database_path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;merged.duckdb&quot;</span><span class="p">),</span>
+    <span class="n">database_path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"merged.duckdb"</span><span class="p">),</span>
     <span class="n">keep_singletons</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">remove_singletons</span><span class="o">=</span><span class="kc">True</span>
 <span class="p">)</span>
@@ -4932,12 +4932,12 @@
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">koza.model.graph_operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">AppendConfig</span><span class="p">,</span> <span class="n">FileSpec</span>
 
 <span class="n">config</span> <span class="o">=</span> <span class="n">AppendConfig</span><span class="p">(</span>
-    <span class="n">database_path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;merged.duckdb&quot;</span><span class="p">),</span>
+    <span class="n">database_path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"merged.duckdb"</span><span class="p">),</span>
     <span class="n">node_files</span><span class="o">=</span><span class="p">[</span>
-        <span class="n">FileSpec</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data/new_nodes.tsv&quot;</span><span class="p">)),</span>
+        <span class="n">FileSpec</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"data/new_nodes.tsv"</span><span class="p">)),</span>
     <span class="p">],</span>
     <span class="n">edge_files</span><span class="o">=</span><span class="p">[</span>
-        <span class="n">FileSpec</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data/new_edges.tsv&quot;</span><span class="p">)),</span>
+        <span class="n">FileSpec</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"data/new_edges.tsv"</span><span class="p">)),</span>
     <span class="p">],</span>
     <span class="n">deduplicate</span><span class="o">=</span><span class="kc">True</span>
 <span class="p">)</span>
@@ -5057,9 +5057,9 @@
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">koza.model.graph_operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">QCReportConfig</span>
 
 <span class="n">config</span> <span class="o">=</span> <span class="n">QCReportConfig</span><span class="p">(</span>
-    <span class="n">database_path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;merged.duckdb&quot;</span><span class="p">),</span>
-    <span class="n">output_file</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;qc_report.yaml&quot;</span><span class="p">),</span>
-    <span class="n">group_by</span><span class="o">=</span><span class="s2">&quot;provided_by&quot;</span>
+    <span class="n">database_path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"merged.duckdb"</span><span class="p">),</span>
+    <span class="n">output_file</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"qc_report.yaml"</span><span class="p">),</span>
+    <span class="n">group_by</span><span class="o">=</span><span class="s2">"provided_by"</span>
 <span class="p">)</span>
 </code></pre></div>
 <hr />
@@ -5100,8 +5100,8 @@
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">koza.model.graph_operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">GraphStatsConfig</span>
 
 <span class="n">config</span> <span class="o">=</span> <span class="n">GraphStatsConfig</span><span class="p">(</span>
-    <span class="n">database_path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;merged.duckdb&quot;</span><span class="p">),</span>
-    <span class="n">output_file</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;graph_stats.yaml&quot;</span><span class="p">)</span>
+    <span class="n">database_path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"merged.duckdb"</span><span class="p">),</span>
+    <span class="n">output_file</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"graph_stats.yaml"</span><span class="p">)</span>
 <span class="p">)</span>
 </code></pre></div>
 <hr />
@@ -5148,8 +5148,8 @@
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">koza.model.graph_operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">SchemaReportConfig</span>
 
 <span class="n">config</span> <span class="o">=</span> <span class="n">SchemaReportConfig</span><span class="p">(</span>
-    <span class="n">database_path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;merged.duckdb&quot;</span><span class="p">),</span>
-    <span class="n">output_file</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;schema_report.yaml&quot;</span><span class="p">),</span>
+    <span class="n">database_path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"merged.duckdb"</span><span class="p">),</span>
+    <span class="n">output_file</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"schema_report.yaml"</span><span class="p">),</span>
     <span class="n">include_biolink_compliance</span><span class="o">=</span><span class="kc">True</span>
 <span class="p">)</span>
 </code></pre></div>
@@ -5213,9 +5213,9 @@
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">koza.model.graph_operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">NodeReportConfig</span>
 
 <span class="n">config</span> <span class="o">=</span> <span class="n">NodeReportConfig</span><span class="p">(</span>
-    <span class="n">database_path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;merged.duckdb&quot;</span><span class="p">),</span>
-    <span class="n">output_file</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;node_report.tsv&quot;</span><span class="p">),</span>
-    <span class="n">categorical_columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;category&quot;</span><span class="p">,</span> <span class="s2">&quot;provided_by&quot;</span><span class="p">]</span>
+    <span class="n">database_path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"merged.duckdb"</span><span class="p">),</span>
+    <span class="n">output_file</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"node_report.tsv"</span><span class="p">),</span>
+    <span class="n">categorical_columns</span><span class="o">=</span><span class="p">[</span><span class="s2">"category"</span><span class="p">,</span> <span class="s2">"provided_by"</span><span class="p">]</span>
 <span class="p">)</span>
 </code></pre></div>
 <hr />
@@ -5297,9 +5297,9 @@
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">koza.model.graph_operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">EdgeReportConfig</span>
 
 <span class="n">config</span> <span class="o">=</span> <span class="n">EdgeReportConfig</span><span class="p">(</span>
-    <span class="n">database_path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;merged.duckdb&quot;</span><span class="p">),</span>
-    <span class="n">output_file</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;edge_report.tsv&quot;</span><span class="p">),</span>
-    <span class="n">categorical_columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;predicate&quot;</span><span class="p">,</span> <span class="s2">&quot;subject_category&quot;</span><span class="p">,</span> <span class="s2">&quot;object_category&quot;</span><span class="p">]</span>
+    <span class="n">database_path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"merged.duckdb"</span><span class="p">),</span>
+    <span class="n">output_file</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"edge_report.tsv"</span><span class="p">),</span>
+    <span class="n">categorical_columns</span><span class="o">=</span><span class="p">[</span><span class="s2">"predicate"</span><span class="p">,</span> <span class="s2">"subject_category"</span><span class="p">,</span> <span class="s2">"object_category"</span><span class="p">]</span>
 <span class="p">)</span>
 </code></pre></div>
 <hr />
@@ -5368,10 +5368,10 @@
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">koza.model.graph_operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">NodeExamplesConfig</span>
 
 <span class="n">config</span> <span class="o">=</span> <span class="n">NodeExamplesConfig</span><span class="p">(</span>
-    <span class="n">database_path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;merged.duckdb&quot;</span><span class="p">),</span>
-    <span class="n">output_file</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;node_examples.tsv&quot;</span><span class="p">),</span>
+    <span class="n">database_path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"merged.duckdb"</span><span class="p">),</span>
+    <span class="n">output_file</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"node_examples.tsv"</span><span class="p">),</span>
     <span class="n">sample_size</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
-    <span class="n">type_column</span><span class="o">=</span><span class="s2">&quot;category&quot;</span>
+    <span class="n">type_column</span><span class="o">=</span><span class="s2">"category"</span>
 <span class="p">)</span>
 </code></pre></div>
 <hr />
@@ -5446,10 +5446,10 @@
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">koza.model.graph_operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">EdgeExamplesConfig</span>
 
 <span class="n">config</span> <span class="o">=</span> <span class="n">EdgeExamplesConfig</span><span class="p">(</span>
-    <span class="n">database_path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;merged.duckdb&quot;</span><span class="p">),</span>
-    <span class="n">output_file</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;edge_examples.tsv&quot;</span><span class="p">),</span>
+    <span class="n">database_path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"merged.duckdb"</span><span class="p">),</span>
+    <span class="n">output_file</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"edge_examples.tsv"</span><span class="p">),</span>
     <span class="n">sample_size</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
-    <span class="n">type_columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;predicate&quot;</span><span class="p">,</span> <span class="s2">&quot;primary_knowledge_source&quot;</span><span class="p">]</span>
+    <span class="n">type_columns</span><span class="o">=</span><span class="p">[</span><span class="s2">"predicate"</span><span class="p">,</span> <span class="s2">"primary_knowledge_source"</span><span class="p">]</span>
 <span class="p">)</span>
 </code></pre></div>
 <hr />

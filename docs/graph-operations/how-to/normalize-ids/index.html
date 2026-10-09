@@ -2477,14 +2477,14 @@ MONDO:0008199   skos:exactMatch OMIM:176000 semapv:ManualMappingCuration
 <h3 id="step-1-verify-your-database">Step 1: Verify Your Database</h3>
 <p>First, check the current state of your edges:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Count edges and check identifier patterns</span>
-duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">"</span>
 <span class="s2">  SELECT COUNT(*) as edge_count FROM edges;</span>
-<span class="s2">&quot;</span>
+<span class="s2">"</span>
 
 <span class="c1"># See sample identifiers</span>
-duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">"</span>
 <span class="s2">  SELECT DISTINCT subject FROM edges LIMIT 10;</span>
-<span class="s2">&quot;</span>
+<span class="s2">"</span>
 </code></pre></div>
 <h3 id="step-2-apply-the-mapping">Step 2: Apply the Mapping</h3>
 <div class="highlight"><pre><span></span><code>koza<span class="w"> </span>normalize<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
@@ -2606,28 +2606,28 @@ MONDO:0005149   skos:closeMatch OMIM:222100 semapv:LexicalMatching
 <p>After normalization, verify the results.</p>
 <h3 id="check-normalization-statistics">Check Normalization Statistics</h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># Count how many edges were normalized</span>
-duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">"</span>
 <span class="s2">  SELECT</span>
 <span class="s2">    COUNT(*) as total_edges,</span>
 <span class="s2">    COUNT(original_subject) as normalized_subjects,</span>
 <span class="s2">    COUNT(original_object) as normalized_objects</span>
 <span class="s2">  FROM edges;</span>
-<span class="s2">&quot;</span>
+<span class="s2">"</span>
 </code></pre></div>
 <h3 id="compare-before-and-after">Compare Before and After</h3>
 <p>Save identifiers before normalization for comparison:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Before normalization - export unique identifiers</span>
-duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;</span>
-<span class="s2">  SELECT DISTINCT object FROM edges WHERE object LIKE &#39;OMIM:%&#39;</span>
-<span class="s2">&quot;</span><span class="w"> </span>&gt;<span class="w"> </span>before_omim_ids.txt
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">"</span>
+<span class="s2">  SELECT DISTINCT object FROM edges WHERE object LIKE 'OMIM:%'</span>
+<span class="s2">"</span><span class="w"> </span>&gt;<span class="w"> </span>before_omim_ids.txt
 
 <span class="c1"># Run normalization</span>
 koza<span class="w"> </span>normalize<span class="w"> </span>graph.duckdb<span class="w"> </span>-m<span class="w"> </span>mondo-omim.sssom.tsv
 
 <span class="c1"># After normalization - check OMIM IDs are gone</span>
-duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;</span>
-<span class="s2">  SELECT DISTINCT object FROM edges WHERE object LIKE &#39;OMIM:%&#39;</span>
-<span class="s2">&quot;</span><span class="w"> </span>&gt;<span class="w"> </span>after_omim_ids.txt
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">"</span>
+<span class="s2">  SELECT DISTINCT object FROM edges WHERE object LIKE 'OMIM:%'</span>
+<span class="s2">"</span><span class="w"> </span>&gt;<span class="w"> </span>after_omim_ids.txt
 
 <span class="c1"># Compare</span>
 diff<span class="w"> </span>before_omim_ids.txt<span class="w"> </span>after_omim_ids.txt
@@ -2637,7 +2637,7 @@ diff<span class="w"> </span>before_omim_ids.txt<span class="w"> </span>after_omi
 <div class="highlight"><pre><span></span><code><span class="c1">-- Find object identifiers that match a pattern but were not normalized</span>
 <span class="k">SELECT</span><span class="w"> </span><span class="k">DISTINCT</span><span class="w"> </span><span class="k">object</span>
 <span class="k">FROM</span><span class="w"> </span><span class="n">edges</span>
-<span class="k">WHERE</span><span class="w"> </span><span class="k">object</span><span class="w"> </span><span class="k">LIKE</span><span class="w"> </span><span class="s1">&#39;OMIM:%&#39;</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="k">object</span><span class="w"> </span><span class="k">LIKE</span><span class="w"> </span><span class="s1">'OMIM:%'</span>
 <span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">original_object</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NULL</span>
 <span class="k">LIMIT</span><span class="w"> </span><span class="mi">20</span><span class="p">;</span>
 </code></pre></div>
@@ -2650,9 +2650,9 @@ diff<span class="w"> </span>before_omim_ids.txt<span class="w"> </span>after_omi
 <h3 id="using-normalize-in-the-merge-pipeline">Using Normalize in the Merge Pipeline</h3>
 <p>For new graphs, <code>koza merge</code> includes normalization as part of its pipeline:</p>
 <div class="highlight"><pre><span></span><code>koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--nodes<span class="w"> </span><span class="s2">&quot;*.nodes.*&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--edges<span class="w"> </span><span class="s2">&quot;*.edges.*&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--mappings<span class="w"> </span><span class="s2">&quot;mappings/*.sssom.tsv&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span><span class="s2">"*.nodes.*"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span><span class="s2">"*.edges.*"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--mappings<span class="w"> </span><span class="s2">"mappings/*.sssom.tsv"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--output<span class="w"> </span>merged_graph.duckdb
 </code></pre></div>
 <p>This runs: join -&gt; deduplicate -&gt; <strong>normalize</strong> -&gt; prune</p>
@@ -2660,15 +2660,15 @@ diff<span class="w"> </span>before_omim_ids.txt<span class="w"> </span>after_omi
 <h3 id="skip-normalization-in-merge">Skip Normalization in Merge</h3>
 <p>If you want to run merge without normalization:</p>
 <div class="highlight"><pre><span></span><code>koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--nodes<span class="w"> </span><span class="s2">&quot;*.nodes.*&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--edges<span class="w"> </span><span class="s2">&quot;*.edges.*&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span><span class="s2">"*.nodes.*"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span><span class="s2">"*.edges.*"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--output<span class="w"> </span>merged_graph.duckdb<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--skip-normalize
 </code></pre></div>
 <h3 id="normalize-after-other-operations">Normalize After Other Operations</h3>
 <p>You can run normalize at any point after your database has edges:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># First, join your files</span>
-koza<span class="w"> </span>join<span class="w"> </span>--nodes<span class="w"> </span><span class="s2">&quot;*.nodes.*&quot;</span><span class="w"> </span>--edges<span class="w"> </span><span class="s2">&quot;*.edges.*&quot;</span><span class="w"> </span>--output<span class="w"> </span>graph.duckdb
+koza<span class="w"> </span>join<span class="w"> </span>--nodes<span class="w"> </span><span class="s2">"*.nodes.*"</span><span class="w"> </span>--edges<span class="w"> </span><span class="s2">"*.edges.*"</span><span class="w"> </span>--output<span class="w"> </span>graph.duckdb
 
 <span class="c1"># Later, normalize with new mappings</span>
 koza<span class="w"> </span>normalize<span class="w"> </span>graph.duckdb<span class="w"> </span>-m<span class="w"> </span>new_mappings.sssom.tsv

@@ -2531,8 +2531,8 @@ koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</spa
 <div class="highlight"><pre><span></span><code>wc<span class="w"> </span>-l<span class="w"> </span>./output/*_nodes.tsv<span class="w"> </span>./output/*_edges.tsv
 </code></pre></div>
 <p>For Parquet (using DuckDB):</p>
-<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;SELECT COUNT(*) FROM read_parquet(&#39;./output/*_nodes.parquet&#39;)&quot;</span>
-duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;SELECT COUNT(*) FROM read_parquet(&#39;./output/*_edges.parquet&#39;)&quot;</span>
+<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">"SELECT COUNT(*) FROM read_parquet('./output/*_nodes.parquet')"</span>
+duckdb<span class="w"> </span>-c<span class="w"> </span><span class="s2">"SELECT COUNT(*) FROM read_parquet('./output/*_edges.parquet')"</span>
 </code></pre></div>
 <h3 id="inspect-archive-contents">Inspect archive contents</h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># List tar contents</span>

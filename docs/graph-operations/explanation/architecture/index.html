@@ -2202,7 +2202,7 @@
 </ul>
 <h3 id="persistent-mode">Persistent mode</h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># Create or open a persistent database</span>
-<span class="k">with</span> <span class="n">GraphDatabase</span><span class="p">(</span><span class="n">db_path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;my_graph.duckdb&quot;</span><span class="p">))</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
+<span class="k">with</span> <span class="n">GraphDatabase</span><span class="p">(</span><span class="n">db_path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"my_graph.duckdb"</span><span class="p">))</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
     <span class="c1"># Data persists after the context exits</span>
     <span class="k">pass</span>
 </code></pre></div>
@@ -2251,17 +2251,17 @@
 <h3 id="4-export-or-persist">4. Export or persist</h3>
 <p>Finally, data can be exported back to file formats:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Export to individual files</span>
-<span class="n">db</span><span class="o">.</span><span class="n">export_to_format</span><span class="p">(</span><span class="s2">&quot;nodes&quot;</span><span class="p">,</span> <span class="n">output_path</span><span class="p">,</span> <span class="n">KGXFormat</span><span class="o">.</span><span class="n">TSV</span><span class="p">)</span>
+<span class="n">db</span><span class="o">.</span><span class="n">export_to_format</span><span class="p">(</span><span class="s2">"nodes"</span><span class="p">,</span> <span class="n">output_path</span><span class="p">,</span> <span class="n">KGXFormat</span><span class="o">.</span><span class="n">TSV</span><span class="p">)</span>
 
 <span class="c1"># Export to a tar archive</span>
-<span class="n">db</span><span class="o">.</span><span class="n">export_to_archive</span><span class="p">(</span><span class="n">archive_path</span><span class="p">,</span> <span class="s2">&quot;my_graph&quot;</span><span class="p">,</span> <span class="n">KGXFormat</span><span class="o">.</span><span class="n">TSV</span><span class="p">,</span> <span class="n">compress</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">db</span><span class="o">.</span><span class="n">export_to_archive</span><span class="p">(</span><span class="n">archive_path</span><span class="p">,</span> <span class="s2">"my_graph"</span><span class="p">,</span> <span class="n">KGXFormat</span><span class="o">.</span><span class="n">TSV</span><span class="p">,</span> <span class="n">compress</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 <span class="c1"># Export to loose files</span>
-<span class="n">db</span><span class="o">.</span><span class="n">export_to_loose_files</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="s2">&quot;my_graph&quot;</span><span class="p">,</span> <span class="n">KGXFormat</span><span class="o">.</span><span class="n">PARQUET</span><span class="p">)</span>
+<span class="n">db</span><span class="o">.</span><span class="n">export_to_loose_files</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="s2">"my_graph"</span><span class="p">,</span> <span class="n">KGXFormat</span><span class="o">.</span><span class="n">PARQUET</span><span class="p">)</span>
 </code></pre></div>
 <h2 id="graphdatabase-context-manager">GraphDatabase Context Manager</h2>
 <p>The <code>GraphDatabase</code> class implements the context manager protocol (<code>__enter__</code> and <code>__exit__</code>) for safe resource management:</p>
-<div class="highlight"><pre><span></span><code><span class="k">with</span> <span class="n">GraphDatabase</span><span class="p">(</span><span class="n">db_path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;graph.duckdb&quot;</span><span class="p">))</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
+<div class="highlight"><pre><span></span><code><span class="k">with</span> <span class="n">GraphDatabase</span><span class="p">(</span><span class="n">db_path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"graph.duckdb"</span><span class="p">))</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
     <span class="c1"># Connection is automatically managed</span>
     <span class="n">db</span><span class="o">.</span><span class="n">load_file</span><span class="p">(</span><span class="n">file_spec</span><span class="p">)</span>
     <span class="n">stats</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">get_stats</span><span class="p">()</span>
@@ -2364,12 +2364,12 @@ ORDER<span class="w"> </span>BY<span class="w"> </span>count<span class="w"> </s
 --<span class="w"> </span>Find<span class="w"> </span>edges<span class="w"> </span>with<span class="w"> </span>specific<span class="w"> </span>predicates
 SELECT<span class="w"> </span>subject,<span class="w"> </span>predicate,<span class="w"> </span>object
 FROM<span class="w"> </span>edges
-WHERE<span class="w"> </span><span class="nv">predicate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;biolink:interacts_with&#39;</span>
+WHERE<span class="w"> </span><span class="nv">predicate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'biolink:interacts_with'</span>
 LIMIT<span class="w"> </span><span class="m">10</span><span class="p">;</span>
 
 --<span class="w"> </span>Analyze<span class="w"> </span>dangling<span class="w"> </span>edges
 SELECT
-<span class="w">    </span>split_part<span class="o">(</span>subject,<span class="w"> </span><span class="s1">&#39;:&#39;</span>,<span class="w"> </span><span class="m">1</span><span class="o">)</span><span class="w"> </span>as<span class="w"> </span>subject_prefix,
+<span class="w">    </span>split_part<span class="o">(</span>subject,<span class="w"> </span><span class="s1">':'</span>,<span class="w"> </span><span class="m">1</span><span class="o">)</span><span class="w"> </span>as<span class="w"> </span>subject_prefix,
 <span class="w">    </span>COUNT<span class="o">(</span>*<span class="o">)</span><span class="w"> </span>as<span class="w"> </span>count
 FROM<span class="w"> </span>dangling_edges
 GROUP<span class="w"> </span>BY<span class="w"> </span><span class="m">1</span>
@@ -2378,17 +2378,17 @@ ORDER<span class="w"> </span>BY<span class="w"> </span><span class="m">2</span><
 <h3 id="using-python">Using Python</h3>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">duckdb</span>
 
-<span class="n">conn</span> <span class="o">=</span> <span class="n">duckdb</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;my_graph.duckdb&quot;</span><span class="p">,</span> <span class="n">read_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">conn</span> <span class="o">=</span> <span class="n">duckdb</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">"my_graph.duckdb"</span><span class="p">,</span> <span class="n">read_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 <span class="c1"># Run custom analytics</span>
-<span class="n">result</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"""</span>
 <span class="s2">    SELECT</span>
 <span class="s2">        provided_by,</span>
 <span class="s2">        COUNT(DISTINCT id) as node_count,</span>
 <span class="s2">        COUNT(DISTINCT category) as category_count</span>
 <span class="s2">    FROM nodes</span>
 <span class="s2">    GROUP BY provided_by</span>
-<span class="s2">&quot;&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">fetchdf</span><span class="p">()</span>
+<span class="s2">"""</span><span class="p">)</span><span class="o">.</span><span class="n">fetchdf</span><span class="p">()</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
@@ -2397,8 +2397,8 @@ ORDER<span class="w"> </span>BY<span class="w"> </span><span class="m">2</span><
 <p>Within operations or custom scripts, you can access the underlying DuckDB connection:</p>
 <div class="highlight"><pre><span></span><code><span class="k">with</span> <span class="n">GraphDatabase</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
     <span class="c1"># Access the raw DuckDB connection</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT COUNT(*) FROM nodes&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total nodes: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"SELECT COUNT(*) FROM nodes"</span><span class="p">)</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Total nodes: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div>
 <p>This direct SQL access supports custom analyses, ad-hoc queries, and integration with other tools that use DuckDB.</p>
 

@@ -2358,11 +2358,11 @@
 <h3 id="inspecting-schema-changes-via-sql">Inspecting Schema Changes via SQL</h3>
 <p>After appending, you can also check the schema directly:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># View current table schemas</span>
-duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">&quot;DESCRIBE nodes&quot;</span>
-duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">&quot;DESCRIBE edges&quot;</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">"DESCRIBE nodes"</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">"DESCRIBE edges"</span>
 
 <span class="c1"># Check which columns have NULL values (potentially new columns)</span>
-duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">&quot;SELECT COUNT(*) - COUNT(custom_score) as nulls FROM nodes&quot;</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">"SELECT COUNT(*) - COUNT(custom_score) as nulls FROM nodes"</span>
 </code></pre></div>
 <h2 id="when-to-use-append-vs-join">When to Use Append vs Join</h2>
 <p>Choose the right operation based on your use case:</p>
@@ -2445,22 +2445,22 @@ koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</spa
 <p>After appending, verify the operation succeeded.</p>
 <h3 id="check-record-counts">Check Record Counts</h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># Compare before and after counts</span>
-duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">&quot;SELECT COUNT(*) AS node_count FROM nodes&quot;</span>
-duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">&quot;SELECT COUNT(*) AS edge_count FROM edges&quot;</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">"SELECT COUNT(*) AS node_count FROM nodes"</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">"SELECT COUNT(*) AS edge_count FROM edges"</span>
 </code></pre></div>
 <h3 id="verify-new-data-is-present">Verify New Data Is Present</h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># Check for records from the new source</span>
-duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">&quot;SELECT COUNT(*) FROM nodes WHERE file_source LIKE &#39;%new_data%&#39;&quot;</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">"SELECT COUNT(*) FROM nodes WHERE file_source LIKE '%new_data%'"</span>
 
 <span class="c1"># Or by provided_by if set</span>
-duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">&quot;SELECT provided_by, COUNT(*) FROM nodes GROUP BY provided_by ORDER BY COUNT(*) DESC&quot;</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">"SELECT provided_by, COUNT(*) FROM nodes GROUP BY provided_by ORDER BY COUNT(*) DESC"</span>
 </code></pre></div>
 <h3 id="check-schema-evolution">Check Schema Evolution</h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># View the current schema</span>
-duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">&quot;DESCRIBE nodes&quot;</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">"DESCRIBE nodes"</span>
 
 <span class="c1"># Check for new columns with mostly NULL values (recently added)</span>
-duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">&quot;</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">"</span>
 <span class="s2">SELECT</span>
 <span class="s2">    column_name,</span>
 <span class="s2">    COUNT(*) - COUNT(column_name) as null_count,</span>
@@ -2469,15 +2469,15 @@ duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s
 <span class="s2">UNPIVOT (value FOR column_name IN (*))</span>
 <span class="s2">GROUP BY column_name</span>
 <span class="s2">ORDER BY null_count DESC</span>
-<span class="s2">&quot;</span>
+<span class="s2">"</span>
 </code></pre></div>
 <h3 id="verify-deduplication-if-used">Verify Deduplication (if used)</h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># Check duplicate archive tables</span>
-duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">&quot;SELECT COUNT(*) as duplicate_nodes FROM duplicate_nodes&quot;</span>
-duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">&quot;SELECT COUNT(*) as duplicate_edges FROM duplicate_edges&quot;</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">"SELECT COUNT(*) as duplicate_nodes FROM duplicate_nodes"</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">"SELECT COUNT(*) as duplicate_edges FROM duplicate_edges"</span>
 
 <span class="c1"># View sample duplicates</span>
-duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">&quot;SELECT * FROM duplicate_nodes LIMIT 5&quot;</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">"SELECT * FROM duplicate_nodes LIMIT 5"</span>
 </code></pre></div>
 <h3 id="generate-qc-report">Generate QC Report</h3>
 <p>For comprehensive verification:</p>
@@ -2492,7 +2492,7 @@ koza<span class="w"> </span>merge<span class="w"> </span><span class="se">\</spa
 <span class="w">  </span>--output<span class="w"> </span>knowledge_graph.duckdb
 
 <span class="c1"># Step 2: Check initial counts</span>
-duckdb<span class="w"> </span>knowledge_graph.duckdb<span class="w"> </span><span class="s2">&quot;SELECT COUNT(*) FROM nodes&quot;</span>
+duckdb<span class="w"> </span>knowledge_graph.duckdb<span class="w"> </span><span class="s2">"SELECT COUNT(*) FROM nodes"</span>
 <span class="c1"># Returns: 125340</span>
 
 <span class="c1"># Step 3: Append new data with deduplication and schema tracking</span>
@@ -2505,7 +2505,7 @@ koza<span class="w"> </span>append<span class="w"> </span><span class="se">\</sp
 <span class="w">  </span>--show-progress
 
 <span class="c1"># Step 4: Verify the update</span>
-duckdb<span class="w"> </span>knowledge_graph.duckdb<span class="w"> </span><span class="s2">&quot;SELECT COUNT(*) FROM nodes&quot;</span>
+duckdb<span class="w"> </span>knowledge_graph.duckdb<span class="w"> </span><span class="s2">"SELECT COUNT(*) FROM nodes"</span>
 <span class="c1"># Returns: 138574</span>
 
 <span class="c1"># Step 5: Generate updated QC report</span>

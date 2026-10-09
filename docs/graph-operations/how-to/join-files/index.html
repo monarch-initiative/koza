@@ -2260,8 +2260,8 @@ koza<span class="w"> </span>join<span class="w"> </span><span class="se">\</span
 <h2 id="progress-tracking">Progress Tracking</h2>
 <p>Progress tracking is enabled by default. Use <code>--quiet</code> to suppress all output:</p>
 <div class="highlight"><pre><span></span><code>koza<span class="w"> </span>join<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--nodes<span class="w"> </span><span class="s2">&quot;*.nodes.*&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--edges<span class="w"> </span><span class="s2">&quot;*.edges.*&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="w"> </span><span class="s2">"*.nodes.*"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--edges<span class="w"> </span><span class="s2">"*.edges.*"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--output<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--quiet
 </code></pre></div>
@@ -2269,12 +2269,12 @@ koza<span class="w"> </span>join<span class="w"> </span><span class="se">\</span
 <h2 id="verification">Verification</h2>
 <p>After joining, verify the operation succeeded using SQL queries or the report commands.</p>
 <h3 id="quick-verification-with-duckdb-cli">Quick Verification with DuckDB CLI</h3>
-<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">&quot;SELECT COUNT(*) AS node_count FROM nodes&quot;</span>
-duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">&quot;SELECT COUNT(*) AS edge_count FROM edges&quot;</span>
+<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">"SELECT COUNT(*) AS node_count FROM nodes"</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">"SELECT COUNT(*) AS edge_count FROM edges"</span>
 </code></pre></div>
 <h3 id="check-schema">Check Schema</h3>
-<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">&quot;DESCRIBE nodes&quot;</span>
-duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">&quot;DESCRIBE edges&quot;</span>
+<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">"DESCRIBE nodes"</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">"DESCRIBE edges"</span>
 </code></pre></div>
 <h3 id="generate-qc-report">Generate QC Report</h3>
 <div class="highlight"><pre><span></span><code>koza<span class="w"> </span>report<span class="w"> </span>qc<span class="w"> </span><span class="se">\</span>
@@ -2282,13 +2282,13 @@ duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s
 <span class="w">  </span>-o<span class="w"> </span>qc_report.yaml
 </code></pre></div>
 <h3 id="view-sample-records">View Sample Records</h3>
-<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">&quot;SELECT * FROM nodes LIMIT 5&quot;</span>
-duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">&quot;SELECT * FROM edges LIMIT 5&quot;</span>
+<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">"SELECT * FROM nodes LIMIT 5"</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">"SELECT * FROM edges LIMIT 5"</span>
 </code></pre></div>
 <h3 id="verify-source-attribution">Verify Source Attribution</h3>
 <p>Check file source tracking:</p>
-<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">&quot;SELECT file_source, COUNT(*) FROM nodes GROUP BY file_source&quot;</span>
-duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">&quot;SELECT file_source, COUNT(*) FROM edges GROUP BY file_source&quot;</span>
+<div class="highlight"><pre><span></span><code>duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">"SELECT file_source, COUNT(*) FROM nodes GROUP BY file_source"</span>
+duckdb<span class="w"> </span>graph.duckdb<span class="w"> </span><span class="s2">"SELECT file_source, COUNT(*) FROM edges GROUP BY file_source"</span>
 </code></pre></div>
 <h2 id="complete-example">Complete Example</h2>
 <p>A typical workflow combining multiple options:</p>

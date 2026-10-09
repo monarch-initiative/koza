@@ -2567,7 +2567,7 @@
 <li><strong>metadata</strong>: Optional metadata about the dataset</li>
 </ul>
 <h2 id="basic-structure">Basic Structure</h2>
-<div class="highlight"><pre><span></span><code><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;my-ingest&#39;</span>
+<div class="highlight"><pre><span></span><code><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">'my-ingest'</span>
 <span class="nt">reader</span><span class="p">:</span><span class="w"> </span><span class="c1"># OR readers: for multiple sources</span>
 <span class="w">  </span><span class="c1"># reader configuration</span>
 <span class="nt">transform</span><span class="p">:</span>
@@ -2638,20 +2638,20 @@
 <div class="highlight"><pre><span></span><code><span class="nt">reader</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">format</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">csv</span>
 <span class="w">  </span><span class="nt">files</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;data/input.tsv&#39;</span>
-<span class="w">  </span><span class="nt">delimiter</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;\t&#39;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'data/input.tsv'</span>
+<span class="w">  </span><span class="nt">delimiter</span><span class="p">:</span><span class="w"> </span><span class="s">'\t'</span>
 </code></pre></div>
 <h3 id="multiple-readers-example">Multiple Readers Example</h3>
 <div class="highlight"><pre><span></span><code><span class="nt">readers</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">main_data</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">format</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">csv</span>
 <span class="w">    </span><span class="nt">files</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;data/main.tsv&#39;</span>
-<span class="w">    </span><span class="nt">delimiter</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;\t&#39;</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'data/main.tsv'</span>
+<span class="w">    </span><span class="nt">delimiter</span><span class="p">:</span><span class="w"> </span><span class="s">'\t'</span>
 <span class="w">  </span><span class="nt">reference_data</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">format</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">json</span>
 <span class="w">    </span><span class="nt">files</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;data/reference.json&#39;</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'data/reference.json'</span>
 </code></pre></div>
 <h3 id="base-reader-properties">Base Reader Properties</h3>
 <p>All reader types support these common properties:</p>
@@ -2765,16 +2765,16 @@
 <h4 id="column-definition-examples">Column Definition Examples</h4>
 <div class="highlight"><pre><span></span><code><span class="c1"># Simple string columns</span>
 <span class="nt">columns</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;gene_id&#39;</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;symbol&#39;</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;score&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'gene_id'</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'symbol'</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'score'</span>
 
 <span class="c1"># Mixed types  </span>
 <span class="nt">columns</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;gene_id&#39;</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;symbol&#39;</span><span class="w"> </span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;score&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">&#39;int&#39;</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;p_value&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">&#39;float&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'gene_id'</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'symbol'</span><span class="w"> </span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'score'</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">'int'</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'p_value'</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">'float'</span>
 </code></pre></div>
 <h3 id="json-reader-configuration">JSON Reader Configuration</h3>
 <p>For JSON format files (<code>format: json</code>):</p>
@@ -2861,26 +2861,26 @@
 <h4 id="comparison-filters">Comparison Filters</h4>
 <p>For numeric comparisons:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">filters</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">inclusion</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;include&#39;</span><span class="w">  </span><span class="c1"># or &#39;exclude&#39;</span>
-<span class="w">    </span><span class="nt">column</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;score&#39;</span>
-<span class="w">    </span><span class="nt">filter_code</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;gt&#39;</span><span class="w">     </span><span class="c1"># gt, ge, lt, le  </span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">inclusion</span><span class="p">:</span><span class="w"> </span><span class="s">'include'</span><span class="w">  </span><span class="c1"># or 'exclude'</span>
+<span class="w">    </span><span class="nt">column</span><span class="p">:</span><span class="w"> </span><span class="s">'score'</span>
+<span class="w">    </span><span class="nt">filter_code</span><span class="p">:</span><span class="w"> </span><span class="s">'gt'</span><span class="w">     </span><span class="c1"># gt, ge, lt, le  </span>
 <span class="w">    </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">500</span>
 </code></pre></div>
 <h4 id="equality-filters">Equality Filters</h4>
 <p>For exact matches:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">filters</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">inclusion</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;include&#39;</span>
-<span class="w">    </span><span class="nt">column</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;status&#39;</span>
-<span class="w">    </span><span class="nt">filter_code</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;eq&#39;</span><span class="w">     </span><span class="c1"># eq, ne</span>
-<span class="w">    </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;active&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">inclusion</span><span class="p">:</span><span class="w"> </span><span class="s">'include'</span>
+<span class="w">    </span><span class="nt">column</span><span class="p">:</span><span class="w"> </span><span class="s">'status'</span>
+<span class="w">    </span><span class="nt">filter_code</span><span class="p">:</span><span class="w"> </span><span class="s">'eq'</span><span class="w">     </span><span class="c1"># eq, ne</span>
+<span class="w">    </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="s">'active'</span>
 </code></pre></div>
 <h4 id="list-filters">List Filters</h4>
 <p>For checking membership in lists:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">filters</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">inclusion</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;include&#39;</span>
-<span class="w">    </span><span class="nt">column</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;category&#39;</span>
-<span class="w">    </span><span class="nt">filter_code</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;in&#39;</span><span class="w">     </span><span class="c1"># in, in_exact</span>
-<span class="w">    </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;A&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;B&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;C&#39;</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">inclusion</span><span class="p">:</span><span class="w"> </span><span class="s">'include'</span>
+<span class="w">    </span><span class="nt">column</span><span class="p">:</span><span class="w"> </span><span class="s">'category'</span>
+<span class="w">    </span><span class="nt">filter_code</span><span class="p">:</span><span class="w"> </span><span class="s">'in'</span><span class="w">     </span><span class="c1"># in, in_exact</span>
+<span class="w">    </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">'A'</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">'B'</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">'C'</span><span class="p p-Indicator">]</span>
 </code></pre></div>
 <h3 id="filter-codes">Filter Codes</h3>
 <ul>
@@ -2956,13 +2956,13 @@
 </ul>
 <h3 id="example-transform-configuration">Example Transform Configuration</h3>
 <div class="highlight"><pre><span></span><code><span class="nt">transform</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">code</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;transform.py&#39;</span>
-<span class="w">  </span><span class="nt">global_table</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;tables/global_mappings.yaml&#39;</span>
-<span class="w">  </span><span class="nt">local_table</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;tables/local_mappings.yaml&#39;</span>
+<span class="w">  </span><span class="nt">code</span><span class="p">:</span><span class="w"> </span><span class="s">'transform.py'</span>
+<span class="w">  </span><span class="nt">global_table</span><span class="p">:</span><span class="w"> </span><span class="s">'tables/global_mappings.yaml'</span>
+<span class="w">  </span><span class="nt">local_table</span><span class="p">:</span><span class="w"> </span><span class="s">'tables/local_mappings.yaml'</span>
 <span class="w">  </span><span class="nt">mappings</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;mappings/gene_mappings.yaml&#39;</span>
-<span class="w">  </span><span class="nt">on_map_failure</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;warning&#39;</span>
-<span class="w">  </span><span class="nt">custom_param</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;value&#39;</span><span class="w">  </span><span class="c1"># Goes into extra_fields</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'mappings/gene_mappings.yaml'</span>
+<span class="w">  </span><span class="nt">on_map_failure</span><span class="p">:</span><span class="w"> </span><span class="s">'warning'</span>
+<span class="w">  </span><span class="nt">custom_param</span><span class="p">:</span><span class="w"> </span><span class="s">'value'</span><span class="w">  </span><span class="c1"># Goes into extra_fields</span>
 </code></pre></div>
 <h2 id="writer-configuration">Writer Configuration</h2>
 <p>The writer section configures output format and properties.</p>
@@ -3037,15 +3037,15 @@
 <div class="highlight"><pre><span></span><code><span class="nt">writer</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">format</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tsv</span>
 <span class="w">  </span><span class="nt">node_properties</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;id&#39;</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;category&#39;</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;name&#39;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'id'</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'category'</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'name'</span>
 <span class="w">  </span><span class="nt">edge_properties</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;id&#39;</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;subject&#39;</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;predicate&#39;</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;object&#39;</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;category&#39;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'id'</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'subject'</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'predicate'</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'object'</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'category'</span>
 </code></pre></div>
 <h3 id="sssom-configuration">SSSOM Configuration</h3>
 <p>SSSOM (Simple Standard for Sharing Ontological Mappings) integration:</p>
@@ -3094,24 +3094,24 @@
 <div class="highlight"><pre><span></span><code><span class="nt">writer</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">sssom_config</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">files</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;mappings/ontology_mappings.sssom.tsv&#39;</span>
-<span class="w">    </span><span class="nt">subject_target_prefixes</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;MONDO&#39;</span><span class="p p-Indicator">]</span>
-<span class="w">    </span><span class="nt">object_target_prefixes</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;HP&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;GO&#39;</span><span class="p p-Indicator">]</span>
-<span class="w">    </span><span class="nt">use_match</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;exact&#39;</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'mappings/ontology_mappings.sssom.tsv'</span>
+<span class="w">    </span><span class="nt">subject_target_prefixes</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">'MONDO'</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">object_target_prefixes</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">'HP'</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">'GO'</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">use_match</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">'exact'</span><span class="p p-Indicator">]</span>
 </code></pre></div>
 <h2 id="metadata-configuration">Metadata Configuration</h2>
 <p>Metadata can be defined inline or loaded from a separate file.</p>
 <h3 id="inline-metadata">Inline Metadata</h3>
 <div class="highlight"><pre><span></span><code><span class="nt">metadata</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;My</span><span class="nv"> </span><span class="s">Data</span><span class="nv"> </span><span class="s">Source&#39;</span>
-<span class="w">  </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;Description</span><span class="nv"> </span><span class="s">of</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">data</span><span class="nv"> </span><span class="s">and</span><span class="nv"> </span><span class="s">processing&#39;</span>
-<span class="w">  </span><span class="nt">ingest_title</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;Source</span><span class="nv"> </span><span class="s">Database</span><span class="nv"> </span><span class="s">Name&#39;</span>
-<span class="w">  </span><span class="nt">ingest_url</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;https://source-database.org&#39;</span>
-<span class="w">  </span><span class="nt">provided_by</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;my_source_gene_disease&#39;</span>
-<span class="w">  </span><span class="nt">rights</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;https://source-database.org/license&#39;</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">'My</span><span class="nv"> </span><span class="s">Data</span><span class="nv"> </span><span class="s">Source'</span>
+<span class="w">  </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">'Description</span><span class="nv"> </span><span class="s">of</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">data</span><span class="nv"> </span><span class="s">and</span><span class="nv"> </span><span class="s">processing'</span>
+<span class="w">  </span><span class="nt">ingest_title</span><span class="p">:</span><span class="w"> </span><span class="s">'Source</span><span class="nv"> </span><span class="s">Database</span><span class="nv"> </span><span class="s">Name'</span>
+<span class="w">  </span><span class="nt">ingest_url</span><span class="p">:</span><span class="w"> </span><span class="s">'https://source-database.org'</span>
+<span class="w">  </span><span class="nt">provided_by</span><span class="p">:</span><span class="w"> </span><span class="s">'my_source_gene_disease'</span>
+<span class="w">  </span><span class="nt">rights</span><span class="p">:</span><span class="w"> </span><span class="s">'https://source-database.org/license'</span>
 </code></pre></div>
 <h3 id="external-metadata-file">External Metadata File</h3>
-<div class="highlight"><pre><span></span><code><span class="nt">metadata</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;./metadata.yaml&#39;</span>
+<div class="highlight"><pre><span></span><code><span class="nt">metadata</span><span class="p">:</span><span class="w"> </span><span class="s">'./metadata.yaml'</span>
 </code></pre></div>
 <h3 id="metadata-properties">Metadata Properties</h3>
 <table>
@@ -3157,57 +3157,57 @@
 </table>
 <h2 id="complete-example">Complete Example</h2>
 <p>Here's a comprehensive example showing all major configuration options:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;comprehensive-example&#39;</span>
+<div class="highlight"><pre><span></span><code><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">'comprehensive-example'</span>
 
 <span class="nt">metadata</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;Example</span><span class="nv"> </span><span class="s">Database&#39;</span>
-<span class="w">  </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;Comprehensive</span><span class="nv"> </span><span class="s">example</span><span class="nv"> </span><span class="s">of</span><span class="nv"> </span><span class="s">Koza</span><span class="nv"> </span><span class="s">configuration&#39;</span>
-<span class="w">  </span><span class="nt">ingest_title</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;Example</span><span class="nv"> </span><span class="s">DB&#39;</span>
-<span class="w">  </span><span class="nt">ingest_url</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;https://example-db.org&#39;</span>
-<span class="w">  </span><span class="nt">provided_by</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;example_gene_disease&#39;</span>
-<span class="w">  </span><span class="nt">rights</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;https://example-db.org/license&#39;</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">'Example</span><span class="nv"> </span><span class="s">Database'</span>
+<span class="w">  </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">'Comprehensive</span><span class="nv"> </span><span class="s">example</span><span class="nv"> </span><span class="s">of</span><span class="nv"> </span><span class="s">Koza</span><span class="nv"> </span><span class="s">configuration'</span>
+<span class="w">  </span><span class="nt">ingest_title</span><span class="p">:</span><span class="w"> </span><span class="s">'Example</span><span class="nv"> </span><span class="s">DB'</span>
+<span class="w">  </span><span class="nt">ingest_url</span><span class="p">:</span><span class="w"> </span><span class="s">'https://example-db.org'</span>
+<span class="w">  </span><span class="nt">provided_by</span><span class="p">:</span><span class="w"> </span><span class="s">'example_gene_disease'</span>
+<span class="w">  </span><span class="nt">rights</span><span class="p">:</span><span class="w"> </span><span class="s">'https://example-db.org/license'</span>
 
 <span class="nt">reader</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">format</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">csv</span>
 <span class="w">  </span><span class="nt">files</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;data/genes.tsv&#39;</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;data/diseases.tsv&#39;</span>
-<span class="w">  </span><span class="nt">delimiter</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;\t&#39;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'data/genes.tsv'</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'data/diseases.tsv'</span>
+<span class="w">  </span><span class="nt">delimiter</span><span class="p">:</span><span class="w"> </span><span class="s">'\t'</span>
 <span class="w">  </span><span class="nt">columns</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;gene_id&#39;</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;gene_symbol&#39;</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;disease_id&#39;</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;confidence&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">&#39;float&#39;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'gene_id'</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'gene_symbol'</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'disease_id'</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'confidence'</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">'float'</span>
 <span class="w">  </span><span class="nt">filters</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">inclusion</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;include&#39;</span>
-<span class="w">      </span><span class="nt">column</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;confidence&#39;</span>
-<span class="w">      </span><span class="nt">filter_code</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;ge&#39;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">inclusion</span><span class="p">:</span><span class="w"> </span><span class="s">'include'</span>
+<span class="w">      </span><span class="nt">column</span><span class="p">:</span><span class="w"> </span><span class="s">'confidence'</span>
+<span class="w">      </span><span class="nt">filter_code</span><span class="p">:</span><span class="w"> </span><span class="s">'ge'</span>
 <span class="w">      </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.7</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">inclusion</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;exclude&#39;</span>
-<span class="w">      </span><span class="nt">column</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;gene_symbol&#39;</span>
-<span class="w">      </span><span class="nt">filter_code</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;eq&#39;</span>
-<span class="w">      </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;DEPRECATED&#39;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">inclusion</span><span class="p">:</span><span class="w"> </span><span class="s">'exclude'</span>
+<span class="w">      </span><span class="nt">column</span><span class="p">:</span><span class="w"> </span><span class="s">'gene_symbol'</span>
+<span class="w">      </span><span class="nt">filter_code</span><span class="p">:</span><span class="w"> </span><span class="s">'eq'</span>
+<span class="w">      </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="s">'DEPRECATED'</span>
 
 <span class="nt">transform</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">code</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;transform.py&#39;</span>
-<span class="w">  </span><span class="nt">global_table</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;tables/global_mappings.yaml&#39;</span>
-<span class="w">  </span><span class="nt">on_map_failure</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;warning&#39;</span>
+<span class="w">  </span><span class="nt">code</span><span class="p">:</span><span class="w"> </span><span class="s">'transform.py'</span>
+<span class="w">  </span><span class="nt">global_table</span><span class="p">:</span><span class="w"> </span><span class="s">'tables/global_mappings.yaml'</span>
+<span class="w">  </span><span class="nt">on_map_failure</span><span class="p">:</span><span class="w"> </span><span class="s">'warning'</span>
 
 <span class="nt">writer</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">format</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tsv</span>
 <span class="w">  </span><span class="nt">node_properties</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;id&#39;</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;category&#39;</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;name&#39;</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;provided_by&#39;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'id'</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'category'</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'name'</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'provided_by'</span>
 <span class="w">  </span><span class="nt">edge_properties</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;id&#39;</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;subject&#39;</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;predicate&#39;</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;object&#39;</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;category&#39;</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;provided_by&#39;</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;confidence&#39;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'id'</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'subject'</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'predicate'</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'object'</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'category'</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'provided_by'</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'confidence'</span>
 <span class="w">  </span><span class="nt">min_node_count</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span>
 <span class="w">  </span><span class="nt">min_edge_count</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
 </code></pre></div>
