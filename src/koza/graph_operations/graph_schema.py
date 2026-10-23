@@ -245,8 +245,9 @@ def _parse_duckdb_type(col_type: str | None) -> duckdb.typing.DuckDBPyType | Non
 def _list_element(
     col_type: duckdb.typing.DuckDBPyType,
 ) -> tuple[duckdb.typing.DuckDBPyType, bool]:
-    """Unwrap one LIST level: ``(element type, True)`` for a list, else ``(type, False)``."""
-    if col_type.id == "list":
+    """Unwrap one list level: ``(element type, True)`` for a LIST or fixed-size
+    ARRAY, else ``(type, False)``."""
+    if col_type.id in ("list", "array"):
         return col_type.children[0][1], True
     return col_type, False
 
@@ -342,7 +343,8 @@ def _inline_class(
     list, so the class describes what the data actually holds. Ranges reduce
     via `_primitive_range` like top-level slots, keeping the released schema
     loadable with only `linkml:types` (ADR-0002). A class reached from several
-    columns accumulates the union of their fields.
+    columns accumulates the union of their fields, each widened to cover every
+    column it appears in (see `_merge_slot_shape`).
     """
     name = camelcase(biolink_class)
     class_def = classes.get(name)
@@ -352,8 +354,6 @@ def _inline_class(
         )
         classes[name] = class_def
     for field, field_type in struct_type.children:
-        if field in class_def.attributes:
-            continue
         element, is_list = _list_element(field_type)
         biolink_slot = _induced_biolink_slot(sv, field, biolink_class)
         attr = SlotDefinition(name=field)
@@ -375,8 +375,40 @@ def _inline_class(
             attr.range = _DUCKDB_SCALAR_TO_RANGE.get(str(element).upper())
         if is_list:
             attr.multivalued = True
-        class_def.attributes[field] = attr
+        existing = class_def.attributes.get(field)
+        if existing is None:
+            class_def.attributes[field] = attr
+        else:
+            _merge_slot_shape(existing, attr, f"{name}.{field}")
     return name
+
+
+def _merge_slot_shape(base: SlotDefinition, other: SlotDefinition, label: str) -> None:
+    """Widen `base` in place to also describe `other` — the same slot as seen in
+    another column (nodes vs. edges share one flat slot namespace; an inlined
+    class can be reached from several columns).
+
+    - `multivalued` / `inlined`: true if either is
+    - a multivalued, inlined slot is always `inlined_as_list` — without it
+      LinkML reads multivalued+inlined as a dict keyed by identifier
+    - range: an inlined class beats a reference or primitive; otherwise
+      `other` wins (matching the previous last-definition-wins behavior).
+      Differing ranges are logged.
+    """
+    if other.range is not None and str(other.range) != str(base.range):
+        if base.range is not None:
+            logger.warning(
+                f"Slot {label!r} has different shapes across columns: range "
+                f"{base.range!r} vs {other.range!r}"
+            )
+        if not (base.inlined and not other.inlined):
+            base.range = other.range
+    base.multivalued = bool(base.multivalued or other.multivalued) or None
+    base.inlined = bool(base.inlined or other.inlined) or None
+    if base.multivalued and base.inlined:
+        base.inlined_as_list = True
+    elif not base.inlined:
+        base.inlined_as_list = None
 
 
 def _apply_inline_struct(
@@ -544,7 +576,15 @@ def derive_schema(
         id="https://w3id.org/monarch-initiative/koza/graph-schema",
         name="koza-graph-schema",
     )
-    schema.slots = {**entity_slots, **association_slots}
+    # Nodes and edges share one flat slot namespace; a slot in both gets one
+    # shape covering both columns.
+    merged_slots = dict(entity_slots)
+    for name, slot in association_slots.items():
+        if name in merged_slots:
+            _merge_slot_shape(merged_slots[name], slot, name)
+        else:
+            merged_slots[name] = slot
+    schema.slots = merged_slots
     schema.classes = {
         "Entity": ClassDefinition(name="Entity", slots=list(entity_slots.keys())),
         "Association": ClassDefinition(
@@ -705,8 +745,11 @@ def export_schema(
             continue
         for col_name, col_type, *_ in rows:
             parsed = _parse_duckdb_type(col_type)
+            if parsed is None:
+                scalar_types[col_name] = (col_type or "").upper()
+                continue
             # The outer type decides: `STRUCT(x VARCHAR[])` is one record, not a list.
-            if parsed is not None and parsed.id == "list":
+            if _list_element(parsed)[1]:
                 multivalued_slots.add(col_name)
             else:
                 scalar_types[col_name] = (col_type or "").upper()
@@ -736,6 +779,7 @@ def export_schema(
         rng = _DUCKDB_SCALAR_TO_RANGE.get(col_type)
         if rng:
             slot.range = rng
+
 
     # schema_as_dict emits the idiomatic compact schema form — `prefix: uri`
     # rather than expanded Prefix objects, and drops redundant per-element
