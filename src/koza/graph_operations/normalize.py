@@ -323,6 +323,12 @@ def normalize_graph(config: NormalizeConfig) -> NormalizeResult:
         )
 
 
+# Longest metadata line the header count reads (DuckDB's default is 2 MB).
+# `buffer_size` is set alongside it: left to default, DuckDB sizes its read
+# buffer from max_line_size, and a large limit then allocates gigabytes.
+_SSSOM_MAX_LINE_BYTES = 16 * 1024 * 1024
+
+
 def _sssom_header_line_count(db: GraphDatabase, path: Path) -> int:
     """Number of leading `#` lines (the SSSOM YAML metadata block) in `path`.
 
@@ -334,7 +340,7 @@ def _sssom_header_line_count(db: GraphDatabase, path: Path) -> int:
     cursor = db.conn.execute(
         "SELECT line FROM read_csv(?, header=false, columns={'line': 'VARCHAR'}, "
         "delim=E'\\x01', quote='', escape='', auto_detect=false, "
-        "max_line_size=1073741824)",
+        f"max_line_size={_SSSOM_MAX_LINE_BYTES}, buffer_size={2 * _SSSOM_MAX_LINE_BYTES})",
         [str(path)],
     )
     count = 0
