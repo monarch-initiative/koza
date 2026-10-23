@@ -2,7 +2,6 @@
 Normalize operation for applying SSSOM mappings to graph data.
 """
 
-import gzip
 import time
 from pathlib import Path
 from typing import NamedTuple
@@ -324,14 +323,23 @@ def normalize_graph(config: NormalizeConfig) -> NormalizeResult:
         )
 
 
-def _sssom_header_line_count(path: Path) -> int:
-    """Number of leading `#` lines (the SSSOM YAML metadata block) in `path`."""
-    opener = gzip.open if path.suffix == ".gz" else open
+def _sssom_header_line_count(db: GraphDatabase, path: Path) -> int:
+    """Number of leading `#` lines (the SSSOM YAML metadata block) in `path`.
+
+    Read through DuckDB's CSV reader as raw lines (no delimiter, quoting or
+    escaping), so it decompresses exactly what `read_csv` does (.gz, .zst, ...)
+    and counts lines the way its `skip` option does. Streams until the first
+    non-`#` line."""
+    cursor = db.conn.execute(
+        "SELECT line FROM read_csv(?, header=false, columns={'line': 'VARCHAR'}, "
+        "delim=E'\\x01', quote='', escape='', auto_detect=false)",
+        [str(path)],
+    )
     count = 0
-    with opener(path, "rt", encoding="utf-8") as f:
-        for line in f:
-            if not line.startswith("#"):
-                break
+    while rows := cursor.fetchmany(1000):
+        for (line,) in rows:
+            if line is None or not line.startswith("#"):
+                return count
             count += 1
     return count
 
@@ -371,7 +379,7 @@ def _load_sssom_file(db: GraphDatabase, file_spec: FileSpec) -> FileLoadResult:
         safe_filename = file_spec.path.stem.replace("-", "_").replace(".", "_")
         temp_table_name = f"temp_mapping_{safe_filename}_{id(file_spec)}"
 
-        header_lines = _sssom_header_line_count(file_spec.path)
+        header_lines = _sssom_header_line_count(db, file_spec.path)
         create_sql = f"""
             CREATE TEMP TABLE {temp_table_name} AS
             SELECT *, '{file_spec.source_name or file_spec.path.stem}' as mapping_source 

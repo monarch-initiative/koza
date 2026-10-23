@@ -902,21 +902,30 @@ HGNC:123\tskos:exactMatch\tUniProtKB:P12345\thttps://example.org/uniprot
 """
 
 
-@pytest.mark.parametrize("compressed", [False, True])
-def test_sssom_rows_with_hash_in_values_are_kept(temp_dir, compressed):
+@pytest.mark.parametrize("compression", [None, "gz", "zst"])
+def test_sssom_rows_with_hash_in_values_are_kept(temp_dir, compression):
     """Only the leading `#` metadata block is skipped. A `#` inside a value (IRIs,
-    URLs) must not truncate the row; DuckDB 2's `comment='#'` would drop it."""
+    URLs) must not truncate the row; DuckDB 2's `comment='#'` would drop it.
+    Compressed files are read the same way `read_csv` reads them."""
     import gzip
+    import shutil
+    import subprocess
 
     from koza.graph_operations.normalize import _load_sssom_file
     from koza.model.graph_operations import FileSpec
 
-    path = temp_dir / ("hash.sssom.tsv.gz" if compressed else "hash.sssom.tsv")
-    if compressed:
+    plain = temp_dir / "hash.sssom.tsv"
+    plain.write_text(SSSOM_WITH_HEADER_AND_IRIS)
+    path = plain
+    if compression == "gz":
+        path = temp_dir / "hash.sssom.tsv.gz"
         with gzip.open(path, "wt") as f:
             f.write(SSSOM_WITH_HEADER_AND_IRIS)
-    else:
-        path.write_text(SSSOM_WITH_HEADER_AND_IRIS)
+    elif compression == "zst":
+        if shutil.which("zstd") is None:
+            pytest.skip("zstd binary not available")
+        path = temp_dir / "hash.sssom.tsv.zst"
+        subprocess.run(["zstd", "-q", "-f", str(plain), "-o", str(path)], check=True)
 
     with GraphDatabase() as db:
         result = _load_sssom_file(db, FileSpec(path=path, source_name="hash"))

@@ -20,6 +20,12 @@ from koza.model.graph_operations import (
 from koza.graph_operations.schema_utils import get_multivalued_columns
 
 
+# Storage format for the graph files koza writes. duckdb 2 otherwise writes a
+# format no 1.x release can open; the 1.4 format keeps a graph built under 2.x
+# readable by every supported duckdb (>=1.4.2). Applies when a file is created.
+DUCKDB_STORAGE_CONFIG = {"storage_compatibility_version": "v1.4.0"}
+
+
 def _generate_multivalued_select(
     conn: duckdb.DuckDBPyConnection,
     temp_table: str,
@@ -255,7 +261,10 @@ class GraphDatabase:
         """
         self.db_path = db_path
         self.read_only = read_only
-        self.conn = duckdb.connect(str(db_path) if db_path else ":memory:", read_only=read_only)
+        if db_path and not read_only:
+            self.conn = duckdb.connect(str(db_path), config=DUCKDB_STORAGE_CONFIG)
+        else:
+            self.conn = duckdb.connect(str(db_path) if db_path else ":memory:", read_only=read_only)
         if not read_only:
             self._setup_database()
 

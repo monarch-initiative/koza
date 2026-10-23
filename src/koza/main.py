@@ -6,6 +6,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Annotated
 
+import duckdb
 import typer
 from loguru import logger
 from tqdm import tqdm
