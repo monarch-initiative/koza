@@ -1036,12 +1036,13 @@ def test_overlay_slot_usage_survives_closurize_and_export(biolink_schemaview, tm
             nodes_headers=["id", "category"],
             edges_headers=["subject", "predicate", "object", "sources"],
             biolink_schemaview=biolink_schemaview,
+            edges_column_types={"sources": _SOURCES_STRUCT_LIST},
             overlay=_SOURCES_INLINED_OVERLAY,
         )
         conn.execute("CREATE TABLE denormalized_nodes (id VARCHAR, category VARCHAR)")
         conn.execute(
             "CREATE TABLE denormalized_edges (subject VARCHAR, predicate VARCHAR, "
-            "object VARCHAR, sources VARCHAR[])"
+            f"object VARCHAR, sources {_SOURCES_STRUCT_LIST})"
         )
         _evolve_schema_for_denormalized(conn)
         exported = export_schema(conn, project_denormalized=True)
@@ -1052,3 +1053,125 @@ def test_overlay_slot_usage_survives_closurize_and_export(biolink_schemaview, tm
     sources = reloaded.induced_slot("sources", "Association")
     assert sources.range == "RetrievalSource"
     assert sources.inlined_as_list
+
+
+
+# --- overlay validation (review of #264) -------------------------------------
+
+_EDGE_COLUMN_TYPES = {"Association": {"sources": "VARCHAR[]", "publications": "VARCHAR[]"}}
+
+
+@pytest.mark.parametrize(
+    "overlay, message",
+    [
+        ({"classes": {"Extra": {"is_a": "NoSuchParent"}}}, "NoSuchParent"),
+        ({"classes": {"Extra": {"mixins": ["NoSuchMixin"]}}}, "NoSuchMixin"),
+        ({"classes": {"Extra": {"slots": ["no_such_slot"]}}}, "no_such_slot"),
+        ({"classes": {"Extra": {"slot_usage": {"x": {"range": "NoSuchClass"}}}}}, "NoSuchClass"),
+        (
+            {"classes": {"Association": {"slot_usage": {"sources": {"any_of": [{"range": "NoSuchClass"}]}}}}},
+            "NoSuchClass",
+        ),
+        ({"classes": {"DenormalizedAssociation": {}}}, "closurize builds"),
+    ],
+)
+def test_overlay_rejects_dangling_references(biolink_schemaview, overlay, message):
+    with pytest.raises(ValueError, match=message):
+        apply_schema_overlay(_edges_schema(biolink_schemaview), overlay, biolink_schemaview)
+
+
+def test_overlay_biolink_references_are_pulled_in_and_resolve(biolink_schemaview):
+    """is_a / mixins / any_of naming Biolink classes get standalone definitions,
+    so the overlaid schema loads in a SchemaView."""
+    overlay = {
+        "classes": {
+            "Extra": {"is_a": "NamedThing", "mixins": ["ThingWithTaxon"]},
+            "Association": {"slot_usage": {"publications": {"any_of": [{"range": "Publication"}]}}},
+        }
+    }
+    schema = _edges_schema(biolink_schemaview)
+    apply_schema_overlay(schema, overlay, biolink_schemaview)
+    assert {"NamedThing", "ThingWithTaxon", "Publication"} <= set(schema.classes)
+
+
+@pytest.mark.parametrize(
+    "overlay, message",
+    [
+        # inlined records declared on a CURIE-list column
+        (_SOURCES_INLINED_OVERLAY, "doesn't hold records"),
+        ({"classes": {"Association": {"slot_usage": {"publications": {"multivalued": False}}}}}, "is a list"),
+        ({"slots": {"publications": {"multivalued": False}}}, "is a list"),
+    ],
+)
+def test_overlay_must_match_column_shape(biolink_schemaview, overlay, message):
+    with pytest.raises(ValueError, match=message):
+        apply_schema_overlay(
+            _edges_schema(biolink_schemaview), overlay, biolink_schemaview, _EDGE_COLUMN_TYPES
+        )
+
+
+def test_overlay_slot_usage_accepted_on_record_column(biolink_schemaview):
+    schema = _edges_schema(biolink_schemaview)
+    apply_schema_overlay(
+        schema,
+        _SOURCES_INLINED_OVERLAY,
+        biolink_schemaview,
+        {"Association": {"sources": _SOURCES_STRUCT_LIST}},
+    )
+    assert schema.classes["Association"].slot_usage["sources"].inlined_as_list
+
+
+def test_overlay_primitive_range_override_clears_inferred_inlining(biolink_schemaview):
+    schema = derive_schema(
+        nodes_headers=["id", "category"],
+        edges_headers=["subject", "predicate", "object", "sources"],
+        biolink_schemaview=biolink_schemaview,
+        edges_column_types={"sources": _SOURCES_STRUCT_LIST},
+    )
+    assert schema.slots["sources"].inlined_as_list
+    apply_schema_overlay(schema, {"slots": {"sources": {"range": "uriorcurie"}}}, biolink_schemaview)
+    sources = schema.slots["sources"]
+    assert sources.range == "uriorcurie"
+    assert not sources.inlined and not sources.inlined_as_list
+
+
+def test_missing_overlay_fails_before_join_loads_files(tmp_path):
+    """The overlay is read and checked before any file is loaded, so a typo in
+    its path doesn't cost a full load (and leaves no half-built database)."""
+    from koza.graph_operations.join import join_graphs
+    from koza.model.graph_operations import FileSpec, JoinConfig
+
+    nodes = tmp_path / "x_nodes.tsv"
+    nodes.write_text("id\tcategory\nA:1\tbiolink:Gene\n")
+    db_path = tmp_path / "graph.duckdb"
+    config = JoinConfig(
+        node_files=[FileSpec(path=nodes)],
+        output_database=db_path,
+        schema_overlay=tmp_path / "no-such-overlay.yaml",
+        quiet=True,
+        show_progress=False,
+    )
+    with pytest.raises(FileNotFoundError, match="Schema overlay not found"):
+        join_graphs(config)
+    assert not db_path.exists()
+
+
+def test_malformed_overlay_fails_before_join_loads_files(tmp_path):
+    from koza.graph_operations.join import join_graphs
+    from koza.model.graph_operations import FileSpec, JoinConfig
+
+    nodes = tmp_path / "x_nodes.tsv"
+    nodes.write_text("id\tcategory\nA:1\tbiolink:Gene\n")
+    overlay = tmp_path / "overlay.yaml"
+    overlay.write_text("classes:\n  Association:\n    slot_usage:\n      sources:\n        inlined_as_lst: true\n")
+    db_path = tmp_path / "graph.duckdb"
+    config = JoinConfig(
+        node_files=[FileSpec(path=nodes)],
+        output_database=db_path,
+        schema_overlay=overlay,
+        quiet=True,
+        show_progress=False,
+    )
+    with pytest.raises(Exception):
+        join_graphs(config)
+    assert not db_path.exists()

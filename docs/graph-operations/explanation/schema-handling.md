@@ -264,9 +264,16 @@ classes:
 - **`slot_usage` on `Entity` / `Association`** refines a column's slot for that class. This is the LinkML-native way to narrow a slot. It stays on the class, closurize carries it onto `DenormalizedEntity` / `DenormalizedAssociation`, and `SchemaView.induced_slot` honors it in the exported schema.
 - **Other `classes`** are added as written.
 - **Top-level `slots`** replace the named fields of a derived slot definition, for changes that aren't refinements. Each override is logged.
-- A class used as a `range` must be defined in the overlay, already be in the schema, or be a Biolink class. A Biolink class gets a standalone definition reduced to LinkML primitives.
+- **Class references must resolve.** A class named by `range` (including inside `any_of` and similar), `is_a` or `mixins` must be defined in the overlay, already be in the schema, or be a Biolink class. A Biolink class gets a standalone definition reduced to LinkML primitives. Names in a class's `slots` list must be slots in the graph.
+- **Refinements must match the data.** `inlined` / `inlined_as_list` need a column that holds records (`STRUCT` / `MAP`), and `multivalued` must match whether the column is a list.
 
-Koza raises an error at seed time for an overlay that names a slot not in the graph, an unknown range class, misspelled LinkML fields, or anything other than `slot_usage` on `Entity` / `Association`.
+For a record column, koza already infers `inlined_as_list` from the column type, so the `sources` example above makes explicit what seeding would derive anyway.
+
+**Errors.** Koza checks the overlay in two stages, both before the graph is written out:
+- **Before any file is loaded:** a missing file, unsupported keys, misspelled LinkML fields, anything other than `slot_usage` on `Entity` / `Association`, or the closurize-owned `DenormalizedEntity` / `DenormalizedAssociation` names.
+- **At seed time:** checks that need the graph, such as slots and columns that don't exist, references that don't resolve, or a shape that contradicts a column.
+
+Koza logs a warning when an overlay class replaces a derived class of the same name.
 
 ### Tolerant of unseeded databases
 

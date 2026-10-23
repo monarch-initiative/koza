@@ -535,6 +535,17 @@ def load(
             ),
         ),
     ] = None,
+    schema_overlay: Annotated[
+        str | None,
+        typer.Option(
+            "--schema-overlay",
+            help=(
+                "LinkML YAML fragment applied to the seeded graph schema: "
+                "slot_usage on Entity/Association to refine a column's slot, "
+                "extra classes, or top-level slot overrides."
+            ),
+        ),
+    ] = None,
     required_node_fields: Annotated[
         list[str] | None,
         typer.Option("--required-node-field", help="Node fields that must be present and non-empty (can specify multiple)"),
@@ -609,6 +620,7 @@ def load(
             output_database=Path(output_database) if output_database else None,
             output_format=output_format,
             slots_file=Path(slots_file) if slots_file else None,
+            schema_overlay=Path(schema_overlay) if schema_overlay else None,
             required_node_fields=required_node_fields or [],
             required_edge_fields=required_edge_fields or [],
             generate_provided_by=generate_provided_by,

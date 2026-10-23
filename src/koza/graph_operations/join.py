@@ -132,6 +132,14 @@ def join_graphs(config: JoinConfig) -> JoinResult:
         if config.slots_file is not None:
             _apply_slots_file(config)
 
+        # Read and check the schema overlay up front: a missing or malformed
+        # overlay should fail before hours of loading, not at seed time.
+        overlay = (
+            load_schema_overlay(config.schema_overlay)
+            if config.schema_overlay is not None and config.seed_schema
+            else None
+        )
+
         # Initialize database
         with GraphDatabase(config.database_path) as db:
             # Load node files
@@ -199,7 +207,7 @@ def join_graphs(config: JoinConfig) -> JoinResult:
             # operations can consult `current_schema(conn)` instead of
             # falling back to DESCRIBE. See decisions/0002-schema-lives-with-database.md.
             if config.seed_schema:
-                _seed_graph_schema(db, files_loaded, config.schema_overlay)
+                _seed_graph_schema(db, files_loaded, overlay)
 
             # Get final statistics
             final_stats = db.get_stats()
@@ -296,11 +304,11 @@ def _validated_slot_list(loaded: dict, key: str, source: Path) -> list[str] | No
 
 
 def _seed_graph_schema(
-    db: GraphDatabase, files_loaded: list[FileLoadResult], schema_overlay: Path | None = None
+    db: GraphDatabase, files_loaded: list[FileLoadResult], overlay: dict | None = None
 ) -> None:
     """Read the column lists from the final nodes/edges tables and seed the
     derived schema + Biolink YAML into the DuckDB's _koza_schema metadata,
-    applying `schema_overlay` (a LinkML YAML fragment) if given."""
+    applying `overlay` (a parsed schema overlay) if given."""
     nodes_types = _column_types_for_table(db, "nodes")
     edges_types = _column_types_for_table(db, "edges")
     if not nodes_types and not edges_types:
@@ -314,7 +322,7 @@ def _seed_graph_schema(
         declared_outputs=discover_declared_outputs(),
         nodes_column_types=nodes_types,
         edges_column_types=edges_types,
-        overlay=load_schema_overlay(schema_overlay) if schema_overlay else None,
+        overlay=overlay,
     )
 
 
