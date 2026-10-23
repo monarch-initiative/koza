@@ -17,6 +17,7 @@ from koza.graph_operations import prune_graph
 from koza.graph_operations.graph_schema import (
     ASSOCIATION_ROOT,
     _canonical_slot_order,
+    _column_slot,
     ENTITY_ROOT,
     UnknownSlotsError,
     current_schema,
@@ -670,3 +671,113 @@ def test_projected_export_is_independent_of_denormalized_column_order(biolink_sc
         "object_label",
         "subject_closure",
     ]
+
+
+# --- inlined class slots (issue #261) ---------------------------------------
+
+_SOURCES_STRUCT_LIST = (
+    "STRUCT(category VARCHAR[], id VARCHAR, resource_id VARCHAR, "
+    "resource_role VARCHAR, source_record_urls VARCHAR[])[]"
+)
+
+
+def test_column_slot_applies_class_level_slot_usage(biolink_schemaview):
+    """Biolink's `association` declares `sources` inlined_as_list via
+    slot_usage; the global slot doesn't. The column shape must see it."""
+    assert not biolink_schemaview.get_slot("sources").inlined_as_list
+    shape = _column_slot(biolink_schemaview, "sources", ASSOCIATION_ROOT)
+    assert shape.multivalued and shape.inlined_as_list
+
+
+def test_column_slot_range_is_broadest_across_descendants(biolink_schemaview):
+    """Subclasses narrow `object` to their own ranges; one column holds all of
+    them, so its shape keeps the root's range."""
+    assert _column_slot(biolink_schemaview, "object", ASSOCIATION_ROOT).range == "named thing"
+
+
+def test_struct_list_column_declares_inlined_class(biolink_schemaview):
+    schema = derive_schema(
+        nodes_headers=["id", "category"],
+        edges_headers=["subject", "predicate", "object", "sources"],
+        biolink_schemaview=biolink_schemaview,
+        edges_column_types={"sources": _SOURCES_STRUCT_LIST},
+    )
+    sources = schema.slots["sources"]
+    assert sources.range == "RetrievalSource"
+    assert sources.multivalued and sources.inlined and sources.inlined_as_list
+
+    retrieval_source = schema.classes["RetrievalSource"]
+    assert retrieval_source.class_uri == "biolink:RetrievalSource"
+    attrs = retrieval_source.attributes
+    assert set(attrs) == {"category", "id", "resource_id", "resource_role", "source_record_urls"}
+    assert attrs["resource_id"].range == "uriorcurie"
+    assert attrs["resource_role"].range == "string"  # enum → string
+    assert attrs["source_record_urls"].multivalued
+    assert not attrs["resource_id"].multivalued
+
+
+def test_class_slot_with_reference_column_stays_curie(biolink_schemaview):
+    """A class-valued slot stored as CURIEs (VARCHAR[]) is a reference, not
+    inlined — the column type is the evidence, not Biolink's flag alone."""
+    for column_types in ({"sources": "VARCHAR[]"}, None):
+        schema = derive_schema(
+            nodes_headers=["id", "category"],
+            edges_headers=["subject", "predicate", "object", "sources"],
+            biolink_schemaview=biolink_schemaview,
+            edges_column_types=column_types,
+        )
+        assert schema.slots["sources"].range == "uriorcurie"
+        assert not schema.slots["sources"].inlined
+        assert "RetrievalSource" not in schema.classes
+
+
+def test_export_with_inlined_class_loads_standalone(biolink_schemaview, tmp_path):
+    conn = duckdb.connect(str(tmp_path / "test.duckdb"))
+    try:
+        seed_schema(
+            conn,
+            nodes_headers=["id", "category"],
+            edges_headers=["subject", "predicate", "object", "sources"],
+            biolink_schemaview=biolink_schemaview,
+            edges_column_types={"sources": _SOURCES_STRUCT_LIST},
+        )
+        conn.execute(
+            "CREATE TABLE denormalized_edges (subject VARCHAR, predicate VARCHAR, "
+            f"object VARCHAR, sources {_SOURCES_STRUCT_LIST})"
+        )
+        exported = export_schema(conn, project_denormalized=False)
+    finally:
+        conn.close()
+
+    reloaded = SchemaView(exported)
+    sources = reloaded.induced_slot("sources", "Association")
+    assert sources.range == "RetrievalSource"
+    assert sources.multivalued and sources.inlined_as_list
+    assert reloaded.induced_slot("resource_id", "RetrievalSource").range == "uriorcurie"
+
+
+def test_export_multivalued_follows_outer_column_type(biolink_schemaview, tmp_path):
+    """Only a LIST column is multivalued: a scalar STRUCT with a list field is
+    one record, any `<type>[]` is a list, and a Biolink-multivalued slot
+    stored as a scalar (in_taxon under force_single_valued) is single-valued."""
+    conn = duckdb.connect(str(tmp_path / "test.duckdb"))
+    try:
+        seed_schema(
+            conn,
+            nodes_headers=["id", "category", "in_taxon"],
+            edges_headers=["subject", "predicate", "object", "record", "counts"],
+            biolink_schemaview=biolink_schemaview,
+        )
+        conn.execute("CREATE TABLE denormalized_nodes (id VARCHAR, category VARCHAR, in_taxon VARCHAR)")
+        conn.execute(
+            "CREATE TABLE denormalized_edges (subject VARCHAR, predicate VARCHAR, object VARCHAR, "
+            "record STRUCT(urls VARCHAR[]), counts BIGINT[])"
+        )
+        exported = yaml.safe_load(export_schema(conn, project_denormalized=False))
+    finally:
+        conn.close()
+
+    slots = exported["slots"]
+    assert not slots["record"].get("multivalued")
+    assert slots["counts"]["multivalued"] is True
+    assert not slots["in_taxon"].get("multivalued")

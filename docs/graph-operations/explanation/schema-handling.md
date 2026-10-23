@@ -239,11 +239,13 @@ This schema is the source of truth. Operations consult it (via `current_schema(c
 1. **Seeded** at graph creation. `koza join` calls `seed_schema(conn, ...)` after `create_final_tables`. The schema is derived by:
     - Walking Biolink's `named thing` and `association` class hierarchies
     - Intersecting with the union of all input file headers
+    - Resolving each column's Biolink slot as one shape across every class under the root (`named thing` / `association`), so Biolink's class-level `slot_usage` applies
+    - Declaring class-valued slots whose column holds records (`STRUCT` / `STRUCT[]`, e.g. `sources`) as an inlined class (`inlined` / `inlined_as_list`), with a standalone definition of that class built from the struct's fields. Class-valued slots stored as CURIEs stay `uriorcurie` references
     - Adding koza extras (`file_source`, `provided_by`)
     - Adding declared outputs from operation modules (e.g. `normalize.DECLARED_OUTPUTS` contributes `original_subject` / `original_object`)
     - Validating that no input column lies outside the union — strict reject on unknowns (ADR-0001)
 2. **Evolved** by each operation that produces new slots. `normalize` calls `ensure_slots(conn, "edges", ["original_subject", "original_object"])` before its SQL; the function ALTER-TABLEs and updates the stored schema in one transaction. `closurize_graph` adds `DenormalizedEntity` and `DenormalizedAssociation` classes whose slot lists come from the actual columns of the produced views.
-3. **Exported** at release time. `koza schema-export` reads `_koza_schema`, projects `DenormalizedEntity` → `Entity` and `DenormalizedAssociation` → `Association` (consumer-facing naming), derives `multivalued: true` from actual DuckDB column types, declares prefixes and imports — and writes a standalone LinkML YAML that downstream tools (`gen-pydantic`, `lsolr create-schema`, monarch-app's `imports:`) consume directly.
+3. **Exported** at release time. `koza schema-export` reads `_koza_schema`, projects `DenormalizedEntity` → `Entity` and `DenormalizedAssociation` → `Association` (consumer-facing naming), derives `multivalued` from the outer DuckDB column type (a LIST is multivalued, a scalar — including a `STRUCT` with list fields — is not), declares prefixes and imports — and writes a standalone LinkML YAML that downstream tools (`gen-pydantic`, `lsolr create-schema`, monarch-app's `imports:`) consume directly.
 
 ### Tolerant of unseeded databases
 
