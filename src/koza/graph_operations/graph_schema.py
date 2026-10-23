@@ -386,6 +386,17 @@ def _inline_class(
     return name
 
 
+# How wide a primitive range is when merging two columns' shapes: the wider
+# one can hold every value of the narrower.
+_RANGE_WIDTH: dict[str, int] = {
+    "integer": 1,
+    "float": 2,
+    "double": 2,
+    "decimal": 2,
+    "string": 3,
+}
+
+
 def _merge_flag(a, b):
     """True if either flag is true; False if either was explicitly false; else unset."""
     if a or b:
@@ -405,9 +416,10 @@ def _merge_slot_shape(base: SlotDefinition, other: SlotDefinition, label: str) -
     - a multivalued, inlined slot is always `inlined_as_list` — without it
       LinkML reads multivalued+inlined as a dict keyed by identifier
     - range: an inlined class beats a reference or primitive; between two
-      non-inlined ranges `string` wins, since a string column can't hold the
-      other's typed values; otherwise `other` wins (matching the previous
-      last-definition-wins behavior). Differing ranges are logged.
+      non-inlined primitives the wider wins (`string` > `float`/`double`/
+      `decimal` > `integer`), so a column's values always fit the range;
+      otherwise `other` wins (matching the previous last-definition-wins
+      behavior). Differing ranges are logged.
     """
     if other.range is not None and str(other.range) != str(base.range):
         if base.range is not None:
@@ -415,10 +427,13 @@ def _merge_slot_shape(base: SlotDefinition, other: SlotDefinition, label: str) -
                 f"Slot {label!r} has different shapes across columns: range "
                 f"{base.range!r} vs {other.range!r}"
             )
+        base_width = _RANGE_WIDTH.get(str(base.range))
+        other_width = _RANGE_WIDTH.get(str(other.range))
         if base.inlined and not other.inlined:
             pass
-        elif not other.inlined and str(base.range) == "string":
-            pass
+        elif not other.inlined and base_width is not None and other_width is not None:
+            if other_width > base_width:
+                base.range = other.range
         else:
             base.range = other.range
     base.multivalued = _merge_flag(base.multivalued, other.multivalued)

@@ -894,3 +894,48 @@ def test_explicit_single_valued_survives_node_edge_merge(biolink_schemaview, tmp
     )
     assert schema.slots["provided_by"].multivalued is False
     assert schema.slots["file_source"].multivalued is False
+
+
+
+@pytest.mark.parametrize("order", ["bigint_first", "double_first"])
+def test_non_biolink_struct_field_widens_integer_to_float(biolink_schemaview, order):
+    """BIGINT vs DOUBLE on a field of a class reached from two columns: the
+    float range holds both, whichever column comes first."""
+    from koza.graph_operations.graph_schema import _inline_class, _list_element, _parse_duckdb_type
+
+    pair = ["STRUCT(resource_id VARCHAR, extra BIGINT)[]", "STRUCT(resource_id VARCHAR, extra DOUBLE)[]"]
+    if order == "double_first":
+        pair.reverse()
+    classes = {}
+    for col_type in pair:
+        element, _ = _list_element(_parse_duckdb_type(col_type))
+        _inline_class(biolink_schemaview, "retrieval source", element, classes)
+    assert classes["RetrievalSource"].attributes["extra"].range == "float"
+
+
+def test_export_clears_inlined_as_list_when_column_is_single_valued(biolink_schemaview, tmp_path):
+    """Seeded as a list of records, but a single record in the denormalized
+    view: exported single-valued, with no leftover inlined_as_list."""
+    struct = "STRUCT(resource_id VARCHAR)"
+    conn = duckdb.connect(str(tmp_path / "test.duckdb"))
+    try:
+        seed_schema(
+            conn,
+            nodes_headers=["id", "category"],
+            edges_headers=["subject", "predicate", "object", "sources"],
+            biolink_schemaview=biolink_schemaview,
+            edges_column_types={"sources": f"{struct}[]"},
+        )
+        assert current_schema(conn).slots["sources"].inlined_as_list
+        conn.execute("CREATE TABLE denormalized_nodes (id VARCHAR, category VARCHAR)")
+        conn.execute(
+            "CREATE TABLE denormalized_edges (subject VARCHAR, predicate VARCHAR, object VARCHAR, "
+            f"sources {struct})"
+        )
+        exported = yaml.safe_load(export_schema(conn, project_denormalized=False))
+    finally:
+        conn.close()
+    sources = exported["slots"]["sources"]
+    assert not sources.get("multivalued")
+    assert not sources.get("inlined_as_list")
+    assert sources["inlined"] is True
