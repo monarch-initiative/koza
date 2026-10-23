@@ -247,6 +247,36 @@ This schema is the source of truth. Operations consult it (via `current_schema(c
 2. **Evolved** by each operation that produces new slots. `normalize` calls `ensure_slots(conn, "edges", ["original_subject", "original_object"])` before its SQL; the function ALTER-TABLEs and updates the stored schema in one transaction. `closurize_graph` adds `DenormalizedEntity` and `DenormalizedAssociation` classes whose slot lists come from the actual columns of the produced views.
 3. **Exported** at release time. `koza schema-export` reads `_koza_schema`, projects `DenormalizedEntity` → `Entity` and `DenormalizedAssociation` → `Association` (consumer-facing naming), derives `multivalued` from the outer DuckDB column type (a LIST is multivalued, a scalar — including a `STRUCT` with list fields — is not), declares prefixes and imports — and writes a standalone LinkML YAML that downstream tools (`gen-pydantic`, `lsolr create-schema`, monarch-app's `imports:`) consume directly.
 
+### Schema overlays
+
+Some shapes can't be derived from Biolink plus the data. A build declares those in a schema overlay: a LinkML YAML fragment passed as `--schema-overlay` to `koza join` / `koza merge`, or as `schema_overlay` on `JoinConfig` / `MergeConfig`. Koza applies it when it seeds the schema.
+
+```yaml
+classes:
+  Association:
+    slot_usage:
+      sources:
+        range: RetrievalSource
+        inlined: true
+        inlined_as_list: true
+```
+
+- **`slot_usage` on `Entity` / `Association`** refines a column's slot for that class. This is the LinkML-native way to narrow a slot. It stays on the class, closurize carries it onto `DenormalizedEntity` / `DenormalizedAssociation`, and `SchemaView.induced_slot` honors it in the exported schema.
+- **Other `classes`** are added as written.
+- **`enums`** are added as written. A Biolink enum used as a range (e.g. `KnowledgeLevelEnum`) is copied in with its permissible values. A Biolink *type* can't be a range, because the released schema imports only `linkml:types`. Use the LinkML type it reduces to instead.
+- **Top-level `slots`** replace the named fields of a derived slot definition, for changes that aren't refinements. Each override is logged.
+- **Class references must resolve.** A class named by `range` (including inside `any_of` and similar), `is_a` or `mixins` must be defined in the overlay, already be in the schema, or be a Biolink class. A Biolink class gets a standalone definition reduced to LinkML primitives. Names in a class's `slots` list must be slots in the graph.
+- **Refinements must match the data.** `inlined` / `inlined_as_list` need a column that holds records (`STRUCT` / `MAP`), and `multivalued` must match whether the column is a list. A refined slot must also end up inlined exactly when its column holds records, as `SchemaView.is_inlined` reports it. For example, a class range with no identifier on a CURIE column is rejected, because LinkML would treat it as inlined. `slot_usage` can't narrow a record column to a primitive range. A top-level override can.
+- **Only join-time columns can be refined.** The overlay is applied when the schema is seeded, before closurize adds `*_closure`, label and aggregation columns, so those can't be named.
+
+For a record column, koza already infers `inlined_as_list` from the column type, so the `sources` example above makes explicit what seeding would derive anyway.
+
+**Errors.** Koza checks the overlay in two stages, both before the graph is written out:
+- **Before any file is loaded:** a missing file, unsupported keys, misspelled LinkML fields, anything other than `slot_usage` on `Entity` / `Association`, or the closurize-owned `DenormalizedEntity` / `DenormalizedAssociation` names.
+- **At seed time:** checks that need the graph, such as slots and columns that don't exist, references that don't resolve, or a shape that contradicts a column.
+
+Koza logs a warning when an overlay class replaces a derived class of the same name.
+
 ### Tolerant of unseeded databases
 
 Graphs that predate the schema feature don't have a `_koza_schema` table. `ensure_slots` gracefully degrades — it falls back to a plain `ALTER TABLE` with column type defaulting to `VARCHAR` (multivalued-ness unknown without a schema), and skips the schema-metadata update. Operations refactored to consume the seam still work on these older graphs. See [ADR-0002](https://github.com/monarch-initiative/koza/blob/main/decisions/0002-schema-lives-with-database.md).

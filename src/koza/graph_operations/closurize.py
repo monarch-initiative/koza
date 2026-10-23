@@ -114,6 +114,16 @@ def closurize_graph(config: ClosurizeConfig) -> ClosurizeResult:
     )
 
 
+def _carried_slot_usage(schema, class_name: str, columns: list[str]) -> dict:
+    """`slot_usage` from a narrow class (e.g. a schema overlay's refinements),
+    restricted to the columns its denormalized class still has. Copied rather
+    than inherited because `export_schema` drops the narrow classes."""
+    narrow = schema.classes.get(class_name)
+    if narrow is None or not narrow.slot_usage:
+        return {}
+    return {name: usage for name, usage in narrow.slot_usage.items() if name in columns}
+
+
 def _evolve_schema_for_denormalized(conn) -> None:
     """If the database is seeded, add DenormalizedEntity / DenormalizedAssociation
     classes to the stored schema. Slot lists come from the actual columns of
@@ -143,12 +153,14 @@ def _evolve_schema_for_denormalized(conn) -> None:
         is_a="Entity",
         description="Post-closurize node shape (entity + closure expansion + per-predicate aggregations).",
         slots=de_cols,
+        slot_usage=_carried_slot_usage(schema, "Entity", de_cols),
     )
     schema.classes["DenormalizedAssociation"] = ClassDefinition(
         name="DenormalizedAssociation",
         is_a="Association",
         description="Post-closurize edge shape (association + subject/object closure expansion).",
         slots=da_cols,
+        slot_usage=_carried_slot_usage(schema, "Association", da_cols),
     )
 
     update_schema(conn, schema)
