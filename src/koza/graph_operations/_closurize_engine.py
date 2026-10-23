@@ -16,7 +16,7 @@ import os
 import duckdb
 from loguru import logger
 
-from .utils import DUCKDB_STORAGE_CONFIG
+from .utils import DUCKDB_STORAGE_CONFIG, apply_memory_limit
 
 def edge_columns(field: str, include_closure_fields: bool =True, node_column_names: list = None):
     column_text = f"""
@@ -220,8 +220,7 @@ def add_closure(database_path: str,
     include_closure = closure_file is not None
     logger.info(f"Closurize: database={database_path}, closure_file={closure_file}")
     db = duckdb.connect(database=database_path, config=DUCKDB_STORAGE_CONFIG)
-    if mem := os.environ.get("DUCKDB_MEMORY_LIMIT"):
-        db.sql(f"PRAGMA memory_limit='{mem}'")
+    apply_memory_limit(db)
 
     _ensure_namespace_column(db)
     if include_closure:

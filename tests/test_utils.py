@@ -393,3 +393,25 @@ def test_graph_database_files_stay_readable_by_duckdb_1x(tmp_path):
         header = f.read(20)
     assert header[8:12] == b"DUCK"
     assert struct.unpack("<Q", header[12:20])[0] <= 67
+
+
+def test_graph_database_honors_duckdb_memory_limit(tmp_path, monkeypatch):
+    """DUCKDB_MEMORY_LIMIT caps every GraphDatabase connection (file, read-only
+    and in-memory), so long operations spill instead of exhausting RAM."""
+    from koza.graph_operations.utils import GraphDatabase
+
+    monkeypatch.setenv("DUCKDB_MEMORY_LIMIT", "512MB")
+    path = tmp_path / "graph.duckdb"
+    for db_path, read_only in [(path, False), (path, True), (None, False)]:
+        with GraphDatabase(db_path, read_only=read_only) as db:
+            limit = db.conn.execute("SELECT current_setting('memory_limit')").fetchone()[0]
+        assert limit in ("512.0 MiB", "488.2 MiB", "512.0 MB"), limit
+
+
+def test_graph_database_default_memory_limit_without_env(monkeypatch):
+    from koza.graph_operations.utils import GraphDatabase
+
+    monkeypatch.delenv("DUCKDB_MEMORY_LIMIT", raising=False)
+    with GraphDatabase() as db:
+        default = duckdb.connect().execute("SELECT current_setting('memory_limit')").fetchone()[0]
+        assert db.conn.execute("SELECT current_setting('memory_limit')").fetchone()[0] == default
