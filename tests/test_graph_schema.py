@@ -18,6 +18,7 @@ from koza.graph_operations.graph_schema import (
     ASSOCIATION_ROOT,
     _canonical_slot_order,
     _column_slot,
+    apply_schema_overlay,
     ENTITY_ROOT,
     UnknownSlotsError,
     current_schema,
@@ -939,3 +940,115 @@ def test_export_clears_inlined_as_list_when_column_is_single_valued(biolink_sche
     assert not sources.get("multivalued")
     assert not sources.get("inlined_as_list")
     assert sources["inlined"] is True
+
+
+# --- schema overlay (issue #262) ---------------------------------------------
+
+def _edges_schema(biolink_schemaview):
+    return derive_schema(
+        nodes_headers=["id", "category"],
+        edges_headers=["subject", "predicate", "object", "sources", "publications"],
+        biolink_schemaview=biolink_schemaview,
+    )
+
+
+_SOURCES_INLINED_OVERLAY = {
+    "classes": {
+        "Association": {
+            "slot_usage": {
+                "sources": {
+                    "range": "RetrievalSource",
+                    "inlined": True,
+                    "inlined_as_list": True,
+                }
+            }
+        }
+    }
+}
+
+
+def test_overlay_slot_usage_refines_graph_class(biolink_schemaview):
+    schema = _edges_schema(biolink_schemaview)
+    apply_schema_overlay(schema, _SOURCES_INLINED_OVERLAY, biolink_schemaview)
+
+    usage = schema.classes["Association"].slot_usage["sources"]
+    assert usage.range == "RetrievalSource" and usage.inlined_as_list
+    # The top-level slot is untouched: slot_usage is a per-class refinement.
+    assert schema.slots["sources"].range == "uriorcurie"
+    # Biolink class named as a range gets a standalone definition.
+    retrieval_source = schema.classes["RetrievalSource"]
+    assert retrieval_source.class_uri == "biolink:RetrievalSource"
+    assert retrieval_source.attributes["resource_id"].range == "uriorcurie"
+
+
+def test_overlay_class_defined_in_overlay_is_used_as_is(biolink_schemaview):
+    schema = _edges_schema(biolink_schemaview)
+    overlay = {
+        "classes": {
+            "Association": {"slot_usage": {"sources": {"range": "SourceRecord", "inlined_as_list": True}}},
+            "SourceRecord": {"attributes": {"resource_id": {"range": "uriorcurie"}}},
+        }
+    }
+    apply_schema_overlay(schema, overlay, biolink_schemaview)
+    assert set(schema.classes["SourceRecord"].attributes) == {"resource_id"}
+
+
+def test_overlay_top_level_slot_replaces_named_fields(biolink_schemaview):
+    schema = _edges_schema(biolink_schemaview)
+    apply_schema_overlay(
+        schema, {"slots": {"publications": {"range": "string"}}}, biolink_schemaview
+    )
+    publications = schema.slots["publications"]
+    assert publications.range == "string"
+    assert publications.slot_uri == "biolink:publications"  # unnamed fields kept
+
+
+@pytest.mark.parametrize(
+    "overlay, message",
+    [
+        ({"classes": {"Association": {"slot_usage": {"not_a_column": {"range": "string"}}}}},
+         "not a slot of Association"),
+        ({"slots": {"not_a_column": {"range": "string"}}}, "not in this graph"),
+        ({"classes": {"Association": {"slot_usage": {"sources": {"range": "NoSuchClass"}}}}},
+         "neither defined"),
+        ({"classes": {"Association": {"slots": ["sources"]}}}, "only set slot_usage"),
+        ({"enums": {}}, "unsupported keys"),
+    ],
+)
+def test_overlay_rejects_invalid_input(biolink_schemaview, overlay, message):
+    with pytest.raises(ValueError, match=message):
+        apply_schema_overlay(_edges_schema(biolink_schemaview), overlay, biolink_schemaview)
+
+
+def test_overlay_rejects_misspelled_slot_fields(biolink_schemaview):
+    overlay = {"classes": {"Association": {"slot_usage": {"sources": {"inlined_as_lst": True}}}}}
+    with pytest.raises(Exception):
+        apply_schema_overlay(_edges_schema(biolink_schemaview), overlay, biolink_schemaview)
+
+
+def test_overlay_slot_usage_survives_closurize_and_export(biolink_schemaview, tmp_path):
+    from koza.graph_operations.closurize import _evolve_schema_for_denormalized
+
+    conn = duckdb.connect(str(tmp_path / "test.duckdb"))
+    try:
+        seed_schema(
+            conn,
+            nodes_headers=["id", "category"],
+            edges_headers=["subject", "predicate", "object", "sources"],
+            biolink_schemaview=biolink_schemaview,
+            overlay=_SOURCES_INLINED_OVERLAY,
+        )
+        conn.execute("CREATE TABLE denormalized_nodes (id VARCHAR, category VARCHAR)")
+        conn.execute(
+            "CREATE TABLE denormalized_edges (subject VARCHAR, predicate VARCHAR, "
+            "object VARCHAR, sources VARCHAR[])"
+        )
+        _evolve_schema_for_denormalized(conn)
+        exported = export_schema(conn, project_denormalized=True)
+    finally:
+        conn.close()
+
+    reloaded = SchemaView(exported)
+    sources = reloaded.induced_slot("sources", "Association")
+    assert sources.range == "RetrievalSource"
+    assert sources.inlined_as_list

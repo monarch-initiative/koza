@@ -146,6 +146,7 @@ class JoinConfig(GraphOperationConfig):
     required_edge_fields: list[str] = Field(default_factory=list)
     seed_schema: bool = True  # Seed the koza graph schema (derived-schema.yaml + Biolink) into DuckDB metadata
     slots_file: Path | None = None  # YAML file with {nodes: [...], edges: [...]} — applies explicit JSONL schemas to all files in the join
+    schema_overlay: Path | None = None  # LinkML YAML fragment applied to the seeded graph schema (slot_usage on Entity/Association, extra classes, slot overrides)
     # Slot names to collapse from arrays to scalars (keeping the first element).
     # Empty by default: koza preserves Biolink multivalued slot definitions.
     # Opt in per field, e.g. ["category", "in_taxon", "type"] to match consumers
@@ -545,6 +546,8 @@ class MergeConfig(BaseModel):
     # Slot names to collapse from arrays to scalars during the join step.
     # Empty by default: Biolink multivalued slot definitions are preserved.
     force_single_valued: list[str] = Field(default_factory=list)
+    # LinkML YAML fragment applied to the seeded graph schema during the join step.
+    schema_overlay: Path | None = None
 
     # Normalize-specific options
     # SSSOM predicate CURIEs to apply, e.g. ["skos:exactMatch"]. None means apply every

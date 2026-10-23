@@ -392,6 +392,17 @@ def join(
             ),
         ),
     ] = None,
+    schema_overlay: Annotated[
+        str | None,
+        typer.Option(
+            "--schema-overlay",
+            help=(
+                "LinkML YAML fragment applied to the seeded graph schema: "
+                "slot_usage on Entity/Association to refine a column's slot, "
+                "extra classes, or top-level slot overrides."
+            ),
+        ),
+    ] = None,
     force_single_valued: Annotated[
         list[str] | None,
         typer.Option(
@@ -480,6 +491,7 @@ def join(
             required_edge_fields=required_edge_fields or [],
             slots_file=Path(slots_file) if slots_file else None,
             force_single_valued=force_single_valued or [],
+            schema_overlay=Path(schema_overlay) if schema_overlay else None,
             quiet=quiet,
             show_progress=show_progress,
         )
@@ -1461,6 +1473,17 @@ def merge(
         list[str] | None,
         typer.Option("--required-edge-field", help="Edge fields that must be present and non-empty (can specify multiple)"),
     ] = None,
+    schema_overlay: Annotated[
+        str | None,
+        typer.Option(
+            "--schema-overlay",
+            help=(
+                "LinkML YAML fragment applied to the seeded graph schema: "
+                "slot_usage on Entity/Association to refine a column's slot, "
+                "extra classes, or top-level slot overrides."
+            ),
+        ),
+    ] = None,
     force_single_valued: Annotated[
         list[str] | None,
         typer.Option(
@@ -1598,6 +1621,7 @@ def merge(
             required_node_fields=required_node_fields or [],
             required_edge_fields=required_edge_fields or [],
             force_single_valued=force_single_valued or [],
+            schema_overlay=Path(schema_overlay) if schema_overlay else None,
             quiet=quiet,
             show_progress=show_progress,
         )
