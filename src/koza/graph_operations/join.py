@@ -297,25 +297,28 @@ def _validated_slot_list(loaded: dict, key: str, source: Path) -> list[str] | No
 def _seed_graph_schema(db: GraphDatabase, files_loaded: list[FileLoadResult]) -> None:
     """Read the column lists from the final nodes/edges tables and seed the
     derived schema + Biolink YAML into the DuckDB's _koza_schema metadata."""
-    nodes_headers = _headers_for_table(db, "nodes")
-    edges_headers = _headers_for_table(db, "edges")
-    if not nodes_headers and not edges_headers:
+    nodes_types = _column_types_for_table(db, "nodes")
+    edges_types = _column_types_for_table(db, "edges")
+    if not nodes_types and not edges_types:
         # Nothing to seed against — e.g. a join that produced no tables.
         return
     seed_schema(
         conn=db.conn,
-        nodes_headers=nodes_headers,
-        edges_headers=edges_headers,
+        nodes_headers=list(nodes_types),
+        edges_headers=list(edges_types),
         biolink_schemaview=load_biolink_schemaview(),
         declared_outputs=discover_declared_outputs(),
+        nodes_column_types=nodes_types,
+        edges_column_types=edges_types,
     )
 
 
-def _headers_for_table(db: GraphDatabase, table: str) -> list[str]:
+def _column_types_for_table(db: GraphDatabase, table: str) -> dict[str, str]:
+    """Column name → DuckDB type for `table`, in column order; empty if absent."""
     try:
-        return [r[0] for r in db.conn.execute(f"DESCRIBE {table}").fetchall()]
+        return {r[0]: r[1] for r in db.conn.execute(f"DESCRIBE {table}").fetchall()}
     except Exception:
-        return []
+        return {}
 
 
 def _print_join_summary(result: JoinResult):

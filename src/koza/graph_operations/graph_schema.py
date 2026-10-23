@@ -21,6 +21,7 @@ from linkml_runtime.linkml_model.meta import (
     SlotDefinition,
 )
 from linkml_runtime.loaders import yaml_loader
+from linkml_runtime.utils.formatutils import camelcase
 from linkml_runtime.utils.schema_as_dict import schema_as_dict
 from linkml_runtime.utils.schemaview import SchemaView
 from loguru import logger
@@ -189,7 +190,7 @@ _KNOWN_PREFIX_URIS: dict[str, str] = {
 }
 
 
-def _biolink_derived_slot(sv: SchemaView, col: str) -> SlotDefinition:
+def _biolink_derived_slot(sv: SchemaView, col: str, root_class: str) -> SlotDefinition:
     """A SlotDefinition for a column that matched the Biolink slot pool,
     carrying semantic references back to the Biolink slot it was derived from.
 
@@ -206,19 +207,272 @@ def _biolink_derived_slot(sv: SchemaView, col: str) -> SlotDefinition:
     so the released schema (which imports only `linkml:types`) stays loadable —
     e.g. `name` (Biolink `label type`) → string, `has_gene` (Biolink `gene`)
     → uriorcurie.
+
+    The slot is resolved as one shape across every class under `root_class`
+    (see `_column_slot`), so Biolink's class-level `slot_usage` applies.
+    `slot_uri` still comes from the global slot — it is the slot's identity,
+    not part of its per-class shape.
     """
-    biolink_slot = sv.get_slot(col.replace("_", " "))
+    biolink_slot = _column_slot(sv, col, root_class)
     slot_range = (
         _primitive_range(sv, biolink_slot.range) if biolink_slot is not None else None
     )
     try:
-        slot_uri = sv.get_uri(biolink_slot) if biolink_slot is not None else None
+        global_slot = sv.get_slot(col.replace("_", " "))
+        slot_uri = sv.get_uri(global_slot) if global_slot is not None else None
     except Exception:
         logger.warning(f"Could not resolve slot_uri for Biolink slot {col!r}")
         slot_uri = None
     return SlotDefinition(
         name=col, range=slot_range, slot_uri=slot_uri, exact_mappings=[f"biolink:{col}"]
     )
+
+
+# How deep `_inline_class` follows nested STRUCT fields into further inlined
+# classes before leaving a field as a plain primitive.
+_MAX_INLINE_DEPTH = 3
+
+
+def _parse_duckdb_type(col_type: str | None) -> duckdb.typing.DuckDBPyType | None:
+    if not col_type:
+        return None
+    try:
+        return duckdb.sqltype(col_type)
+    except Exception:
+        return None
+
+
+def _list_element(
+    col_type: duckdb.typing.DuckDBPyType,
+) -> tuple[duckdb.typing.DuckDBPyType, bool]:
+    """Unwrap one list level: ``(element type, True)`` for a LIST or fixed-size
+    ARRAY, else ``(type, False)``."""
+    if col_type.id in ("list", "array"):
+        return col_type.children[0][1], True
+    return col_type, False
+
+
+def _induced_biolink_slot(
+    sv: SchemaView, name: str, class_name: str
+) -> SlotDefinition | None:
+    """The Biolink slot as seen from `class_name`, so class-level `slot_usage`
+    applies. Falls back to the global slot when it can't be induced there."""
+    biolink_name = name.replace("_", " ")
+    try:
+        return sv.induced_slot(biolink_name, class_name)
+    except Exception:
+        return sv.get_slot(biolink_name)
+
+
+# (id(SchemaView), root class) -> (SchemaView, {biolink slot name: shape}).
+# The SchemaView is held so its id can't be reused while the entry lives.
+_COLUMN_SLOT_CACHE: dict[tuple[int, str], tuple[SchemaView, dict[str, SlotDefinition]]] = {}
+
+_SHAPE_FLAGS = ("multivalued", "inlined", "inlined_as_list")
+
+
+def _column_slot(sv: SchemaView, name: str, root_class: str) -> SlotDefinition | None:
+    """The single shape of a Biolink slot across a whole column.
+
+    A `nodes` / `edges` column holds rows of every class under `root_class`,
+    and Biolink refines slots per class via `slot_usage` — including on
+    descendants the slot only appears on (e.g. `association` declares
+    `sources` `inlined_as_list`; subclasses narrow `subject` / `object`
+    ranges). So the shape is resolved over every class in the hierarchy
+    that uses the slot:
+
+    - flags (`multivalued`, `inlined`, `inlined_as_list`): the value all
+      those classes agree on; on disagreement, the global slot's value,
+      with a warning
+    - range: the agreed range; otherwise the broadest — the range induced
+      on `root_class` if the slot is used there, else the global slot's
+    """
+    key = (id(sv), root_class)
+    cached = _COLUMN_SLOT_CACHE.get(key)
+    if cached is None or cached[0] is not sv:
+        cached = (sv, _column_slot_shapes(sv, root_class))
+        _COLUMN_SLOT_CACHE[key] = cached
+    return cached[1].get(name.replace("_", " "))
+
+
+def _column_slot_shapes(sv: SchemaView, root_class: str) -> dict[str, SlotDefinition]:
+    per_slot: dict[str, list[SlotDefinition]] = {}
+    for cls in [root_class, *sv.class_descendants(root_class)]:
+        try:
+            induced = sv.class_induced_slots(cls)
+        except Exception:
+            continue
+        for slot in induced:
+            per_slot.setdefault(slot.name, []).append(slot)
+
+    root_slots = set(sv.class_slots(root_class))
+    shapes: dict[str, SlotDefinition] = {}
+    for name, variants in per_slot.items():
+        base = variants[0] if name in root_slots else sv.get_slot(name)
+        if base is None:
+            base = variants[0]
+        shape = SlotDefinition(name=name, range=base.range)
+        if len({str(v.range) for v in variants}) == 1:
+            shape.range = variants[0].range
+        for flag in _SHAPE_FLAGS:
+            values = {bool(getattr(v, flag)) for v in variants}
+            if len(values) == 1:
+                setattr(shape, flag, values.pop() or None)
+            else:
+                logger.warning(
+                    f"Biolink slot {name!r} has conflicting {flag!r} across "
+                    f"{root_class!r} descendants; using the global slot's value"
+                )
+                global_slot = sv.get_slot(name)
+                setattr(shape, flag, getattr(global_slot, flag, None) if global_slot else None)
+        shapes[name] = shape
+    return shapes
+
+
+def _inline_class(
+    sv: SchemaView,
+    biolink_class: str,
+    struct_type: duckdb.typing.DuckDBPyType,
+    classes: dict[str, ClassDefinition],
+    depth: int = 0,
+) -> str:
+    """Record a standalone definition of `biolink_class` shaped by the fields of
+    a STRUCT column, and return its class name.
+
+    Attributes come from the struct's fields, not Biolink's full induced slot
+    list, so the class describes what the data actually holds. Ranges reduce
+    via `_primitive_range` like top-level slots, keeping the released schema
+    loadable with only `linkml:types` (ADR-0002). A class reached from several
+    columns accumulates the union of their fields, each widened to cover every
+    column it appears in (see `_merge_slot_shape`).
+    """
+    name = camelcase(biolink_class)
+    class_def = classes.get(name)
+    if class_def is None:
+        class_def = ClassDefinition(
+            name=name, class_uri=sv.get_uri(sv.get_class(biolink_class))
+        )
+        classes[name] = class_def
+    for field, field_type in struct_type.children:
+        element, is_list = _list_element(field_type)
+        biolink_slot = _induced_biolink_slot(sv, field, biolink_class)
+        attr = SlotDefinition(name=field)
+        if biolink_slot is not None:
+            attr.exact_mappings = [f"biolink:{field}"]
+        if (
+            element.id == "struct"
+            and biolink_slot is not None
+            and biolink_slot.range in sv.all_classes()
+            and depth < _MAX_INLINE_DEPTH
+        ):
+            attr.range = _inline_class(sv, biolink_slot.range, element, classes, depth + 1)
+            attr.inlined = True
+            if is_list:
+                attr.inlined_as_list = True
+        elif biolink_slot is not None:
+            attr.range = _primitive_range(sv, biolink_slot.range)
+        else:
+            # Non-Biolink field: range from its DuckDB type. VARCHAR is recorded as
+            # `string` (not left unset) so a typed field elsewhere can't silently
+            # narrow it when the class is merged across columns.
+            attr.range = "string" if element.id == "varchar" else _DUCKDB_SCALAR_TO_RANGE.get(str(element).upper())
+        if is_list:
+            attr.multivalued = True
+        existing = class_def.attributes.get(field)
+        if existing is None:
+            class_def.attributes[field] = attr
+        else:
+            _merge_slot_shape(existing, attr, f"{name}.{field}")
+    return name
+
+
+# How wide a primitive range is when merging two columns' shapes: the wider
+# one can hold every value of the narrower.
+_RANGE_WIDTH: dict[str, int] = {
+    "integer": 1,
+    "float": 2,
+    "double": 2,
+    "decimal": 2,
+    "string": 3,
+}
+
+
+def _merge_flag(a, b):
+    """True if either flag is true; False if either was explicitly false; else unset."""
+    if a or b:
+        return True
+    if a is False or b is False:
+        return False
+    return None
+
+
+def _merge_slot_shape(base: SlotDefinition, other: SlotDefinition, label: str) -> None:
+    """Widen `base` in place to also describe `other` — the same slot as seen in
+    another column (nodes vs. edges share one flat slot namespace; an inlined
+    class can be reached from several columns).
+
+    - `multivalued` / `inlined`: true if either is; an explicit false is kept
+      when neither is true
+    - a multivalued, inlined slot is always `inlined_as_list` — without it
+      LinkML reads multivalued+inlined as a dict keyed by identifier
+    - range: an inlined class beats a reference or primitive; between two
+      non-inlined primitives the wider wins (`string` > `float`/`double`/
+      `decimal` > `integer`), so a column's values always fit the range;
+      otherwise `other` wins (matching the previous last-definition-wins
+      behavior). Differing ranges are logged.
+    """
+    if other.range is not None and str(other.range) != str(base.range):
+        if base.range is not None:
+            logger.warning(
+                f"Slot {label!r} has different shapes across columns: range "
+                f"{base.range!r} vs {other.range!r}"
+            )
+        base_width = _RANGE_WIDTH.get(str(base.range))
+        other_width = _RANGE_WIDTH.get(str(other.range))
+        if base.inlined and not other.inlined:
+            pass
+        elif not other.inlined and base_width is not None and other_width is not None:
+            if other_width > base_width:
+                base.range = other.range
+        else:
+            base.range = other.range
+    base.multivalued = _merge_flag(base.multivalued, other.multivalued)
+    base.inlined = _merge_flag(base.inlined, other.inlined)
+    if base.multivalued and base.inlined:
+        base.inlined_as_list = True
+    elif not base.inlined:
+        base.inlined_as_list = None
+
+
+def _apply_inline_struct(
+    sv: SchemaView,
+    slot: SlotDefinition,
+    root_class: str,
+    col_type: str | None,
+    classes: dict[str, ClassDefinition],
+) -> None:
+    """Declare `slot` as an inlined class when its column holds records.
+
+    `_primitive_range` reduces class-valued Biolink ranges to `uriorcurie`,
+    which is right for reference columns. A STRUCT (or STRUCT[]) column holds
+    the records themselves, so the slot keeps its Biolink class as range and
+    is marked `inlined` (plus `inlined_as_list` for a list) — the shape
+    consumers need to serialize it.
+    """
+    parsed = _parse_duckdb_type(col_type)
+    if parsed is None:
+        return
+    element, is_list = _list_element(parsed)
+    if element.id != "struct":
+        return
+    biolink_slot = _column_slot(sv, slot.name, root_class)
+    if biolink_slot is None or biolink_slot.range not in sv.all_classes():
+        return
+    slot.range = _inline_class(sv, biolink_slot.range, element, classes)
+    slot.inlined = True
+    if is_list:
+        slot.multivalued = True
+        slot.inlined_as_list = True
 
 
 def _biolink_slot_pool(sv: SchemaView, root_class: str) -> set[str]:
@@ -246,13 +500,20 @@ def _flatten(
     headers: list[str],
     class_label: str,
     declared_outputs: dict[str, dict],
+    column_types: dict[str, str] | None = None,
+    inline_classes: dict[str, ClassDefinition] | None = None,
 ) -> tuple[dict[str, SlotDefinition], list[str]]:
     pool = _biolink_slot_pool(sv, root_class)
+    column_types = column_types or {}
+    inline_classes = inline_classes if inline_classes is not None else {}
     slots: dict[str, SlotDefinition] = {}
     rejected: list[str] = []
     for col in headers:
         if col in pool:
-            slots[col] = _biolink_derived_slot(sv, col)
+            slots[col] = _biolink_derived_slot(sv, col, root_class)
+            _apply_inline_struct(
+                sv, slots[col], root_class, column_types.get(col), inline_classes
+            )
         elif col in declared_outputs:
             slots[col] = SlotDefinition(name=col, **declared_outputs[col])
         elif col in KOZA_INGEST_EXTRAS:
@@ -282,6 +543,8 @@ def derive_schema(
     biolink_schemaview: SchemaView,
     declared_outputs: dict[str, dict[str, dict]] | None = None,
     strict: bool = True,
+    nodes_column_types: dict[str, str] | None = None,
+    edges_column_types: dict[str, str] | None = None,
 ) -> SchemaDefinition:
     """Derive a flat LinkML schema from input file headers + Biolink.
 
@@ -293,13 +556,26 @@ def derive_schema(
     slots so the resulting schema reflects whatever's in the data. Used
     by `seed_schema` to record the schema of an already-loaded graph
     rather than enforce validation against it.
+
+    `nodes_column_types` / `edges_column_types` map column name to DuckDB type.
+    When given, a Biolink class-valued slot whose column is a STRUCT (or
+    STRUCT[]) is declared as an inlined class rather than a CURIE reference,
+    and that class's definition is added to the schema (see
+    `_apply_inline_struct`).
     """
     declared_outputs = declared_outputs or {}
     entity_outputs = declared_outputs.get("Entity", {})
     association_outputs = declared_outputs.get("Association", {})
+    inline_classes: dict[str, ClassDefinition] = {}
 
     entity_slots, entity_rejected = _flatten(
-        biolink_schemaview, ENTITY_ROOT, nodes_headers, "Entity", entity_outputs
+        biolink_schemaview,
+        ENTITY_ROOT,
+        nodes_headers,
+        "Entity",
+        entity_outputs,
+        nodes_column_types,
+        inline_classes,
     )
     association_slots, association_rejected = _flatten(
         biolink_schemaview,
@@ -307,6 +583,8 @@ def derive_schema(
         edges_headers,
         "Association",
         association_outputs,
+        edges_column_types,
+        inline_classes,
     )
     entity_slots = _with_ingest_extras(entity_slots)
     association_slots = _with_ingest_extras(association_slots)
@@ -331,12 +609,21 @@ def derive_schema(
         id="https://w3id.org/monarch-initiative/koza/graph-schema",
         name="koza-graph-schema",
     )
-    schema.slots = {**entity_slots, **association_slots}
+    # Nodes and edges share one flat slot namespace; a slot in both gets one
+    # shape covering both columns.
+    merged_slots = dict(entity_slots)
+    for name, slot in association_slots.items():
+        if name in merged_slots:
+            _merge_slot_shape(merged_slots[name], slot, name)
+        else:
+            merged_slots[name] = slot
+    schema.slots = merged_slots
     schema.classes = {
         "Entity": ClassDefinition(name="Entity", slots=list(entity_slots.keys())),
         "Association": ClassDefinition(
             name="Association", slots=list(association_slots.keys())
         ),
+        **inline_classes,
     }
     return schema
 
@@ -374,6 +661,8 @@ def seed_schema(
     edges_headers: list[str],
     biolink_schemaview: SchemaView,
     declared_outputs: dict[str, dict[str, dict]] | None = None,
+    nodes_column_types: dict[str, str] | None = None,
+    edges_column_types: dict[str, str] | None = None,
 ) -> SchemaDefinition:
     """Derive a graph schema and persist it as metadata in the DuckDB.
 
@@ -388,6 +677,8 @@ def seed_schema(
         biolink_schemaview=biolink_schemaview,
         declared_outputs=declared_outputs,
         strict=False,
+        nodes_column_types=nodes_column_types,
+        edges_column_types=edges_column_types,
     )
     _ensure_metadata_table(conn)
     _write_metadata(conn, _KIND_DERIVED_SCHEMA, yaml_dumper.dumps(schema))
@@ -418,8 +709,8 @@ def export_schema(
     narrow post-merge classes are dropped — matching monarch-app's convention
     where those names refer to the post-closurize wide shape.
 
-    Slot definitions are enriched with `multivalued: true` for any slot whose
-    column in `denormalized_nodes` or `denormalized_edges` is `VARCHAR[]`.
+    `multivalued` on each slot follows its column in `denormalized_nodes` /
+    `denormalized_edges`: true for a LIST type, unset for a scalar.
     """
     schema = current_schema(conn)
 
@@ -435,10 +726,16 @@ def export_schema(
     # slots — so the released schema is standalone-loadable for CURIE expansion.
     prefixes = dict(schema.prefixes or {})
     used_prefixes = {"linkml", "biolink"}
+    references: list[str | None] = []
     for slot in schema.slots.values():
-        for curie in [slot.slot_uri, *(slot.exact_mappings or [])]:
-            if curie and ":" in curie:
-                used_prefixes.add(curie.split(":", 1)[0])
+        references += [slot.slot_uri, *(slot.exact_mappings or [])]
+    for cls in schema.classes.values():
+        references.append(cls.class_uri)
+        for attr in (cls.attributes or {}).values():
+            references += [attr.slot_uri, *(attr.exact_mappings or [])]
+    for curie in references:
+        if curie and ":" in curie:
+            used_prefixes.add(curie.split(":", 1)[0])
     for prefix in sorted(used_prefixes):
         uri = _KNOWN_PREFIX_URIS.get(prefix)
         if uri is None:
@@ -480,11 +777,15 @@ def export_schema(
             # with whatever Entity / Association slot info we have.
             continue
         for col_name, col_type, *_ in rows:
-            upper = (col_type or "").upper()
-            if "VARCHAR[]" in upper:
+            parsed = _parse_duckdb_type(col_type)
+            if parsed is None:
+                scalar_types[col_name] = (col_type or "").upper()
+                continue
+            # The outer type decides: `STRUCT(x VARCHAR[])` is one record, not a list.
+            if _list_element(parsed)[1]:
                 multivalued_slots.add(col_name)
             else:
-                scalar_types[col_name] = upper
+                scalar_types[col_name] = (col_type or "").upper()
 
     for slot_name in multivalued_slots:
         slot = schema.slots.get(slot_name)
@@ -492,6 +793,19 @@ def export_schema(
             slot = SlotDefinition(name=slot_name)
             schema.slots[slot_name] = slot
         slot.multivalued = True
+        # Seeded single-valued but a list here (e.g. a STRUCT on one table, a
+        # list on the other): inlined records must still be a list, not a dict.
+        if slot.inlined:
+            slot.inlined_as_list = True
+
+    # The column type wins in the other direction too: a slot Biolink declares
+    # multivalued but the build stores as a scalar (e.g. `in_taxon` under
+    # `force_single_valued`) is single-valued in this graph.
+    for slot_name in scalar_types:
+        slot = schema.slots.get(slot_name)
+        if slot is not None and slot.multivalued and slot_name not in multivalued_slots:
+            slot.multivalued = None
+            slot.inlined_as_list = None
 
     # Recover range for computed, non-Biolink scalar columns from their DuckDB
     # type — only where the slot has no range yet, so Biolink-derived ranges
@@ -503,6 +817,7 @@ def export_schema(
         rng = _DUCKDB_SCALAR_TO_RANGE.get(col_type)
         if rng:
             slot.range = rng
+
 
     # schema_as_dict emits the idiomatic compact schema form — `prefix: uri`
     # rather than expanded Prefix objects, and drops redundant per-element
@@ -521,6 +836,9 @@ def export_schema(
     for class_def in doc.get("classes", {}).values():
         if class_def.get("slots"):
             class_def["slots"] = _canonical_slot_order(class_def["slots"])
+        if isinstance(class_def.get("attributes"), dict):
+            attrs = class_def["attributes"]
+            class_def["attributes"] = {name: attrs[name] for name in sorted(attrs)}
 
     return yaml.dump(doc, sort_keys=False, allow_unicode=True)
 
