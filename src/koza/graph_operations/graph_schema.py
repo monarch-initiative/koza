@@ -17,6 +17,8 @@ import yaml
 from linkml_runtime.dumpers import yaml_dumper
 from linkml_runtime.linkml_model.meta import (
     ClassDefinition,
+    EnumDefinition,
+    PermissibleValue,
     Prefix,
     SchemaDefinition,
     SlotDefinition,
@@ -1101,10 +1103,10 @@ def ensure_slots(
 # column-bearing classes: `Entity` ↔ `nodes`, `Association` ↔ `edges`.
 _GRAPH_CLASSES = frozenset(_TABLE_TO_CLASS.values())
 
-# Top-level keys of a LinkML schema an overlay may carry. Only `classes` and
-# `slots` are applied; the rest are accepted so an overlay can be a complete,
+# Top-level keys of a LinkML schema an overlay may carry. Only `classes`,
+# `slots` and `enums` are applied; the rest are accepted so an overlay can be a complete,
 # independently valid LinkML document.
-_OVERLAY_APPLIED_KEYS = frozenset({"classes", "slots"})
+_OVERLAY_APPLIED_KEYS = frozenset({"classes", "slots", "enums"})
 _OVERLAY_IGNORED_KEYS = frozenset(
     {"id", "name", "title", "description", "version", "license", "prefixes",
      "default_prefix", "default_range", "imports"}
@@ -1144,6 +1146,15 @@ def check_schema_overlay(overlay: dict) -> SchemaDefinition:
     unknown = set(overlay) - _OVERLAY_APPLIED_KEYS - _OVERLAY_IGNORED_KEYS
     if unknown:
         raise ValueError(f"Schema overlay has unsupported keys: {sorted(unknown)}")
+    for section in sorted(_OVERLAY_APPLIED_KEYS):
+        entries = overlay.get(section) or {}
+        if not isinstance(entries, dict):
+            raise ValueError(f"Schema overlay `{section}` must be a mapping of names to definitions")
+        for name, value in entries.items():
+            if value is not None and not isinstance(value, dict):
+                raise ValueError(
+                    f"Schema overlay {section}.{name} must be a mapping, got {value!r}"
+                )
     raw_classes = overlay.get("classes") or {}
     reserved = sorted(set(raw_classes) & _RESERVED_OVERLAY_CLASSES)
     if reserved:
@@ -1163,6 +1174,7 @@ def check_schema_overlay(overlay: dict) -> SchemaDefinition:
         name="overlay",
         classes=raw_classes,
         slots=overlay.get("slots") or {},
+        enums=overlay.get("enums") or {},
     )
 
 
@@ -1186,10 +1198,19 @@ def _column_shape(col_type: str | None) -> tuple[bool, bool] | None:
 
 
 def _check_against_columns(
-    label: str, slot: SlotDefinition, shapes: list[tuple[bool, bool]]
+    label: str, slot: SlotDefinition, shapes: list[tuple[bool, bool]], refinement: bool
 ) -> None:
-    """Reject a slot_usage / override whose shape contradicts the data it describes."""
+    """Reject a slot_usage / override whose shape contradicts the data it describes.
+
+    A refinement (`slot_usage`) also can't narrow a record column to a primitive
+    range: the records stay inlined, so the slot would claim CURIEs inlined as
+    records. An override may — it replaces the slot, inlining included."""
     for is_list, holds_records in shapes:
+        if refinement and holds_records and str(slot.range) in _LINKML_BUILTIN_PRIMITIVES:
+            raise ValueError(
+                f"Schema overlay narrows {label} to range {slot.range!r}, but its column "
+                f"holds records; slot_usage can't turn records into primitive values"
+            )
         if slot.multivalued is not None and bool(slot.multivalued) != is_list:
             raise ValueError(
                 f"Schema overlay sets {label} multivalued: {bool(slot.multivalued)}, but "
@@ -1238,6 +1259,14 @@ def apply_schema_overlay(
     raw_slots = overlay.get("slots") or {}
     column_types = column_types or {}
     referenced_classes: set[str] = set()
+    # (graph class, slot, column holds records): what a refined slot's inlining
+    # must resolve to in the final schema, as consumers will see it.
+    inline_expectations: list[tuple[str, str, bool]] = []
+
+    for enum_name, enum_def in parsed.enums.items():
+        if enum_name in schema.enums:
+            logger.warning(f"Schema overlay replaces enum {enum_name!r}")
+        schema.enums[enum_name] = enum_def
 
     def shapes_for(slot_name: str, classes) -> list[tuple[bool, bool]]:
         shapes = []
@@ -1256,9 +1285,10 @@ def apply_schema_overlay(
                         f"Schema overlay slot_usage names {slot_name!r}, which is not "
                         f"a slot of {class_name} in this graph"
                     )
-                _check_against_columns(
-                    f"{class_name}.{slot_name}", usage, shapes_for(slot_name, [class_name])
-                )
+                shapes = shapes_for(slot_name, [class_name])
+                _check_against_columns(f"{class_name}.{slot_name}", usage, shapes, refinement=True)
+                if shapes:
+                    inline_expectations.append((class_name, slot_name, shapes[0][1]))
                 target.slot_usage[slot_name] = usage
                 referenced_classes |= _slot_ranges(usage)
             continue
@@ -1269,10 +1299,11 @@ def apply_schema_overlay(
             if parent:
                 referenced_classes.add(str(parent))
         for slot_name in class_def.slots or []:
-            if slot_name not in schema.slots and slot_name not in parsed.slots:
+            if slot_name not in schema.slots:
                 raise ValueError(
                     f"Schema overlay class {class_name!r} lists slot {slot_name!r}, "
-                    f"which is not in this graph or the overlay"
+                    f"which is not a slot in this graph (an overlay can refine or "
+                    f"override graph slots, not add new ones)"
                 )
         for attr in (class_def.attributes or {}).values():
             referenced_classes |= _slot_ranges(attr)
@@ -1287,7 +1318,9 @@ def apply_schema_overlay(
                 f"Schema overlay overrides slot {slot_name!r}, which is not in this graph"
             )
         fields = set(raw_slots[slot_name] or {})
-        _check_against_columns(slot_name, slot_def, shapes_for(slot_name, _GRAPH_CLASSES))
+        _check_against_columns(
+            slot_name, slot_def, shapes_for(slot_name, _GRAPH_CLASSES), refinement=False
+        )
         for field in fields:
             setattr(derived, field, getattr(slot_def, field))
         # A non-class range can't be inlined; don't leave inferred flags behind.
@@ -1299,23 +1332,40 @@ def apply_schema_overlay(
         referenced_classes |= _slot_ranges(slot_def)
 
     biolink_classes = {camelcase(name): name for name in sv.all_classes()}
+    biolink_types = {camelcase(name): name for name in sv.all_types()}
     for name in sorted(referenced_classes):
-        if name in schema.classes or name in _LINKML_BUILTIN_PRIMITIVES:
+        if name in schema.classes or name in schema.enums or name in _LINKML_BUILTIN_PRIMITIVES:
             continue
-        biolink_class = biolink_classes.get(name)
-        if biolink_class is None:
+        if name in biolink_classes:
+            schema.classes[name] = _standalone_biolink_class(sv, biolink_classes[name])
+        elif name in sv.all_enums():
+            schema.enums[name] = _standalone_biolink_enum(sv, name)
+        elif name in biolink_types or name in sv.all_types():
+            biolink_type = biolink_types.get(name, name)
             raise ValueError(
-                f"Schema overlay references {name!r}, which is neither defined "
-                f"in the overlay, a LinkML built-in type, nor a Biolink class"
+                f"Schema overlay uses Biolink type {name!r}; the released schema imports "
+                f"only linkml:types, so use the type it reduces to "
+                f"({_primitive_range(sv, biolink_type)!r})"
             )
-        schema.classes[name] = _standalone_biolink_class(sv, biolink_class)
+        else:
+            raise ValueError(
+                f"Schema overlay references {name!r}, which is neither defined in the "
+                f"overlay, a LinkML built-in type, nor a Biolink class or enum"
+            )
 
-    _check_schema_resolves(schema)
+    _check_schema_resolves(schema, inline_expectations)
 
 
-def _check_schema_resolves(schema: SchemaDefinition) -> None:
+def _check_schema_resolves(
+    schema: SchemaDefinition, inline_expectations: list[tuple[str, str, bool]] = ()
+) -> None:
     """Fail at seed time, not at export or in a consumer, if the overlaid schema
-    doesn't load: every class's induced slots must resolve in a SchemaView."""
+    doesn't load: every class's induced slots must resolve in a SchemaView.
+
+    Each refined slot's effective inlining, as `SchemaView.is_inlined` reports
+    it, must also match its column: inlined exactly when the column holds
+    records. This catches LinkML's implicit default — a class range with no
+    identifier is inlined — on a CURIE column, where no flag was set."""
     # Round-trip as koza stores it: normalizes JsonObj containers a freshly
     # derived schema holds, and leaves `schema` itself untouched.
     candidate = yaml_loader.loads(yaml_dumper.dumps(schema), target_class=SchemaDefinition)
@@ -1328,6 +1378,30 @@ def _check_schema_resolves(schema: SchemaDefinition) -> None:
             view.class_induced_slots(class_name)
     except Exception as e:
         raise ValueError(f"Schema overlay leaves the graph schema unresolvable: {e}") from e
+    for class_name, slot_name, holds_records in inline_expectations:
+        inlined = view.is_inlined(view.induced_slot(slot_name, class_name))
+        if inlined != holds_records:
+            raise ValueError(
+                f"Schema overlay makes {class_name}.{slot_name} "
+                f"{'inlined records' if inlined else 'a reference'}, but its column "
+                f"{'holds records' if holds_records else 'holds identifiers, not records'}"
+                + ("" if holds_records else
+                   "; give the range class an identifier or use a primitive range")
+            )
+
+
+def _standalone_biolink_enum(sv: SchemaView, name: str) -> EnumDefinition:
+    """A Biolink enum's permissible values, without `meaning` CURIEs (whose
+    prefixes the released schema doesn't declare)."""
+    enum = sv.get_enum(name)
+    return EnumDefinition(
+        name=name,
+        enum_uri=f"biolink:{name}",
+        permissible_values={
+            text: PermissibleValue(text=text, description=pv.description)
+            for text, pv in (enum.permissible_values or {}).items()
+        },
+    )
 
 
 def _standalone_biolink_class(sv: SchemaView, biolink_class: str) -> ClassDefinition:
@@ -1340,6 +1414,9 @@ def _standalone_biolink_class(sv: SchemaView, biolink_class: str) -> ClassDefini
             name=name,
             range=_primitive_range(sv, slot.range),
             multivalued=slot.multivalued or None,
+            # Keep Biolink's identifier: without one, LinkML defaults a slot
+            # with this class as range to inlined records.
+            identifier=True if slot.identifier else None,
             exact_mappings=[f"biolink:{name}"],
         )
     return ClassDefinition(

@@ -1012,7 +1012,7 @@ def test_overlay_top_level_slot_replaces_named_fields(biolink_schemaview):
         ({"classes": {"Association": {"slot_usage": {"sources": {"range": "NoSuchClass"}}}}},
          "neither defined"),
         ({"classes": {"Association": {"slots": ["sources"]}}}, "only set slot_usage"),
-        ({"enums": {}}, "unsupported keys"),
+        ({"types": {}}, "unsupported keys"),
     ],
 )
 def test_overlay_rejects_invalid_input(biolink_schemaview, overlay, message):
@@ -1175,3 +1175,94 @@ def test_malformed_overlay_fails_before_join_loads_files(tmp_path):
     with pytest.raises(Exception):
         join_graphs(config)
     assert not db_path.exists()
+
+
+
+# --- overlay re-review of #264 -----------------------------------------------
+
+def test_pulled_biolink_class_keeps_identifier_so_curie_column_is_a_reference(biolink_schemaview):
+    """A Biolink class pulled in as a range keeps its identifier, so `range`
+    alone on a CURIE column stays a reference, not implicitly inlined."""
+    schema = _edges_schema(biolink_schemaview)
+    overlay = {"classes": {"Association": {"slot_usage": {"sources": {"range": "RetrievalSource"}}}}}
+    apply_schema_overlay(schema, overlay, biolink_schemaview, _EDGE_COLUMN_TYPES)
+    assert schema.classes["RetrievalSource"].attributes["id"].identifier
+
+
+def test_class_range_without_identifier_on_curie_column_is_rejected(biolink_schemaview):
+    """LinkML inlines a class range with no identifier by default; on a column
+    of identifiers that would describe CURIEs as records."""
+    overlay = {
+        "classes": {
+            "Association": {"slot_usage": {"sources": {"range": "SourceRecord"}}},
+            "SourceRecord": {"attributes": {"resource_id": {"range": "uriorcurie"}}},
+        }
+    }
+    with pytest.raises(ValueError, match="holds identifiers, not records"):
+        apply_schema_overlay(
+            _edges_schema(biolink_schemaview), overlay, biolink_schemaview, _EDGE_COLUMN_TYPES
+        )
+
+
+def test_slot_usage_cannot_narrow_record_column_to_primitive(biolink_schemaview):
+    schema = derive_schema(
+        nodes_headers=["id", "category"],
+        edges_headers=["subject", "predicate", "object", "sources"],
+        biolink_schemaview=biolink_schemaview,
+        edges_column_types={"sources": _SOURCES_STRUCT_LIST},
+    )
+    overlay = {"classes": {"Association": {"slot_usage": {"sources": {"range": "uriorcurie"}}}}}
+    with pytest.raises(ValueError, match="holds records"):
+        apply_schema_overlay(
+            schema, overlay, biolink_schemaview, {"Association": {"sources": _SOURCES_STRUCT_LIST}}
+        )
+
+
+def test_overlay_biolink_enum_range_is_pulled_in_and_exports(biolink_schemaview, tmp_path):
+    overlay = {"classes": {"Association": {"slot_usage": {"knowledge_level": {"range": "KnowledgeLevelEnum"}}}}}
+    conn = duckdb.connect(str(tmp_path / "test.duckdb"))
+    try:
+        seed_schema(
+            conn,
+            nodes_headers=["id", "category"],
+            edges_headers=["subject", "predicate", "object", "knowledge_level"],
+            biolink_schemaview=biolink_schemaview,
+            overlay=overlay,
+        )
+        conn.execute("CREATE TABLE denormalized_nodes (id VARCHAR, category VARCHAR)")
+        conn.execute(
+            "CREATE TABLE denormalized_edges (subject VARCHAR, predicate VARCHAR, object VARCHAR, "
+            "knowledge_level VARCHAR)"
+        )
+        from koza.graph_operations.closurize import _evolve_schema_for_denormalized
+
+        _evolve_schema_for_denormalized(conn)
+        exported = export_schema(conn, project_denormalized=True)
+    finally:
+        conn.close()
+    reloaded = SchemaView(exported)
+    assert reloaded.induced_slot("knowledge_level", "Association").range == "KnowledgeLevelEnum"
+    assert "knowledge_assertion" in reloaded.get_enum("KnowledgeLevelEnum").permissible_values
+
+
+def test_overlay_defined_enum_is_used(biolink_schemaview):
+    schema = _edges_schema(biolink_schemaview)
+    overlay = {
+        "enums": {"SourceKind": {"permissible_values": {"curated": {}, "predicted": {}}}},
+        "classes": {"Association": {"slot_usage": {"publications": {"range": "SourceKind"}}}},
+    }
+    apply_schema_overlay(schema, overlay, biolink_schemaview)
+    assert set(schema.enums["SourceKind"].permissible_values) == {"curated", "predicted"}
+
+
+@pytest.mark.parametrize(
+    "overlay, message",
+    [
+        ({"classes": {"Association": {"slot_usage": {"publications": {"range": "LabelType"}}}}}, "Biolink type"),
+        ({"classes": {"Association": "oops"}}, "must be a mapping, got 'oops'"),
+        ({"classes": {"Extra": {"slots": ["brand_new"]}}}, "not add new ones"),
+    ],
+)
+def test_overlay_error_messages_are_specific(biolink_schemaview, overlay, message):
+    with pytest.raises(ValueError, match=message):
+        apply_schema_overlay(_edges_schema(biolink_schemaview), overlay, biolink_schemaview)

@@ -263,9 +263,11 @@ classes:
 
 - **`slot_usage` on `Entity` / `Association`** refines a column's slot for that class. This is the LinkML-native way to narrow a slot. It stays on the class, closurize carries it onto `DenormalizedEntity` / `DenormalizedAssociation`, and `SchemaView.induced_slot` honors it in the exported schema.
 - **Other `classes`** are added as written.
+- **`enums`** are added as written. A Biolink enum used as a range (e.g. `KnowledgeLevelEnum`) is copied in with its permissible values. A Biolink *type* can't be a range, because the released schema imports only `linkml:types`. Use the LinkML type it reduces to instead.
 - **Top-level `slots`** replace the named fields of a derived slot definition, for changes that aren't refinements. Each override is logged.
 - **Class references must resolve.** A class named by `range` (including inside `any_of` and similar), `is_a` or `mixins` must be defined in the overlay, already be in the schema, or be a Biolink class. A Biolink class gets a standalone definition reduced to LinkML primitives. Names in a class's `slots` list must be slots in the graph.
-- **Refinements must match the data.** `inlined` / `inlined_as_list` need a column that holds records (`STRUCT` / `MAP`), and `multivalued` must match whether the column is a list.
+- **Refinements must match the data.** `inlined` / `inlined_as_list` need a column that holds records (`STRUCT` / `MAP`), and `multivalued` must match whether the column is a list. A refined slot must also end up inlined exactly when its column holds records, as `SchemaView.is_inlined` reports it. For example, a class range with no identifier on a CURIE column is rejected, because LinkML would treat it as inlined. `slot_usage` can't narrow a record column to a primitive range. A top-level override can.
+- **Only join-time columns can be refined.** The overlay is applied when the schema is seeded, before closurize adds `*_closure`, label and aggregation columns, so those can't be named.
 
 For a record column, koza already infers `inlined_as_list` from the column type, so the `sources` example above makes explicit what seeding would derive anyway.
 
