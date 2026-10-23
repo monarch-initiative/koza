@@ -836,3 +836,61 @@ def test_fixed_size_struct_array_is_inlined_as_list(biolink_schemaview):
         edges_column_types={"sources": "STRUCT(resource_id VARCHAR)[2]"},
     )
     assert schema.slots["sources"].inlined_as_list
+
+
+def test_export_single_record_and_curie_list_is_inlined_as_list(biolink_schemaview, tmp_path):
+    """A single STRUCT on nodes and a CURIE list on edges: the merged slot is
+    inlined and single-valued at seed time, and export makes it multivalued from
+    the list column, so it must also set inlined_as_list (never a dict)."""
+    struct = "STRUCT(attribute_name VARCHAR)"
+    conn = duckdb.connect(str(tmp_path / "test.duckdb"))
+    try:
+        seed_schema(
+            conn,
+            nodes_headers=["id", "category", "has_attribute"],
+            edges_headers=["subject", "predicate", "object", "has_attribute"],
+            biolink_schemaview=biolink_schemaview,
+            nodes_column_types={"has_attribute": struct},
+            edges_column_types={"has_attribute": "VARCHAR[]"},
+        )
+        conn.execute(f"CREATE TABLE denormalized_nodes (id VARCHAR, category VARCHAR, has_attribute {struct})")
+        conn.execute(
+            "CREATE TABLE denormalized_edges (subject VARCHAR, predicate VARCHAR, object VARCHAR, "
+            "has_attribute VARCHAR[])"
+        )
+        exported = yaml.safe_load(export_schema(conn, project_denormalized=False))
+    finally:
+        conn.close()
+
+    slot = exported["slots"]["has_attribute"]
+    assert slot["range"] == "Attribute"
+    assert slot["multivalued"] is True and slot["inlined"] is True and slot["inlined_as_list"] is True
+
+
+@pytest.mark.parametrize("order", ["varchar_first", "integer_first"])
+def test_non_biolink_struct_field_widens_to_string(biolink_schemaview, order):
+    """A non-Biolink struct field that is VARCHAR in one column and INTEGER in
+    another holds strings somewhere, so the class field is `string`."""
+    types = ["STRUCT(attribute_name VARCHAR, extra VARCHAR)[]", "STRUCT(attribute_name VARCHAR, extra INTEGER)[]"]
+    if order == "integer_first":
+        types.reverse()
+    schema = derive_schema(
+        nodes_headers=["id", "category", "has_attribute"],
+        edges_headers=["subject", "predicate", "object", "has_attribute"],
+        biolink_schemaview=biolink_schemaview,
+        nodes_column_types={"has_attribute": types[0]},
+        edges_column_types={"has_attribute": types[1]},
+    )
+    assert schema.classes["Attribute"].attributes["extra"].range == "string"
+
+
+def test_explicit_single_valued_survives_node_edge_merge(biolink_schemaview, tmp_path):
+    """Koza extras are declared multivalued: false on both tables; merging the
+    two must keep that explicit false rather than dropping it."""
+    schema = derive_schema(
+        nodes_headers=["id", "category"],
+        edges_headers=["subject", "predicate", "object"],
+        biolink_schemaview=biolink_schemaview,
+    )
+    assert schema.slots["provided_by"].multivalued is False
+    assert schema.slots["file_source"].multivalued is False

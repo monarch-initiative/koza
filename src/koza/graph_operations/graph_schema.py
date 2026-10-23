@@ -372,7 +372,10 @@ def _inline_class(
         elif biolink_slot is not None:
             attr.range = _primitive_range(sv, biolink_slot.range)
         else:
-            attr.range = _DUCKDB_SCALAR_TO_RANGE.get(str(element).upper())
+            # Non-Biolink field: range from its DuckDB type. VARCHAR is recorded as
+            # `string` (not left unset) so a typed field elsewhere can't silently
+            # narrow it when the class is merged across columns.
+            attr.range = "string" if element.id == "varchar" else _DUCKDB_SCALAR_TO_RANGE.get(str(element).upper())
         if is_list:
             attr.multivalued = True
         existing = class_def.attributes.get(field)
@@ -383,17 +386,28 @@ def _inline_class(
     return name
 
 
+def _merge_flag(a, b):
+    """True if either flag is true; False if either was explicitly false; else unset."""
+    if a or b:
+        return True
+    if a is False or b is False:
+        return False
+    return None
+
+
 def _merge_slot_shape(base: SlotDefinition, other: SlotDefinition, label: str) -> None:
     """Widen `base` in place to also describe `other` — the same slot as seen in
     another column (nodes vs. edges share one flat slot namespace; an inlined
     class can be reached from several columns).
 
-    - `multivalued` / `inlined`: true if either is
+    - `multivalued` / `inlined`: true if either is; an explicit false is kept
+      when neither is true
     - a multivalued, inlined slot is always `inlined_as_list` — without it
       LinkML reads multivalued+inlined as a dict keyed by identifier
-    - range: an inlined class beats a reference or primitive; otherwise
-      `other` wins (matching the previous last-definition-wins behavior).
-      Differing ranges are logged.
+    - range: an inlined class beats a reference or primitive; between two
+      non-inlined ranges `string` wins, since a string column can't hold the
+      other's typed values; otherwise `other` wins (matching the previous
+      last-definition-wins behavior). Differing ranges are logged.
     """
     if other.range is not None and str(other.range) != str(base.range):
         if base.range is not None:
@@ -401,10 +415,14 @@ def _merge_slot_shape(base: SlotDefinition, other: SlotDefinition, label: str) -
                 f"Slot {label!r} has different shapes across columns: range "
                 f"{base.range!r} vs {other.range!r}"
             )
-        if not (base.inlined and not other.inlined):
+        if base.inlined and not other.inlined:
+            pass
+        elif not other.inlined and str(base.range) == "string":
+            pass
+        else:
             base.range = other.range
-    base.multivalued = bool(base.multivalued or other.multivalued) or None
-    base.inlined = bool(base.inlined or other.inlined) or None
+    base.multivalued = _merge_flag(base.multivalued, other.multivalued)
+    base.inlined = _merge_flag(base.inlined, other.inlined)
     if base.multivalued and base.inlined:
         base.inlined_as_list = True
     elif not base.inlined:
@@ -760,6 +778,10 @@ def export_schema(
             slot = SlotDefinition(name=slot_name)
             schema.slots[slot_name] = slot
         slot.multivalued = True
+        # Seeded single-valued but a list here (e.g. a STRUCT on one table, a
+        # list on the other): inlined records must still be a list, not a dict.
+        if slot.inlined:
+            slot.inlined_as_list = True
 
     # The column type wins in the other direction too: a slot Biolink declares
     # multivalued but the build stores as a scalar (e.g. `in_taxon` under
@@ -768,6 +790,7 @@ def export_schema(
         slot = schema.slots.get(slot_name)
         if slot is not None and slot.multivalued and slot_name not in multivalued_slots:
             slot.multivalued = None
+            slot.inlined_as_list = None
 
     # Recover range for computed, non-Biolink scalar columns from their DuckDB
     # type — only where the slot has no range yet, so Biolink-derived ranges
