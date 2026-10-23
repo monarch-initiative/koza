@@ -4205,8 +4205,8 @@ the database to already be seeded — call <code>is_seeded(conn)</code> first.</
 <code>DenormalizedAssociation</code> are renamed to <code>Entity</code> / <code>Association</code> and the
 narrow post-merge classes are dropped — matching monarch-app's convention
 where those names refer to the post-closurize wide shape.</p>
-<p>Slot definitions are enriched with <code>multivalued: true</code> for any slot whose
-column in <code>denormalized_nodes</code> or <code>denormalized_edges</code> is <code>VARCHAR[]</code>.</p>
+<p><code>multivalued</code> on each slot follows its column in <code>denormalized_nodes</code> /
+<code>denormalized_edges</code>: true for a LIST type, unset for a scalar.</p>
 
 
     </div>
