@@ -24,8 +24,8 @@ a list before unnesting, and a graph whose edges carry no ``category`` slot at
 all simply gets the fallback union check throughout.
 
 The Biolink lookups (:func:`build_edge_type_constraints`,
-:func:`build_category_prefixes`) are registered as DuckDB relations, so the graph
-database stays opened read-only.
+:func:`build_category_prefixes`) are loaded as DuckDB temp tables, which live in the
+in-memory temp catalog, so the graph database stays opened read-only.
 """
 
 from __future__ import annotations
@@ -33,7 +33,6 @@ from __future__ import annotations
 import time
 from pathlib import Path
 
-import pandas as pd
 from loguru import logger
 
 from koza.graph_operations.biolink_constraints import (
@@ -88,16 +87,24 @@ def _biolink_prefixed(expr: str) -> str:
 def _category_list_expr(qualified_col: str, dtype: str) -> str:
     """List-coerced category column with every element normalized to ``biolink:``."""
     list_expr = _to_list_expr(qualified_col, dtype)
-    return f"list_transform({list_expr}, x -> {_biolink_prefixed('x')})"
+    return f"list_transform({list_expr}, lambda x: {_biolink_prefixed('x')})"
+
+
+def _register_rows(conn, name: str, columns: list[str], rows: list[tuple]) -> None:
+    """Expose Python rows as temp table `name` (all VARCHAR), one list parameter
+    per column — no DataFrame round trip."""
+    column_values = [list(values) for values in zip(*rows)] if rows else [[] for _ in columns]
+    select = ", ".join(f"unnest(?::VARCHAR[]) AS {column}" for column in columns)
+    conn.execute(f"CREATE OR REPLACE TEMP TABLE {name} AS SELECT {select}", column_values)
 
 
 def _register_constraint_relations(conn, constraints, prefix_rows) -> None:
-    """Register the Biolink lookups as DuckDB relations (keeps the graph read-only)."""
-    conn.register("_assoc_subj", pd.DataFrame(constraints.subject_rows(), columns=["association_class", "subject_category"]))
-    conn.register("_assoc_pred", pd.DataFrame(constraints.predicate_rows(), columns=["association_class", "predicate"]))
-    conn.register("_assoc_obj", pd.DataFrame(constraints.object_rows(), columns=["association_class", "object_category"]))
-    conn.register("_union", pd.DataFrame(constraints.union_rows(), columns=["subject_category", "predicate", "object_category"]))
-    conn.register("_category_prefixes", pd.DataFrame(prefix_rows, columns=["category", "prefix"]))
+    """Load the Biolink lookups as temp tables (keeps the graph read-only)."""
+    _register_rows(conn, "_assoc_subj", ["association_class", "subject_category"], constraints.subject_rows())
+    _register_rows(conn, "_assoc_pred", ["association_class", "predicate"], constraints.predicate_rows())
+    _register_rows(conn, "_assoc_obj", ["association_class", "object_category"], constraints.object_rows())
+    _register_rows(conn, "_union", ["subject_category", "predicate", "object_category"], constraints.union_rows())
+    _register_rows(conn, "_category_prefixes", ["category", "prefix"], prefix_rows)
 
 
 def _edge_type_summary_view(conn) -> None:

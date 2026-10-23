@@ -891,3 +891,76 @@ ZZZ:exact	skos:exactMatch	FB:FBgn0000008
 
 if __name__ == "__main__":
     pytest.main([__file__])
+
+
+SSSOM_WITH_HEADER_AND_IRIS = """# curie_map:
+#   skos: http://www.w3.org/2004/02/skos/core#
+# mapping_set_id: https://example.org/mappings.sssom.tsv
+subject_id\tpredicate_id\tobject_id\tobject_source
+NCBIGene:43852\thttp://www.w3.org/2004/02/skos/core#exactMatch\tFB:FBgn0000008\thttps://example.org/fb#gene
+HGNC:123\tskos:exactMatch\tUniProtKB:P12345\thttps://example.org/uniprot
+"""
+
+
+@pytest.mark.parametrize("compression", [None, "gz", "zst"])
+def test_sssom_rows_with_hash_in_values_are_kept(temp_dir, compression):
+    """Only the leading `#` metadata block is skipped. A `#` inside a value (IRIs,
+    URLs) must not truncate the row; DuckDB 2's `comment='#'` would drop it.
+    Compressed files are read the same way `read_csv` reads them."""
+    import gzip
+    import shutil
+    import subprocess
+
+    from koza.graph_operations.normalize import _load_sssom_file
+    from koza.model.graph_operations import FileSpec
+
+    plain = temp_dir / "hash.sssom.tsv"
+    plain.write_text(SSSOM_WITH_HEADER_AND_IRIS)
+    path = plain
+    if compression == "gz":
+        path = temp_dir / "hash.sssom.tsv.gz"
+        with gzip.open(path, "wt") as f:
+            f.write(SSSOM_WITH_HEADER_AND_IRIS)
+    elif compression == "zst":
+        if shutil.which("zstd") is None:
+            pytest.skip("zstd binary not available")
+        path = temp_dir / "hash.sssom.tsv.zst"
+        subprocess.run(["zstd", "-q", "-f", str(plain), "-o", str(path)], check=True)
+
+    with GraphDatabase() as db:
+        result = _load_sssom_file(db, FileSpec(path=path, source_name="hash"))
+        assert result.errors == []
+        rows = db.conn.execute(
+            f"SELECT subject_id, predicate_id, object_source FROM {result.temp_table_name} ORDER BY subject_id"
+        ).fetchall()
+    assert rows == [
+        ("HGNC:123", "skos:exactMatch", "https://example.org/uniprot"),
+        ("NCBIGene:43852", "http://www.w3.org/2004/02/skos/core#exactMatch", "https://example.org/fb#gene"),
+    ]
+
+
+@pytest.mark.parametrize("metadata", ["blank_line", "long_line"])
+def test_sssom_header_with_blank_or_very_long_metadata_lines(temp_dir, metadata):
+    """Blank lines inside the metadata block are part of it (`skip` counts them),
+    and a metadata line longer than DuckDB's default max_line_size still loads."""
+    from koza.graph_operations.normalize import _load_sssom_file
+    from koza.model.graph_operations import FileSpec
+
+    extra = "\n" if metadata == "blank_line" else "# description: " + "x" * 3_000_000 + "\n"
+    text = (
+        "# curie_map:\n"
+        + extra
+        + "#   skos: http://www.w3.org/2004/02/skos/core#\n"
+        + "subject_id\tpredicate_id\tobject_id\n"
+        + "HGNC:123\tskos:exactMatch\tUniProtKB:P12345\n"
+    )
+    path = temp_dir / f"{metadata}.sssom.tsv"
+    path.write_text(text)
+
+    with GraphDatabase() as db:
+        result = _load_sssom_file(db, FileSpec(path=path, source_name=metadata))
+        assert result.errors == []
+        rows = db.conn.execute(
+            f"SELECT subject_id, predicate_id, object_id FROM {result.temp_table_name}"
+        ).fetchall()
+    assert rows == [("HGNC:123", "skos:exactMatch", "UniProtKB:P12345")]

@@ -16,6 +16,8 @@ import os
 import duckdb
 from loguru import logger
 
+from .utils import DUCKDB_STORAGE_CONFIG
+
 def edge_columns(field: str, include_closure_fields: bool =True, node_column_names: list = None):
     column_text = f"""
        {field}.name as {field}_label, 
@@ -94,7 +96,7 @@ def _drop_any(name: str, db) -> None:
     standalone closurizer has `denormalized_edges` as a TABLE; this code
     creates it as a VIEW), and because DuckDB's `DROP X IF EXISTS` errors
     on type mismatch, so we look up the actual type first."""
-    row = db.sql(
+    row = db.execute(
         f"SELECT table_type FROM information_schema.tables WHERE table_name = '{name}'"
     ).fetchone()
     if row is None:
@@ -217,7 +219,7 @@ def add_closure(database_path: str,
 
     include_closure = closure_file is not None
     logger.info(f"Closurize: database={database_path}, closure_file={closure_file}")
-    db = duckdb.connect(database=database_path)
+    db = duckdb.connect(database=database_path, config=DUCKDB_STORAGE_CONFIG)
     if mem := os.environ.get("DUCKDB_MEMORY_LIMIT"):
         db.sql(f"PRAGMA memory_limit='{mem}'")
 

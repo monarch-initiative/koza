@@ -323,13 +323,44 @@ def normalize_graph(config: NormalizeConfig) -> NormalizeResult:
         )
 
 
+# Longest metadata line the header count reads (DuckDB's default is 2 MB).
+# `buffer_size` is set alongside it: left to default, DuckDB sizes its read
+# buffer from max_line_size, and a large limit then allocates gigabytes.
+_SSSOM_MAX_LINE_BYTES = 16 * 1024 * 1024
+
+
+def _sssom_header_line_count(db: GraphDatabase, path: Path) -> int:
+    """Number of leading `#` lines (the SSSOM YAML metadata block) in `path`.
+
+    Read through DuckDB's CSV reader as raw lines (no delimiter, quoting or
+    escaping), so it decompresses exactly what `read_csv` does (.gz, .zst, ...)
+    and counts lines the way its `skip` option does. Blank lines inside the
+    metadata block count as part of it (the reader returns them as NULL).
+    Streams until the first non-blank, non-`#` line."""
+    cursor = db.conn.execute(
+        "SELECT line FROM read_csv(?, header=false, columns={'line': 'VARCHAR'}, "
+        "delim=E'\\x01', quote='', escape='', auto_detect=false, "
+        f"max_line_size={_SSSOM_MAX_LINE_BYTES}, buffer_size={2 * _SSSOM_MAX_LINE_BYTES})",
+        [str(path)],
+    )
+    count = 0
+    while rows := cursor.fetchmany(1000):
+        for (line,) in rows:
+            if line is not None and not line.startswith("#"):
+                return count
+            count += 1
+    return count
+
+
 def _load_sssom_file(db: GraphDatabase, file_spec: FileSpec) -> FileLoadResult:
     """
     Load an SSSOM mapping file into a temporary table.
 
     SSSOM files are TSV format with a YAML metadata header (lines starting with #).
-    This function loads the file using DuckDB's read_csv with comment='#' to skip
-    the header, and creates a temporary table for later merging.
+    The header is skipped by line count rather than read_csv's `comment='#'`:
+    DuckDB 2 treats `#` anywhere in a line as a comment, which truncates rows
+    holding IRIs such as `http://www.w3.org/2004/02/skos/core#exactMatch`
+    (and `ignore_errors` then drops them silently).
 
     The key columns used from SSSOM files are:
     - subject_id: The canonical/target identifier
@@ -356,7 +387,7 @@ def _load_sssom_file(db: GraphDatabase, file_spec: FileSpec) -> FileLoadResult:
         safe_filename = file_spec.path.stem.replace("-", "_").replace(".", "_")
         temp_table_name = f"temp_mapping_{safe_filename}_{id(file_spec)}"
 
-        # Load SSSOM file with comment='#' to skip YAML header
+        header_lines = _sssom_header_line_count(db, file_spec.path)
         create_sql = f"""
             CREATE TEMP TABLE {temp_table_name} AS
             SELECT *, '{file_spec.source_name or file_spec.path.stem}' as mapping_source 
@@ -364,7 +395,7 @@ def _load_sssom_file(db: GraphDatabase, file_spec: FileSpec) -> FileLoadResult:
                          delim='\\t', 
                          header=true, 
                          all_varchar=true,
-                         comment='#',
+                         skip={header_lines},
                          ignore_errors=true)
         """
 

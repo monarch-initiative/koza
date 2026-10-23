@@ -358,12 +358,12 @@ def _json_list_column_as_list(
     its string, JSON `null` as NULL. Array or object elements raise
     `NestedValueError`."""
     quoted = f'"{col_name}"'
-    where = f"list_has_any(list_transform({quoted}, x -> json_type(x)), ['ARRAY', 'OBJECT'])"
+    where = f"list_has_any(list_transform({quoted}, lambda x: json_type(x)), ['ARRAY', 'OBJECT'])"
     bad = db.conn.execute(f"SELECT COUNT(*) FROM {temp_table_name} WHERE {where}").fetchone()
     if bad and bad[0]:
         raise _nested_value_error(db, temp_table_name, col_name, source, file_type, target_type, where)
     return (
-        f"list_transform({quoted}, x -> CASE WHEN json_type(x) = 'NULL' THEN NULL ELSE json_extract_string(x, '$') END)"
+        f"list_transform({quoted}, lambda x: CASE WHEN json_type(x) = 'NULL' THEN NULL ELSE json_extract_string(x, '$') END)"
     )
 
 
@@ -460,7 +460,7 @@ def _conform_temp_table_types(
                 continue
             # Scalar → list. NULL stays NULL rather than becoming [NULL].
             if split_pipes and file_type.strip().upper() == "VARCHAR":
-                items = f"list_filter(list_transform(string_split({quoted}, '|'), x -> trim(x)), x -> x != '')"
+                items = f"list_filter(list_transform(string_split({quoted}, '|'), lambda x: trim(x)), lambda x: x != '')"
                 projections.append(f"{_list_or_null(items, target_type)} AS {quoted}")
             else:
                 projections.append(
@@ -470,7 +470,7 @@ def _conform_temp_table_types(
             continue
 
         # List-shaped source (a LIST column, or a JSON column rendered as one).
-        non_null = f"list_filter({list_expr}, x -> x IS NOT NULL)"
+        non_null = f"list_filter({list_expr}, lambda x: x IS NOT NULL)"
         if target_is_list:
             projections.append(f"{_list_or_null(non_null, target_type)} AS {quoted}")
             wrapped.append(col_name)
@@ -582,9 +582,9 @@ def _append_single_file(db: GraphDatabase, file_spec, table_type: str) -> FileLo
                 col_type = file_columns[col_name]
                 # Checks if the name of the column is somewhere in the set of columns.
                 # This is fairly likely to happen if you have multiple tables which all share the same incorrect schema.
-                col_already_in_db = col_name in set(
-                    db.conn.execute(f"PRAGMA table_info ('{table_type}')").fetchdf()["name"]
-                )
+                col_already_in_db = col_name in {
+                    row[1] for row in db.conn.execute(f"PRAGMA table_info ('{table_type}')").fetchall()
+                }
                 if not col_already_in_db:
                     alter_sql = f"ALTER TABLE {table_type} ADD COLUMN {col_name} {col_type}"
                     db.conn.execute(alter_sql)

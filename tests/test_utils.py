@@ -375,3 +375,21 @@ class TestUtilityFunctions:
 
 if __name__ == "__main__":
     pytest.main([__file__])
+
+
+
+def test_graph_database_files_stay_readable_by_duckdb_1x(tmp_path):
+    """A graph file koza creates uses the 1.4 storage format, even under duckdb 2
+    (whose own format no 1.x release can open). The header's version field is
+    67 for that format and 999 for duckdb 2's."""
+    import struct
+
+    from koza.graph_operations.utils import GraphDatabase
+
+    path = tmp_path / "graph.duckdb"
+    with GraphDatabase(path) as db:
+        db.conn.execute("CREATE TABLE t AS SELECT 1 AS x")
+    with open(path, "rb") as f:
+        header = f.read(20)
+    assert header[8:12] == b"DUCK"
+    assert struct.unpack("<Q", header[12:20])[0] <= 67
