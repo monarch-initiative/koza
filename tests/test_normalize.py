@@ -891,3 +891,40 @@ ZZZ:exact	skos:exactMatch	FB:FBgn0000008
 
 if __name__ == "__main__":
     pytest.main([__file__])
+
+
+SSSOM_WITH_HEADER_AND_IRIS = """# curie_map:
+#   skos: http://www.w3.org/2004/02/skos/core#
+# mapping_set_id: https://example.org/mappings.sssom.tsv
+subject_id\tpredicate_id\tobject_id\tobject_source
+NCBIGene:43852\thttp://www.w3.org/2004/02/skos/core#exactMatch\tFB:FBgn0000008\thttps://example.org/fb#gene
+HGNC:123\tskos:exactMatch\tUniProtKB:P12345\thttps://example.org/uniprot
+"""
+
+
+@pytest.mark.parametrize("compressed", [False, True])
+def test_sssom_rows_with_hash_in_values_are_kept(temp_dir, compressed):
+    """Only the leading `#` metadata block is skipped. A `#` inside a value (IRIs,
+    URLs) must not truncate the row; DuckDB 2's `comment='#'` would drop it."""
+    import gzip
+
+    from koza.graph_operations.normalize import _load_sssom_file
+    from koza.model.graph_operations import FileSpec
+
+    path = temp_dir / ("hash.sssom.tsv.gz" if compressed else "hash.sssom.tsv")
+    if compressed:
+        with gzip.open(path, "wt") as f:
+            f.write(SSSOM_WITH_HEADER_AND_IRIS)
+    else:
+        path.write_text(SSSOM_WITH_HEADER_AND_IRIS)
+
+    with GraphDatabase() as db:
+        result = _load_sssom_file(db, FileSpec(path=path, source_name="hash"))
+        assert result.errors == []
+        rows = db.conn.execute(
+            f"SELECT subject_id, predicate_id, object_source FROM {result.temp_table_name} ORDER BY subject_id"
+        ).fetchall()
+    assert rows == [
+        ("HGNC:123", "skos:exactMatch", "https://example.org/uniprot"),
+        ("NCBIGene:43852", "http://www.w3.org/2004/02/skos/core#exactMatch", "https://example.org/fb#gene"),
+    ]

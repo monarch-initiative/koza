@@ -11,12 +11,17 @@ env:
 
 jobs:
   test-python3-ubuntu-latest:
-    name: test py${{ matrix.python-version }} on linux
+    name: test py${{ matrix.python-version }}${{ matrix.duckdb && format(' duckdb {0}', matrix.duckdb) || '' }} on linux
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
+        duckdb: [""]  # latest
+        include:
+          # Lowest supported duckdb (pyproject floor), so 1.x compatibility doesn't rot.
+          - python-version: "3.12"
+            duckdb: "1.5.0"
     env:
       OS: ubuntu
 
@@ -39,4 +44,9 @@ jobs:
           uv lock --check
 
       - name: Run tests
+        if: matrix.duckdb == ''
         run: make test
+
+      - name: Run tests against the duckdb floor
+        if: matrix.duckdb != ''
+        run: uv run --with "duckdb==${{ matrix.duckdb }}" pytest tests

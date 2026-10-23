@@ -38,7 +38,7 @@ def graph_db(tmp_path):
 
 
 def _read_tsv(path):
-    return duckdb.sql(f"SELECT * FROM read_csv('{path}', delim='\t', header=true, all_varchar=true)").df()
+    return duckdb.execute(f"SELECT * FROM read_csv('{path}', delim='\t', header=true, all_varchar=true)").df()
 
 
 def test_export_tsv_serializes_nested_json_and_pipe_lists(graph_db, tmp_path):
@@ -51,8 +51,8 @@ def test_export_tsv_serializes_nested_json_and_pipe_lists(graph_db, tmp_path):
     assert edges["publications"].iloc[0] == "PMID:1|PMID:2"
     # nested list-of-struct -> JSON-in-cell, round-trippable
     src = edges["sources"].iloc[0]
-    assert duckdb.sql(f"SELECT json_valid('{src}')").fetchone()[0]
-    assert duckdb.sql(f"SELECT json_extract_string('{src}', '$[0].resource_id')").fetchone()[0] == "infores:medic"
+    assert duckdb.execute(f"SELECT json_valid('{src}')").fetchone()[0]
+    assert duckdb.execute(f"SELECT json_extract_string('{src}', '$[0].resource_id')").fetchone()[0] == "infores:medic"
 
     nodes = _read_tsv(out / "nodes.tsv")
     assert nodes["category"].iloc[0] == "biolink:Gene|biolink:NamedThing"
@@ -80,7 +80,7 @@ def test_export_tsv_quotes_special_characters(tmp_path):
 def test_export_jsonl_keeps_nested_structure(graph_db, tmp_path):
     out = tmp_path / "out"
     export_graph(ExportConfig(database_path=graph_db, output_dir=out, output_format="jsonl", quiet=True))
-    row = duckdb.sql(
+    row = duckdb.execute(
         f"SELECT sources, publications FROM read_json('{out / 'edges.jsonl'}', format='newline_delimited')"
     ).fetchone()
     assert row[0][0]["resource_id"] == "infores:medic"   # sources stays a list of structs
@@ -92,7 +92,7 @@ def test_export_parquet_preserves_types(graph_db, tmp_path):
     export_graph(ExportConfig(database_path=graph_db, output_dir=out, output_format="parquet", quiet=True))
     types = {
         r[0]: r[1]
-        for r in duckdb.sql(f"DESCRIBE SELECT * FROM read_parquet('{out / 'edges.parquet'}')").fetchall()
+        for r in duckdb.execute(f"DESCRIBE SELECT * FROM read_parquet('{out / 'edges.parquet'}')").fetchall()
     }
     assert "STRUCT" in types["sources"].upper()  # nested type preserved, not flattened
 
@@ -122,5 +122,5 @@ def test_convert_jsonl_to_tsv(tmp_path):
     assert (out / "edges.tsv").exists()
     df = _read_tsv(out / "edges.tsv")
     src = df["sources"].iloc[0]
-    assert duckdb.sql(f"SELECT json_extract_string('{src}', '$[0].resource_id')").fetchone()[0] == "infores:medic"
+    assert duckdb.execute(f"SELECT json_extract_string('{src}', '$[0].resource_id')").fetchone()[0] == "infores:medic"
     assert int(result.row_counts["edges"]) == 1

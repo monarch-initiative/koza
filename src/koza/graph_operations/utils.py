@@ -60,7 +60,7 @@ def _generate_multivalued_select(
             select_parts.append(f"""
                 CASE
                     WHEN "{col_name}" IS NULL OR trim("{col_name}") = '' THEN NULL
-                    ELSE list_filter(string_split(trim("{col_name}"), '|'), x -> trim(x) != '')
+                    ELSE list_filter(string_split(trim("{col_name}"), '|'), lambda x: trim(x) != '')
                 END as "{col_name}" """.strip())
         else:
             # Keep as-is

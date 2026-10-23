@@ -88,7 +88,7 @@ def _biolink_prefixed(expr: str) -> str:
 def _category_list_expr(qualified_col: str, dtype: str) -> str:
     """List-coerced category column with every element normalized to ``biolink:``."""
     list_expr = _to_list_expr(qualified_col, dtype)
-    return f"list_transform({list_expr}, x -> {_biolink_prefixed('x')})"
+    return f"list_transform({list_expr}, lambda x: {_biolink_prefixed('x')})"
 
 
 def _register_constraint_relations(conn, constraints, prefix_rows) -> None:

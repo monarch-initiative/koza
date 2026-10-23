@@ -94,7 +94,7 @@ def _drop_any(name: str, db) -> None:
     standalone closurizer has `denormalized_edges` as a TABLE; this code
     creates it as a VIEW), and because DuckDB's `DROP X IF EXISTS` errors
     on type mismatch, so we look up the actual type first."""
-    row = db.sql(
+    row = db.execute(
         f"SELECT table_type FROM information_schema.tables WHERE table_name = '{name}'"
     ).fetchone()
     if row is None:

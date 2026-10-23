@@ -2,6 +2,7 @@
 Normalize operation for applying SSSOM mappings to graph data.
 """
 
+import gzip
 import time
 from pathlib import Path
 from typing import NamedTuple
@@ -323,13 +324,27 @@ def normalize_graph(config: NormalizeConfig) -> NormalizeResult:
         )
 
 
+def _sssom_header_line_count(path: Path) -> int:
+    """Number of leading `#` lines (the SSSOM YAML metadata block) in `path`."""
+    opener = gzip.open if path.suffix == ".gz" else open
+    count = 0
+    with opener(path, "rt", encoding="utf-8") as f:
+        for line in f:
+            if not line.startswith("#"):
+                break
+            count += 1
+    return count
+
+
 def _load_sssom_file(db: GraphDatabase, file_spec: FileSpec) -> FileLoadResult:
     """
     Load an SSSOM mapping file into a temporary table.
 
     SSSOM files are TSV format with a YAML metadata header (lines starting with #).
-    This function loads the file using DuckDB's read_csv with comment='#' to skip
-    the header, and creates a temporary table for later merging.
+    The header is skipped by line count rather than read_csv's `comment='#'`:
+    DuckDB 2 treats `#` anywhere in a line as a comment, which truncates rows
+    holding IRIs such as `http://www.w3.org/2004/02/skos/core#exactMatch`
+    (and `ignore_errors` then drops them silently).
 
     The key columns used from SSSOM files are:
     - subject_id: The canonical/target identifier
@@ -356,7 +371,7 @@ def _load_sssom_file(db: GraphDatabase, file_spec: FileSpec) -> FileLoadResult:
         safe_filename = file_spec.path.stem.replace("-", "_").replace(".", "_")
         temp_table_name = f"temp_mapping_{safe_filename}_{id(file_spec)}"
 
-        # Load SSSOM file with comment='#' to skip YAML header
+        header_lines = _sssom_header_line_count(file_spec.path)
         create_sql = f"""
             CREATE TEMP TABLE {temp_table_name} AS
             SELECT *, '{file_spec.source_name or file_spec.path.stem}' as mapping_source 
@@ -364,7 +379,7 @@ def _load_sssom_file(db: GraphDatabase, file_spec: FileSpec) -> FileLoadResult:
                          delim='\\t', 
                          header=true, 
                          all_varchar=true,
-                         comment='#',
+                         skip={header_lines},
                          ignore_errors=true)
         """
 

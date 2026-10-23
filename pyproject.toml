@@ -15,7 +15,9 @@ license = "BSD-3-Clause"
 
 dependencies = [
     "coverage>=7.13.0",
-    "duckdb",
+    # 1.5: biolink-check needs it (1.4 fails on pandas 3 string columns and on its
+    # query); `lambda x:` syntax needs >=1.3. 2.x is supported too.
+    "duckdb>=1.5.0",
     "loguru",
     "biolink-model>=4.3.6",
     "mergedeep==1.3.4",
