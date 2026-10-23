@@ -4086,7 +4086,8 @@ the actual produced shape.</p>
 
         <p>Derive a graph schema and persist it as metadata in the DuckDB.</p>
 <p>Called once at graph creation. After this, operations read and evolve the
-stored schema rather than re-deriving from Biolink.</p>
+stored schema rather than re-deriving from Biolink. <code>overlay</code>, if given,
+is applied to the derived schema first (see <code>apply_schema_overlay</code>).</p>
 
 
     </div>

@@ -1852,6 +1852,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#schema-overlays" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Schema overlays
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#tolerant-of-unseeded-databases" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2390,6 +2401,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#schema-overlays" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Schema overlays
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#tolerant-of-unseeded-databases" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2640,6 +2662,30 @@ For chemicals: <code>taxon</code>, <code>chromosome</code>, <code>definition</co
 <li><strong>Evolved</strong> by each operation that produces new slots. <code>normalize</code> calls <code>ensure_slots(conn, "edges", ["original_subject", "original_object"])</code> before its SQL; the function ALTER-TABLEs and updates the stored schema in one transaction. <code>closurize_graph</code> adds <code>DenormalizedEntity</code> and <code>DenormalizedAssociation</code> classes whose slot lists come from the actual columns of the produced views.</li>
 <li><strong>Exported</strong> at release time. <code>koza schema-export</code> reads <code>_koza_schema</code>, projects <code>DenormalizedEntity</code> → <code>Entity</code> and <code>DenormalizedAssociation</code> → <code>Association</code> (consumer-facing naming), derives <code>multivalued</code> from the outer DuckDB column type (a LIST is multivalued, a scalar — including a <code>STRUCT</code> with list fields — is not), declares prefixes and imports — and writes a standalone LinkML YAML that downstream tools (<code>gen-pydantic</code>, <code>lsolr create-schema</code>, monarch-app's <code>imports:</code>) consume directly.</li>
 </ol>
+<h3 id="schema-overlays">Schema overlays</h3>
+<p>Some shapes can't be derived from Biolink plus the data. A build declares those in a schema overlay: a LinkML YAML fragment passed as <code>--schema-overlay</code> to <code>koza join</code> / <code>koza merge</code>, or as <code>schema_overlay</code> on <code>JoinConfig</code> / <code>MergeConfig</code>. Koza applies it when it seeds the schema.</p>
+<div class="highlight"><pre><span></span><code><span class="nt">classes</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">Association</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">slot_usage</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">sources</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">range</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">RetrievalSource</span>
+<span class="w">        </span><span class="nt">inlined</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">        </span><span class="nt">inlined_as_list</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
+<ul>
+<li><strong><code>slot_usage</code> on <code>Entity</code> / <code>Association</code></strong> refines a column's slot for that class. This is the LinkML-native way to narrow a slot. It stays on the class, closurize carries it onto <code>DenormalizedEntity</code> / <code>DenormalizedAssociation</code>, and <code>SchemaView.induced_slot</code> honors it in the exported schema.</li>
+<li><strong>Other <code>classes</code></strong> are added as written.</li>
+<li><strong><code>enums</code></strong> are added as written. A Biolink enum used as a range (e.g. <code>KnowledgeLevelEnum</code>) is copied in with its permissible values. A Biolink <em>type</em> can't be a range, because the released schema imports only <code>linkml:types</code>. Use the LinkML type it reduces to instead.</li>
+<li><strong>Top-level <code>slots</code></strong> replace the named fields of a derived slot definition, for changes that aren't refinements. Each override is logged.</li>
+<li><strong>Class references must resolve.</strong> A class named by <code>range</code> (including inside <code>any_of</code> and similar), <code>is_a</code> or <code>mixins</code> must be defined in the overlay, already be in the schema, or be a Biolink class. A Biolink class gets a standalone definition reduced to LinkML primitives. Names in a class's <code>slots</code> list must be slots in the graph.</li>
+<li><strong>Refinements must match the data.</strong> <code>inlined</code> / <code>inlined_as_list</code> need a column that holds records (<code>STRUCT</code> / <code>MAP</code>), and <code>multivalued</code> must match whether the column is a list. A refined slot must also end up inlined exactly when its column holds records, as <code>SchemaView.is_inlined</code> reports it. For example, a class range with no identifier on a CURIE column is rejected, because LinkML would treat it as inlined. <code>slot_usage</code> can't narrow a record column to a primitive range. A top-level override can.</li>
+<li><strong>Only join-time columns can be refined.</strong> The overlay is applied when the schema is seeded, before closurize adds <code>*_closure</code>, label and aggregation columns, so those can't be named.</li>
+</ul>
+<p>For a record column, koza already infers <code>inlined_as_list</code> from the column type, so the <code>sources</code> example above makes explicit what seeding would derive anyway.</p>
+<p><strong>Errors.</strong> Koza checks the overlay in two stages, both before the graph is written out:
+- <strong>Before any file is loaded:</strong> a missing file, unsupported keys, misspelled LinkML fields, anything other than <code>slot_usage</code> on <code>Entity</code> / <code>Association</code>, or the closurize-owned <code>DenormalizedEntity</code> / <code>DenormalizedAssociation</code> names.
+- <strong>At seed time:</strong> checks that need the graph, such as slots and columns that don't exist, references that don't resolve, or a shape that contradicts a column.</p>
+<p>Koza logs a warning when an overlay class replaces a derived class of the same name.</p>
 <h3 id="tolerant-of-unseeded-databases">Tolerant of unseeded databases</h3>
 <p>Graphs that predate the schema feature don't have a <code>_koza_schema</code> table. <code>ensure_slots</code> gracefully degrades — it falls back to a plain <code>ALTER TABLE</code> with column type defaulting to <code>VARCHAR</code> (multivalued-ness unknown without a schema), and skips the schema-metadata update. Operations refactored to consume the seam still work on these older graphs. See <a href="https://github.com/monarch-initiative/koza/blob/main/decisions/0002-schema-lives-with-database.md">ADR-0002</a>.</p>
 <h3 id="why-this-matters">Why this matters</h3>

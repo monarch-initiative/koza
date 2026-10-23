@@ -2289,6 +2289,7 @@ koza join -n file1.tsv -n file2.tsv -e edges.tsv -o graph.duckdb
 <li><code>--required-node-field &lt;str&gt;</code>: Node fields that must be present and non-empty (can specify multiple)</li>
 <li><code>--required-edge-field &lt;str&gt;</code>: Edge fields that must be present and non-empty (can specify multiple)</li>
 <li><code>--slots-file &lt;str&gt;</code>: YAML file with {nodes: [...], edges: [...]} — sets explicit JSONL schema, skipping inference. JSON keys NOT in the slot list are silently dropped at read time.</li>
+<li><code>--schema-overlay &lt;str&gt;</code>: LinkML YAML fragment applied to the seeded graph schema: slot_usage on Entity/Association to refine a column&#x27;s slot, extra classes, or top-level slot overrides.</li>
 <li><code>--force-single-valued &lt;str&gt;</code>: Collapse this Biolink-multivalued slot to a scalar, keeping only the first array element (repeatable). Default: none — Biolink multivalued slots are preserved as arrays. Pass e.g. --force-single-valued category for the historical Monarch convention.</li>
 <li><code>-q, --quiet</code>: Suppress output</li>
 <li><code>-p, --progress</code>: Show progress bars  [default: True]</li>
@@ -2320,6 +2321,7 @@ koza load --input-dir kg/ -o graph.duckdb
 <li><code>-o, --output &lt;str&gt;</code>: Path to output database file (default: in-memory)</li>
 <li><code>-f, --format &lt;tsv|jsonl|parquet&gt;</code>: Output format for any exported files  [default: tsv]</li>
 <li><code>--slots-file &lt;str&gt;</code>: YAML file with {nodes: [...], edges: [...]} — sets explicit JSONL schema, skipping inference. JSON keys NOT in the slot list are silently dropped at read time.</li>
+<li><code>--schema-overlay &lt;str&gt;</code>: LinkML YAML fragment applied to the seeded graph schema: slot_usage on Entity/Association to refine a column&#x27;s slot, extra classes, or top-level slot overrides.</li>
 <li><code>--required-node-field &lt;str&gt;</code>: Node fields that must be present and non-empty (can specify multiple)</li>
 <li><code>--required-edge-field &lt;str&gt;</code>: Edge fields that must be present and non-empty (can specify multiple)</li>
 <li><code>--generate-provided-by</code>: Overwrite provided_by with the source filename (cat-merge style). Off by default: load preserves any existing provided_by.</li>
@@ -2708,6 +2710,7 @@ koza merge --input-dir ./data/ -m &amp;quot;*.sssom.tsv&amp;quot; --remove-singl
 <li><code>--remove-singletons</code>: Move singleton nodes to separate table</li>
 <li><code>--required-node-field &lt;str&gt;</code>: Node fields that must be present and non-empty (can specify multiple)</li>
 <li><code>--required-edge-field &lt;str&gt;</code>: Edge fields that must be present and non-empty (can specify multiple)</li>
+<li><code>--schema-overlay &lt;str&gt;</code>: LinkML YAML fragment applied to the seeded graph schema: slot_usage on Entity/Association to refine a column&#x27;s slot, extra classes, or top-level slot overrides.</li>
 <li><code>--force-single-valued &lt;str&gt;</code>: Collapse this Biolink-multivalued slot to a scalar during the join step, keeping only the first array element (repeatable). Default: none — Biolink multivalued slots are preserved as arrays.</li>
 <li><code>-q, --quiet</code>: Suppress output</li>
 <li><code>-p, --progress</code>: Show progress bars  [default: True]</li>
