@@ -2,6 +2,7 @@
 Shared utilities for graph operations using DuckDB.
 """
 
+import os
 import re
 import time
 from pathlib import Path
@@ -24,6 +25,18 @@ from koza.graph_operations.schema_utils import get_multivalued_columns
 # format no 1.x release can open; the 1.4 format keeps a graph built under 2.x
 # readable by every supported duckdb (>=1.4.2). Applies when a file is created.
 DUCKDB_STORAGE_CONFIG = {"storage_compatibility_version": "v1.4.0"}
+
+# Env var capping DuckDB's memory (e.g. "20GB") for every connection koza opens.
+# DuckDB defaults to 80% of RAM, which a full graph operation can reach on a
+# small host; under a cap it spills to disk instead.
+DUCKDB_MEMORY_LIMIT_ENV = "DUCKDB_MEMORY_LIMIT"
+
+
+def apply_memory_limit(conn: duckdb.DuckDBPyConnection) -> None:
+    """Set memory_limit on `conn` from DUCKDB_MEMORY_LIMIT, if it is set."""
+    limit = os.environ.get(DUCKDB_MEMORY_LIMIT_ENV)
+    if limit:
+        conn.execute("SET memory_limit = '{}'".format(limit.replace("'", "''")))
 
 
 def _generate_multivalued_select(
@@ -265,6 +278,7 @@ class GraphDatabase:
             self.conn = duckdb.connect(str(db_path), config=DUCKDB_STORAGE_CONFIG)
         else:
             self.conn = duckdb.connect(str(db_path) if db_path else ":memory:", read_only=read_only)
+        apply_memory_limit(self.conn)
         if not read_only:
             self._setup_database()
 
