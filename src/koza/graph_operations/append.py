@@ -582,9 +582,9 @@ def _append_single_file(db: GraphDatabase, file_spec, table_type: str) -> FileLo
                 col_type = file_columns[col_name]
                 # Checks if the name of the column is somewhere in the set of columns.
                 # This is fairly likely to happen if you have multiple tables which all share the same incorrect schema.
-                col_already_in_db = col_name in set(
-                    db.conn.execute(f"PRAGMA table_info ('{table_type}')").fetchdf()["name"]
-                )
+                col_already_in_db = col_name in {
+                    row[1] for row in db.conn.execute(f"PRAGMA table_info ('{table_type}')").fetchall()
+                }
                 if not col_already_in_db:
                     alter_sql = f"ALTER TABLE {table_type} ADD COLUMN {col_name} {col_type}"
                     db.conn.execute(alter_sql)
