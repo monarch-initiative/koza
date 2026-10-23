@@ -937,3 +937,30 @@ def test_sssom_rows_with_hash_in_values_are_kept(temp_dir, compression):
         ("HGNC:123", "skos:exactMatch", "https://example.org/uniprot"),
         ("NCBIGene:43852", "http://www.w3.org/2004/02/skos/core#exactMatch", "https://example.org/fb#gene"),
     ]
+
+
+@pytest.mark.parametrize("metadata", ["blank_line", "long_line"])
+def test_sssom_header_with_blank_or_very_long_metadata_lines(temp_dir, metadata):
+    """Blank lines inside the metadata block are part of it (`skip` counts them),
+    and a metadata line longer than DuckDB's default max_line_size still loads."""
+    from koza.graph_operations.normalize import _load_sssom_file
+    from koza.model.graph_operations import FileSpec
+
+    extra = "\n" if metadata == "blank_line" else "# description: " + "x" * 3_000_000 + "\n"
+    text = (
+        "# curie_map:\n"
+        + extra
+        + "#   skos: http://www.w3.org/2004/02/skos/core#\n"
+        + "subject_id\tpredicate_id\tobject_id\n"
+        + "HGNC:123\tskos:exactMatch\tUniProtKB:P12345\n"
+    )
+    path = temp_dir / f"{metadata}.sssom.tsv"
+    path.write_text(text)
+
+    with GraphDatabase() as db:
+        result = _load_sssom_file(db, FileSpec(path=path, source_name=metadata))
+        assert result.errors == []
+        rows = db.conn.execute(
+            f"SELECT subject_id, predicate_id, object_id FROM {result.temp_table_name}"
+        ).fetchall()
+    assert rows == [("HGNC:123", "skos:exactMatch", "UniProtKB:P12345")]

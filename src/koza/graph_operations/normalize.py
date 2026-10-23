@@ -328,17 +328,19 @@ def _sssom_header_line_count(db: GraphDatabase, path: Path) -> int:
 
     Read through DuckDB's CSV reader as raw lines (no delimiter, quoting or
     escaping), so it decompresses exactly what `read_csv` does (.gz, .zst, ...)
-    and counts lines the way its `skip` option does. Streams until the first
-    non-`#` line."""
+    and counts lines the way its `skip` option does. Blank lines inside the
+    metadata block count as part of it (the reader returns them as NULL).
+    Streams until the first non-blank, non-`#` line."""
     cursor = db.conn.execute(
         "SELECT line FROM read_csv(?, header=false, columns={'line': 'VARCHAR'}, "
-        "delim=E'\\x01', quote='', escape='', auto_detect=false)",
+        "delim=E'\\x01', quote='', escape='', auto_detect=false, "
+        "max_line_size=1073741824)",
         [str(path)],
     )
     count = 0
     while rows := cursor.fetchmany(1000):
         for (line,) in rows:
-            if line is None or not line.startswith("#"):
+            if line is not None and not line.startswith("#"):
                 return count
             count += 1
     return count
