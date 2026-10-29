@@ -183,3 +183,56 @@ def test_no_negative_zero(kg):
     compute_annotation_information_content(_config(kg))
     root = _ic(kg)["HP:ROOT"]
     assert root == 0.0 and math.copysign(1.0, root) == 1.0
+
+
+def _shared(db_path, table="annotation_ic"):
+    with GraphDatabase(db_path) as db:
+        rows = db.conn.execute(f"SELECT corpus, term, ic FROM {table}").fetchall()
+    out = {}
+    for corpus, term, ic in rows:
+        out.setdefault(corpus, {})[term] = ic
+    return out
+
+
+def test_corpus_writes_rows_of_a_shared_table(kg):
+    gene = compute_annotation_information_content(_config(kg, output_table="annotation_ic", corpus="gene_hp"))
+    mp = compute_annotation_information_content(
+        _config(kg, output_table="annotation_ic", corpus="gene_mp", object_prefixes=["MP"]))
+    assert (gene.corpus, gene.term_count, mp.term_count) == ("gene_hp", 5, 1)
+    shared = _shared(kg)
+    assert shared["gene_hp"] == pytest.approx(
+        {"HP:1": 1.0, "HP:0": 1.0, "HP:2": 1.0, "HP:OTHER": 1.0, "HP:ROOT": 0.0})
+    assert shared["gene_mp"] == pytest.approx({"MP:1": 0.0})
+
+
+def test_corpus_matches_own_table(kg):
+    compute_annotation_information_content(_config(kg))
+    compute_annotation_information_content(_config(kg, output_table="annotation_ic", corpus="gene_hp"))
+    assert _shared(kg)["gene_hp"] == _ic(kg)
+
+
+def test_corpus_rerun_replaces_only_its_rows(kg):
+    compute_annotation_information_content(_config(kg, output_table="annotation_ic", corpus="gene_hp"))
+    compute_annotation_information_content(
+        _config(kg, output_table="annotation_ic", corpus="gene_mp", object_prefixes=["MP"]))
+    # rerun gene_hp with a different corpus definition: its rows change, gene_mp's don't
+    compute_annotation_information_content(
+        _config(kg, output_table="annotation_ic", corpus="gene_hp", include_negated=True))
+    shared = _shared(kg)
+    assert shared["gene_hp"]["HP:1"] == pytest.approx(-math.log2(2 / 3))
+    assert len(shared["gene_hp"]) == 5  # replaced, not appended
+    assert shared["gene_mp"] == pytest.approx({"MP:1": 0.0})
+
+
+def test_corpus_rejects_a_table_without_corpus_column(kg):
+    compute_annotation_information_content(_config(kg))  # ic_gene_hp is (term, ic)
+    with pytest.raises(ValueError, match="no corpus column"):
+        compute_annotation_information_content(_config(kg, corpus="gene_hp"))
+    assert len(_ic(kg)) == 5  # left as it was
+
+
+def test_corpus_must_not_be_empty(tmp_path):
+    db_path = tmp_path / "x.duckdb"
+    db_path.touch()
+    with pytest.raises(ValidationError):
+        _config(db_path, corpus="")

@@ -94,7 +94,8 @@ def compute_pairwise_similarity(config: PairwiseSimilarityConfig) -> PairwiseSim
             object_count = con.execute("SELECT count(*) FROM o_terms").fetchone()[0]
             logger.info(
                 f"pairwise-similarity: {subject_count:,} subjects x {object_count:,} objects, "
-                f"ic_table={config.ic_table}, min_ancestor_ic>{config.min_ancestor_information_content}"
+                f"ic_table={config.ic_table}, ic_corpus={config.ic_corpus}, "
+                f"min_ancestor_ic>{config.min_ancestor_information_content}"
             )
 
             # closure restricted to the compared terms; UNION collapses multi-predicate
@@ -111,14 +112,22 @@ def compute_pairwise_similarity(config: PairwiseSimilarityConfig) -> PairwiseSim
             con.execute("CREATE TABLE o_clo AS SELECT c.t, c.a FROM clo c JOIN o_terms o ON o.t = c.t")
             # One IC per term: a duplicated term would multiply `common` rows in the
             # LEFT JOIN below, inflating the shared-ancestor count (Jaccard > 1 / inf).
-            con.execute(f"CREATE TABLE ic AS SELECT term, max(ic) AS ic FROM kg.{config.ic_table} GROUP BY term")
+            ic_source = f"kg.{config.ic_table}"
+            ic_label = config.ic_table
+            if config.ic_corpus is not None:
+                corpus = sql_string_list([config.ic_corpus])
+                ic_source = f"(SELECT term, ic FROM kg.{config.ic_table} WHERE corpus = {corpus})"
+                ic_label = f"{config.ic_table} corpus {config.ic_corpus}"
+            con.execute(f"CREATE TABLE ic AS SELECT term, max(ic) AS ic FROM {ic_source} GROUP BY term")
+            if config.ic_corpus is not None and not con.execute("SELECT count(*) FROM ic").fetchone()[0]:
+                raise ValueError(f"{config.ic_table} has no rows for corpus {config.ic_corpus!r}")
             dup_terms = con.execute(
-                f"SELECT count(*) FROM (SELECT term FROM kg.{config.ic_table} GROUP BY term HAVING count(*) > 1)"
+                f"SELECT count(*) FROM (SELECT term FROM {ic_source} GROUP BY term HAVING count(*) > 1)"
             ).fetchone()[0]
             if dup_terms:
                 logger.warning(
                     f"pairwise-similarity: {dup_terms:,} terms appear more than once in "
-                    f"{config.ic_table}; using the max IC for each"
+                    f"{ic_label}; using the max IC for each"
                 )
 
             con.execute("""CREATE TABLE result (subject_id VARCHAR, object_id VARCHAR, ancestor_id VARCHAR,

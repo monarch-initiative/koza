@@ -254,3 +254,26 @@ def test_unknown_root_yields_no_terms(kg, tmp_path):
     """The root is only added back when the closure knows it, so a typo stays empty."""
     result = compute_pairwise_similarity(_config(kg, tmp_path / "pairs.tsv", subject_root="HP:NOPE"))
     assert result.subject_count == 0 and result.row_count == 0
+
+
+def _shared_ic_table(db_path):
+    """IC as one corpus of a shared (corpus, term, ic) table, beside another corpus's conflicting rows."""
+    with GraphDatabase(db_path) as db:
+        c = db.conn
+        c.execute("CREATE TABLE annotation_ic (corpus VARCHAR, term VARCHAR, ic DOUBLE)")
+        c.executemany("INSERT INTO annotation_ic VALUES ('x', ?, ?)", list(IC.items()))
+        c.executemany("INSERT INTO annotation_ic VALUES ('other', ?, 99.0)", [[t] for t in ANCESTORS])
+
+
+def test_ic_corpus_reads_one_corpus_of_a_shared_table(kg, tmp_path):
+    _shared_ic_table(kg)
+    own, shared = tmp_path / "own.tsv", tmp_path / "shared.tsv"
+    compute_pairwise_similarity(_config(kg, own))
+    compute_pairwise_similarity(_config(kg, shared, ic_table="annotation_ic", ic_corpus="x"))
+    assert _read(shared).equals(_read(own))
+
+
+def test_unknown_ic_corpus_fails(kg, tmp_path):
+    _shared_ic_table(kg)
+    with pytest.raises(ValueError, match="no rows for corpus 'nope'"):
+        compute_pairwise_similarity(_config(kg, tmp_path / "p.tsv", ic_table="annotation_ic", ic_corpus="nope"))

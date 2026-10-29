@@ -918,13 +918,19 @@ class AnnotationInformationContentConfig(BaseModel):
 
     Associations are the `edges` rows matching every given filter: predicate,
     category, subject/object CURIE prefixes, and negation. Run it once per
-    annotation corpus (e.g. mouse genes -> MP, zebrafish genes -> ZP), each into
-    its own table. This differs from `information-content`, whose corpus is the
-    closure itself (ontology-structure IC).
+    annotation corpus (e.g. mouse genes -> MP, zebrafish genes -> ZP). This
+    differs from `information-content`, whose corpus is the closure itself
+    (ontology-structure IC).
+
+    With `corpus` set, `output_table` is a table shared by several corpora,
+    (corpus, term, ic): the run replaces only the rows for `corpus`, creating
+    the table if needed. Without it, `output_table` is (term, ic) and replaced.
     """
 
     database_path: Path
     output_table: str = Field(pattern=_SQL_IDENTIFIER)
+    # Key for this corpus's rows in a shared (corpus, term, ic) output_table.
+    corpus: str | None = Field(default=None, min_length=1)
     # Closure source (the table + columns closurize materializes).
     closure_table: str = Field(default="closure", pattern=_SQL_IDENTIFIER)
     closure_subject_column: str = Field(default="subject_id", pattern=_SQL_IDENTIFIER)
@@ -962,7 +968,8 @@ class PairwiseSimilarityConfig(BaseModel):
 
     - jaccard_similarity = |anc(s) & anc(o)| / |anc(s) | anc(o)|
     - ancestor_information_content (Resnik) = max IC over shared ancestors that
-      have a row in `ic_table` (ancestors without one are ignored)
+      have a row in `ic_table` (ancestors without one are ignored); with
+      `ic_corpus` set, only the `ic_table` rows whose corpus column matches it
     - ancestor_id = the shared ancestor with that IC; ties go to the smallest id
     - phenodigm_score = sqrt(Resnik * Jaccard)
 
@@ -979,6 +986,8 @@ class PairwiseSimilarityConfig(BaseModel):
     database_path: Path
     output_path: Path
     ic_table: str = Field(pattern=_SQL_IDENTIFIER)
+    # Read one corpus from a shared (corpus, term, ic) ic_table.
+    ic_corpus: str | None = Field(default=None, min_length=1)
     subject_root: str
     object_root: str
     subject_prefixes: list[str] | None = None
@@ -1043,6 +1052,7 @@ class AnnotationInformationContentResult(BaseModel):
 
     success: bool
     output_table: str
+    corpus: str | None = None
     term_count: int
     entity_count: int
     association_count: int
