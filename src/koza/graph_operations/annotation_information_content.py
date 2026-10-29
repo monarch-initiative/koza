@@ -38,28 +38,26 @@ from koza.model.graph_operations import (
 )
 
 from .utils import (
+    SHARED_IC_COLUMNS,
     GraphDatabase,
     category_membership_filter,
+    check_shared_ic_table,
     curie_prefix_filter,
     print_operation_summary,
     sql_string_list,
+    table_columns,
 )
 
 
 def _prepare_shared_table(conn, table: str) -> None:
-    """Create the shared (corpus, term, ic) table, or check an existing one has a corpus column."""
-    columns = [
-        row[0]
-        for row in conn.execute(
-            "SELECT column_name FROM information_schema.columns WHERE table_catalog = current_database() "
-            "AND table_schema = current_schema() AND table_name = ?",
-            [table],
-        ).fetchall()
-    ]
+    """Create the shared (corpus, term, ic) table, or check an existing one has its columns."""
+    columns = table_columns(conn, table)
     if not columns:
-        conn.execute(f"CREATE TABLE {table} (corpus VARCHAR, term VARCHAR, ic DOUBLE)")
+        conn.execute(f"CREATE TABLE {table} ({', '.join(f'{c} {t}' for c, t in SHARED_IC_COLUMNS.items())})")
     elif "corpus" not in columns:
         raise ValueError(f"{table} has no corpus column; it can't hold several corpora")
+    else:
+        check_shared_ic_table(table, columns)
 
 
 def compute_annotation_information_content(
@@ -120,6 +118,12 @@ def compute_annotation_information_content(
                 GROUP BY c.o
             """
             if config.corpus is None:
+                # Replacing a shared table with one corpus's (term, ic) would silently drop every corpus.
+                if "corpus" in table_columns(conn, config.output_table):
+                    raise ValueError(
+                        f"{config.output_table} holds several corpora (it has a corpus column); "
+                        "set corpus to replace one of them"
+                    )
                 conn.execute(f"CREATE OR REPLACE TABLE {config.output_table} AS {ic_query}")
                 term_count = conn.execute(f"SELECT count(*) FROM {config.output_table}").fetchone()[0]
             else:

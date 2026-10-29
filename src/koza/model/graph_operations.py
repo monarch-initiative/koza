@@ -924,7 +924,8 @@ class AnnotationInformationContentConfig(BaseModel):
 
     With `corpus` set, `output_table` is a table shared by several corpora,
     (corpus, term, ic): the run replaces only the rows for `corpus`, creating
-    the table if needed. Without it, `output_table` is (term, ic) and replaced.
+    the table if needed. Without it, `output_table` is (term, ic) and replaced;
+    a run without `corpus` refuses to replace a table that has a corpus column.
     """
 
     database_path: Path
@@ -970,6 +971,7 @@ class PairwiseSimilarityConfig(BaseModel):
     - ancestor_information_content (Resnik) = max IC over shared ancestors that
       have a row in `ic_table` (ancestors without one are ignored); with
       `ic_corpus` set, only the `ic_table` rows whose corpus column matches it
+      (required when `ic_table` has a corpus column)
     - ancestor_id = the shared ancestor with that IC; ties go to the smallest id
     - phenodigm_score = sqrt(Resnik * Jaccard)
 

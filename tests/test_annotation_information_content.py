@@ -236,3 +236,26 @@ def test_corpus_must_not_be_empty(tmp_path):
     db_path.touch()
     with pytest.raises(ValidationError):
         _config(db_path, corpus="")
+
+
+def test_without_corpus_refuses_to_replace_a_shared_table(kg):
+    compute_annotation_information_content(_config(kg, output_table="annotation_ic", corpus="gene_hp"))
+    with pytest.raises(ValueError, match="holds several corpora"):
+        compute_annotation_information_content(_config(kg, output_table="annotation_ic"))
+    assert len(_shared(kg)["gene_hp"]) == 5  # left as it was
+
+
+def test_corpus_rejects_a_shared_table_with_the_wrong_types(kg):
+    with GraphDatabase(kg) as db:
+        db.conn.execute("CREATE TABLE annotation_ic (ic INTEGER, corpus VARCHAR, term VARCHAR)")
+    with pytest.raises(ValueError, match="needs ic DOUBLE"):
+        compute_annotation_information_content(_config(kg, output_table="annotation_ic", corpus="gene_hp"))
+
+
+def test_corpus_finds_an_existing_table_whatever_its_case(kg):
+    with GraphDatabase(kg) as db:
+        db.conn.execute("CREATE TABLE Annotation_IC (corpus VARCHAR, term VARCHAR, ic DOUBLE)")
+        db.conn.execute("INSERT INTO Annotation_IC VALUES ('other', 'HP:9', 1.0)")
+    compute_annotation_information_content(_config(kg, output_table="annotation_ic", corpus="gene_hp"))
+    shared = _shared(kg)
+    assert shared["other"] == {"HP:9": 1.0} and len(shared["gene_hp"]) == 5

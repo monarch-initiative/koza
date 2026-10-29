@@ -39,7 +39,7 @@ from koza.model.graph_operations import (
     PairwiseSimilarityResult,
 )
 
-from .utils import curie_prefix_filter, print_operation_summary, sql_string_list
+from .utils import curie_prefix_filter, print_operation_summary, sql_string_list, table_columns
 
 
 def _copy_options(output_path: Path) -> str:
@@ -112,6 +112,14 @@ def compute_pairwise_similarity(config: PairwiseSimilarityConfig) -> PairwiseSim
             con.execute("CREATE TABLE o_clo AS SELECT c.t, c.a FROM clo c JOIN o_terms o ON o.t = c.t")
             # One IC per term: a duplicated term would multiply `common` rows in the
             # LEFT JOIN below, inflating the shared-ancestor count (Jaccard > 1 / inf).
+            # A shared table read without ic_corpus would take each term's max IC over every corpus.
+            ic_columns = table_columns(con, config.ic_table, catalog="kg")
+            if "corpus" in ic_columns and config.ic_corpus is None:
+                raise ValueError(
+                    f"{config.ic_table} holds several corpora (it has a corpus column); set ic_corpus to pick one"
+                )
+            if config.ic_corpus is not None and ic_columns and "corpus" not in ic_columns:
+                raise ValueError(f"ic_corpus is set but {config.ic_table} has no corpus column")
             ic_source = f"kg.{config.ic_table}"
             ic_label = config.ic_table
             if config.ic_corpus is not None:

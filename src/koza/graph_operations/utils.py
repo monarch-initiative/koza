@@ -232,6 +232,31 @@ def sql_string_list(values: list[str]) -> str:
     return ", ".join("'" + v.replace("'", "''") + "'" for v in values)
 
 
+def table_columns(conn: duckdb.DuckDBPyConnection, table: str, catalog: str | None = None) -> dict[str, str]:
+    """{lowercased column name: type} of `table` in `catalog` (default: the current database), or
+    ``{}`` when there is no such table. Matched case-insensitively, as DuckDB resolves identifiers."""
+    catalog_test = "table_catalog = ?" if catalog else "table_catalog = current_database()"
+    params = ([catalog] if catalog else []) + [table]
+    rows = conn.execute(
+        "SELECT column_name, data_type FROM information_schema.columns "
+        f"WHERE {catalog_test} AND table_schema = 'main' AND lower(table_name) = lower(?)",
+        params,
+    ).fetchall()
+    return {name.lower(): data_type for name, data_type in rows}
+
+
+# The columns a table shared by several annotation-IC corpora must have.
+SHARED_IC_COLUMNS = {"corpus": "VARCHAR", "term": "VARCHAR", "ic": "DOUBLE"}
+
+
+def check_shared_ic_table(table: str, columns: dict[str, str]) -> None:
+    """Raise unless `columns` (from `table_columns`) has a shared IC table's columns and types."""
+    wrong = [f"{name} {kind}" for name, kind in SHARED_IC_COLUMNS.items() if columns.get(name) != kind]
+    if wrong:
+        found = ", ".join(f"{name} {kind}" for name, kind in columns.items())
+        raise ValueError(f"{table} is not a shared (corpus, term, ic) table: needs {', '.join(wrong)}; has {found}")
+
+
 def curie_prefix_filter(column: str, prefixes: list[str] | None) -> str:
     """``AND (starts_with(col, 'P1:') OR ...)`` for CURIE prefixes (colon optional), or ``""`` when none."""
     if not prefixes:

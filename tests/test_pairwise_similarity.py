@@ -277,3 +277,14 @@ def test_unknown_ic_corpus_fails(kg, tmp_path):
     _shared_ic_table(kg)
     with pytest.raises(ValueError, match="no rows for corpus 'nope'"):
         compute_pairwise_similarity(_config(kg, tmp_path / "p.tsv", ic_table="annotation_ic", ic_corpus="nope"))
+
+
+def test_shared_table_without_ic_corpus_fails(kg, tmp_path):
+    _shared_ic_table(kg)
+    with pytest.raises(ValueError, match="set ic_corpus"):
+        compute_pairwise_similarity(_config(kg, tmp_path / "p.tsv", ic_table="annotation_ic"))
+
+
+def test_ic_corpus_on_a_table_without_corpus_column_fails(kg, tmp_path):
+    with pytest.raises(ValueError, match="ic_corpus is set but information_content_x has no corpus column"):
+        compute_pairwise_similarity(_config(kg, tmp_path / "p.tsv", ic_corpus="x"))
