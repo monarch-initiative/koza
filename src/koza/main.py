@@ -875,13 +875,19 @@ def information_content(
 def annotation_information_content(
     database: Annotated[str, typer.Argument(help="Path to an already-closurized DuckDB database file")],
     output_table: Annotated[str, typer.Option(
-        "--output-table", help="Table to write (term, ic), e.g. information_content_mgi_mp",
+        "--output-table",
+        help="Table to write (term, ic), e.g. information_content_mgi_mp; with --corpus, a shared "
+             "(corpus, term, ic) table, e.g. annotation_information_content",
     )],
     association_category: Annotated[list[str], typer.Option(
         "--association-category",
         help="Edge category making up the annotation corpus (repeatable, required), "
              "e.g. biolink:GeneToPhenotypicFeatureAssociation",
     )],
+    corpus: Annotated[str | None, typer.Option(
+        "--corpus",
+        help="Write this corpus's rows of a shared (corpus, term, ic) --output-table, replacing only them",
+    )] = None,
     subject_prefix: Annotated[list[str] | None, typer.Option(
         "--subject-prefix", help="Keep associations whose subject has this CURIE prefix (repeatable), e.g. MGI",
     )] = None,
@@ -900,7 +906,7 @@ def annotation_information_content(
     )] = False,
     quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress output")] = False,
 ) -> None:
-    """Compute annotation-based information content into a named table.
+    """Compute annotation-based information content into a table.
 
     IC(t) = -log2(n(t) / N): n(t) = distinct entities annotated to t or a closure
     descendant of t, N = distinct annotated entities (oaklib's
@@ -914,11 +920,18 @@ def annotation_information_content(
             --output-table information_content_mgi_mp \\
             --association-category biolink:GeneToPhenotypicFeatureAssociation \\
             --subject-prefix MGI --object-prefix MP
+
+        # the same corpus as rows of a table shared with other corpora
+        koza annotation-information-content monarch-kg.duckdb \\
+            --output-table annotation_information_content --corpus mgi_mp \\
+            --association-category biolink:GeneToPhenotypicFeatureAssociation \\
+            --subject-prefix MGI --object-prefix MP
     """
     try:
         config_kwargs = {
             "database_path": Path(database),
             "output_table": output_table,
+            "corpus": corpus,
             "association_categories": association_category,
             "subject_prefixes": subject_prefix or None,
             "object_prefixes": object_prefix or None,
@@ -932,7 +945,8 @@ def annotation_information_content(
         result = compute_annotation_information_content(AnnotationInformationContentConfig(**config_kwargs))
         if not quiet:
             typer.echo(
-                f"Annotation-information-content completed: {result.output_table} "
+                f"Annotation-information-content completed: {result.output_table}"
+                f"{f' corpus {result.corpus}' if result.corpus else ''} "
                 f"({result.term_count:,} terms, {result.entity_count:,} entities)"
             )
     except Exception as e:
@@ -953,6 +967,9 @@ def pairwise_similarity(
         "--subject-prefix", help="Keep subject terms with this CURIE prefix (repeatable)")] = None,
     object_prefix: Annotated[list[str] | None, typer.Option(
         "--object-prefix", help="Keep object terms with this CURIE prefix (repeatable)")] = None,
+    ic_corpus: Annotated[str | None, typer.Option(
+        "--ic-corpus", help="Read only this corpus's rows of a shared (corpus, term, ic) --ic-table",
+    )] = None,
     min_ancestor_ic: Annotated[float, typer.Option(
         "--min-ancestor-information-content", help="Keep pairs whose Resnik score is strictly greater",
     )] = 1.5,
@@ -979,12 +996,19 @@ def pairwise_similarity(
             --ic-table information_content_mgi_mp \\
             --subject-root HP:0000118 --subject-prefix HP \\
             --object-root MP:0000001 --object-prefix MP
+
+        # IC from one corpus of a shared (corpus, term, ic) table
+        koza pairwise-similarity monarch-kg.duckdb -o HP_vs_MP.parquet \\
+            --ic-table annotation_information_content --ic-corpus mgi_mp \\
+            --subject-root HP:0000118 --subject-prefix HP \\
+            --object-root MP:0000001 --object-prefix MP
     """
     try:
         config_kwargs = {
             "database_path": Path(database),
             "output_path": Path(output),
             "ic_table": ic_table,
+            "ic_corpus": ic_corpus,
             "subject_root": subject_root,
             "object_root": object_root,
             "subject_prefixes": subject_prefix or None,
