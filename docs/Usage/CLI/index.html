@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../images/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.0">
     
     
       
@@ -29,10 +29,10 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
       
       
 
@@ -2441,7 +2441,7 @@ koza information-content graph.duckdb \
 <li><code>--help</code>: Show this message and exit.</li>
 </ul>
 <h2 id="koza-annotation-information-content"><code>koza annotation-information-content</code></h2>
-<p>Compute annotation-based information content into a named table.</p>
+<p>Compute annotation-based information content into a table.</p>
 <p>IC(t) = -log2(n(t) / N): n(t) = distinct entities annotated to t or a closure
 descendant of t, N = distinct annotated entities (oaklib&#x27;s
 <code>information-content --use-associations</code>). Run once per annotation corpus.</p>
@@ -2452,6 +2452,12 @@ descendant of t, N = distinct annotated entities (oaklib&#x27;s
         --output-table information_content_mgi_mp \
         --association-category biolink:GeneToPhenotypicFeatureAssociation \
         --subject-prefix MGI --object-prefix MP</p>
+<pre><code># the same corpus as rows of a table shared with other corpora
+koza annotation-information-content monarch-kg.duckdb \
+    --output-table annotation_information_content --corpus mgi_mp \
+    --association-category biolink:GeneToPhenotypicFeatureAssociation \
+    --subject-prefix MGI --object-prefix MP
+</code></pre>
 <p><strong>Usage</strong>:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>annotation-information-content<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span><span class="o">{</span>database<span class="o">}</span>
 </code></pre></div>
@@ -2461,8 +2467,9 @@ descendant of t, N = distinct annotated entities (oaklib&#x27;s
 </ul>
 <p><strong>Options</strong>:</p>
 <ul>
-<li><code>--output-table &lt;str&gt;</code>: Table to write (term, ic), e.g. information_content_mgi_mp  [required]</li>
+<li><code>--output-table &lt;str&gt;</code>: Table to write (term, ic), e.g. information_content_mgi_mp; with --corpus, a shared (corpus, term, ic) table, e.g. annotation_information_content  [required]</li>
 <li><code>--association-category &lt;str&gt;</code>: Edge category making up the annotation corpus (repeatable, required), e.g. biolink:GeneToPhenotypicFeatureAssociation  [required]</li>
+<li><code>--corpus &lt;str&gt;</code>: Write this corpus&#x27;s rows of a shared (corpus, term, ic) --output-table, replacing only them</li>
 <li><code>--subject-prefix &lt;str&gt;</code>: Keep associations whose subject has this CURIE prefix (repeatable), e.g. MGI</li>
 <li><code>--object-prefix &lt;str&gt;</code>: Keep associations whose object has this CURIE prefix (repeatable), e.g. MP</li>
 <li><code>--association-predicate &lt;str&gt;</code>: Edge predicate for entity-&gt;term associations. Default: biolink:has_phenotype</li>
@@ -2482,6 +2489,12 @@ closure. Pairs are kept when Resnik (max IC of a shared ancestor, from
         --ic-table information_content_mgi_mp \
         --subject-root HP:0000118 --subject-prefix HP \
         --object-root MP:0000001 --object-prefix MP</p>
+<pre><code># IC from one corpus of a shared (corpus, term, ic) table
+koza pairwise-similarity monarch-kg.duckdb -o HP_vs_MP.parquet \
+    --ic-table annotation_information_content --ic-corpus mgi_mp \
+    --subject-root HP:0000118 --subject-prefix HP \
+    --object-root MP:0000001 --object-prefix MP
+</code></pre>
 <p><strong>Usage</strong>:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">$ </span>koza<span class="w"> </span>pairwise-similarity<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span><span class="o">{</span>database<span class="o">}</span>
 </code></pre></div>
@@ -2497,6 +2510,7 @@ closure. Pairs are kept when Resnik (max IC of a shared ancestor, from
 <li><code>--object-root &lt;str&gt;</code>: Object terms: descendants of this term  [required]</li>
 <li><code>--subject-prefix &lt;str&gt;</code>: Keep subject terms with this CURIE prefix (repeatable)</li>
 <li><code>--object-prefix &lt;str&gt;</code>: Keep object terms with this CURIE prefix (repeatable)</li>
+<li><code>--ic-corpus &lt;str&gt;</code>: Read only this corpus&#x27;s rows of a shared (corpus, term, ic) --ic-table</li>
 <li><code>--min-ancestor-information-content &lt;float&gt;</code>: Keep pairs whose Resnik score is strictly greater  [default: 1.5]</li>
 <li><code>--closure-predicate &lt;str&gt;</code>: Closure predicate(s) defining ancestry (repeatable). Default: rdfs:subClassOf</li>
 <li><code>--no-labels</code>: Skip the label columns</li>
@@ -3031,10 +3045,10 @@ nodes/edges (no row iteration):</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.code.copy", "navigation.expand", "navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.code.copy", "navigation.expand", "navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../../assets/javascripts/bundle.c21346df.min.js"></script>
       
     
   </body>
