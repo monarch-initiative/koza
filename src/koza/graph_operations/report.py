@@ -1669,19 +1669,39 @@ def generate_edge_examples(config: EdgeExamplesConfig) -> EdgeExamplesResult:
             # Build partition clause
             partition_clause = ", ".join(valid_type_cols)
 
-            # Build query using window function
-            query = f"""
-                SELECT * EXCLUDE (rn) FROM (
-                    SELECT *, ROW_NUMBER() OVER (PARTITION BY {partition_clause} ORDER BY subject, object) as rn
-                    FROM {denorm_table}
-                ) WHERE rn <= {config.sample_size}
-                ORDER BY {partition_clause}, subject, object
-            """
+            # Rank only the narrow key columns, then pull the full-width rows for the
+            # sampled keys. Windowing over `SELECT *` of a wide denormalized table
+            # holds every column of every edge in the window sort, which runs out of
+            # memory on a full KG.
+            order_cols = ["subject", "object"] + (["id"] if "id" in available_cols else [])
+            order_clause = ", ".join(order_cols)
+            key_cols = list(dict.fromkeys(valid_type_cols + order_cols))
+            key_select = ", ".join(key_cols)
+            key_match = " AND ".join(f"d.{c} IS NOT DISTINCT FROM k.{c}" for c in key_cols)
 
-            # Get stats
+            db.conn.execute(f"""
+                CREATE OR REPLACE TEMP TABLE _edge_example_keys AS
+                SELECT {key_select} FROM {denorm_table}
+                QUALIFY ROW_NUMBER() OVER (PARTITION BY {partition_clause} ORDER BY {order_clause})
+                    <= {config.sample_size}
+            """)
             types_count = db.conn.execute(
-                f"SELECT COUNT(*) FROM (SELECT DISTINCT {partition_clause} FROM {denorm_table})"
+                f"SELECT COUNT(*) FROM (SELECT DISTINCT {partition_clause} FROM _edge_example_keys)"
             ).fetchone()[0]
+
+            # Edges that share a key (duplicates without an id) are re-capped here,
+            # over the small semi-joined set. Materialized once so the export and the
+            # row count don't each re-run the sampling.
+            db.conn.execute(f"""
+                CREATE OR REPLACE TEMP TABLE _edge_examples AS
+                SELECT * FROM (
+                    SELECT d.* FROM {denorm_table} d
+                    SEMI JOIN _edge_example_keys k ON {key_match}
+                )
+                QUALIFY ROW_NUMBER() OVER (PARTITION BY {partition_clause} ORDER BY {order_clause})
+                    <= {config.sample_size}
+            """)
+            query = f"SELECT * FROM _edge_examples ORDER BY {partition_clause}, {order_clause}"
 
             # Export to file
             if config.output_file:
@@ -1692,7 +1712,7 @@ def generate_edge_examples(config: EdgeExamplesConfig) -> EdgeExamplesResult:
                     print(f"  - {types_count:,} types sampled")
                     print(f"  - {total_examples:,} total examples")
             else:
-                total_examples = db.conn.execute(f"SELECT COUNT(*) FROM ({query})").fetchone()[0]
+                total_examples = db.conn.execute("SELECT COUNT(*) FROM _edge_examples").fetchone()[0]
 
             total_time = time.time() - start_time
 
