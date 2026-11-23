@@ -20,21 +20,43 @@ class Match(str, Enum):
 
 
 @dataclass()
+class FieldMapping:
+    """Configuration for mapping a specific field.
+
+    :param files: Field-specific SSSOM files (merged with global files)
+    :param target_prefixes: List of prefixes to map TO for this field
+    :param preserve_original: Whether to preserve the original value
+    :param original_field_name: Custom name for the preservation field (defaults to original_{field_name})
+    """
+
+    target_prefixes: list[str] = field(default_factory=list)
+    files: list[str | Path] = field(default_factory=list)
+    preserve_original: bool = True
+    original_field_name: str | None = None
+
+
+@dataclass()
 class SSSOMConfig:
     """SSSOM config options
 
-    :param files: SSSOM files to use
+    :param files: Global SSSOM files applied to all field mappings
     :param filter_prefixes: Prefixes to filter by
-    :param subject_target_prefixes: Prefixes to use for subject mapping
-    :param object_target_prefixes: Prefixes to use for object mapping
+    :param field_mappings: Dictionary mapping field names to FieldMapping configurations
+    :param field_target_mappings: (DEPRECATED) Dictionary mapping field names to their target prefixes - use field_mappings instead
+    :param subject_target_prefixes: (DEPRECATED) Prefixes to use for subject mapping - use field_mappings instead
+    :param object_target_prefixes: (DEPRECATED) Prefixes to use for object mapping - use field_mappings instead
     :param use_match: Match types to use
+    :param base_directory: Base directory for resolving relative file paths
     """
 
     files: Sequence[str | Path] = field(default_factory=list)
     filter_prefixes: list[str] = field(default_factory=list)
-    subject_target_prefixes: list[str] = field(default_factory=list)
-    object_target_prefixes: list[str] = field(default_factory=list)
+    field_mappings: dict[str, FieldMapping] = field(default_factory=dict)
+    field_target_mappings: dict[str, list[str]] = field(default_factory=dict)  # DEPRECATED
+    subject_target_prefixes: list[str] = field(default_factory=list)  # DEPRECATED
+    object_target_prefixes: list[str] = field(default_factory=list)   # DEPRECATED
     use_match: list[Match] = field(default_factory=list)
+    base_directory: Path | None = field(default=None)
 
     predicates = {
         "exact": ["skos:exactMatch"],
@@ -45,34 +67,150 @@ class SSSOMConfig:
     def __post_init__(self):
         if not self.use_match:
             self.use_match = [Match.exact]
+
+        # Resolve relative file paths before processing
+        self._resolve_file_paths()
+
+        # Handle backward compatibility - migrate deprecated configurations to new structure
+        self._migrate_deprecated_config()
+
+        # Validate that we have at least one SSSOM file somewhere
+        self._validate_file_configuration()
+
+        # Build unified field mappings with file merging
+        self._build_unified_field_mappings()
+
         logger.debug("Building SSSOM Dataframe...")
         self.df = self._merge_and_filter_sssom()
         logger.debug("Building SSSOM Lookup Table...")
         self.lookup_table = self._build_sssom_lookup_table()  # use_match=self.use_match)
 
+    def _resolve_file_paths(self):
+        """Resolve relative file paths using base_directory, similar to Source._open_files()."""
+        if self.base_directory is None:
+            return  # No base directory provided, use paths as-is
+
+        # Resolve global files
+        resolved_files = []
+        for file in self.files:
+            file_path = Path(file)
+            if not file_path.is_absolute():
+                file_path = self.base_directory / file_path
+            resolved_files.append(file_path)
+        self.files = resolved_files
+
+        # Resolve field-specific files
+        for field_mapping in self.field_mappings.values():
+            resolved_field_files = []
+            for file in field_mapping.files:
+                file_path = Path(file)
+                if not file_path.is_absolute():
+                    file_path = self.base_directory / file_path
+                resolved_field_files.append(file_path)
+            field_mapping.files = resolved_field_files
+
+    def _migrate_deprecated_config(self):
+        """Migrate deprecated configuration options to new structure."""
+        # Migrate old field_target_mappings to new field_mappings structure
+        if self.field_target_mappings:
+            logger.warning("field_target_mappings is deprecated. Use field_mappings instead.")
+            for field_name, target_prefixes in self.field_target_mappings.items():
+                if field_name not in self.field_mappings:
+                    self.field_mappings[field_name] = FieldMapping(
+                        target_prefixes=target_prefixes,
+                        preserve_original=True  # Default for backward compatibility
+                    )
+
+        # Migrate old subject_target_prefixes and object_target_prefixes
+        if self.subject_target_prefixes and "subject" not in self.field_mappings:
+            logger.warning("subject_target_prefixes is deprecated. Use field_mappings['subject'] instead.")
+            self.field_mappings["subject"] = FieldMapping(
+                target_prefixes=self.subject_target_prefixes,
+                preserve_original=True
+            )
+
+        if self.object_target_prefixes and "object" not in self.field_mappings:
+            logger.warning("object_target_prefixes is deprecated. Use field_mappings['object'] instead.")
+            self.field_mappings["object"] = FieldMapping(
+                target_prefixes=self.object_target_prefixes,
+                preserve_original=True
+            )
+
+    def _validate_file_configuration(self):
+        """Validate that at least one SSSOM file is specified somewhere."""
+        has_global_files = bool(self.files)
+        has_field_files = any(field_mapping.files for field_mapping in self.field_mappings.values())
+
+        if not has_global_files and not has_field_files:
+            raise ValueError("At least one SSSOM file must be specified either globally or in field_mappings")
+
+    def _build_unified_field_mappings(self):
+        """Build unified field mappings that merge global and field-specific files."""
+        self._unified_field_mappings = {}
+
+        for field_name, field_mapping in self.field_mappings.items():
+            # Merge global files with field-specific files
+            all_files = list(self.files) + list(field_mapping.files)
+
+            if not all_files:
+                logger.warning(f"No SSSOM files available for field '{field_name}' - skipping")
+                continue
+
+            # Set default original field name if not specified
+            original_field_name = field_mapping.original_field_name
+            if original_field_name is None:
+                original_field_name = f"original_{field_name}"
+
+            self._unified_field_mappings[field_name] = {
+                'files': all_files,
+                'target_prefixes': field_mapping.target_prefixes,
+                'preserve_original': field_mapping.preserve_original,
+                'original_field_name': original_field_name
+            }
+
     def apply_mapping(self, entity: dict) -> dict:
-        """Apply SSSOM mappings to an edge record."""
+        """Apply SSSOM mappings to any field in an entity record."""
 
-        if self._has_mapping(entity["subject"], self.subject_target_prefixes):
-            entity["original_subject"] = entity["subject"]
-            entity["subject"] = self._get_mapping(entity["subject"], self.subject_target_prefixes)
+        for field_name, field_config in self._unified_field_mappings.items():
+            if field_name in entity:
+                target_prefixes = field_config['target_prefixes']
+                if self._has_mapping(entity[field_name], target_prefixes):
+                    # Store original value if preservation is enabled
+                    if field_config['preserve_original']:
+                        original_field_name = field_config['original_field_name']
+                        entity[original_field_name] = entity[field_name]
 
-        if self._has_mapping(entity["object"], self.object_target_prefixes):
-            entity["original_object"] = entity["object"]
-            entity["object"] = self._get_mapping(entity["object"], self.object_target_prefixes)
+                    # Apply mapping
+                    entity[field_name] = self._get_mapping(entity[field_name], target_prefixes)
 
         return entity
 
     def _merge_and_filter_sssom(self):
         mapping_sets: list[MappingSetDataFrame] = []
-        for file in self.files:
+
+        # Collect all unique files from global and field-specific configurations
+        all_files = set(self.files)
+        for field_config in self._unified_field_mappings.values():
+            all_files.update(field_config['files'])
+
+        # Parse all SSSOM files
+        for file in all_files:
             msdf = parse_sssom_table(file)
             mapping_sets.append(msdf)
+
+        if not mapping_sets:
+            raise ValueError("No valid SSSOM files found")
+
         merged_msdf = merge_msdf(*mapping_sets)
+
+        # Collect all target prefixes from unified field mappings
+        all_target_prefixes = []
+        for field_config in self._unified_field_mappings.values():
+            all_target_prefixes.extend(field_config['target_prefixes'])
+
         filters = [
-            *self.subject_target_prefixes,
-            *self.object_target_prefixes,
-            *(set(self.filter_prefixes) - set(self.subject_target_prefixes) - set(self.object_target_prefixes)),
+            *all_target_prefixes,
+            *(set(self.filter_prefixes) - set(all_target_prefixes)),
         ]
         logger.debug(f"Filtering SSSOM by {filters}")
         merged_msdf = filter_prefixes(
@@ -154,10 +292,14 @@ class SSSOMConfig:
         """Set a mapping for an ID."""
         original_prefix = original_id.split(":")[0]
         mapped_prefix = mapped_id.split(":")[0]
-        target_prefixes = self.subject_target_prefixes + self.object_target_prefixes
+
+        # Collect all target prefixes from unified field mappings
+        all_target_prefixes = []
+        for field_config in self._unified_field_mappings.values():
+            all_target_prefixes.extend(field_config['target_prefixes'])
         if (
             original_prefix in self.filter_prefixes or len(self.filter_prefixes) == 0
-        ) and mapped_prefix in target_prefixes:
+        ) and mapped_prefix in all_target_prefixes:
             if original_id not in lookup_table:
                 lookup_table[original_id] = {}
             if mapped_prefix in lookup_table[original_id]:
